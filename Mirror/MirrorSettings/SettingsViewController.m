@@ -325,7 +325,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         }]];
         [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"copy"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
-            pasteboard.string = @"wangyuqing.rachel@gmail.com";
+            pasteboard.string = @"yuqingwang.dev@gmail.com";
         }]];
         [self presentViewController:alertController animated:YES completion:nil];
     }
