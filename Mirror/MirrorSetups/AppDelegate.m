@@ -11,6 +11,7 @@
 #import "MirrorSettings.h"
 #import "MirrorStorage.h"
 #import "MirrorMacro.h"
+#import "MirrorFakeDataSeeder.h"
 
 @interface AppDelegate () <UITabBarControllerDelegate>
 
@@ -20,6 +21,8 @@
 
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+//    [MirrorFakeDataSeeder seedFakeData];
+
     // 由于删除了storyboard，所以需要自己手动创建UIWindow
     _window = [[UIWindow alloc]initWithFrame:[[UIScreen mainScreen] bounds]];
     
