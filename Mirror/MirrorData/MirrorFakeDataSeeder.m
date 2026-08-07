@@ -109,12 +109,12 @@ static NSInteger const kFakeDataEndDay = 7;
 + (NSArray<MirrorFakeTaskPlan *> *)fakeTaskPlans
 {
     return @[
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Gym" color:MirrorColorTypeCellGreen createdHour:7 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Tennis" color:MirrorColorTypeCellYellow createdHour:18 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Code" color:MirrorColorTypeCellPurple createdHour:9 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Swim" color:MirrorColorTypeCellBlue createdHour:17 createdMinute:45],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Read" color:MirrorColorTypeCellOrange createdHour:21 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Study" color:MirrorColorTypeCellTeal createdHour:20 createdMinute:0]
+        [[MirrorFakeTaskPlan alloc] initWithName:@"Gym" color:MirrorColorTypeCellBlue createdHour:7 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:@"Tennis" color:MirrorColorTypeCellGreen createdHour:18 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:@"Code" color:MirrorColorTypeCellYellow createdHour:9 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:@"Swim" color:MirrorColorTypeCellTeal createdHour:17 createdMinute:45],
+        [[MirrorFakeTaskPlan alloc] initWithName:@"Read" color:MirrorColorTypeCellPink createdHour:21 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:@"Study" color:MirrorColorTypeCellPurple createdHour:20 createdMinute:0]
     ];
 }
 
