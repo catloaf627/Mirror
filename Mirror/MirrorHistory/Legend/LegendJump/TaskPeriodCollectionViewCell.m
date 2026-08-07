@@ -17,6 +17,7 @@
 static const CGFloat kHorizontalPadding = 20;
 static const CGFloat kVerticalPadding = 10;
 static const CGFloat kDeleteButtonWidth = 72;
+static const CGFloat kCellRadius = 12;
 
 @interface TaskPeriodCollectionViewCell () <UIGestureRecognizerDelegate>
 
@@ -47,7 +48,7 @@ static const CGFloat kDeleteButtonWidth = 72;
     self.taskName = taskName;
     self.periodIndex = index;
     self.type = type;
-    self.layer.cornerRadius = 14;
+    self.layer.cornerRadius = kCellRadius;
     self.layer.masksToBounds = YES;
     [self p_setupUI];
     [self hideDeleteButtonAnimated:NO];
@@ -89,7 +90,7 @@ static const CGFloat kDeleteButtonWidth = 72;
 {
     if (self.dateLabel.superview) return;
 
-    self.contentView.layer.cornerRadius = 14;
+    self.contentView.layer.cornerRadius = kCellRadius;
     self.contentView.layer.masksToBounds = YES;
 
     [self.contentView addSubview:self.deleteButton];
@@ -241,7 +242,7 @@ static const CGFloat kDeleteButtonWidth = 72;
 {
     if (!_foregroundView) {
         _foregroundView = [UIView new];
-        _foregroundView.layer.cornerRadius = 14;
+        _foregroundView.layer.cornerRadius = kCellRadius;
         _foregroundView.layer.masksToBounds = YES;
     }
     return _foregroundView;
