@@ -146,14 +146,6 @@
         make.width.height.mas_equalTo(40);
     }];
     
-    // 直接返回的手势
-    UIPanGestureRecognizer *panRecognizer = [UIPanGestureRecognizer new];
-    [panRecognizer addTarget:self action:@selector(panGestureRecognizerAction:)];
-    [self.view addGestureRecognizer:panRecognizer];
-    UITapGestureRecognizer *tapRecognizer = [UITapGestureRecognizer new];
-    [tapRecognizer addTarget:self action:@selector(tapGestureRecognizerAction:)];
-    [self.view addGestureRecognizer:tapRecognizer];
-    
     // 动画
     self.transitioningDelegate = self;
 }
@@ -177,22 +169,6 @@
     NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:([startDate timeIntervalSince1970] + [self.lastedPicker selectedRowInComponent:0] * 3600 + [self.lastedPicker selectedRowInComponent:1] * 60)];
     [MirrorStorage savePeriodWithTaskname:self.taskName startAt:startDate endAt:endDate];
     [self dismissViewControllerAnimated:YES completion:nil];
-}
-
-- (void)panGestureRecognizerAction:(UIPanGestureRecognizer *)pan // 摸到 startbutton 下方 20pt，dismiss
-{
-    CGPoint touchPoint = [pan locationInView:self.view];
-    if (touchPoint.y > self.startButton.frame.origin.y + self.startButton.frame.size.height + 20) {
-        [self dismissViewControllerAnimated:YES completion:nil];
-    }
-}
-
-- (void)tapGestureRecognizerAction:(UITapGestureRecognizer *)tap // 摸到 startbutton 下方 20pt，dismiss
-{
-    CGPoint touchPoint = [tap locationInView:self.view];
-    if (touchPoint.y > self.startButton.frame.origin.y + self.startButton.frame.size.height + 20) {
-        [self dismissViewControllerAnimated:YES completion:nil];
-    }
 }
 
 - (void)dismiss

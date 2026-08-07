@@ -50,7 +50,7 @@ static CGFloat const kShadowWidth = 5;
     self.contentView.layer.cornerRadius = 14;
     self.contentView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
     self.contentView.layer.shadowRadius = kShadowWidth/2;
-    self.contentView.layer.shadowOpacity = 1;
+    self.contentView.layer.shadowOpacity = 0.2;
     
     [self.contentView addSubview:self.taskNameLabel];
     [self.contentView addSubview:self.hintLabel];
@@ -77,7 +77,7 @@ static CGFloat const kShadowWidth = 5;
         _taskNameLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _taskNameLabel.numberOfLines = 1;
         _taskNameLabel.textAlignment = NSTextAlignmentCenter;
-        _taskNameLabel.font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:22];
+        _taskNameLabel.font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:16];
     }
     return _taskNameLabel;
 }
@@ -89,7 +89,7 @@ static CGFloat const kShadowWidth = 5;
         _hintLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _hintLabel.numberOfLines = 1;
         _hintLabel.textAlignment = NSTextAlignmentCenter;
-        _hintLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:12];
+        _hintLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:10];
     }
     return _hintLabel;
 }
