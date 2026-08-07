@@ -235,23 +235,10 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
             if (error) {
                 // 读取出错
             } else {
-                NSDictionary *dataDict = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[MirrorTaskModel.class, MirrorRecordModel.class, NSMutableArray.class, NSArray.class, NSDictionary.class, NSString.class, NSNumber.class]] fromData:data error:nil];
-                BOOL taskIsValid = [dataDict.allKeys containsObject:TASKS] && [dataDict[TASKS] isKindOfClass:[NSMutableArray<MirrorTaskModel *> class]];
-                BOOL recordIsValid = [dataDict.allKeys containsObject:RECORDS] && [dataDict[RECORDS] isKindOfClass:[NSMutableArray<MirrorRecordModel *> class]];
-                BOOL secondIsValid = [dataDict.allKeys containsObject:SECONDS] && [dataDict[SECONDS] isKindOfClass:[NSNumber class]];
-                if (taskIsValid && recordIsValid && secondIsValid) {
+                if ([MirrorStorage canImportJSONData:data]) {
                     UIAlertController* alert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"import_data_?"] message:[MirrorLanguage mirror_stringWithKey:@"import_data_?_message"] preferredStyle:UIAlertControllerStyleAlert];
                     UIAlertAction* importAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"import"] style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-                        // 解析
-                        NSMutableArray<MirrorTaskModel *> *tasks = dataDict[TASKS];
-                        NSMutableArray<MirrorRecordModel *> *records = dataDict[RECORDS];
-                        NSNumber *secondsFromGMT = dataDict[SECONDS];
-                        // 覆盖本地数据
-                        NSData *data = [NSKeyedArchiver archivedDataWithRootObject:@{TASKS:tasks, RECORDS:records, SECONDS:secondsFromGMT} requiringSecureCoding:YES error:nil];
-                        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-                        NSString *path = [paths objectAtIndex:0];
-                        NSString *filePath = [path stringByAppendingPathComponent:@"mirror.data"];
-                        [data writeToFile:filePath atomically:YES]; // 所有的数据全部导入
+                        [MirrorStorage importJSONData:data]; // 所有的数据全部导入
                         [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)]; // 导入后修改数据以适应本地system timezone
                         [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
                     }];
@@ -285,9 +272,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
                                                                           preferredStyle:UIAlertControllerStyleAlert];
         // Export
         [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"export_data"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-            NSString *path = [paths objectAtIndex:0];
-            NSData *data = [NSData dataWithContentsOfFile:[path stringByAppendingPathComponent:@"mirror.data"] options:0 error:nil];
+            NSData *data = [MirrorStorage exportJSONData];
             if (data==nil) { // 本地没有数据
                 UIAlertController *nodataController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"no_data"]
                                                                                          message:nil
@@ -296,7 +281,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
                 [self presentViewController:nodataController animated:YES completion:nil];
             } else { // 唤起路径
                 // create url
-                NSString *filename = [@"Mirror" stringByAppendingString:[MirrorTimeText getPreciseTimeString]];
+                NSString *filename = [[@"Mirror" stringByAppendingString:[MirrorTimeText getPreciseTimeString]] stringByAppendingString:@".json"];
                 NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingString:filename]];
                 [data writeToURL:url atomically:NO]; // 给data创建一个url：为了起名字
                 NSArray *activityItems = @[url];

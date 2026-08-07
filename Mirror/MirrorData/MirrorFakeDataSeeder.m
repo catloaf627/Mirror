@@ -196,11 +196,7 @@ static NSInteger const kFakeDataEndDay = 7;
 
 + (void)saveTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records
 {
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:@{TASKS:tasks, RECORDS:records, SECONDS:@([NSTimeZone systemTimeZone].secondsFromGMT)} requiringSecureCoding:YES error:nil];
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *path = [paths objectAtIndex:0];
-    NSString *filePath = [path stringByAppendingPathComponent:@"mirror.data"];
-    [data writeToFile:filePath atomically:YES];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records secondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
 }
 
 @end

@@ -307,54 +307,34 @@ static NSInteger const kMaxTaskCnt = 8;
 
 #pragma mark - Local database
 
-+ (void)saveMirrorTasks:(NSMutableArray<MirrorTaskModel *> *)tasks // 归档
++ (void)saveMirrorTasks:(NSMutableArray<MirrorTaskModel *> *)tasks
 {
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:@{TASKS:tasks, RECORDS:[MirrorStorage retriveMirrorRecords], SECONDS:[MirrorStorage retriveSecondsFromGMT]} requiringSecureCoding:YES error:nil];
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *path = [paths objectAtIndex:0];
-    NSString *filePath = [path stringByAppendingPathComponent:@"mirror.data"];
-    [data writeToFile:filePath atomically:YES];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:[MirrorStorage retriveMirrorRecords] secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
 }
 
-+ (NSMutableArray<MirrorTaskModel *> *)retriveMirrorTasks // 解档
++ (NSMutableArray<MirrorTaskModel *> *)retriveMirrorTasks
 {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *path = [paths objectAtIndex:0];
-    NSString *filePath = [path stringByAppendingPathComponent:@"mirror.data"];
-    NSData *storedEncodedObject = [NSData dataWithContentsOfFile:filePath options:0 error:nil];
-    NSDictionary *dataDict = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[MirrorTaskModel.class, MirrorRecordModel.class, NSMutableArray.class, NSArray.class, NSDictionary.class, NSString.class, NSNumber.class]] fromData:storedEncodedObject error:nil];
-    BOOL taskIsValid = [dataDict.allKeys containsObject:TASKS] && [dataDict[TASKS] isKindOfClass:[NSMutableArray<MirrorTaskModel *> class]];
-    BOOL recordIsValid = [dataDict.allKeys containsObject:RECORDS] && [dataDict[RECORDS] isKindOfClass:[NSMutableArray<MirrorRecordModel *> class]];
-    BOOL secondIsValid = [dataDict.allKeys containsObject:SECONDS] && [dataDict[SECONDS] isKindOfClass:[NSNumber class]];
-    if (taskIsValid && recordIsValid && secondIsValid) {
-        NSMutableArray<MirrorTaskModel *> *tasks = dataDict[TASKS];
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSNumber *secondsFromGMT = nil;
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records secondsFromGMT:&secondsFromGMT]) {
         return tasks;
     } else {
         return [NSMutableArray new];
     }
 }
 
-+ (void)saveMirrorRecords:(NSMutableArray<MirrorRecordModel *> *)records // 归档
++ (void)saveMirrorRecords:(NSMutableArray<MirrorRecordModel *> *)records
 {
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:@{TASKS:[MirrorStorage retriveMirrorTasks], RECORDS:records, SECONDS:[MirrorStorage retriveSecondsFromGMT]} requiringSecureCoding:YES error:nil];
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *path = [paths objectAtIndex:0];
-    NSString *filePath = [path stringByAppendingPathComponent:@"mirror.data"];
-    [data writeToFile:filePath atomically:YES];
+    [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:records secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
 }
 
-+ (NSMutableArray<MirrorRecordModel *> *)retriveMirrorRecords // 解档
++ (NSMutableArray<MirrorRecordModel *> *)retriveMirrorRecords
 {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *path = [paths objectAtIndex:0];
-    NSString *filePath = [path stringByAppendingPathComponent:@"mirror.data"];
-    NSData *storedEncodedObject = [NSData dataWithContentsOfFile:filePath options:0 error:nil];
-    NSDictionary *dataDict = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[MirrorTaskModel.class, MirrorRecordModel.class, NSMutableArray.class, NSArray.class, NSDictionary.class, NSString.class, NSNumber.class]] fromData:storedEncodedObject error:nil];
-    BOOL taskIsValid = [dataDict.allKeys containsObject:TASKS] && [dataDict[TASKS] isKindOfClass:[NSMutableArray<MirrorTaskModel *> class]];
-    BOOL recordIsValid = [dataDict.allKeys containsObject:RECORDS] && [dataDict[RECORDS] isKindOfClass:[NSMutableArray<MirrorRecordModel *> class]];
-    BOOL secondIsValid = [dataDict.allKeys containsObject:SECONDS] && [dataDict[SECONDS] isKindOfClass:[NSNumber class]];
-    if (taskIsValid && recordIsValid && secondIsValid) {
-        NSMutableArray<MirrorRecordModel *> *records = dataDict[RECORDS];
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSNumber *secondsFromGMT = nil;
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records secondsFromGMT:&secondsFromGMT]) {
         for (int i=0; i<records.count; i++) {
             records[i].originalIndex = i;
         }
@@ -364,7 +344,7 @@ static NSInteger const kMaxTaskCnt = 8;
     }
 }
 
-+ (void)saveSecondsFromGMT:(NSNumber *)secondFromGMT // 归档
++ (void)saveSecondsFromGMT:(NSNumber *)secondFromGMT
 {
     /*
      Standard     0h                         2023年5月2日13时                 标准时间
@@ -391,30 +371,146 @@ static NSInteger const kMaxTaskCnt = 8;
         }
         [MirrorStorage saveMirrorRecords:records];
         // 改timezone
-        NSData *data = [NSKeyedArchiver archivedDataWithRootObject:@{TASKS:[MirrorStorage retriveMirrorTasks], RECORDS:[MirrorStorage retriveMirrorRecords], SECONDS:secondFromGMT} requiringSecureCoding:YES error:nil];
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-        NSString *path = [paths objectAtIndex:0];
-        NSString *filePath = [path stringByAppendingPathComponent:@"mirror.data"];
-        [data writeToFile:filePath atomically:YES];
+        [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:[MirrorStorage retriveMirrorRecords] secondsFromGMT:secondFromGMT];
     }
 }
 
-+ (NSNumber *)retriveSecondsFromGMT // 解档
++ (NSNumber *)retriveSecondsFromGMT
 {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *path = [paths objectAtIndex:0];
-    NSString *filePath = [path stringByAppendingPathComponent:@"mirror.data"];
-    NSData *storedEncodedObject = [NSData dataWithContentsOfFile:filePath options:0 error:nil];
-    NSDictionary *dataDict = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[MirrorTaskModel.class, MirrorRecordModel.class, NSMutableArray.class, NSArray.class, NSDictionary.class, NSString.class, NSNumber.class]] fromData:storedEncodedObject error:nil];
-    BOOL taskIsValid = [dataDict.allKeys containsObject:TASKS] && [dataDict[TASKS] isKindOfClass:[NSMutableArray<MirrorTaskModel *> class]];
-    BOOL recordIsValid = [dataDict.allKeys containsObject:RECORDS] && [dataDict[RECORDS] isKindOfClass:[NSMutableArray<MirrorRecordModel *> class]];
-    BOOL secondIsValid = [dataDict.allKeys containsObject:SECONDS] && [dataDict[SECONDS] isKindOfClass:[NSNumber class]];
-    if (taskIsValid && recordIsValid && secondIsValid) {
-        NSNumber *secondFromGMT = dataDict[SECONDS];
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSNumber *secondFromGMT = nil;
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records secondsFromGMT:&secondFromGMT]) {
         return secondFromGMT;
     } else {
         return @([NSTimeZone systemTimeZone].secondsFromGMT);
     }
+}
+
++ (NSData *)exportJSONData
+{
+    return [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:[MirrorStorage retriveMirrorTasks] records:[MirrorStorage retriveMirrorRecords] secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]] options:NSJSONWritingPrettyPrinted error:nil];
+}
+
++ (BOOL)canImportJSONData:(NSData *)data
+{
+    NSDictionary *jsonDictionary = [MirrorStorage jsonDictionaryFromData:data];
+    return [MirrorStorage parseJSONDictionary:jsonDictionary tasks:nil records:nil secondsFromGMT:nil];
+}
+
++ (BOOL)importJSONData:(NSData *)data
+{
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSNumber *secondsFromGMT = nil;
+    NSDictionary *jsonDictionary = [MirrorStorage jsonDictionaryFromData:data];
+    if (![MirrorStorage parseJSONDictionary:jsonDictionary tasks:&tasks records:&records secondsFromGMT:&secondsFromGMT]) {
+        return NO;
+    }
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records secondsFromGMT:secondsFromGMT];
+    return YES;
+}
+
++ (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records secondsFromGMT:(NSNumber *)secondsFromGMT
+{
+    NSData *data = [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:tasks records:records secondsFromGMT:secondsFromGMT] options:NSJSONWritingPrettyPrinted error:nil];
+    [data writeToFile:[MirrorStorage jsonFilePath] atomically:YES];
+}
+
++ (NSString *)jsonFilePath
+{
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+    NSString *path = [paths objectAtIndex:0];
+    return [path stringByAppendingPathComponent:@"mirror.json"];
+}
+
++ (NSDictionary *)jsonDictionaryFromDisk
+{
+    NSData *data = [NSData dataWithContentsOfFile:[MirrorStorage jsonFilePath] options:0 error:nil];
+    return [MirrorStorage jsonDictionaryFromData:data];
+}
+
++ (NSDictionary *)jsonDictionaryFromData:(NSData *)data
+{
+    if (!data) return nil;
+    id jsonObject = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+    if (![jsonObject isKindOfClass:NSDictionary.class]) return nil;
+    return jsonObject;
+}
+
++ (NSDictionary *)jsonDictionaryWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records secondsFromGMT:(NSNumber *)secondsFromGMT
+{
+    NSMutableArray *jsonTasks = [NSMutableArray new];
+    for (MirrorTaskModel *task in tasks) {
+        [jsonTasks addObject:@{
+            @"task_name": task.taskName ?: @"",
+            @"is_archived": @(task.isArchived),
+            @"is_hidden": @(task.isHidden),
+            @"color": @(task.color),
+            @"created_time": @(task.createdTime)
+        }];
+    }
+
+    NSMutableArray *jsonRecords = [NSMutableArray new];
+    for (MirrorRecordModel *record in records) {
+        [jsonRecords addObject:@{
+            @"task_name": record.taskName ?: @"",
+            @"start_time": @(record.startTime),
+            @"end_time": @(record.endTime)
+        }];
+    }
+
+    return @{
+        @"version": @1,
+        TASKS: jsonTasks,
+        RECORDS: jsonRecords,
+        SECONDS: secondsFromGMT ?: @([NSTimeZone systemTimeZone].secondsFromGMT)
+    };
+}
+
++ (BOOL)parseJSONDictionary:(NSDictionary *)jsonDictionary tasks:(NSMutableArray<MirrorTaskModel *> **)tasks records:(NSMutableArray<MirrorRecordModel *> **)records secondsFromGMT:(NSNumber **)secondsFromGMT
+{
+    if (![jsonDictionary isKindOfClass:NSDictionary.class]) return NO;
+
+    NSArray *jsonTasks = jsonDictionary[TASKS];
+    NSArray *jsonRecords = jsonDictionary[RECORDS];
+    NSNumber *jsonSecondsFromGMT = jsonDictionary[SECONDS];
+    if (![jsonTasks isKindOfClass:NSArray.class] || ![jsonRecords isKindOfClass:NSArray.class] || ![jsonSecondsFromGMT isKindOfClass:NSNumber.class]) {
+        return NO;
+    }
+
+    NSMutableArray<MirrorTaskModel *> *parsedTasks = [NSMutableArray new];
+    for (NSDictionary *jsonTask in jsonTasks) {
+        if (![jsonTask isKindOfClass:NSDictionary.class]) return NO;
+        NSString *taskName = jsonTask[@"task_name"];
+        NSNumber *isArchived = jsonTask[@"is_archived"];
+        NSNumber *isHidden = jsonTask[@"is_hidden"];
+        NSNumber *color = jsonTask[@"color"];
+        NSNumber *createdTime = jsonTask[@"created_time"];
+        if (![taskName isKindOfClass:NSString.class] || ![isArchived isKindOfClass:NSNumber.class] || ![isHidden isKindOfClass:NSNumber.class] || ![color isKindOfClass:NSNumber.class] || ![createdTime isKindOfClass:NSNumber.class]) {
+            return NO;
+        }
+        MirrorTaskModel *task = [[MirrorTaskModel alloc] initWithTitle:taskName createdTime:[createdTime longValue] colorType:[color integerValue] isArchived:[isArchived boolValue] isHidden:[isHidden boolValue] isAddTask:NO];
+        [parsedTasks addObject:task];
+    }
+
+    NSMutableArray<MirrorRecordModel *> *parsedRecords = [NSMutableArray new];
+    for (NSDictionary *jsonRecord in jsonRecords) {
+        if (![jsonRecord isKindOfClass:NSDictionary.class]) return NO;
+        NSString *taskName = jsonRecord[@"task_name"];
+        NSNumber *startTime = jsonRecord[@"start_time"];
+        NSNumber *endTime = jsonRecord[@"end_time"];
+        if (![taskName isKindOfClass:NSString.class] || ![startTime isKindOfClass:NSNumber.class] || ![endTime isKindOfClass:NSNumber.class]) {
+            return NO;
+        }
+        MirrorRecordModel *record = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:[startTime longValue] endTime:[endTime longValue]];
+        [parsedRecords addObject:record];
+    }
+
+    if (tasks) *tasks = parsedTasks;
+    if (records) *records = parsedRecords;
+    if (secondsFromGMT) *secondsFromGMT = jsonSecondsFromGMT;
+    return YES;
 }
 
 #pragma mark - 取出部分数据

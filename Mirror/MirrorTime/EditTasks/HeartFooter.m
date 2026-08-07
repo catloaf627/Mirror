@@ -13,6 +13,7 @@
 #import "MirrorTaskModel.h"
 #import "MirrorRecordModel.h"
 #import "MirrorTimeText.h"
+#import "MirrorStorage.h"
 
 @interface HeartFooter ()
 
@@ -40,21 +41,9 @@
 
 - (void)exportJson
 {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *path = [paths objectAtIndex:0];
-    NSData *data = [NSData dataWithContentsOfFile:[path stringByAppendingPathComponent:@"mirror.data"] options:0 error:nil];
-    NSDictionary *dataDict = [NSKeyedUnarchiver unarchivedObjectOfClasses:[NSSet setWithArray:@[MirrorTaskModel.class, MirrorRecordModel.class, NSMutableArray.class, NSArray.class, NSDictionary.class, NSString.class, NSNumber.class]] fromData:data error:nil];
-    BOOL taskIsValid = [dataDict.allKeys containsObject:TASKS] && [dataDict[TASKS] isKindOfClass:[NSMutableArray<MirrorTaskModel *> class]];
-    BOOL recordIsValid = [dataDict.allKeys containsObject:RECORDS] && [dataDict[RECORDS] isKindOfClass:[NSMutableArray<MirrorRecordModel *> class]];
-    BOOL secondIsValid = [dataDict.allKeys containsObject:SECONDS] && [dataDict[SECONDS] isKindOfClass:[NSNumber class]];
-    if (!taskIsValid || !recordIsValid || !secondIsValid) {
-        // 格式不对
-        return;
-    }
-    // data -> json
-    NSMutableArray<MirrorTaskModel *> *tasks = dataDict[TASKS];
-    NSMutableArray<MirrorRecordModel *> *records = dataDict[RECORDS];
-    NSNumber *secondsFromGMT = dataDict[SECONDS];
+    NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    NSNumber *secondsFromGMT = [MirrorStorage retriveSecondsFromGMT];
     NSMutableArray *jsontasks = [NSMutableArray new];
     NSMutableArray *jsonrecords = [NSMutableArray new];
     NSString *jsonSecondsFromGMT = [@"seconds from GMT: " stringByAppendingString:[secondsFromGMT stringValue]];

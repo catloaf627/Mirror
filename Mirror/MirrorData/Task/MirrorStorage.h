@@ -61,7 +61,17 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (NSMutableArray<MirrorRecordModel *> *)retriveMirrorRecords;
 
++ (NSNumber *)retriveSecondsFromGMT;
+
 + (void)saveSecondsFromGMT:(NSNumber *)secondFromGMT;
+
++ (NSData * _Nullable)exportJSONData;
+
++ (BOOL)canImportJSONData:(NSData *)data;
+
++ (BOOL)importJSONData:(NSData *)data;
+
++ (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records secondsFromGMT:(NSNumber *)secondsFromGMT;
 
 /*
  取出一个taskmodel
