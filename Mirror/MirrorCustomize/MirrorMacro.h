@@ -66,7 +66,7 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 // https://stackoverflow.com/questions/8090916/fonts-on-ios-device
 
 // 侧边半屏ratio
-#define kLeftSheetRatio (0.7)
+#define kLeftSheetRatio (0.8)
 // Max number of colors
 #define kMaxColorNum (8)
 // 最小记录时间为一分钟（只要时长超过一分钟，分钟数必然有变化）全app忽略秒数（秒数全部记为0）

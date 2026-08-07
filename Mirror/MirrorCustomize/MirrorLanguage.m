@@ -21,12 +21,12 @@
     [mirrorDict setValue:@[@"Record", @"记录"] forKey:@"record"];
     
     // Settings
-    [mirrorDict setValue:@[@"Apply Chinese", @"使用中文"] forKey:@"apply_chinese"];
-    [mirrorDict setValue:@[@"Week starts on Monday", @"将周一作为一周的第一天"] forKey:@"week_starts_on_Monday"];
+    [mirrorDict setValue:@[@"Use Chinese", @"使用中文"] forKey:@"apply_chinese"];
+    [mirrorDict setValue:@[@"Weeks start on Monday", @"周一作为一周的第一天"] forKey:@"week_starts_on_Monday"];
     [mirrorDict setValue:@[@"Show record indexes", @"展示记录的序号"] forKey:@"show_record_indexes"];
-    [mirrorDict setValue:@[@"Show histogram on Data", @"数据页使用柱状图"] forKey:@"show_histogram_on_data"];
-    [mirrorDict setValue:@[@"Show piechart on Record", @"记录页使用饼状图"] forKey:@"show_piechart_on_record"];
-    [mirrorDict setValue:@[@"Apply heatmap", @"展示热力图"] forKey:@"heatmap"];
+    [mirrorDict setValue:@[@"Histogram on Data", @"数据页使用柱状图"] forKey:@"show_histogram_on_data"];
+    [mirrorDict setValue:@[@"Piechart on Record", @"记录页使用饼状图"] forKey:@"show_piechart_on_record"];
+    [mirrorDict setValue:@[@"Heatmap on Record", @"记录页使用热力图"] forKey:@"heatmap"];
     [mirrorDict setValue:@[@"Export/Import data", @"导出/导入数据"] forKey:@"export_import_data"];
     [mirrorDict setValue:@[@"Export or import data?", @"选择导入或是导出"] forKey:@"export_or_import"];
     [mirrorDict setValue:@[@"Export data", @"导出数据"] forKey:@"export_data"];
