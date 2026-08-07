@@ -16,6 +16,7 @@
 
 static const CGFloat kHorizontalPadding = 20;
 static const CGFloat kVerticalPadding = 10;
+static const CGFloat kDeleteButtonWidth = 72;
 
 @interface TaskPeriodCollectionViewCell () <UIGestureRecognizerDelegate>
 
@@ -23,12 +24,14 @@ static const CGFloat kVerticalPadding = 10;
 @property (nonatomic, assign) NSInteger periodIndex;
 @property (nonatomic, assign) BottomRightType type;
 
+@property (nonatomic, strong) UIView *foregroundView;
 @property (nonatomic, strong) UILabel *dateLabel;
 @property (nonatomic, strong) UIButton *deleteButton;
 @property (nonatomic, strong) UILabel *bottomRightLabel; // 总时长
 @property (nonatomic, strong) UIDatePicker *startPicker;
 @property (nonatomic, strong) UILabel *dashLabel;
 @property (nonatomic, strong) UIDatePicker *endPicker;
+@property (nonatomic, assign) BOOL isDeleteButtonShown;
 
 @end
 
@@ -44,9 +47,17 @@ static const CGFloat kVerticalPadding = 10;
     self.taskName = taskName;
     self.periodIndex = index;
     self.type = type;
-    [self updateCellInfo];
     self.layer.cornerRadius = 14;
+    self.layer.masksToBounds = YES;
     [self p_setupUI];
+    [self hideDeleteButtonAnimated:NO];
+    [self updateCellInfo];
+}
+
+- (void)prepareForReuse
+{
+    [super prepareForReuse];
+    [self hideDeleteButtonAnimated:NO];
 }
 
 - (void)updateCellInfo
@@ -54,6 +65,8 @@ static const CGFloat kVerticalPadding = 10;
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:self.taskName];
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
     self.backgroundColor = [UIColor mirrorColorNamed:task.color];
+    self.contentView.backgroundColor = [UIColor systemRedColor];
+    self.foregroundView.backgroundColor = [UIColor mirrorColorNamed:task.color];
     NSString *prefix =  [MirrorSettings appliedShowIndex] ? [[@"No." stringByAppendingString:[@(self.periodIndex) stringValue]] stringByAppendingString:@" "] : @"";
     self.dateLabel.text = [prefix stringByAppendingString:[MirrorTimeText YYYYmmddWeekdayWithStart:allRecords[self.periodIndex].startTime]];
     long start = allRecords[self.periodIndex].startTime;
@@ -74,40 +87,54 @@ static const CGFloat kVerticalPadding = 10;
 
 - (void)p_setupUI
 {
-    [self addSubview:self.dateLabel];
+    if (self.dateLabel.superview) return;
+
+    self.contentView.layer.cornerRadius = 14;
+    self.contentView.layer.masksToBounds = YES;
+
+    [self.contentView addSubview:self.deleteButton];
+    [self.deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.bottom.right.offset(0);
+        make.width.mas_equalTo(kDeleteButtonWidth);
+    }];
+
+    UIPanGestureRecognizer *panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleHorizontalPan:)];
+    panGestureRecognizer.delegate = self;
+    panGestureRecognizer.cancelsTouchesInView = YES;
+    [self.foregroundView addGestureRecognizer:panGestureRecognizer];
+
+    [self.contentView addSubview:self.foregroundView];
+    [self.foregroundView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.offset(0);
+    }];
+
+    [self.foregroundView addSubview:self.dateLabel];
     [self.dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(kVerticalPadding);
         make.left.offset(kHorizontalPadding);
         make.width.mas_equalTo(self.bounds.size.width - 3*kHorizontalPadding - 20);
         make.height.mas_equalTo((self.bounds.size.height - 2*kVerticalPadding)/2);
     }];
-    [self addSubview:self.deleteButton];
-    [self.deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.mas_equalTo(self.dateLabel);
-        make.right.offset(-kHorizontalPadding);
-        make.height.width.mas_equalTo(20);
-    }];
-    
-    
-    [self addSubview:self.startPicker];
+
+    [self.foregroundView addSubview:self.startPicker];
     [self.startPicker mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.offset(-kVerticalPadding);
         make.left.offset(kHorizontalPadding);
         make.height.mas_equalTo((self.bounds.size.height - 2*kVerticalPadding)/2);
     }];
-    [self addSubview:self.dashLabel];
+    [self.foregroundView addSubview:self.dashLabel];
     [self.dashLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.offset(-kVerticalPadding);
         make.left.mas_equalTo(self.startPicker.mas_right);
         make.width.height.mas_equalTo((self.bounds.size.height - 2*kVerticalPadding)/2);
     }];
-    [self addSubview:self.endPicker];
+    [self.foregroundView addSubview:self.endPicker];
     [self.endPicker mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.offset(-kVerticalPadding);
         make.left.mas_equalTo(self.dashLabel.mas_right);
         make.height.mas_equalTo((self.bounds.size.height - 2*kVerticalPadding)/2);
     }];
-    [self addSubview:self.bottomRightLabel];
+    [self.foregroundView addSubview:self.bottomRightLabel];
     [self.bottomRightLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.bottom.offset(-kVerticalPadding);
         make.right.offset(-kHorizontalPadding);
@@ -147,7 +174,78 @@ static const CGFloat kVerticalPadding = 10;
     [self.delegate presentViewController:deleteButtonAlert animated:YES completion:nil];
 }
 
+- (void)showDeleteButtonAnimated:(BOOL)animated
+{
+    void (^animations)(void) = ^{
+        self.foregroundView.transform = CGAffineTransformMakeTranslation(-kDeleteButtonWidth, 0);
+    };
+    if (animated) {
+        [UIView animateWithDuration:0.2 animations:animations];
+    } else {
+        animations();
+    }
+    self.isDeleteButtonShown = YES;
+}
+
+- (void)hideDeleteButtonAnimated:(BOOL)animated
+{
+    void (^animations)(void) = ^{
+        self.foregroundView.transform = CGAffineTransformIdentity;
+    };
+    if (animated) {
+        [UIView animateWithDuration:0.2 animations:animations];
+    } else {
+        animations();
+    }
+    self.isDeleteButtonShown = NO;
+}
+
+- (void)handleHorizontalPan:(UIPanGestureRecognizer *)panGestureRecognizer
+{
+    CGFloat translationX = [panGestureRecognizer translationInView:self.foregroundView].x;
+    CGFloat startOffset = self.isDeleteButtonShown ? -kDeleteButtonWidth : 0;
+
+    if (panGestureRecognizer.state == UIGestureRecognizerStateChanged) {
+        CGFloat offset = MIN(0, MAX(-kDeleteButtonWidth, startOffset + translationX));
+        self.foregroundView.transform = CGAffineTransformMakeTranslation(offset, 0);
+    } else if (panGestureRecognizer.state == UIGestureRecognizerStateEnded || panGestureRecognizer.state == UIGestureRecognizerStateCancelled) {
+        CGFloat velocityX = [panGestureRecognizer velocityInView:self.foregroundView].x;
+        CGFloat currentOffset = self.foregroundView.transform.tx;
+        if (velocityX < -200 || currentOffset < -kDeleteButtonWidth / 2) {
+            [self showDeleteButtonAnimated:YES];
+        } else {
+            [self hideDeleteButtonAnimated:YES];
+        }
+    }
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    if (![gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]) {
+        return YES;
+    }
+
+    UIPanGestureRecognizer *panGestureRecognizer = (UIPanGestureRecognizer *)gestureRecognizer;
+    CGPoint velocity = [panGestureRecognizer velocityInView:self.foregroundView];
+    return fabs(velocity.x) > fabs(velocity.y);
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
+    return NO;
+}
+
 #pragma mark - Getters
+
+- (UIView *)foregroundView
+{
+    if (!_foregroundView) {
+        _foregroundView = [UIView new];
+        _foregroundView.layer.cornerRadius = 14;
+        _foregroundView.layer.masksToBounds = YES;
+    }
+    return _foregroundView;
+}
 
 - (UILabel *)bottomRightLabel
 {
@@ -165,9 +263,10 @@ static const CGFloat kVerticalPadding = 10;
 {
     if (!_deleteButton) {
         _deleteButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"delete.left"]  imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_deleteButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        _deleteButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _deleteButton.backgroundColor = [UIColor systemRedColor];
+        _deleteButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:14];
+        [_deleteButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] forState:UIControlStateNormal];
+        [_deleteButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [_deleteButton addTarget:self action:@selector(deletePeriod) forControlEvents:UIControlEventTouchUpInside];
     }
     return _deleteButton;
