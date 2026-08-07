@@ -409,7 +409,7 @@ static CGFloat const kLeftRightSpacing = 20;
         _dateLabel = [UILabel new];
         _dateLabel.textAlignment = NSTextAlignmentCenter;
         _dateLabel.text = @"";
-        _dateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+        _dateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:14];
         _dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText]; // 和nickname的文字颜色保持一致
     }
     return _dateLabel;
