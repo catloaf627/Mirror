@@ -131,7 +131,7 @@
 {
     NSString *motto = [[NSUserDefaults standardUserDefaults] stringForKey:@"MirrorUserMotto"];
     if (motto==nil) {
-        return @"Mirror, mirror on the wall, who is the fairest of them all?";
+        return @"Mirror, mirror on the wall, who is the smartest of them all?";
     } else {
         return motto;
     }
