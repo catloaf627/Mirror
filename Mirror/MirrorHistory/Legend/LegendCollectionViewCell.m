@@ -64,7 +64,7 @@ static CGFloat const kPadding = 10;
 {
     if (!_label) {
         _label = [UILabel new];
-        _label.adjustsFontSizeToFitWidth = YES;
+        _label.font = [UIFont systemFontOfSize:14];
     }
     return _label;
 }
