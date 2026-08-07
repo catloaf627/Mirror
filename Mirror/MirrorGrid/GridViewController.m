@@ -28,8 +28,8 @@
 #import "HiddenAnimation.h"
 
 static CGFloat const kLeftRightSpacing = 20;
-static CGFloat const kCellWidth = 30;
-static CGFloat const kCellSpacing = 3;
+static CGFloat const kCellWidth = 25;
+static CGFloat const kCellSpacing = 2.5;
 
 @interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, PushAllRecordsDelegate>
 
