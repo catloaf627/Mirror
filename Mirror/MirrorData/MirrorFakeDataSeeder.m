@@ -44,7 +44,7 @@ static NSInteger const kFakeDataStartMonth = 1;
 static NSInteger const kFakeDataStartDay = 1;
 static NSInteger const kFakeDataEndYear = 2026;
 static NSInteger const kFakeDataEndMonth = 8;
-static NSInteger const kFakeDataEndDay = 5;
+static NSInteger const kFakeDataEndDay = 7;
 
 + (void)seedFakeData
 {

@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,6 +20,32 @@ typedef NS_ENUM(NSInteger, SpanType) {
 #define kScreenWidth [UIScreen mainScreen].bounds.size.width
 #define kScreenHeight [UIScreen mainScreen].bounds.size.height
 
+static inline UIWindow * _Nullable MirrorKeyWindow(void) {
+    if (@available(iOS 13.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if (scene.activationState != UISceneActivationStateForegroundActive || ![scene isKindOfClass:[UIWindowScene class]]) {
+                continue;
+            }
+
+            for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+                if (window.isKeyWindow) {
+                    return window;
+                }
+            }
+        }
+    }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    return [UIApplication sharedApplication].keyWindow;
+#pragma clang diagnostic pop
+}
+
+static inline CGFloat MirrorBottomSafeAreaHeight(void) {
+    UIWindow *window = MirrorKeyWindow();
+    return window ? window.safeAreaInsets.bottom : 0;
+}
+
 #define kIs_iphone ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone)
 #define kIs_iPhoneX kScreenWidth >=375.0f && kScreenHeight >=812.0f&& kIs_iphone
     
@@ -27,7 +54,7 @@ typedef NS_ENUM(NSInteger, SpanType) {
 /*导航栏高度*/
 #define kNavBarHeight (44)
 /*TabBar高度*/
-#define kTabBarHeight (CGFloat)(kIs_iPhoneX?(49.0 + 34.0):(49.0))
+#define kTabBarHeight (CGFloat)(49.0 + MirrorBottomSafeAreaHeight())
 /*顶部安全区域远离高度*/
 #define kTopBarSafeHeight (CGFloat)(kIs_iPhoneX?(44.0):(0))
  /*底部安全区域远离高度*/
