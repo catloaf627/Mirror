@@ -30,6 +30,7 @@
 static CGFloat const kLeftRightSpacing = 20;
 static CGFloat const kCellWidth = 25;
 static CGFloat const kCellSpacing = 2.5;
+static CGFloat const kFontSize = 14;
 
 @interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, PushAllRecordsDelegate>
 
@@ -508,7 +509,7 @@ static CGFloat const kCellSpacing = 2.5;
     day0.adjustsFontSizeToFitWidth = YES;
     day0.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"monday"] : [MirrorLanguage mirror_stringWithKey:@"sunday"];
     day0.textColor = textColor;
-    day0.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+    day0.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
     [_weekdayView addSubview:day0];
     [day0 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
@@ -519,7 +520,7 @@ static CGFloat const kCellSpacing = 2.5;
     day1.adjustsFontSizeToFitWidth = YES;
     day1.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"tuesday"] : [MirrorLanguage mirror_stringWithKey:@"monday"];
     day1.textColor = textColor;
-    day1.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+    day1.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
     [_weekdayView addSubview:day1];
     [day1 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
@@ -530,7 +531,7 @@ static CGFloat const kCellSpacing = 2.5;
     day2.adjustsFontSizeToFitWidth = YES;
     day2.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"wednesday"] : [MirrorLanguage mirror_stringWithKey:@"tuesday"];
     day2.textColor = textColor;
-    day2.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+    day2.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
     [_weekdayView addSubview:day2];
     [day2 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
@@ -541,7 +542,7 @@ static CGFloat const kCellSpacing = 2.5;
     day3.adjustsFontSizeToFitWidth = YES;
     day3.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"thursday"] : [MirrorLanguage mirror_stringWithKey:@"wednesday"];
     day3.textColor = textColor;
-    day3.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+    day3.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
     [_weekdayView addSubview:day3];
     [day3 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
@@ -552,7 +553,7 @@ static CGFloat const kCellSpacing = 2.5;
     day4.adjustsFontSizeToFitWidth = YES;
     day4.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"friday"] : [MirrorLanguage mirror_stringWithKey:@"thursday"];
     day4.textColor = textColor;
-    day4.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+    day4.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
     [_weekdayView addSubview:day4];
     [day4 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
@@ -563,7 +564,7 @@ static CGFloat const kCellSpacing = 2.5;
     day5.adjustsFontSizeToFitWidth = YES;
     day5.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"saturday"] : [MirrorLanguage mirror_stringWithKey:@"friday"];
     day5.textColor = textColor;
-    day5.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+    day5.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
     [_weekdayView addSubview:day5];
     [day5 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
@@ -574,7 +575,7 @@ static CGFloat const kCellSpacing = 2.5;
     day6.adjustsFontSizeToFitWidth = YES;
     day6.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"sunday"] : [MirrorLanguage mirror_stringWithKey:@"saturday"];
     day6.textColor = textColor;
-    day6.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+    day6.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
     [_weekdayView addSubview:day6];
     [day6 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
@@ -709,7 +710,7 @@ static CGFloat const kCellSpacing = 2.5;
     if (!_leftHint) {
         _leftHint = [UILabel new];
         _leftHint.textAlignment = NSTextAlignmentLeft;
-        _leftHint.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+        _leftHint.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
         _leftHint.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     }
     return _leftHint;
@@ -720,7 +721,7 @@ static CGFloat const kCellSpacing = 2.5;
     if (!_rightHint) {
         _rightHint = [UILabel new];
         _rightHint.textAlignment = NSTextAlignmentRight;
-        _rightHint.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+        _rightHint.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
         _rightHint.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     }
     return _rightHint;
@@ -731,7 +732,7 @@ static CGFloat const kCellSpacing = 2.5;
     if (!_dateLabel) {
         _dateLabel = [UILabel new];
         _dateLabel.textAlignment = NSTextAlignmentCenter;
-        _dateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+        _dateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
         _dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     }
     return _dateLabel;
