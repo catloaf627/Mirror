@@ -13,6 +13,7 @@
 #import "MirrorSettings.h"
 #import "MirrorTimeText.h"
 #import "MirrorTool.h"
+#import "UIFont+MirrorFont.h"
 
 static CGFloat const kShadowWidth = 5;
 
@@ -77,7 +78,7 @@ static CGFloat const kShadowWidth = 5;
         _taskNameLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _taskNameLabel.numberOfLines = 1;
         _taskNameLabel.textAlignment = NSTextAlignmentCenter;
-        _taskNameLabel.font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:16];
+        _taskNameLabel.font = [UIFont mirrorTitleFont_Card];
     }
     return _taskNameLabel;
 }
@@ -89,7 +90,7 @@ static CGFloat const kShadowWidth = 5;
         _hintLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _hintLabel.numberOfLines = 1;
         _hintLabel.textAlignment = NSTextAlignmentCenter;
-        _hintLabel.font = [UIFont fontWithName:@"HelveticaNeue-Light" size:10];
+        _hintLabel.font = [UIFont mirrorHintFont_Card];
     }
     return _hintLabel;
 }

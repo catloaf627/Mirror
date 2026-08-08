@@ -28,8 +28,8 @@
 
 #import "Mirror-Swift.h"
 
-static CGFloat const kCellSpacing = 16; // cell之间的上下间距
-static CGFloat const kCollectionViewPadding = 20; // 左右留白
+#define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
+#define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
 @interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate>
 
@@ -231,7 +231,7 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForFooterInSection:(NSInteger)section
 {
-    return CGSizeMake(kScreenWidth, 30); // 起到提示效果
+    return CGSizeMake(kScreenWidth, 30*kHeightRatio); // 起到提示效果
 }
 
 #pragma mark - Getters

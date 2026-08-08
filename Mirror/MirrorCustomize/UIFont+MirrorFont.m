@@ -8,6 +8,16 @@
 
 @implementation UIFont (MirrorFont)
 
++ (UIFont *)mirrorTitleFont_Card
+{
+    return [UIFont fontWithName:@"HelveticaNeue-Bold" size:16*kWidthRatio];
+}
+
++ (UIFont *)mirrorHintFont_Card
+{
+    return [UIFont fontWithName:@"HelveticaNeue-Light" size:10*kWidthRatio];
+}
+
 + (UIFont *)mirrorTodayFont
 {
     return [UIFont mirror_fontWithSize:37*kWidthRatio bold:NO];

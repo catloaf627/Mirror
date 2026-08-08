@@ -9,7 +9,8 @@
 #import <Masonry/Masonry.h>
 #import "UIColor+MirrorColor.h"
 #import "MirrorLanguage.h"
-
+#import "UIFont+MirrorFont.h"
+#import "MirrorMacro.h"
 @interface HintFooter ()
 
 @property (nonatomic, strong) UILabel *hintLabel;
@@ -27,8 +28,8 @@
     [self.hintLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(10);
         make.right.offset(-10);
-        make.top.offset(10); // 和下面的cell的距离 与 cell之间的距离保持一致
-        make.height.mas_equalTo(20);
+        make.top.offset(10*kHeightRatio); // 和下面的cell的距离 与 cell之间的距离保持一致
+        make.height.mas_equalTo(20*kHeightRatio);
     }];
 }
 
@@ -40,7 +41,7 @@
         _hintLabel.adjustsFontSizeToFitWidth = YES;
         _hintLabel.textAlignment = NSTextAlignmentLeft;
         _hintLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _hintLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:12];
+        _hintLabel.font = [UIFont mirrorHintFont];
     }
     return _hintLabel;
 }
