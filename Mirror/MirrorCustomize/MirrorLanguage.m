@@ -25,7 +25,7 @@
     [mirrorDict setValue:ML(@"Start", @"计时", @"Iniciar", @"Démarrer", @"開始", @"시작") forKey:@"start"];
     [mirrorDict setValue:ML(@"Today", @"今天", @"Hoy", @"Aujourd'hui", @"今日", @"오늘") forKey:@"today"];
     [mirrorDict setValue:ML(@"Data", @"数据", @"Datos", @"Données", @"データ", @"데이터") forKey:@"data"];
-    [mirrorDict setValue:ML(@"Record", @"记录", @"Registro", @"Historique", @"記録", @"기록") forKey:@"record"];
+    [mirrorDict setValue:ML(@"Record", @"记录", @"Historial", @"Historique", @"記録", @"기록") forKey:@"record"];
     
     // Settings
     [mirrorDict setValue:ML(@"Language", @"语言", @"Idioma", @"Langue", @"言語", @"언어") forKey:@"language"];
@@ -35,8 +35,8 @@
     [mirrorDict setValue:ML(@"Histogram on Data", @"数据页使用柱状图", @"Histograma en Datos", @"Histogramme dans Données", @"データでヒストグラムを表示", @"데이터에 히스토그램 표시") forKey:@"show_histogram_on_data"];
     [mirrorDict setValue:ML(@"Piechart on Record", @"记录页使用饼状图", @"Gráfico circular en Registro", @"Camembert dans Historique", @"記録で円グラフを表示", @"기록에 원형 차트 표시") forKey:@"show_piechart_on_record"];
     [mirrorDict setValue:ML(@"Heatmap on Record", @"记录页使用热力图", @"Mapa de calor en Registro", @"Carte thermique dans Historique", @"記録でヒートマップを表示", @"기록에 히트맵 표시") forKey:@"heatmap"];
-    [mirrorDict setValue:ML(@"Download from iCloud", @"从 iCloud 下载", @"Descargar de iCloud", @"Télécharger depuis iCloud", @"iCloudからダウンロード", @"iCloud에서 다운로드") forKey:@"download_from_icloud"];
-    [mirrorDict setValue:ML(@"Download from iCloud?", @"确认从 iCloud 下载？", @"¿Descargar de iCloud?", @"Télécharger depuis iCloud ?", @"iCloudからダウンロードしますか？", @"iCloud에서 다운로드할까요?") forKey:@"download_from_icloud_?"];
+    [mirrorDict setValue:ML(@"Download from iCloud", @"从 iCloud 下载", @"Descargar desde iCloud", @"Télécharger depuis iCloud", @"iCloudからダウンロード", @"iCloud에서 다운로드") forKey:@"download_from_icloud"];
+    [mirrorDict setValue:ML(@"Download from iCloud?", @"确认从 iCloud 下载？", @"¿Descargar desde iCloud?", @"Télécharger depuis iCloud ?", @"iCloudからダウンロードしますか？", @"iCloud에서 다운로드할까요?") forKey:@"download_from_icloud_?"];
     [mirrorDict setValue:ML(@"There are %@ records on your iCloud. Downloading will replace your current data.", @"你的 iCloud 上有 %@ 条记录。下载后会替换当前数据。", @"Hay %@ registros en tu iCloud. La descarga reemplazará tus datos actuales.", @"Il y a %@ enregistrements sur votre iCloud. Le téléchargement remplacera vos données actuelles.", @"iCloudに%@件の記録があります。ダウンロードすると現在のデータが置き換えられます。", @"iCloud에 %@개의 기록이 있습니다. 다운로드하면 현재 데이터가 대체됩니다.") forKey:@"icloud_records_message"];
     [mirrorDict setValue:ML(@"Download", @"下载", @"Descargar", @"Télécharger", @"ダウンロード", @"다운로드") forKey:@"download"];
     [mirrorDict setValue:ML(@"No iCloud data", @"没有 iCloud 数据", @"No hay datos en iCloud", @"Aucune donnée iCloud", @"iCloudデータがありません", @"iCloud 데이터 없음") forKey:@"no_icloud_data"];
@@ -55,7 +55,7 @@
     
     // Profile edit cell
     [mirrorDict setValue:ML(@"Save", @"保存", @"Guardar", @"Enregistrer", @"保存", @"저장") forKey:@"save"];
-    [mirrorDict setValue:ML(@"Remove", @"移掉", @"Quitar", @"Retirer", @"削除", @"제거") forKey:@"remove"];
+    [mirrorDict setValue:ML(@"Remove", @"移掉", @"Quitar", @"Retirer", @"取り除く", @"제거") forKey:@"remove"];
     [mirrorDict setValue:ML(@"Delete", @"删除", @"Eliminar", @"Supprimer", @"削除", @"삭제") forKey:@"delete"];
     [mirrorDict setValue:ML(@"Archive", @"归档", @"Archivar", @"Archiver", @"アーカイブ", @"보관") forKey:@"archive"];
     [mirrorDict setValue:ML(@"Cancel", @"取消", @"Cancelar", @"Annuler", @"キャンセル", @"취소") forKey:@"cancel"];
@@ -63,7 +63,8 @@
     // Profile add cell
     [mirrorDict setValue:ML(@"Enter task title", @"输入任务名称", @"Ingresa el título de la tarea", @"Saisir le titre de la tâche", @"タスク名を入力", @"작업 제목 입력") forKey:@"enter_task_title"];
     [mirrorDict setValue:ML(@"Create", @"创建", @"Crear", @"Créer", @"作成", @"생성") forKey:@"create"];
-    [mirrorDict setValue:ML(@"Discard", @"放弃", @"Descartar", @"Ignorer", @"破棄", @"버리기") forKey:@"discard"];
+    [mirrorDict setValue:ML(@"Discard", @"放弃", @"Descartar", @"Abandonner", @"破棄", @"취소") forKey:@"discard"];
+    [mirrorDict setValue:ML(@"Untitled", @"未命名", @"Sin título", @"Sans titre", @"無題", @"제목 없음") forKey:@"untitled"];
     [mirrorDict setValue:ML(@"Enter a title to create a new task", @"输入名称以创建新的任务", @"Ingresa un título para crear una nueva tarea", @"Saisir un titre pour créer une tâche", @"新しいタスク名を入力", @"새 작업을 만들 제목 입력") forKey:@"add_taskname_hint"];
     [mirrorDict setValue:ML(@"Name field cannot be empty", @"任务名不能为空", @"El nombre no puede estar vacío", @"Le nom ne peut pas être vide", @"名前は空にできません", @"이름은 비워둘 수 없습니다") forKey:@"name_field_cannot_be_empty"];
     [mirrorDict setValue:ML(@"Gotcha", @"知道啦", @"Entendido", @"Compris", @"了解", @"알겠어요") forKey:@"gotcha"];
@@ -74,11 +75,11 @@
     // Full screen
     [mirrorDict setValue:ML(@"Go!", @"开始!", @"¡Vamos!", @"C'est parti !", @"開始!", @"시작!") forKey:@"go"];
     [mirrorDict setValue:ML(@"Give up", @"放弃", @"Rendirse", @"Abandonner", @"あきらめる", @"포기") forKey:@"give_up"];
-    [mirrorDict setValue:ML(@"Stop", @"结束", @"Detener", @"Arrêter", @"終了", @"종료") forKey:@"stop"];
+    [mirrorDict setValue:ML(@"Stop", @"结束", @"Finalizar", @"Terminer", @"終了", @"종료") forKey:@"stop"];
     
     // Task record
-    [mirrorDict setValue:ML(@"Counting...", @"计时中...", @"Contando...", @"Décompte...", @"計測中...", @"기록 중...") forKey:@"counting"];
-    [mirrorDict setValue:ML(@"Lasted: ", @"持续时间：", @"Duración: ", @"Durée : ", @"時間: ", @"지속 시간: ") forKey:@"lasted"];
+    [mirrorDict setValue:ML(@"Counting...", @"计时中...", @"Cronometrando...", @"Chronométrage...", @"計時中...", @"타이머 실행 중...") forKey:@"counting"];
+    [mirrorDict setValue:ML(@"Lasted: ", @"持续时间：", @"Duración: ", @"Durée : ", @"経過時間: ", @"지속 시간: ") forKey:@"lasted"];
     [mirrorDict setValue:ML(@" (Archived) ", @"（已归档）", @" (Archivada) ", @" (Archivée) ", @" (アーカイブ済み) ", @" (보관됨) ") forKey:@"archived_tag"];
     
     // Delete period
