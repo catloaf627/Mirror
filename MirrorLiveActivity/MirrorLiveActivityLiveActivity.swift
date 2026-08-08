@@ -97,6 +97,7 @@ private struct MirrorLockScreenLiveActivityView: View {
                 .foregroundStyle(.white)
         }
         .padding(.vertical, 4)
+        .padding(.horizontal, 16)
     }
 }
 
