@@ -59,6 +59,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 
 + (void)deleteTask:(NSString *)taskName
 {
+    BOOL deletesGoingOnTask = [[MirrorStorage isGoingOnTask] isEqualToString:taskName];
     // 删掉task
     NSMutableArray <MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
     NSInteger deletedIndex = NSNotFound;
@@ -82,6 +83,9 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         }
     }
     [MirrorStorage saveMirrorRecords:validRecords];
+    if (deletesGoingOnTask) {
+        [MirrorStorage p_endLiveActivity];
+    }
     // 通知
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskDeleteNotification object:nil userInfo:nil];
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
@@ -197,6 +201,9 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 + (void)startTask:(NSString *)taskName at:(NSDate *)accurateDate
 {
     [MirrorStorage p_startTask:taskName at:accurateDate];
+    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
+    NSDate *date = [self dateWithoutSeconds:accurateDate];
+    [MirrorStorage p_startLiveActivityWithTaskName:taskName startDate:date colorType:task.color];
     NSLog(@"Start at %@", [MirrorTool timeFromDate:accurateDate printTimeStamp:NO]);
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStartNotification object:nil userInfo:nil];
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
@@ -214,6 +221,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 + (void)stopTask:(NSString *)taskName at:(NSDate *)accurateDate
 {
     [MirrorStorage p_stopTask:taskName at:accurateDate];
+    [MirrorStorage p_endLiveActivity];
     NSLog(@"Stop at %@", [MirrorTool timeFromDate:accurateDate printTimeStamp:NO]);
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
@@ -285,12 +293,40 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 
 + (void)deletePeriodAtIndex:(NSInteger)index
 {
-    NSMutableArray *records = [MirrorStorage retriveMirrorRecords];
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    BOOL deletesGoingOnTask = index >= 0 && index < records.count && records[index].endTime == 0;
     [records removeObjectAtIndex:index];
     [MirrorStorage saveMirrorRecords:records];
+    if (deletesGoingOnTask) {
+        [MirrorStorage p_endLiveActivity];
+    }
     NSLog(@"Period deleted");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodDeleteNotification object:nil userInfo:nil];
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
++ (void)p_startLiveActivityWithTaskName:(NSString *)taskName startDate:(NSDate *)startDate colorType:(NSInteger)colorType
+{
+    Class manager = NSClassFromString(@"MirrorLiveActivityManager");
+    SEL selector = @selector(startWithTaskName:startTimestamp:colorType:);
+    if (![manager respondsToSelector:selector]) {
+        return;
+    }
+
+    void (*startActivity)(id, SEL, NSString *, NSTimeInterval, NSInteger) = (void *)[manager methodForSelector:selector];
+    startActivity(manager, selector, taskName, [startDate timeIntervalSince1970], colorType);
+}
+
++ (void)p_endLiveActivity
+{
+    Class manager = NSClassFromString(@"MirrorLiveActivityManager");
+    SEL selector = @selector(end);
+    if (![manager respondsToSelector:selector]) {
+        return;
+    }
+
+    void (*endActivity)(id, SEL) = (void *)[manager methodForSelector:selector];
+    endActivity(manager, selector);
 }
 
 + (void)editPeriodIsStartTime:(BOOL)isStartTime to:(long)timestamp periodIndex:(NSInteger)index
