@@ -29,6 +29,19 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     return @"";
 }
 
++ (void)resumeGoingOnLiveActivityIfNeeded
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    MirrorRecordModel *record = records.lastObject;
+    if (record == nil || record.endTime != 0) {
+        return;
+    }
+
+    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
+    NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:record.startTime];
+    [MirrorStorage p_startLiveActivityWithTaskName:record.taskName startDate:startDate colorType:task.color];
+}
+
 + (NSMutableArray<MirrorTaskModel *> *)tasksWithoutArchiveWithAddNew
 {
     NSMutableArray <MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];

@@ -48,6 +48,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)stopTask:(NSString *)taskName at:(NSDate *)accurateDate;
 
++ (void)resumeGoingOnLiveActivityIfNeeded;
+
 + (TaskNameExistsType)taskNameExists:(NSString *)newTaskName;
 
 // Period

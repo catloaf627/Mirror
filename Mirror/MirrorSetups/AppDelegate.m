@@ -36,6 +36,7 @@
     // Setup Window
     _window.rootViewController = navigationController;
     [_window makeKeyAndVisible];
+    [MirrorStorage resumeGoingOnLiveActivityIfNeeded];
     NSLog(@"AppDelegate %@, %@", tabbarController, navigationController); // 监控：只有一个tabbarController，只有一个navibarController
     return YES;
 }

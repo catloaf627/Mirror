@@ -9,6 +9,7 @@
 #import "MirrorTabsManager.h"
 #import "MirrorNaviManager.h"
 #import "MirrorSettings.h"
+#import "MirrorStorage.h"
 #import <UIKit/UIKit.h>
 
 
@@ -49,6 +50,7 @@
 
 
 - (void)sceneDidBecomeActive:(UIScene *)scene {
+    [MirrorStorage resumeGoingOnLiveActivityIfNeeded];
     BOOL appIsDark = [MirrorSettings appliedDarkMode];
     BOOL systemIsDark = [UIScreen mainScreen].traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark;
     if (appIsDark == systemIsDark) {
