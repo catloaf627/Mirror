@@ -111,6 +111,7 @@ private struct MirrorColorDot: View {
             .frame(width: size, height: size)
             .overlay(
                 Circle()
+                    .inset(by: 0.5)
                     .stroke(.white.opacity(0.65), lineWidth: 1)
             )
     }
