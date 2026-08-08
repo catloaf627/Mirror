@@ -12,7 +12,7 @@
 
 #import "LanguageCollectionViewCell.h"
 #import "WeekStartsOnCollectionViewCell.h"
-#import "ShowIndexCollectionViewCell.h"
+#import "DownloadFromCloudCollectionViewCell.h"
 #import "PiechartDataCollectionViewCell.h"
 #import "PiechartRecordCollectionViewCell.h"
 #import "HeatmapCollectionViewCell.h"
@@ -33,7 +33,7 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
 
 typedef NS_ENUM(NSInteger, MirrorSettingType) {
     MirrorSettingTypeLanguage,
-    MirrorSettingTypeShowIndex,
+    MirrorSettingTypeDownloadFromCloud,
     MirrorSettingTypeWeekStartsOn,
     MirrorSettingTypeHeatmap,
     MirrorSettingTypePiechartRecord,
@@ -269,6 +269,8 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         return;
     } else if (indexPath.item == MirrorSettingTypeLanguage) {
         [self showLanguagePicker];
+    } else if (indexPath.item == MirrorSettingTypeDownloadFromCloud) {
+        [self showDownloadFromCloudAlert];
     } else if (indexPath.item == MirrorSettingTypeExportImport) {
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"export_or_import"]
                                                                                  message:nil
@@ -327,8 +329,8 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         LanguageCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[LanguageCollectionViewCell identifier] forIndexPath:indexPath];
         [cell configCell];
         return cell;
-    } else if (indexPath.item == MirrorSettingTypeShowIndex) {
-        ShowIndexCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[ShowIndexCollectionViewCell identifier] forIndexPath:indexPath];
+    } else if (indexPath.item == MirrorSettingTypeDownloadFromCloud) {
+        DownloadFromCloudCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[DownloadFromCloudCollectionViewCell identifier] forIndexPath:indexPath];
         [cell configCell];
         return cell;
     } else if (indexPath.item == MirrorSettingTypeWeekStartsOn) {
@@ -405,7 +407,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         _collectionView.backgroundColor = self.view.backgroundColor;
         [_collectionView registerClass:[LanguageCollectionViewCell class] forCellWithReuseIdentifier:[LanguageCollectionViewCell identifier]];
         [_collectionView registerClass:[WeekStartsOnCollectionViewCell class] forCellWithReuseIdentifier:[WeekStartsOnCollectionViewCell identifier]];
-        [_collectionView registerClass:[ShowIndexCollectionViewCell class] forCellWithReuseIdentifier:[ShowIndexCollectionViewCell identifier]];
+        [_collectionView registerClass:[DownloadFromCloudCollectionViewCell class] forCellWithReuseIdentifier:[DownloadFromCloudCollectionViewCell identifier]];
         [_collectionView registerClass:[PiechartDataCollectionViewCell class] forCellWithReuseIdentifier:[PiechartDataCollectionViewCell identifier]];
         [_collectionView registerClass:[PiechartRecordCollectionViewCell class] forCellWithReuseIdentifier:[PiechartRecordCollectionViewCell identifier]];
         [_collectionView registerClass:[HeatmapCollectionViewCell class] forCellWithReuseIdentifier:[HeatmapCollectionViewCell identifier]];
@@ -474,7 +476,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
 - (NSArray *)dataSource
 {
     if (!_dataSource) {
-        _dataSource = @[@(MirrorSettingTypeLanguage), @(MirrorSettingTypeShowIndex), @(MirrorSettingTypeWeekStartsOn), @(MirrorSettingTypeHeatmap), @(MirrorSettingTypePiechartRecord), @(MirrorSettingTypePiechartData), @(MirrorSettingTypeExportImport), @(MirrorSettingTypeReportBug)];
+        _dataSource = @[@(MirrorSettingTypeLanguage), @(MirrorSettingTypeDownloadFromCloud), @(MirrorSettingTypeWeekStartsOn), @(MirrorSettingTypeHeatmap), @(MirrorSettingTypePiechartRecord), @(MirrorSettingTypePiechartData), @(MirrorSettingTypeExportImport), @(MirrorSettingTypeReportBug)];
     }
     return _dataSource;
 }
@@ -531,6 +533,39 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
     alertController.popoverPresentationController.sourceView = self.view;
     alertController.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)showDownloadFromCloudAlert
+{
+    NSNumber *recordCount = [MirrorStorage iCloudRecordCount];
+    if (!recordCount) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"no_icloud_data"]
+                                                                                 message:nil
+                                                                          preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alertController animated:YES completion:nil];
+        return;
+    }
+    
+    NSString *message = [NSString stringWithFormat:[MirrorLanguage mirror_stringWithKey:@"icloud_records_message"], recordCount.stringValue];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"download_from_icloud_?"]
+                                                                             message:message
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
+    UIAlertAction *downloadAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"download"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        if ([MirrorStorage importDataFromICloud]) {
+            [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
+            [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
+        } else {
+            UIAlertController *failedAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"wrong_data_format"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+            [failedAlert addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+            [self presentViewController:failedAlert animated:YES completion:nil];
+        }
+    }];
+    
+    [alertController addAction:cancelAction];
+    [alertController addAction:downloadAction];
     [self presentViewController:alertController animated:YES completion:nil];
 }
 

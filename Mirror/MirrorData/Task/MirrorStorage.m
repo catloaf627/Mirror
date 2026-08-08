@@ -13,6 +13,8 @@
 #import <AudioToolbox/AudioToolbox.h>
 
 static NSInteger const kMaxTaskCnt = 8;
+static NSString * const kMirrorJSONFileName = @"mirror.json";
+static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwang.dev.Mirror";
 
 @implementation MirrorStorage
 
@@ -411,22 +413,101 @@ static NSInteger const kMaxTaskCnt = 8;
     return YES;
 }
 
++ (NSNumber *)iCloudRecordCount
+{
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:nil records:&records secondsFromGMT:nil]) {
+        return @(records.count);
+    }
+    return nil;
+}
+
++ (BOOL)importDataFromICloud
+{
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSNumber *secondsFromGMT = nil;
+    if (![MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:&tasks records:&records secondsFromGMT:&secondsFromGMT]) {
+        return NO;
+    }
+    
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records secondsFromGMT:secondsFromGMT];
+    return YES;
+}
+
 + (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records secondsFromGMT:(NSNumber *)secondsFromGMT
 {
     NSData *data = [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:tasks records:records secondsFromGMT:secondsFromGMT] options:NSJSONWritingPrettyPrinted error:nil];
+    if (!data) return;
+    
     [data writeToFile:[MirrorStorage jsonFilePath] atomically:YES];
+    [MirrorStorage saveJSONDataToICloud:data];
 }
 
 + (NSString *)jsonFilePath
 {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
     NSString *path = [paths objectAtIndex:0];
-    return [path stringByAppendingPathComponent:@"mirror.json"];
+    return [path stringByAppendingPathComponent:kMirrorJSONFileName];
+}
+
++ (void)saveJSONDataToICloud:(NSData *)data
+{
+    NSData *dataCopy = [data copy];
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
+        NSURL *documentsURL = [MirrorStorage iCloudDocumentsURL];
+        if (!documentsURL) {
+            NSLog(@"iCloud Documents is unavailable");
+            return;
+        }
+        
+        NSError *error = nil;
+        [[NSFileManager defaultManager] createDirectoryAtURL:documentsURL withIntermediateDirectories:YES attributes:nil error:&error];
+        if (error) {
+            NSLog(@"Create iCloud Documents folder failed: %@", error);
+            return;
+        }
+        
+        NSURL *fileURL = [documentsURL URLByAppendingPathComponent:kMirrorJSONFileName];
+        if (![dataCopy writeToURL:fileURL options:NSDataWritingAtomic error:&error]) {
+            NSLog(@"Save mirror data to iCloud failed: %@", error);
+        }
+    });
+}
+
++ (NSURL *)iCloudDocumentsURL
+{
+    NSURL *containerURL = [[NSFileManager defaultManager] URLForUbiquityContainerIdentifier:kMirrorICloudContainerIdentifier];
+    if (!containerURL) return nil;
+    return [containerURL URLByAppendingPathComponent:@"Documents" isDirectory:YES];
 }
 
 + (NSDictionary *)jsonDictionaryFromDisk
 {
     NSData *data = [NSData dataWithContentsOfFile:[MirrorStorage jsonFilePath] options:0 error:nil];
+    return [MirrorStorage jsonDictionaryFromData:data];
+}
+
++ (NSDictionary *)jsonDictionaryFromICloud
+{
+    NSURL *documentsURL = [MirrorStorage iCloudDocumentsURL];
+    if (!documentsURL) return nil;
+    
+    NSURL *fileURL = [documentsURL URLByAppendingPathComponent:kMirrorJSONFileName];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:fileURL.path]) return nil;
+    
+    NSError *error = nil;
+    [[NSFileManager defaultManager] startDownloadingUbiquitousItemAtURL:fileURL error:&error];
+    if (error) {
+        NSLog(@"Start downloading iCloud mirror data failed: %@", error);
+    }
+    
+    NSData *data = [NSData dataWithContentsOfURL:fileURL options:NSDataReadingMappedIfSafe error:&error];
+    if (error) {
+        NSLog(@"Read iCloud mirror data failed: %@", error);
+        return nil;
+    }
+    
     return [MirrorStorage jsonDictionaryFromData:data];
 }
 

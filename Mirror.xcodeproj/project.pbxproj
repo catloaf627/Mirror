@@ -54,7 +54,7 @@
 		4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */; };
 		4AC1FDC02A03B05100CDCED9 /* MirrorDataModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBF2A03B05100CDCED9 /* MirrorDataModel.m */; };
 		4AC1FDC42A04122400CDCED9 /* AllRecordsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDC32A04122400CDCED9 /* AllRecordsViewController.m */; };
-		4AC1FDC72A0418F000CDCED9 /* ShowIndexCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDC62A0418F000CDCED9 /* ShowIndexCollectionViewCell.m */; };
+		4AC1FDC72A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDC62A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m */; };
 		4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ACB422D29EEA411005EECC4 /* LeftAnimation.m */; };
 		4ADCD21A302410C600578A81 /* MirrorFakeDataSeeder.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADCD219302410C600578A81 /* MirrorFakeDataSeeder.m */; };
 		4ADDC5B728E476A8006F02DE /* LanguageCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDC5B628E476A8006F02DE /* LanguageCollectionViewCell.m */; };
@@ -168,12 +168,13 @@
 		4AC1FDBF2A03B05100CDCED9 /* MirrorDataModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorDataModel.m; sourceTree = "<group>"; };
 		4AC1FDC22A04122400CDCED9 /* AllRecordsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AllRecordsViewController.h; sourceTree = "<group>"; };
 		4AC1FDC32A04122400CDCED9 /* AllRecordsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AllRecordsViewController.m; sourceTree = "<group>"; };
-		4AC1FDC52A0418F000CDCED9 /* ShowIndexCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShowIndexCollectionViewCell.h; sourceTree = "<group>"; };
-		4AC1FDC62A0418F000CDCED9 /* ShowIndexCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ShowIndexCollectionViewCell.m; sourceTree = "<group>"; };
+		4AC1FDC52A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DownloadFromCloudCollectionViewCell.h; sourceTree = "<group>"; };
+		4AC1FDC62A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DownloadFromCloudCollectionViewCell.m; sourceTree = "<group>"; };
 		4ACB422C29EEA411005EECC4 /* LeftAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LeftAnimation.h; sourceTree = "<group>"; };
 		4ACB422D29EEA411005EECC4 /* LeftAnimation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LeftAnimation.m; sourceTree = "<group>"; };
 		4ADCD2183024109400578A81 /* MirrorFakeDataSeeder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorFakeDataSeeder.h; sourceTree = "<group>"; };
 		4ADCD219302410C600578A81 /* MirrorFakeDataSeeder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorFakeDataSeeder.m; sourceTree = "<group>"; };
+		4ADCD21B3026B05600578A81 /* Mirror.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Mirror.entitlements; sourceTree = "<group>"; };
 		4ADDC5B528E476A8006F02DE /* LanguageCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LanguageCollectionViewCell.h; sourceTree = "<group>"; };
 		4ADDC5B628E476A8006F02DE /* LanguageCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LanguageCollectionViewCell.m; sourceTree = "<group>"; };
 		4ADDC5BB28E6DF8B006F02DE /* ColorCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorCollectionViewCell.h; sourceTree = "<group>"; };
@@ -506,8 +507,8 @@
 			children = (
 				4ADDC5B528E476A8006F02DE /* LanguageCollectionViewCell.h */,
 				4ADDC5B628E476A8006F02DE /* LanguageCollectionViewCell.m */,
-				4AC1FDC52A0418F000CDCED9 /* ShowIndexCollectionViewCell.h */,
-				4AC1FDC62A0418F000CDCED9 /* ShowIndexCollectionViewCell.m */,
+				4AC1FDC52A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.h */,
+				4AC1FDC62A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m */,
 				4AFA3B7529E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.h */,
 				4AFA3B7629E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.m */,
 				4AA353332A25D59400920404 /* HeatmapCollectionViewCell.h */,
@@ -545,6 +546,7 @@
 		4AFB779F28DF4A380064CBCA /* Mirror */ = {
 			isa = PBXGroup;
 			children = (
+				4ADCD21B3026B05600578A81 /* Mirror.entitlements */,
 				4AFB77B128DF4A3B0064CBCA /* Info.plist */,
 				4AFB77AC28DF4A3B0064CBCA /* Assets.xcassets */,
 				4A938F3C2E5E785000375B8B /* Mirror-Bridging-Header.h */,
@@ -742,7 +744,7 @@
 				4A099FAA29DCFE54002683A1 /* MirrorTaskModel.m in Sources */,
 				4AA353382A25D9BB00920404 /* ExportImportCollectionViewCell.m in Sources */,
 				4AA3533B2A25DBDA00920404 /* ReportBugCollectionViewCell.m in Sources */,
-				4AC1FDC72A0418F000CDCED9 /* ShowIndexCollectionViewCell.m in Sources */,
+				4AC1FDC72A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m in Sources */,
 				4A379B5428E31BD200785CAE /* MirrorMacro.m in Sources */,
 				4AE5E8952A02644E004228C1 /* HeartFooter.m in Sources */,
 				4A379B4728E2F33C00785CAE /* MirrorLanguage.m in Sources */,
@@ -872,11 +874,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Mirror/Mirror.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = DFGVVBS3CG;
 				INFOPLIST_FILE = Mirror/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -899,11 +902,12 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = Mirror/Mirror.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = DFGVVBS3CG;
 				INFOPLIST_FILE = Mirror/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
