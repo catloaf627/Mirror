@@ -5,7 +5,7 @@
 //  Created by Yuqing Wang on 2023/4/26.
 //
 
-#import "AllTasksViewController_dep.h"
+#import "AllTasksViewController.h"
 #import "MirrorMacro.h"
 #import "UIColor+MirrorColor.h"
 #import <Masonry/Masonry.h>
@@ -18,13 +18,13 @@
 
 static CGFloat const kCellSpacing = 20; // cell之间的上下间距
 
-@interface AllTasksViewController_dep ()  <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, VCForTaskCellProtocol, ExportJsonProtocol>
+@interface AllTasksViewController ()  <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, VCForTaskCellProtocol, ExportJsonProtocol>
 
 @property (nonatomic, strong) UICollectionView *collectionView;
 
 @end
 
-@implementation AllTasksViewController_dep
+@implementation AllTasksViewController
 
 - (instancetype)init
 {

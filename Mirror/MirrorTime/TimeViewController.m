@@ -22,7 +22,7 @@
 #import "SettingsViewController.h"
 #import "LeftAnimation.h"
 #import "CellAnimation.h"
-#import "AllTasksViewController_dep.h"
+#import "AllTasksViewController.h"
 #import "MirrorLanguage.h"
 #import "HintFooter.h"
 
@@ -142,7 +142,7 @@
 
 - (void)goToAllTasks
 {
-    [self.navigationController pushViewController:[AllTasksViewController_dep new] animated:YES];
+    [self.navigationController pushViewController:[AllTasksViewController new] animated:YES];
 //    [self.navigationController pushViewController:[AllTasksViewController new] animated:YES]; // gizmo
 }
 
