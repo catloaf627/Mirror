@@ -19,6 +19,7 @@ typedef NS_ENUM(NSInteger, SpanType) {
 
 #define kScreenWidth [UIScreen mainScreen].bounds.size.width
 #define kScreenHeight [UIScreen mainScreen].bounds.size.height
+#define kTodayHeaderHeight [UIScreen mainScreen].bounds.size.height/5
 
 static inline UIWindow * _Nullable MirrorKeyWindow(void) {
     if (@available(iOS 13.0, *)) {

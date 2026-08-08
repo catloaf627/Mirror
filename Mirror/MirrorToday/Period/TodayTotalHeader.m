@@ -12,12 +12,14 @@
 #import "MirrorLanguage.h"
 #import "PiechartView.h"
 #import "MirrorTimeText.h"
+#import "MirrorMacro.h"
 
 @interface TodayTotalHeader ()
 
 @property (nonatomic, assign) long count;
 
-@property (nonatomic, strong) UIView *todayView;
+@property (nonatomic, strong) UIView *todayViewLeft;
+@property (nonatomic, strong) UIView *todayViewRight;
 @property (nonatomic, strong) UILabel *todayLabel;
 @property (nonatomic, strong) UILabel *todayDateLabel;
 @property (nonatomic, strong) PiechartView *pieChart;
@@ -41,34 +43,42 @@
 
 - (void)p_setupUI
 {
-    [self addSubview:self.todayView];
-    [self.todayView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self addSubview:self.todayViewLeft];
+    [self.todayViewLeft mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(0);
-        make.centerX.offset(0);
-        make.height.mas_equalTo(100);
-    }];
-    [self.todayView addSubview:self.todayDateLabel];
-    [self.todayDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.bottom.offset(-30); //make some room for the total label
         make.left.offset(0);
-        make.bottom.offset(-20);
+        make.right.offset(-kScreenWidth/2);
     }];
-    [self.todayView addSubview:self.todayLabel];
+    [self.todayViewLeft addSubview:self.todayLabel];
     [self.todayLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(self.todayDateLabel);
-        make.bottom.mas_equalTo(self.todayDateLabel.mas_top);
+        make.centerX.offset(0);
+        make.centerY.offset(-10);
     }];
-    [self.todayView addSubview:self.crownButton];
+    [self.todayViewLeft addSubview:self.todayDateLabel];
+    [self.todayDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.offset(0);
+        make.top.mas_equalTo(self.todayLabel.mas_bottom);
+    }];
+    [self.todayViewLeft addSubview:self.crownButton];
     [self.crownButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.mas_equalTo(self.todayLabel.mas_left);
         make.centerY.mas_equalTo(self.todayLabel.mas_top);
         make.width.height.mas_equalTo(25);
     }];
-    [self.todayView addSubview:self.pieChart];
+    
+    [self addSubview:self.todayViewRight];
+    [self.todayViewRight mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.offset(0);
+        make.bottom.offset(-30); //make some room for the total label
+        make.right.offset(0);
+        make.left.offset(kScreenWidth/2);
+    }];
+    [self.todayViewRight addSubview:self.pieChart];
     [self.pieChart mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.offset(0);
-        make.left.mas_equalTo(self.todayDateLabel.mas_right).offset(20);
-        make.width.height.mas_equalTo(80);
-        make.right.offset(0);
+        make.left.offset(20);
+        make.width.height.mas_equalTo(kTodayHeaderHeight/3*2);
     }];
     
     [self addSubview:self.countLabel];
@@ -76,7 +86,7 @@
     [self.countLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(20);
         make.right.offset(-20);
-        make.top.mas_equalTo(self.todayView.mas_bottom);
+        make.top.mas_equalTo(self.todayViewLeft.mas_bottom);
         make.height.mas_equalTo(20);
     }];
     
@@ -94,7 +104,7 @@
     long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
     long endTime = startTime + 86400;
     NSMutableArray<MirrorDataModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
-    [self.pieChart updateWithData:todayRecordsSortByTasks width:80 enableInteractive:NO];
+    [self.pieChart updateWithData:todayRecordsSortByTasks width:kTodayHeaderHeight/3*2 enableInteractive:NO];
 
 }
 
@@ -125,12 +135,20 @@
 
 #pragma mark - Getters
 
-- (UIView *)todayView
+- (UIView *)todayViewLeft
 {
-    if (!_todayView) {
-        _todayView = [UIView new];
+    if (!_todayViewLeft) {
+        _todayViewLeft = [UIView new];
     }
-    return _todayView;
+    return _todayViewLeft;
+}
+
+- (UIView *)todayViewRight
+{
+    if (!_todayViewRight) {
+        _todayViewRight = [UIView new];
+    }
+    return _todayViewRight;
 }
 
 - (UILabel *)todayLabel
@@ -167,7 +185,7 @@
         long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
         long endTime = startTime + 86400;
         NSMutableArray<MirrorDataModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
-        _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:80 enableInteractive:NO];
+        _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:kTodayHeaderHeight/3*2 enableInteractive:NO];
     }
     return _pieChart;
 }
