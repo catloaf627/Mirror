@@ -28,7 +28,7 @@ struct MirrorLiveActivityLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     HStack(spacing: 8) {
-                        MirrorColorDot(color: MirrorActivityColor.color(for: context.attributes.colorType), size: 14)
+                        MirrorColorDot(color: MirrorActivityColor.color(for: context.attributes.colorType), size: 18)
 
                         Text(context.attributes.taskName)
                             .font(.headline)
@@ -57,14 +57,14 @@ struct MirrorLiveActivityLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                MirrorColorDot(color: MirrorActivityColor.color(for: context.attributes.colorType), size: 13)
+                MirrorColorDot(color: MirrorActivityColor.color(for: context.attributes.colorType), size: 18)
             } compactTrailing: {
                 Text(context.state.startDate, style: .timer)
                     .font(.caption2)
                     .monospacedDigit()
                     .frame(maxWidth: 56)
             } minimal: {
-                MirrorColorDot(color: MirrorActivityColor.color(for: context.attributes.colorType), size: 12)
+                MirrorColorDot(color: MirrorActivityColor.color(for: context.attributes.colorType), size: 18)
             }
             .keylineTint(MirrorActivityColor.color(for: context.attributes.colorType))
         }
@@ -76,7 +76,7 @@ private struct MirrorLockScreenLiveActivityView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            MirrorColorDot(color: MirrorActivityColor.color(for: context.attributes.colorType), size: 16)
+            MirrorColorDot(color: MirrorActivityColor.color(for: context.attributes.colorType), size: 18)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(context.attributes.taskName)
