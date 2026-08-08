@@ -117,30 +117,30 @@ private struct MirrorColorDot: View {
 
 private enum MirrorActivityColor {
     static func color(for colorType: Int) -> Color {
-        switch baseColorType(from: colorType) {
-        case 0:
-            return Color(red: 224 / 255, green: 205 / 255, blue: 207 / 255)
-        case 2:
-            return Color(red: 233 / 255, green: 217 / 255, blue: 209 / 255)
-        case 4:
-            return Color(red: 243 / 255, green: 230 / 255, blue: 211 / 255)
-        case 6:
-            return Color(red: 224 / 255, green: 235 / 255, blue: 223 / 255)
-        case 8:
-            return Color(red: 212 / 255, green: 231 / 255, blue: 234 / 255)
-        case 10:
-            return Color(red: 198 / 255, green: 208 / 255, blue: 220 / 255)
-        case 12:
-            return Color(red: 216 / 255, green: 207 / 255, blue: 226 / 255)
-        case 14:
-            return Color(red: 218 / 255, green: 218 / 255, blue: 218 / 255)
+        switch pulseColorType(from: colorType) {
+        case 1:
+            return Color(red: 170 / 255, green: 117 / 255, blue: 120 / 255)
+        case 3:
+            return Color(red: 160 / 255, green: 106 / 255, blue: 80 / 255)
+        case 5:
+            return Color(red: 168 / 255, green: 132 / 255, blue: 98 / 255)
+        case 7:
+            return Color(red: 103 / 255, green: 119 / 255, blue: 91 / 255)
+        case 9:
+            return Color(red: 62 / 255, green: 130 / 255, blue: 141 / 255)
+        case 11:
+            return Color(red: 104 / 255, green: 120 / 255, blue: 137 / 255)
+        case 13:
+            return Color(red: 105 / 255, green: 100 / 255, blue: 123 / 255)
+        case 15:
+            return Color(red: 104 / 255, green: 104 / 255, blue: 104 / 255)
         default:
-            return Color(red: 198 / 255, green: 208 / 255, blue: 220 / 255)
+            return Color(red: 104 / 255, green: 120 / 255, blue: 137 / 255)
         }
     }
 
-    private static func baseColorType(from colorType: Int) -> Int {
-        colorType % 2 == 0 ? colorType : colorType - 1
+    private static func pulseColorType(from colorType: Int) -> Int {
+        colorType % 2 == 0 ? colorType + 1 : colorType
     }
 }
 
