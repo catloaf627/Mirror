@@ -8,6 +8,10 @@
 #import "MirrorSettings.h"
 #import "UIColor+MirrorColor.h"
 
+static NSString * const kMirrorPreferredLanguageKey = @"MirrorUserPreferredLanguage";
+static NSInteger const kMirrorLanguageEnglish = 0;
+static NSInteger const kMirrorLanguageChinese = 1;
+
 @implementation MirrorSettings
 
 + (BOOL)appliedDarkMode
@@ -27,16 +31,41 @@
 
 + (BOOL)appliedChinese
 {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredChinese"];
+    return [MirrorSettings preferredLanguageKey] == kMirrorLanguageChinese;
 }
 
 + (void)switchLanguage
 {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredChinese"]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MirrorUserPreferredChinese"];
+    if ([MirrorSettings preferredLanguageKey] != kMirrorLanguageChinese) {
+        [MirrorSettings changeLanguageWithKey:kMirrorLanguageChinese];
     } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MirrorUserPreferredChinese"];
+        [MirrorSettings changeLanguageWithKey:kMirrorLanguageEnglish];
     }
+}
+
++ (NSInteger)preferredLanguageKey
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    id languageKey = [defaults objectForKey:kMirrorPreferredLanguageKey];
+    if ([languageKey respondsToSelector:@selector(integerValue)]) {
+        NSInteger value = [languageKey integerValue];
+        if (value >= 0 && value <= 5) return value;
+    }
+
+    if ([defaults boolForKey:@"MirrorUserPreferredChinese"]) {
+        [defaults setInteger:kMirrorLanguageChinese forKey:kMirrorPreferredLanguageKey];
+        return kMirrorLanguageChinese;
+    }
+    return kMirrorLanguageEnglish;
+}
+
++ (void)changeLanguageWithKey:(NSInteger)languageKey
+{
+    if (languageKey < 0 || languageKey > 5) return;
+    if ([MirrorSettings preferredLanguageKey] == languageKey) return;
+    
+    [[NSUserDefaults standardUserDefaults] setInteger:languageKey forKey:kMirrorPreferredLanguageKey];
+    [[NSUserDefaults standardUserDefaults] setBool:languageKey == kMirrorLanguageChinese forKey:@"MirrorUserPreferredChinese"];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchLanguageNotification object:nil];
 }
 

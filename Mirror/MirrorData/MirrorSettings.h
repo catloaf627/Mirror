@@ -19,6 +19,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Language
 + (BOOL)appliedChinese;
 + (void)switchLanguage;
++ (NSInteger)preferredLanguageKey;
++ (void)changeLanguageWithKey:(NSInteger)languageKey;
 
 // Week starts on
 + (BOOL)appliedWeekStarsOnMonday;

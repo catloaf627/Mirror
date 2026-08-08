@@ -96,6 +96,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     [self.view.superview addGestureRecognizer:tapRecognizer];
     // 手势(滑动内部dismiss)
     UIPanGestureRecognizer *panRecognizer = [UIPanGestureRecognizer new];
+    panRecognizer.delegate = self;
     [panRecognizer addTarget:self action:@selector(panGestureRecognizerAction:)];
     [self.view addGestureRecognizer:panRecognizer];
     // Love
@@ -124,7 +125,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
         make.top.mas_equalTo(self.motto.mas_bottom).offset(20);
-        make.height.mas_equalTo((52*kLeftSheetRatio+kCellSpacing)*self.dataSource.count);
+        make.height.mas_equalTo([self collectionViewHeight]);
     }];
     [self.view addSubview:self.versionLabel];
     [self.versionLabel mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -266,6 +267,8 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
 {
     if (indexPath.item >= self.dataSource.count) {
         return;
+    } else if (indexPath.item == MirrorSettingTypeLanguage) {
+        [self showLanguagePicker];
     } else if (indexPath.item == MirrorSettingTypeExportImport) {
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"export_or_import"]
                                                                                  message:nil
@@ -504,10 +507,36 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     NSDictionary *textAttrs = @{NSFontAttributeName : [UIFont fontWithName:@"TrebuchetMS-Italic" size:14]};
     CGFloat height = [[MirrorSettings userMotto] boundingRectWithSize:CGSizeMake(width, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading attributes:textAttrs context:nil].size.height;
     // 考虑到collectionView和version，这个label高度也要有极限的
-    CGFloat collectionViewHeight = (52*kLeftSheetRatio+kCellSpacing)*self.dataSource.count; // collection view height (包含最后一个小的padding)
+    CGFloat collectionViewHeight = [self collectionViewHeight]; // collection view height (包含最后一个小的padding)
     CGFloat versionHeight = 20;
     CGFloat maxHeight = kScreenHeight - 80 - 20 - collectionViewHeight - versionHeight - kTabBarHeight;
     return MIN(height, maxHeight);
+}
+
+- (void)showLanguagePicker
+{
+    NSArray<NSString *> *languageNames = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어"];
+    NSInteger preferredLanguageKey = [MirrorSettings preferredLanguageKey];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"language"]
+                                                                             message:nil
+                                                                      preferredStyle:UIAlertControllerStyleActionSheet];
+    
+    [languageNames enumerateObjectsUsingBlock:^(NSString *languageName, NSUInteger index, BOOL *stop) {
+        NSString *title = index == preferredLanguageKey ? [languageName stringByAppendingString:@" ✓"] : languageName;
+        [alertController addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [MirrorSettings changeLanguageWithKey:index];
+        }]];
+    }];
+    
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
+    alertController.popoverPresentationController.sourceView = self.view;
+    alertController.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (CGFloat)collectionViewHeight
+{
+    return (52*kLeftSheetRatio+kCellSpacing)*self.dataSource.count;
 }
 
 @end

@@ -9,7 +9,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface LanguageCollectionViewCell : ToggleCollectionViewCell;
+@interface LanguageCollectionViewCell : ToggleCollectionViewCell
 
 + (NSString *)identifier;
 - (void)configCell;
