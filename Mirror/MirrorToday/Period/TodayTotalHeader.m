@@ -10,6 +10,7 @@
 #import "MirrorStorage.h"
 #import <Masonry/Masonry.h>
 #import "MirrorLanguage.h"
+#import "UIFont+MirrorFont.h"
 #import "PiechartView.h"
 #import "MirrorTimeText.h"
 #import "MirrorMacro.h"
@@ -176,7 +177,7 @@ static CGFloat const kLeftRightSpacing = 20;
     if (!_todayLabel) {
         _todayLabel = [UILabel new];
         _todayLabel.text =[MirrorLanguage mirror_stringWithKey:@"today"];
-        _todayLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:37*kFontScale];
+        _todayLabel.font = [UIFont mirrorTodayFont];
         _todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _todayLabel.adjustsFontSizeToFitWidth = YES;
     }
@@ -188,7 +189,7 @@ static CGFloat const kLeftRightSpacing = 20;
     if (!_todayDateLabel) {
         _todayDateLabel = [UILabel new];
         _todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:[NSDate now]];
-        _todayDateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17*kFontScale];
+        _todayDateLabel.font = [UIFont mirrorSubtitleFont];
         _todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
         _todayDateLabel.adjustsFontSizeToFitWidth = YES;
 

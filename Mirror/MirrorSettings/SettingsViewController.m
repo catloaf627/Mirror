@@ -27,9 +27,10 @@
 #import "MirrorSettings.h"
 #import "MirrorTimeText.h"
 #import "MirrorStorage.h"
+#import "UIFont+MirrorFont.h"
 
 static CGFloat const kCellSpacing = 10; // cell之间的上下间距
-static CGFloat const kCollectionViewPadding = 20; // 左右留白
+static CGFloat const kCollectionViewPadding = 15; // 左右留白
 
 typedef NS_ENUM(NSInteger, MirrorSettingType) {
     MirrorSettingTypeLanguage,
@@ -117,14 +118,14 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     [self.motto mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
-        make.top.mas_equalTo(self.view).offset(80);
+        make.top.mas_equalTo(self.view).offset(80*kHeightRatio);
         make.height.mas_equalTo([self mottoHeight]);
     }];
     [self.view addSubview:self.collectionView];
     [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
-        make.top.mas_equalTo(self.motto.mas_bottom).offset(20);
+        make.top.mas_equalTo(self.motto.mas_bottom).offset(20*kHeightRatio);
         make.height.mas_equalTo([self collectionViewHeight]);
     }];
     [self.view addSubview:self.versionLabel];
@@ -132,7 +133,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
         make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight);
-        make.height.mas_equalTo(20);
+        make.height.mas_equalTo(20*kHeightRatio);
     }];
     
     [self.view addSubview:self.loveView];
@@ -140,7 +141,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
         make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight);
-        make.height.mas_equalTo(20);
+        make.height.mas_equalTo(20*kHeightRatio);
     }];
     self.loveView.hidden = YES;
 }
@@ -365,7 +366,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(collectionView.frame.size.width, 52*kLeftSheetRatio);
+    return CGSizeMake(collectionView.frame.size.width, 52*kLeftSheetRatio*kHeightRatio);
 }
 
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
@@ -386,10 +387,10 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         _motto = [UIButton new];
         [_motto setTitle:[MirrorSettings userMotto] forState:UIControlStateNormal];
         [_motto setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeTextHint] forState:UIControlStateNormal];
-        _motto.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:14];
+        _motto.titleLabel.font = [UIFont mirrorLabelFont];
         _motto.titleLabel.textAlignment = NSTextAlignmentLeft;
         _motto.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-        [_motto setTitleEdgeInsets:UIEdgeInsetsMake(0, 10, 0, 10)];
+//        [_motto setTitleEdgeInsets:UIEdgeInsetsMake(0, 10, 0, 10)];
         _motto.titleLabel.numberOfLines = 0;
         [_motto addTarget:self action:@selector(tapMotto) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -423,7 +424,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         _versionLabel = [UILabel new];
         _versionLabel.text = @"Version 1.0";
         _versionLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _versionLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:14];
+        _versionLabel.font = [UIFont mirrorHintFont];
         _versionLabel.textAlignment = NSTextAlignmentCenter;
     }
     return _versionLabel;
@@ -506,12 +507,12 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
 {
     // label自适应的height
     CGFloat width  = kScreenWidth*kLeftSheetRatio - 2*kCollectionViewPadding - 2*10;
-    NSDictionary *textAttrs = @{NSFontAttributeName : [UIFont fontWithName:@"TrebuchetMS-Italic" size:14]};
+    NSDictionary *textAttrs = @{NSFontAttributeName : [UIFont mirrorLabelFont]};
     CGFloat height = [[MirrorSettings userMotto] boundingRectWithSize:CGSizeMake(width, MAXFLOAT) options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingUsesFontLeading attributes:textAttrs context:nil].size.height;
     // 考虑到collectionView和version，这个label高度也要有极限的
     CGFloat collectionViewHeight = [self collectionViewHeight]; // collection view height (包含最后一个小的padding)
-    CGFloat versionHeight = 20;
-    CGFloat maxHeight = kScreenHeight - 80 - 20 - collectionViewHeight - versionHeight - kTabBarHeight;
+    CGFloat versionHeight = 20*kHeightRatio;
+    CGFloat maxHeight = kScreenHeight - 80*kHeightRatio - 20*kHeightRatio - collectionViewHeight - versionHeight - kTabBarHeight;
     return MIN(height, maxHeight);
 }
 
@@ -571,7 +572,8 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
 
 - (CGFloat)collectionViewHeight
 {
-    return (52*kLeftSheetRatio+kCellSpacing)*self.dataSource.count;
+    float cellHeight = 52*kLeftSheetRatio*kHeightRatio;
+    return (cellHeight+kCellSpacing)*self.dataSource.count;
 }
 
 @end

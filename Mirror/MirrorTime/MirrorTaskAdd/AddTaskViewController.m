@@ -14,7 +14,6 @@
 #import "MirrorStorage.h"
 
 static CGFloat const kAddTaskVCPadding = 20;
-static CGFloat const kHeightRatio = 0.8;
 
 @interface AddTaskViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate>
 
@@ -38,8 +37,6 @@ static CGFloat const kHeightRatio = 0.8;
 
 - (void)viewDidLayoutSubviews
 {
-    // 创建task页面为半屏
-//    [self.view setFrame:CGRectMake(0, kScreenHeight*(1-kHeightRatio), kScreenWidth, kScreenHeight*kHeightRatio)];
     self.view.layer.cornerRadius = 20;
     self.view.layer.masksToBounds = YES;
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc]initWithTarget:self action:@selector(viewGetsTapped:)];

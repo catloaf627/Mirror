@@ -8,6 +8,7 @@
 #import "MirrorNaviManager.h"
 #import <Masonry/Masonry.h>
 #import "UIColor+MirrorColor.h"
+#import "UIFont+MirrorFont.h"
 #import "MirrorMacro.h"
 
 static CGFloat const kCollectionViewPadding = 20; // 左右留白
@@ -91,7 +92,7 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
         _titleLabel = [UILabel new];
         _titleLabel.numberOfLines = 1;
         _titleLabel.textAlignment = NSTextAlignmentCenter;
-        _titleLabel.font = [UIFont fontWithName:@"HelveticaNeue-Bold" size:16];
+        _titleLabel.font = [UIFont mirrorTitleFont];
     }
     return _titleLabel;
 }

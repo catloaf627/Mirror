@@ -9,6 +9,7 @@
 #import <Masonry/Masonry.h>
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
+#import "UIFont+MirrorFont.h"
 
 @interface ToggleCollectionViewCell ()
 
@@ -34,6 +35,8 @@
     [self.label mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.offset(0);
         make.left.offset(12);
+        float toggleWidth = 51;
+        make.width.mas_lessThanOrEqualTo(kScreenWidth*kLeftSheetRatio - 15*2  - 12  - 5 - toggleWidth);
     }];
 }
 
@@ -42,7 +45,8 @@
     if (!_label) {
         _label = [UILabel new];
         _label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _label.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:15];
+        _label.font = [UIFont mirrorLabelFont];
+        _label.adjustsFontSizeToFitWidth = YES;
     }
     return _label;
 }
