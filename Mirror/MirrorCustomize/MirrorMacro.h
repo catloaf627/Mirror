@@ -20,6 +20,7 @@ typedef NS_ENUM(NSInteger, SpanType) {
 #define kScreenWidth [UIScreen mainScreen].bounds.size.width
 #define kScreenHeight [UIScreen mainScreen].bounds.size.height
 #define kTodayHeaderHeight [UIScreen mainScreen].bounds.size.height/5
+#define kFontScale (kScreenWidth / 320.0) // 基准是 iPhone 14 Pro，它的屏幕宽度是 320 points
 
 static inline UIWindow * _Nullable MirrorKeyWindow(void) {
     if (@available(iOS 13.0, *)) {

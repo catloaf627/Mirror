@@ -14,6 +14,8 @@
 #import "MirrorTimeText.h"
 #import "MirrorMacro.h"
 
+static CGFloat const kLeftRightSpacing = 20;
+
 @interface TodayTotalHeader ()
 
 @property (nonatomic, assign) long count;
@@ -25,6 +27,7 @@
 @property (nonatomic, strong) PiechartView *pieChart;
 @property (nonatomic, strong) UIButton *crownButton;
 @property (nonatomic, strong) UILabel *countLabel;
+@property (nonatomic, assign) float pieChartWidth;
 
 @end
 
@@ -43,21 +46,22 @@
 
 - (void)p_setupUI
 {
+    float viewWidth = kScreenWidth-2*kLeftRightSpacing;
     [self addSubview:self.todayViewLeft];
     [self.todayViewLeft mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(0);
         make.bottom.offset(-30); //make some room for the total label
         make.left.offset(0);
-        make.right.offset(-kScreenWidth/2);
+        make.right.offset(-viewWidth/5*2);
     }];
     [self.todayViewLeft addSubview:self.todayLabel];
     [self.todayLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.offset(0);
+        make.right.offset(-10);
         make.centerY.offset(-10);
     }];
     [self.todayViewLeft addSubview:self.todayDateLabel];
     [self.todayDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.offset(0);
+        make.right.offset(-10);
         make.top.mas_equalTo(self.todayLabel.mas_bottom);
     }];
     [self.todayViewLeft addSubview:self.crownButton];
@@ -72,13 +76,13 @@
         make.top.offset(0);
         make.bottom.offset(-30); //make some room for the total label
         make.right.offset(0);
-        make.left.offset(kScreenWidth/2);
+        make.left.offset(viewWidth/5*3);
     }];
     [self.todayViewRight addSubview:self.pieChart];
     [self.pieChart mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.offset(0);
-        make.left.offset(20);
-        make.width.height.mas_equalTo(kTodayHeaderHeight/3*2);
+        make.left.offset(10);
+        make.width.height.mas_equalTo(self.pieChartWidth);
     }];
     
     [self addSubview:self.countLabel];
@@ -104,7 +108,7 @@
     long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
     long endTime = startTime + 86400;
     NSMutableArray<MirrorDataModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
-    [self.pieChart updateWithData:todayRecordsSortByTasks width:kTodayHeaderHeight/3*2 enableInteractive:NO];
+    [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
 
 }
 
@@ -135,6 +139,15 @@
 
 #pragma mark - Getters
 
+- (float) pieChartWidth {
+    float rightViewHeight = kTodayHeaderHeight;
+    float rightViewWidth = (kScreenWidth-2*kLeftRightSpacing)/5*2;
+    if (rightViewWidth<rightViewHeight) {
+        return rightViewWidth/4*3;
+    } else {
+        return rightViewHeight/4*3;
+    }
+}
 - (UIView *)todayViewLeft
 {
     if (!_todayViewLeft) {
@@ -156,8 +169,9 @@
     if (!_todayLabel) {
         _todayLabel = [UILabel new];
         _todayLabel.text =[MirrorLanguage mirror_stringWithKey:@"today"];
-        _todayLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:37];
+        _todayLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:37*kFontScale];
         _todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        [_todayLabel sizeToFit];
     }
     return _todayLabel;
 }
@@ -167,8 +181,9 @@
     if (!_todayDateLabel) {
         _todayDateLabel = [UILabel new];
         _todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:[NSDate now]];
-        _todayDateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17];
+        _todayDateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17*kFontScale];
         _todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
+        [_todayDateLabel sizeToFit];
     }
     return _todayDateLabel;
 }
@@ -185,7 +200,7 @@
         long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
         long endTime = startTime + 86400;
         NSMutableArray<MirrorDataModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
-        _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:kTodayHeaderHeight/3*2 enableInteractive:NO];
+        _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
     }
     return _pieChart;
 }
