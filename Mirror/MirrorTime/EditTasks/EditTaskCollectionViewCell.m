@@ -16,9 +16,10 @@
 #import <Masonry/Masonry.h>
 #import "MirrorTimeText.h"
 #import "MirrorSettings.h"
+#import "UIFont+MirrorFont.h"
 
-static CGFloat const kPadding = 20;
-
+#define kPadding (10*kHeightRatio)
+#define kElement (22*kHeightRatio)
 @interface EditTaskCollectionViewCell () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UITextFieldDelegate>
 // Data
 @property (nonatomic, strong) NSString *taskName;
@@ -58,20 +59,20 @@ static CGFloat const kPadding = 20;
     [self.taskNameField mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.top.offset(kPadding);
         make.width.mas_equalTo(self.frame.size.width - 3*kPadding - 30);
-        make.height.mas_equalTo(20);
+        make.height.mas_equalTo(kElement);
     }];
     
     [self addSubview:self.deleteButton];
     [self.deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.mas_equalTo(self.taskNameField);
         make.right.offset(-kPadding);
-        make.width.height.mas_equalTo(30);
+        make.width.height.mas_equalTo(kElement);
     }];
     
     [self addSubview:self.collectionView];
     [self.collectionView reloadData];
     [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.mas_equalTo(self.taskNameField.mas_bottom).offset(10);
+        make.top.mas_equalTo(self.taskNameField.mas_bottom).offset(kPadding);
         make.centerX.offset(0);
         make.width.mas_equalTo([self p_colorBlockWidth] * kMaxColorNum);
         make.height.mas_equalTo([self p_colorBlockWidth]);
@@ -80,20 +81,20 @@ static CGFloat const kPadding = 20;
     [self addSubview:self.archiveButton];
     [self.archiveButton setImage:[[[[UIImage systemImageNamed:isArchived ? @"archivebox.fill" : @"archivebox"] imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeText]] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
     [self.archiveButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.mas_equalTo(self.collectionView.mas_bottom).offset(10);
+        make.top.mas_equalTo(self.collectionView.mas_bottom).offset(kPadding);
         make.left.offset(kPadding);
-        make.width.mas_equalTo([self p_colorBlockWidth]);
-        make.height.mas_equalTo([self p_colorBlockWidth]);
+        make.width.mas_equalTo(kElement);
+        make.height.mas_equalTo(kElement);
     }];
     
     [self addSubview:self.totalTimeButton];
     long totalTime = [MirrorTool getTotalTimeOfPeriods:[MirrorStorage getAllTaskRecords:self.taskName]];
     [self.totalTimeButton setTitle:[[MirrorLanguage mirror_stringWithKey:@"total"] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]]forState:UIControlStateNormal];
     [self.totalTimeButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.mas_equalTo(self.collectionView.mas_bottom).offset(10);
+        make.top.mas_equalTo(self.collectionView.mas_bottom).offset(kPadding);
         make.right.offset(-kPadding);
-        make.width.mas_equalTo(self.frame.size.width - [self p_colorBlockWidth] - 3*kPadding);
-        make.height.mas_equalTo([self p_colorBlockWidth]);
+        make.width.mas_equalTo(self.frame.size.width - kElement - 3*kPadding);
+        make.height.mas_equalTo(kElement);
     }];
     
 }
@@ -164,7 +165,7 @@ static CGFloat const kPadding = 20;
         _taskNameField = [UITextField new];
         _taskNameField.placeholder = [MirrorLanguage mirror_stringWithKey:@"enter_task_title"];
         _taskNameField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _taskNameField.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
+        _taskNameField.font = [UIFont mirrorLabelFont];
         _taskNameField.enabled = YES;
         _taskNameField.delegate = self;
         _taskNameField.textAlignment = NSTextAlignmentLeft;
@@ -216,7 +217,7 @@ static CGFloat const kPadding = 20;
 {
     if (!_totalTimeButton) {
         _totalTimeButton = [UIButton new];
-        _totalTimeButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17];
+        _totalTimeButton.titleLabel.font = [UIFont mirrorHintFont];
         [_totalTimeButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
         _totalTimeButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
     }

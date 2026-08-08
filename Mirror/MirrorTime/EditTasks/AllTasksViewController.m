@@ -162,7 +162,7 @@ static CGFloat const kCellSpacing = 20; // cell之间的上下间距
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(kScreenWidth - 2*kCellSpacing, 160);
+    return CGSizeMake(kScreenWidth - 2*kCellSpacing, 120*kHeightRatio);
 }
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
@@ -184,7 +184,7 @@ static CGFloat const kCellSpacing = 20; // cell之间的上下间距
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section
 {
-    return CGSizeMake(kScreenWidth, 30); // 给collectionview一个小小的header，让第一行cell的shadow的过度更自然（没有截断的效果）+ 起到提示效果
+    return CGSizeMake(kScreenWidth, 30*kHeightRatio); // 给collectionview一个小小的header，让第一行cell的shadow的过度更自然（没有截断的效果）+ 起到提示效果
 }
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForFooterInSection:(NSInteger)section
