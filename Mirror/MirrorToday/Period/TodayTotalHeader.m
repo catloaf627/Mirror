@@ -47,6 +47,8 @@ static CGFloat const kLeftRightSpacing = 20;
 - (void)p_setupUI
 {
     float viewWidth = kScreenWidth-2*kLeftRightSpacing;
+
+    // split to 2 subviews: left 3/5, right 2/5
     [self addSubview:self.todayViewLeft];
     [self.todayViewLeft mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(0);
@@ -54,15 +56,26 @@ static CGFloat const kLeftRightSpacing = 20;
         make.left.offset(0);
         make.right.offset(-viewWidth/5*2);
     }];
+    [self addSubview:self.todayViewRight];
+    [self.todayViewRight mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.offset(0);
+        make.bottom.offset(-30); //make some room for the total label
+        make.right.offset(0);
+        make.left.offset(viewWidth/5*3);
+    }];
+    
+    // LEFT
     [self.todayViewLeft addSubview:self.todayLabel];
     [self.todayLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.offset(-10);
-        make.centerY.offset(-10);
+        make.centerY.offset(-10); // slightly higher than the middle
+        make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30); // left padding 20, right padding 10
     }];
     [self.todayViewLeft addSubview:self.todayDateLabel];
     [self.todayDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.offset(-10);
         make.top.mas_equalTo(self.todayLabel.mas_bottom);
+        make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30); // left padding 20, right padding 10
     }];
     [self.todayViewLeft addSubview:self.crownButton];
     [self.crownButton mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -71,13 +84,7 @@ static CGFloat const kLeftRightSpacing = 20;
         make.width.height.mas_equalTo(25);
     }];
     
-    [self addSubview:self.todayViewRight];
-    [self.todayViewRight mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.offset(0);
-        make.bottom.offset(-30); //make some room for the total label
-        make.right.offset(0);
-        make.left.offset(viewWidth/5*3);
-    }];
+    // RIGHT
     [self.todayViewRight addSubview:self.pieChart];
     [self.pieChart mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.offset(0);
@@ -171,7 +178,7 @@ static CGFloat const kLeftRightSpacing = 20;
         _todayLabel.text =[MirrorLanguage mirror_stringWithKey:@"today"];
         _todayLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:37*kFontScale];
         _todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        [_todayLabel sizeToFit];
+        _todayLabel.adjustsFontSizeToFitWidth = YES;
     }
     return _todayLabel;
 }
@@ -183,7 +190,8 @@ static CGFloat const kLeftRightSpacing = 20;
         _todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:[NSDate now]];
         _todayDateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17*kFontScale];
         _todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
-        [_todayDateLabel sizeToFit];
+        _todayDateLabel.adjustsFontSizeToFitWidth = YES;
+
     }
     return _todayDateLabel;
 }
