@@ -18,9 +18,10 @@
 #import "TodayPeriodCollectionViewCell.h"
 #import "TodayTotalHeader.h"
 #import "MirrorStorage.h"
+#import "UIFont+MirrorFont.h"
 
-static CGFloat const kLeftRightSpacing = 20;
-static CGFloat const kCellSpacing = 20; // cell之间的上下间距
+#define kLeftRightSpacing (20*kWidthRatio)
+#define kCellSpacing (20*kHeightRatio) // cell之间的上下间距
 
 @interface TodayViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, EditPeriodForTodayProtocol, UIViewControllerTransitioningDelegate>
 
@@ -172,7 +173,7 @@ static CGFloat const kCellSpacing = 20; // cell之间的上下间距
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(kScreenWidth - 2*kCellSpacing, 80);
+    return CGSizeMake(kScreenWidth - 2*kCellSpacing, 80*kHeightRatio);
 }
 
 - (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
@@ -214,7 +215,7 @@ static CGFloat const kCellSpacing = 20; // cell之间的上下间距
     if (!_emptyHintLabel) {
         _emptyHintLabel = [UILabel new];
         _emptyHintLabel.textAlignment = NSTextAlignmentCenter;
-        _emptyHintLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
+        _emptyHintLabel.font = [UIFont mirrorHintFont];
         _emptyHintLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
         _emptyHintLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_data_today"];
         _emptyHintLabel.hidden = self.todayData.count > 0;

@@ -14,8 +14,9 @@
 #import "PiechartView.h"
 #import "MirrorTimeText.h"
 #import "MirrorMacro.h"
+#import "UIFont+MirrorFont.h"
 
-static CGFloat const kLeftRightSpacing = 20;
+#define kLeftRightSpacing (20*kWidthRatio)
 
 @interface TodayTotalHeader ()
 
@@ -237,7 +238,7 @@ static CGFloat const kLeftRightSpacing = 20;
         _countLabel.adjustsFontSizeToFitWidth = YES;
         _countLabel.textAlignment = NSTextAlignmentLeft;
         _countLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _countLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17];
+        _countLabel.font = [UIFont mirrorHintFont];
     }
     return _countLabel;
 }

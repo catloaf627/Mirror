@@ -13,11 +13,14 @@
 #import "MirrorStorage.h"
 #import "MirrorMacro.h"
 #import "MirrorTimeText.h"
+#import "MirrorMacro.h"
+#import "UIFont+MirrorFont.h"
 
-static const CGFloat kHorizontalPadding = 20;
-static const CGFloat kVerticalPadding = 10;
-static const CGFloat kDeleteButtonWidth = 72;
 static const CGFloat kCellRadius = 12;
+
+#define kHorizontalPadding (20*kWidthRatio)
+#define kVerticalPadding (10*kHeightRatio)
+#define kDeleteButtonWidth (72*kWidthRatio)
 
 @interface TodayPeriodCollectionViewCell ()
 
@@ -27,7 +30,7 @@ static const CGFloat kCellRadius = 12;
 @property (nonatomic, strong) UIView *foregroundView;
 @property (nonatomic, strong) UILabel *taskNameLabel;
 @property (nonatomic, strong) UIButton *deleteButton;
-@property (nonatomic, strong) UILabel *totalLabel; // 总时长
+@property (nonatomic, strong) UILabel *timeLabel; // 总时长
 @property (nonatomic, strong) UIDatePicker *startPicker;
 @property (nonatomic, strong) UILabel *dashLabel;
 @property (nonatomic, strong) UIDatePicker *endPicker;
@@ -69,7 +72,7 @@ static const CGFloat kCellRadius = 12;
     long start = allRecords[self.periodIndex].startTime;
     long end = allRecords[self.periodIndex].endTime;
     NSString *prefix =  [MirrorSettings appliedShowIndex] ? [[@"No." stringByAppendingString:[@(self.periodIndex) stringValue]] stringByAppendingString:@" "] : @"";
-    self.totalLabel.text = [prefix stringByAppendingString:[[MirrorLanguage mirror_stringWithKey:@"lasted"] stringByAppendingString:[MirrorTimeText XdXhXmXsShortWithstart:start end:end]]];
+    self.timeLabel.text = [prefix stringByAppendingString:[[MirrorLanguage mirror_stringWithKey:@"lasted"] stringByAppendingString:[MirrorTimeText XdXhXmXsShortWithstart:start end:end]]];
     self.startPicker.date = [NSDate dateWithTimeIntervalSince1970:start];
     self.startPicker.maximumDate = [self startMaxDate];
     self.startPicker.minimumDate = [self startMinDate];
@@ -80,7 +83,7 @@ static const CGFloat kCellRadius = 12;
 
 - (void)p_setupUI
 {
-    if (self.totalLabel.superview) return;
+    if (self.timeLabel.superview) return;
 
     self.contentView.layer.cornerRadius = kCellRadius;
     self.contentView.layer.masksToBounds = YES;
@@ -104,11 +107,11 @@ static const CGFloat kCellRadius = 12;
         make.edges.offset(0);
     }];
 
-    [self.foregroundView addSubview:self.totalLabel];
-    [self.totalLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.foregroundView addSubview:self.timeLabel];
+    [self.timeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(kVerticalPadding);
         make.left.offset(kHorizontalPadding);
-        make.width.mas_equalTo(self.bounds.size.width - 3*kHorizontalPadding - 20);
+        make.width.mas_equalTo(self.bounds.size.width - 3*kHorizontalPadding - 20*kWidthRatio);
         make.height.mas_equalTo((self.bounds.size.height - 2*kVerticalPadding)/2);
     }];
 
@@ -215,15 +218,15 @@ static const CGFloat kCellRadius = 12;
     return _foregroundView;
 }
 
-- (UILabel *)totalLabel
+- (UILabel *)timeLabel
 {
-    if (!_totalLabel) {
-        _totalLabel = [UILabel new];
-        _totalLabel.adjustsFontSizeToFitWidth = YES;
-        _totalLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _totalLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17];
+    if (!_timeLabel) {
+        _timeLabel = [UILabel new];
+        _timeLabel.adjustsFontSizeToFitWidth = YES;
+        _timeLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+        _timeLabel.font = [UIFont mirrorLabelFont];
     }
-    return _totalLabel;
+    return _timeLabel;
 }
 
 
@@ -232,7 +235,7 @@ static const CGFloat kCellRadius = 12;
     if (!_deleteButton) {
         _deleteButton = [UIButton new];
         _deleteButton.backgroundColor = [UIColor systemRedColor];
-        _deleteButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:14];
+        _deleteButton.titleLabel.font = [UIFont mirrorLabelFont];
         [_deleteButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] forState:UIControlStateNormal];
         [_deleteButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [_deleteButton addTarget:self action:@selector(deletePeriod) forControlEvents:UIControlEventTouchUpInside];
@@ -285,7 +288,7 @@ static const CGFloat kCellRadius = 12;
         _taskNameLabel = [UILabel new];
         _taskNameLabel.adjustsFontSizeToFitWidth = YES;
         _taskNameLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _taskNameLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:12];
+        _taskNameLabel.font = [UIFont mirrorHintFont];
     }
     return _taskNameLabel;
 }
