@@ -18,6 +18,12 @@
     return [UIFont fontWithName:@"HelveticaNeue-Light" size:10*kWidthRatio];
 }
 
+
++ (UIFont *)mirrorButtonFont
+{
+    return [UIFont fontWithName:@"TrebuchetMS-Italic" size:16*kWidthRatio];
+}
+
 + (UIFont *)mirrorTodayFont
 {
     return [UIFont mirror_fontWithSize:37*kWidthRatio bold:NO];

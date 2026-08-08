@@ -14,6 +14,7 @@
 #import "MirrorLanguage.h"
 #import "MirrorTimeText.h"
 #import "SplitLineView.h"
+#import "UIFont+MirrorFont.h"
 
 @interface TimeEditingViewController () <UIViewControllerTransitioningDelegate, UIPickerViewDataSource, UIPickerViewDelegate>
 
@@ -93,49 +94,49 @@
     self.tasknameLabel.text = self.taskName;
     [self.tasknameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
-        make.top.offset(100);
-        make.height.mas_equalTo(50);
+        make.top.offset(100*kHeightRatio);
+        make.height.mas_equalTo(50*kHeightRatio);
         make.width.mas_equalTo(kScreenWidth);
     }];
     [self.view addSubview:self.startLabel];
     [self.startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(20);
-        make.top.mas_equalTo(self.tasknameLabel.mas_bottom).offset(20);
-        make.height.mas_equalTo(50);
+        make.top.mas_equalTo(self.tasknameLabel.mas_bottom).offset(20*kHeightRatio);
+        make.height.mas_equalTo(50*kHeightRatio);
         make.width.mas_equalTo((kScreenWidth - 2*20)/3);
     }];
     [self.view addSubview:self.startPicker];
     [self.startPicker mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.offset(-20);
-        make.top.mas_equalTo(self.tasknameLabel.mas_bottom).offset(20);
-        make.height.mas_equalTo(50);
+        make.top.mas_equalTo(self.tasknameLabel.mas_bottom).offset(20*kHeightRatio);
+        make.height.mas_equalTo(50*kHeightRatio);
         make.width.mas_equalTo(2*(kScreenWidth - 2*20)/3);
     }];
     [self.view addSubview:self.lastedPicker];
     [self.lastedPicker mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(20);
-        make.top.mas_equalTo(self.startPicker.mas_bottom).offset(20);
-        make.height.mas_equalTo(50);
+        make.top.mas_equalTo(self.startPicker.mas_bottom).offset(20*kHeightRatio);
+        make.height.mas_equalTo(50*kHeightRatio);
         make.width.mas_equalTo((kScreenWidth - 3*20)/2);
     }];
     [self.view addSubview:self.saveButton];
     [self.saveButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.lastedPicker.mas_right).offset(20);
         make.centerY.mas_equalTo(self.lastedPicker);
-        make.height.mas_equalTo(40);
+        make.height.mas_equalTo(40*kHeightRatio);
         make.width.mas_equalTo((kScreenWidth - 3*20)/2);
     }];
     [self.view addSubview:self.splitView];
     [self.splitView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.centerY.offset(0);
-        make.height.mas_equalTo(10);
+        make.height.mas_equalTo(10*kHeightRatio);
         make.width.mas_equalTo(kScreenWidth);
     }];
     [self.view addSubview:self.startButton];
     [self.startButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
         make.centerY.offset(kScreenHeight/6);
-        make.height.mas_equalTo(50);
+        make.height.mas_equalTo(50*kHeightRatio);
         make.width.mas_equalTo(3*(kScreenWidth - 2*20)/4);
     }];
     
@@ -243,7 +244,7 @@
         _tasknameLabel = [UILabel new];
         _tasknameLabel.textAlignment = NSTextAlignmentCenter;
         _tasknameLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _tasknameLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
+        _tasknameLabel.font = [UIFont mirrorTitleFont];
     }
     return _tasknameLabel;
 }
@@ -255,7 +256,7 @@
         _startLabel.textAlignment = NSTextAlignmentCenter;
         _startLabel.text = [MirrorLanguage mirror_stringWithKey:@"starts_at"];
         _startLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _startLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17];
+        _startLabel.font = [UIFont mirrorHintFont];
     }
     return _startLabel;
 }
@@ -304,7 +305,7 @@
         _saveButton = [UIButton new];
         [_saveButton setTitle:[MirrorLanguage mirror_stringWithKey:@"save"] forState:UIControlStateNormal];
         [_saveButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
-        _saveButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
+        _saveButton.titleLabel.font = [UIFont mirrorButtonFont];
         _saveButton.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeText].CGColor;
         _saveButton.layer.borderWidth = 1;
         _saveButton.layer.cornerRadius = 12;
@@ -331,7 +332,7 @@
         _startButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         [_startButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeBackground] forState:UIControlStateNormal];
         [_startButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeTextHint] forState:UIControlStateDisabled];
-        _startButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
+        _startButton.titleLabel.font = [UIFont mirrorButtonFont];
         _startButton.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeText].CGColor;
         _startButton.layer.borderWidth = 1;
         _startButton.layer.cornerRadius = 12;
