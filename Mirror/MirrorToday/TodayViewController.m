@@ -23,18 +23,17 @@
 #define kTimelineLeftWidth (52*kWidthRatio)
 #define kTimelineRightPadding (12*kWidthRatio)
 #define kTimelineRecordSpacing (6*kHeightRatio)
-#define kTimelineActionButtonWidth (72*kWidthRatio)
-#define kTimelineActionWidth (144*kWidthRatio)
 #define kTimelineMinimumTinyRecordHeight 10
 #define kTimelineTinyRecordThresholdSeconds (10 * 60)
 #define kTimelineTextHiddenThresholdSeconds (45 * 60)
 
-@interface TodayViewController () <UIViewControllerTransitioningDelegate, UIGestureRecognizerDelegate>
+@interface TodayViewController () <UIViewControllerTransitioningDelegate, UIGestureRecognizerDelegate, UIEditMenuInteractionDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 @property (nonatomic, assign) BOOL didScrollToDefaultHours;
 @property (nonatomic, assign) CGFloat hourHeight;
 @property (nonatomic, assign) long pendingStartTimestamp;
+@property (nonatomic, assign) NSInteger selectedPeriodIndex;
 
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
@@ -47,7 +46,7 @@
 @property (nonatomic, strong) TodayTotalHeader *todayHeader;
 @property (nonatomic, strong) UIScrollView *timelineScrollView;
 @property (nonatomic, strong) UIView *timelineContentView;
-@property (nonatomic, strong) UILabel *emptyHintLabel;
+@property (nonatomic, strong) UIView *taskPickerOverlayView;
 
 @end
 
@@ -110,7 +109,7 @@
     self.todayHeader = nil;
     self.timelineScrollView = nil;
     self.timelineContentView = nil;
-    self.emptyHintLabel = nil;
+    self.taskPickerOverlayView = nil;
     self.didScrollToDefaultHours = NO;
     self.hourHeight = 0;
     // 将vc.view里的所有subviews从父view上移除
@@ -131,7 +130,6 @@
     if (!_isLoaded) return;
     self.todayData = [MirrorStorage getTodayData];
     [self.todayHeader configWithRecords:self.todayData];
-    [self updateHint];
     [self renderTimeline];
 }
 
@@ -152,17 +150,10 @@
     [self.timelineScrollView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.mas_equalTo(self.todayHeader.mas_bottom);
         make.left.right.offset(0);
-        make.bottom.offset(-kTabBarHeight);
+        make.bottom.offset(-self.tabBarController.tabBar.frame.size.height);
     }];
 
     [self.timelineScrollView addSubview:self.timelineContentView];
-
-    [self.view addSubview:self.emptyHintLabel];
-    [self.emptyHintLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.mas_equalTo(self.timelineScrollView.mas_top);
-        make.left.right.bottom.mas_equalTo(self.timelineScrollView);
-    }];
-    [self updateHint];
 
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapTimeline:)];
     tapRecognizer.delegate = self;
@@ -193,6 +184,52 @@
     }
     self.pendingStartTimestamp = [self timestampForTimelineY:point.y];
     [self showTaskPickerAtPoint:point];
+}
+
+- (void)showEditMenu:(UITapGestureRecognizer *)recognizer
+{
+    if (@available(iOS 16.0, *)) {
+        UIView *view = recognizer.view;
+        self.selectedPeriodIndex = view.tag;
+        UIEditMenuInteraction *editMenuInteraction = nil;
+        for (id<UIInteraction> interaction in view.interactions) {
+            if ([interaction isKindOfClass:[UIEditMenuInteraction class]]) {
+                editMenuInteraction = (UIEditMenuInteraction *)interaction;
+                break;
+            }
+        }
+        if (!editMenuInteraction) {
+            return;
+        }
+        
+        CGPoint point = [recognizer locationInView:view];
+        UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
+        [editMenuInteraction presentEditMenuWithConfiguration:configuration];
+    }
+}
+
+- (UIMenu *)recordMenuForPeriodIndex:(NSInteger)periodIndex
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return nil;
+    }
+    
+    UIAction *editAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        UIButton *button = [UIButton new];
+        button.tag = periodIndex;
+        [self editPeriod:button];
+    }];
+    UIAction *deleteAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        [MirrorStorage deletePeriodAtIndex:periodIndex];
+    }];
+    deleteAction.attributes = UIMenuElementAttributesDestructive;
+    return [UIMenu menuWithTitle:@"" children:@[editAction, deleteAction]];
+}
+
+- (UIMenu *)editMenuInteraction:(UIEditMenuInteraction *)interaction menuForConfiguration:(UIEditMenuConfiguration *)configuration suggestedActions:(NSArray<UIMenuElement *> *)suggestedActions API_AVAILABLE(ios(16.0))
+{
+    return [self recordMenuForPeriodIndex:self.selectedPeriodIndex];
 }
 
 - (void)deletePeriod:(UIButton *)sender
@@ -288,16 +325,6 @@
     [alertController addAction:cancelAction];
     [alertController addAction:saveAction];
     [self presentViewController:alertController animated:YES completion:nil];
-}
-
-- (void)showDeleteButton:(UISwipeGestureRecognizer *)swipeRecognizer
-{
-    [self setRecordView:swipeRecognizer.view.superview deleteVisible:YES animated:YES];
-}
-
-- (void)hideDeleteButton:(UISwipeGestureRecognizer *)swipeRecognizer
-{
-    [self setRecordView:swipeRecognizer.view.superview deleteVisible:NO animated:YES];
 }
 
 #pragma mark - Timeline
@@ -398,42 +425,20 @@
     recordView.accessibilityIdentifier = @"TodayTimelineRecordView";
     recordView.layer.cornerRadius = 5;
     recordView.layer.masksToBounds = YES;
-    recordView.backgroundColor = [UIColor systemBlueColor];
-    UIFont *actionButtonFont = [UIFont mirrorLabelFont];
-
-    UIButton *deleteButton = [UIButton new];
-    deleteButton.tag = record.originalIndex;
-    deleteButton.backgroundColor = [UIColor systemRedColor];
-    deleteButton.titleLabel.font = actionButtonFont;
-    [deleteButton setTitle:showsText ? [MirrorLanguage mirror_stringWithKey:@"delete"] : @"" forState:UIControlStateNormal];
-    [deleteButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    [deleteButton addTarget:self action:@selector(deletePeriod:) forControlEvents:UIControlEventTouchUpInside];
-    [recordView addSubview:deleteButton];
-    deleteButton.frame = CGRectMake(CGRectGetWidth(frame) - kTimelineActionButtonWidth, 0, kTimelineActionButtonWidth, CGRectGetHeight(frame));
-
-    UIButton *editButton = [UIButton new];
-    editButton.tag = record.originalIndex;
-    editButton.backgroundColor = [UIColor systemBlueColor];
-    editButton.titleLabel.font = actionButtonFont;
-    [editButton setTitle:showsText ? [MirrorLanguage mirror_stringWithKey:@"edit"] : @"" forState:UIControlStateNormal];
-    [editButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-    [editButton addTarget:self action:@selector(editPeriod:) forControlEvents:UIControlEventTouchUpInside];
-    [recordView addSubview:editButton];
-    editButton.frame = CGRectMake(CGRectGetWidth(frame) - kTimelineActionWidth, 0, kTimelineActionButtonWidth, CGRectGetHeight(frame));
+    recordView.backgroundColor = recordColor;
 
     UIView *foregroundView = [[UIView alloc] initWithFrame:recordView.bounds];
     foregroundView.backgroundColor = recordColor;
     foregroundView.layer.cornerRadius = 5;
     foregroundView.layer.masksToBounds = YES;
+    foregroundView.tag = record.originalIndex;
+    if (@available(iOS 16.0, *)) {
+        UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
+        [foregroundView addInteraction:editMenuInteraction];
+        UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+        [foregroundView addGestureRecognizer:tapRecognizer];
+    }
     [recordView addSubview:foregroundView];
-
-    UISwipeGestureRecognizer *leftSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showDeleteButton:)];
-    leftSwipe.direction = UISwipeGestureRecognizerDirectionLeft;
-    [foregroundView addGestureRecognizer:leftSwipe];
-
-    UISwipeGestureRecognizer *rightSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(hideDeleteButton:)];
-    rightSwipe.direction = UISwipeGestureRecognizerDirectionRight;
-    [foregroundView addGestureRecognizer:rightSwipe];
 
     if (showsText) {
         UILabel *titleLabel = [UILabel new];
@@ -456,22 +461,6 @@
     return recordView;
 }
 
-- (void)setRecordView:(UIView *)recordView deleteVisible:(BOOL)deleteVisible animated:(BOOL)animated
-{
-    if (!recordView.subviews.count) {
-        return;
-    }
-    UIView *foregroundView = recordView.subviews.lastObject;
-    void (^animations)(void) = ^{
-        foregroundView.transform = deleteVisible ? CGAffineTransformMakeTranslation(-kTimelineActionWidth, 0) : CGAffineTransformIdentity;
-    };
-    if (animated) {
-        [UIView animateWithDuration:0.2 animations:animations];
-    } else {
-        animations();
-    }
-}
-
 #pragma mark - Add Records
 
 - (void)showTaskPickerAtPoint:(CGPoint)point
@@ -491,17 +480,88 @@
         return;
     }
 
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[self addRecordTitle] message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    for (MirrorTaskModel *task in availableTasks) {
-        [alertController addAction:[UIAlertAction actionWithTitle:task.taskName style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [self addRecordWithTaskName:task.taskName];
-        }]];
-    }
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
+    [self showCompactTaskPickerWithTasks:availableTasks atPoint:point];
+}
 
-    alertController.popoverPresentationController.sourceView = self.timelineContentView;
-    alertController.popoverPresentationController.sourceRect = CGRectMake(point.x, point.y, 1, 1);
-    [self presentViewController:alertController animated:YES completion:nil];
+- (void)showCompactTaskPickerWithTasks:(NSArray<MirrorTaskModel *> *)tasks atPoint:(CGPoint)point
+{
+    [self dismissTaskPicker];
+
+    CGRect bounds = self.view.bounds;
+    CGFloat pickerWidth = 160*kWidthRatio;
+    CGFloat titleHeight = 34;
+    CGFloat rowHeight = 40;
+    CGFloat pickerHeight = titleHeight + rowHeight*tasks.count + 8;
+    CGPoint viewPoint = [self.timelineContentView convertPoint:point toView:self.view];
+    CGFloat pickerX = MIN(MAX(viewPoint.x - pickerWidth/2, kLeftRightSpacing), CGRectGetWidth(bounds) - pickerWidth - kLeftRightSpacing);
+    CGFloat pickerY = viewPoint.y + 8;
+    if (pickerY + pickerHeight > CGRectGetHeight(bounds) - kLeftRightSpacing) {
+        pickerY = viewPoint.y - pickerHeight - 8;
+    }
+    pickerY = MAX(kLeftRightSpacing, pickerY);
+
+    UIView *overlayView = [[UIView alloc] initWithFrame:bounds];
+    overlayView.backgroundColor = UIColor.clearColor;
+    overlayView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissTaskPicker)];
+    tapRecognizer.delegate = self;
+    [overlayView addGestureRecognizer:tapRecognizer];
+
+    UIView *pickerView = [[UIView alloc] initWithFrame:CGRectMake(pickerX, pickerY, pickerWidth, pickerHeight)];
+    pickerView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
+    pickerView.layer.cornerRadius = 12;
+    pickerView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
+    pickerView.layer.shadowOpacity = 0.18;
+    pickerView.layer.shadowRadius = 8;
+    pickerView.layer.shadowOffset = CGSizeMake(0, 3);
+    [overlayView addSubview:pickerView];
+
+    UILabel *titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(14, 8, pickerWidth - 28, titleHeight - 8)];
+    titleLabel.text = [self addRecordTitle];
+    titleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+    titleLabel.font = [UIFont mirrorHintFont];
+    titleLabel.adjustsFontSizeToFitWidth = YES;
+    [pickerView addSubview:titleLabel];
+
+    for (NSInteger index = 0; index < tasks.count; index++) {
+        MirrorTaskModel *task = tasks[index];
+        CGFloat rowY = titleHeight + rowHeight*index;
+        UIButton *button = [[UIButton alloc] initWithFrame:CGRectMake(0, rowY, pickerWidth, rowHeight)];
+        button.accessibilityIdentifier = task.taskName;
+        [button addTarget:self action:@selector(taskPickerDidSelectTask:) forControlEvents:UIControlEventTouchUpInside];
+        [pickerView addSubview:button];
+
+        UIView *colorDot = [[UIView alloc] initWithFrame:CGRectMake(14, rowY + 12, 16, 16)];
+        colorDot.backgroundColor = [UIColor mirrorColorNamed:task.color];
+        colorDot.layer.cornerRadius = 8;
+        [pickerView addSubview:colorDot];
+
+        UILabel *taskLabel = [[UILabel alloc] initWithFrame:CGRectMake(42, rowY, pickerWidth - 56, rowHeight)];
+        taskLabel.text = task.taskName;
+        taskLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        taskLabel.font = [UIFont mirrorTitleFont_Card];
+        taskLabel.adjustsFontSizeToFitWidth = YES;
+        [pickerView addSubview:taskLabel];
+    }
+
+    self.taskPickerOverlayView = overlayView;
+    [self.view addSubview:overlayView];
+}
+
+- (void)taskPickerDidSelectTask:(UIButton *)sender
+{
+    NSString *taskName = sender.accessibilityIdentifier;
+    [self dismissTaskPicker];
+    if (taskName.length == 0) {
+        return;
+    }
+    [self addRecordWithTaskName:taskName];
+}
+
+- (void)dismissTaskPicker
+{
+    [self.taskPickerOverlayView removeFromSuperview];
+    self.taskPickerOverlayView = nil;
 }
 
 - (void)addRecordWithTaskName:(NSString *)taskName
@@ -556,25 +616,6 @@
         _timelineContentView.backgroundColor = self.view.backgroundColor;
     }
     return _timelineContentView;
-}
-
-- (UILabel *)emptyHintLabel
-{
-    if (!_emptyHintLabel) {
-        _emptyHintLabel = [UILabel new];
-        _emptyHintLabel.textAlignment = NSTextAlignmentCenter;
-        _emptyHintLabel.font = [UIFont mirrorHintFont];
-        _emptyHintLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
-        _emptyHintLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_data_today"];
-        _emptyHintLabel.userInteractionEnabled = NO;
-    }
-    return _emptyHintLabel;
-}
-
-- (void)updateHint
-{
-    self.emptyHintLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_data_today"];
-    self.emptyHintLabel.hidden = self.todayData.count > 0;
 }
 
 - (UIButton *)settingsButton
@@ -659,6 +700,9 @@
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
 {
+    if (gestureRecognizer.view == self.taskPickerOverlayView) {
+        return touch.view == self.taskPickerOverlayView;
+    }
     if (gestureRecognizer.view != self.timelineContentView) {
         return YES;
     }

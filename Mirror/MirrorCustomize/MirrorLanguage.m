@@ -133,7 +133,7 @@
     
     // Empty hints
     [mirrorDict setValue:ML(@"No data", @"暂无数据", @"Sin datos", @"Aucune donnée", @"データなし", @"데이터 없음") forKey:@"no_data"];
-    [mirrorDict setValue:ML(@"No task today", @"今天暂无任务", @"No hay tareas hoy", @"Aucune tâche aujourd'hui", @"今日はタスクなし", @"오늘 작업 없음") forKey:@"no_data_today"];
+    [mirrorDict setValue:ML(@"Please create a task on the Start page first", @"请先去计时页面新建一个任务", @"Crea primero una tarea en la página Iniciar", @"Créez d'abord une tâche sur la page Démarrer", @"まず開始ページでタスクを作成してください", @"먼저 시작 페이지에서 작업을 만들어 주세요") forKey:@"no_task"];
     
     // Today total
     [mirrorDict setValue:ML(@"Total: ", @"总时长：", @"Total: ", @"Total : ", @"合計: ", @"합계: ") forKey:@"total"];
