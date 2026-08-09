@@ -14,7 +14,6 @@
 #import "MirrorStorage.h"
 #import "MirrorTool.h"
 #import "CellAnimation.h"
-#import "MirrorTimeText.h"
 
 static CGFloat const kPadding = 20;
 
@@ -23,33 +22,80 @@ static CGFloat const kIntervalSize = 70;
 static CGFloat const kHintSize = 25;
 
 static NSString *const kHintFont = @"TrebuchetMS-Italic";
-static CGFloat const kTimeSpacing = 5;
-static CGFloat const kDashSpacing = 10;
+static CGFloat const kCircleLineWidth = 18;
 
+@interface MirrorTrackingCircleView : UIView
+
+@property (nonatomic, assign) BOOL isCountingDown;
+@property (nonatomic, assign) CGFloat progress;
+@property (nonatomic, strong) UIColor *taskColor;
+@property (nonatomic, strong) UIColor *pulseColor;
+
+@end
+
+@implementation MirrorTrackingCircleView
+
+- (void)drawRect:(CGRect)rect
+{
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    if (!context) {
+        return;
+    }
+
+    CGRect circleRect = CGRectInset(self.bounds, kCircleLineWidth/2 + 4, kCircleLineWidth/2 + 4);
+    CGPoint center = CGPointMake(CGRectGetMidX(circleRect), CGRectGetMidY(circleRect));
+    CGFloat radius = MIN(CGRectGetWidth(circleRect), CGRectGetHeight(circleRect))/2;
+    CGFloat startAngle = -M_PI_2;
+    CGFloat endAngle = startAngle + 2*M_PI*MAX(0, MIN(1, self.progress));
+
+    CGContextSetLineWidth(context, kCircleLineWidth);
+    CGContextSetLineCap(context, kCGLineCapRound);
+    [[UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellPlus] setStroke];
+    CGContextAddArc(context, center.x, center.y, radius, startAngle, startAngle + 2*M_PI, 0);
+    CGContextStrokePath(context);
+
+    if (self.progress <= 0) {
+        return;
+    }
+
+    NSInteger segmentCount = MAX(1, ceil(self.progress * 120));
+    for (NSInteger index = 0; index < segmentCount; index++) {
+        CGFloat segmentStart = startAngle + (endAngle - startAngle) * index / segmentCount;
+        CGFloat segmentEnd = startAngle + (endAngle - startAngle) * (index + 1) / segmentCount;
+        CGFloat ratio = segmentCount == 1 ? 1 : (CGFloat)index / (segmentCount - 1);
+        UIColor *color = [self colorBetween:self.taskColor and:self.pulseColor ratio:ratio];
+        [color setStroke];
+        CGContextAddArc(context, center.x, center.y, radius, segmentStart, segmentEnd, 0);
+        CGContextStrokePath(context);
+    }
+}
+
+- (UIColor *)colorBetween:(UIColor *)startColor and:(UIColor *)endColor ratio:(CGFloat)ratio
+{
+    CGFloat startRed = 0;
+    CGFloat startGreen = 0;
+    CGFloat startBlue = 0;
+    CGFloat startAlpha = 0;
+    CGFloat endRed = 0;
+    CGFloat endGreen = 0;
+    CGFloat endBlue = 0;
+    CGFloat endAlpha = 0;
+    [startColor getRed:&startRed green:&startGreen blue:&startBlue alpha:&startAlpha];
+    [endColor getRed:&endRed green:&endGreen blue:&endBlue alpha:&endAlpha];
+    return [UIColor colorWithRed:startRed + (endRed - startRed)*ratio
+                           green:startGreen + (endGreen - startGreen)*ratio
+                            blue:startBlue + (endBlue - startBlue)*ratio
+                           alpha:startAlpha + (endAlpha - startAlpha)*ratio];
+}
+
+@end
 
 @interface TimeTrackingViewController () <UIViewControllerTransitioningDelegate>
 
 // UI
 @property (nonatomic, strong) UILabel *taskNameLabel;
-
+@property (nonatomic, strong) MirrorTrackingCircleView *circleView;
 @property (nonatomic, strong) UILabel *timeIntervalLabel;
-
-@property (nonatomic, strong) UILabel *startTimeLabelHH;
-@property (nonatomic, strong) UILabel *startTimeColonLabelA;
-@property (nonatomic, strong) UILabel *startTimeLabelmm;
-@property (nonatomic, strong) UILabel *startTimeColonLabelB;
-@property (nonatomic, strong) UILabel *startTimeLabelss;
-
-@property (nonatomic, strong) UILabel *dashLabel;
-
-@property (nonatomic, strong) UILabel *nowTimeLabelHH;
-@property (nonatomic, strong) UILabel *nowTimeColonLabelA;
-@property (nonatomic, strong) UILabel *nowTimeLabelmm;
-@property (nonatomic, strong) UILabel *nowTimeColonLabelB;
-@property (nonatomic, strong) UILabel *nowTimeLabelss;
-
-@property (nonatomic, strong) UILabel *differentDayLabel;
-
 @property (nonatomic, strong) UIButton *stopButton;
 
 // Data
@@ -57,7 +103,9 @@ static CGFloat const kDashSpacing = 10;
 @property (nonatomic, strong) NSString *taskName;
 @property (nonatomic, strong) NSDate *nowTime;
 @property (nonatomic, strong) NSDate *startTime;
+@property (nonatomic, strong) NSDate *accurateStartDate;
 @property (nonatomic, assign) NSTimeInterval timeInterval;
+@property (nonatomic, assign) NSTimeInterval accurateTimeInterval;
 
 
 // Timer
@@ -69,10 +117,16 @@ static CGFloat const kDashSpacing = 10;
 
 - (instancetype)initWithTaskName:(NSString *)taskName
 {
+    return [self initWithTaskName:taskName accurateStartDate:nil];
+}
+
+- (instancetype)initWithTaskName:(NSString *)taskName accurateStartDate:(NSDate *)accurateStartDate
+{
     self = [super init];
     if (self) {
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
         self.taskName = taskName;
+        self.accurateStartDate = accurateStartDate;
     }
     return self;
 }
@@ -81,19 +135,8 @@ static CGFloat const kDashSpacing = 10;
 {
     // 将vc.view里的所有subviews全部置为nil
     self.taskNameLabel = nil;
+    self.circleView = nil;
     self.timeIntervalLabel = nil;
-    self.startTimeLabelHH = nil;
-    self.startTimeColonLabelA = nil;
-    self.startTimeLabelmm = nil;
-    self.startTimeColonLabelB = nil;
-    self.startTimeLabelss = nil;
-    self.dashLabel = nil;
-    self.nowTimeLabelHH = nil;
-    self.nowTimeColonLabelA = nil;
-    self.nowTimeLabelmm = nil;
-    self.nowTimeColonLabelB = nil;
-    self.nowTimeLabelss = nil;
-    self.differentDayLabel = nil;
     self.stopButton = nil;
     // 将vc.view里的所有subviews从父view上移除
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
@@ -135,92 +178,30 @@ static CGFloat const kDashSpacing = 10;
     [self.view addSubview:self.taskNameLabel];
     [self.taskNameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
-        make.centerY.offset(-180);
+        make.centerY.offset(-190);
         make.width.equalTo(@(kScreenWidth - 2*kPadding));
+    }];
+    [self.view addSubview:self.circleView];
+    [self.circleView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.offset(0);
+        make.centerY.offset(-20);
+        make.width.height.mas_equalTo(MIN(kScreenWidth - 2*kPadding, 280));
     }];
     [self.view addSubview:self.timeIntervalLabel];
     [self.timeIntervalLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.offset(0);
-        make.centerY.equalTo(self.taskNameLabel.mas_bottom).offset(80);
-        make.width.equalTo(@(kScreenWidth - 2*kPadding));
+        make.center.equalTo(self.circleView);
+        make.width.equalTo(self.circleView).offset(-2*kCircleLineWidth - 16);
     }];
-    
-    [self.view addSubview:self.startTimeLabelHH];
-    [self.view addSubview:self.startTimeColonLabelA];
-    [self.view addSubview:self.startTimeLabelmm];
-    [self.view addSubview:self.startTimeColonLabelB];
-    [self.view addSubview:self.startTimeLabelss];
-
-    [self.view addSubview:self.dashLabel];
-
-    [self.view addSubview:self.nowTimeLabelHH];
-    [self.view addSubview:self.nowTimeColonLabelA];
-    [self.view addSubview:self.nowTimeLabelmm];
-    [self.view addSubview:self.nowTimeColonLabelB];
-    [self.view addSubview:self.nowTimeLabelss];
-    
-    [self.dashLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.offset(0);
-        make.centerY.equalTo(self.timeIntervalLabel.mas_bottom).offset(40);
-    }];
-    
-    [self.startTimeLabelss mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(self.dashLabel.mas_left).offset(-kDashSpacing);
-        make.centerY.equalTo(self.dashLabel);
-    }];
-    [self.startTimeColonLabelB mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(self.startTimeLabelss.mas_left).offset(-kTimeSpacing);
-        make.centerY.equalTo(self.startTimeLabelss);
-    }];
-    [self.startTimeLabelmm mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(self.startTimeColonLabelB.mas_left).offset(-kTimeSpacing);
-        make.centerY.equalTo(self.startTimeColonLabelB);
-    }];
-    [self.startTimeColonLabelA mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(self.startTimeLabelmm.mas_left).offset(-kTimeSpacing);
-        make.centerY.equalTo(self.startTimeLabelmm);
-    }];
-    [self.startTimeLabelHH mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.equalTo(self.startTimeColonLabelA.mas_left).offset(-kTimeSpacing);
-        make.centerY.equalTo(self.startTimeColonLabelA);
-    }];
-    
-    [self.nowTimeLabelHH mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.dashLabel.mas_right).offset(kDashSpacing);
-        make.centerY.equalTo(self.dashLabel);
-    }];
-    [self.nowTimeColonLabelA mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.nowTimeLabelHH.mas_right).offset(kTimeSpacing);
-        make.centerY.equalTo(self.nowTimeLabelHH);
-    }];
-    [self.nowTimeLabelmm mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.nowTimeColonLabelA.mas_right).offset(kTimeSpacing);
-        make.centerY.equalTo(self.nowTimeColonLabelA);
-    }];
-    [self.nowTimeColonLabelB mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.nowTimeLabelmm.mas_right).offset(kTimeSpacing);
-        make.centerY.equalTo(self.nowTimeLabelmm);
-    }];
-    [self.nowTimeLabelss mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.nowTimeColonLabelB.mas_right).offset(kTimeSpacing);
-        make.centerY.equalTo(self.nowTimeColonLabelB);
-    }];
-    
-    [self.view addSubview:self.differentDayLabel];
-    [self.differentDayLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.equalTo(self.startTimeLabelss.mas_top);
-        make.centerX.equalTo(self.startTimeLabelss.mas_right);
-    }];
-    self.differentDayLabel.hidden = YES;
     
     [self.view addSubview:self.stopButton];
     [self.stopButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
-        make.centerY.offset(kScreenHeight/6);
+        make.top.equalTo(self.circleView.mas_bottom).offset(36);
         make.height.mas_equalTo(50);
-        make.width.mas_equalTo(3*(kScreenWidth - 2*20)/4); // 和TimeEditingVC 的startbutton保持一个位置和大小
+        make.width.mas_equalTo(3*(kScreenWidth - 2*20)/4);
     }];
     
+    [self updateLabels];
     __weak typeof(self) weakSelf = self;
     self.timer = [NSTimer scheduledTimerWithTimeInterval:(NSTimeInterval)1.0f repeats:YES block:^(NSTimer * _Nonnull timer) {
         // 在iOS 10以后系统，苹果针对NSTimer进行了优化，使用Block回调方式，解决了循环引用问题。
@@ -236,48 +217,49 @@ static CGFloat const kDashSpacing = 10;
 
 - (void)updateLabels
 {
-    // set up formatters
-    NSDateFormatter *hourFormatter = [[NSDateFormatter alloc]init];
-    hourFormatter.dateFormat = @"HH";
-    NSDateFormatter *minFormatter = [[NSDateFormatter alloc]init];
-    minFormatter.dateFormat = @"mm";
-    NSDateFormatter *secFormatter = [[NSDateFormatter alloc]init];
-    secFormatter.dateFormat = @"ss";
-    
-    // udpate start time
-    self.startTimeLabelHH.text = [hourFormatter stringFromDate:self.startTime];
-    self.startTimeLabelmm.text = [minFormatter stringFromDate:self.startTime];
-    self.startTimeLabelss.text = [secFormatter stringFromDate:self.startTime];
-    
-    // update now time
-    self.nowTimeLabelHH.text = [hourFormatter stringFromDate:self.nowTime];
-    self.nowTimeLabelmm.text = [minFormatter stringFromDate:self.nowTime];
-    self.nowTimeLabelss.text = [secFormatter stringFromDate:self.nowTime];
-    
-    // update time interval
-    self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
-    
-    // udpate stop button text
-    if (round(self.timeInterval) >= kMinSeconds) {
+    NSDate *now = self.nowTime;
+    BOOL canStop = [self canStopAndKeepRecord];
+    self.view.backgroundColor = canStop ? [UIColor mirrorColorNamed:MirrorColorTypeBackground] : [UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:self.taskName].color];
+
+    if (canStop) {
+        self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
+        self.circleView.isCountingDown = NO;
+        self.circleView.progress = [self hourCircleProgress];
         [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"stop"] forState:UIControlStateNormal];
     } else {
+        NSTimeInterval countdown = MAX(0, kMinSeconds - self.accurateTimeInterval);
+        self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:ceil(countdown)];
+        self.circleView.isCountingDown = YES;
+        self.circleView.progress = countdown / kMinSeconds;
         [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"give_up"] forState:UIControlStateNormal];
     }
-    
-    if (![[MirrorTimeText YYYYmmdd:self.nowTime] isEqualToString:[MirrorTimeText YYYYmmdd:self.startTime]]) { // 如果两个时间不在同一天，给startTime一个[日期]的标记
-        self.differentDayLabel.hidden = NO;
-        self.differentDayLabel.text = [MirrorTimeText YYYYmmdd:self.startTime];
+
+    [self.circleView setNeedsDisplay];
+}
+
+- (CGFloat)hourCircleProgress
+{
+    NSInteger elapsedMinutes = MAX(0, floor(self.timeInterval / 60.0));
+    NSInteger minuteInHour = elapsedMinutes % 60;
+    if (elapsedMinutes > 0 && minuteInHour == 0) {
+        return 1;
     }
+    return minuteInHour / 60.0;
 }
 
 - (void)stopButtonClicked
 {
     [self dismissViewControllerAnimated:YES completion:nil];
-    if (round(self.timeInterval) >= kMinSeconds) {
+    if ([self canStopAndKeepRecord]) {
         [MirrorStorage stopTask:self.taskName at:[NSDate now]];
     } else {
         [MirrorStorage deletePeriodAtIndex:[MirrorStorage retriveMirrorRecords].count-1];
     }
+}
+
+- (BOOL)canStopAndKeepRecord
+{
+    return self.accurateTimeInterval >= kMinSeconds;
 }
 
 #pragma mark - Data
@@ -295,9 +277,22 @@ static CGFloat const kDashSpacing = 10;
     return startTime;
 }
 
+- (NSDate *)accurateStartDate
+{
+    if (!_accurateStartDate) {
+        _accurateStartDate = self.startTime;
+    }
+    return _accurateStartDate;
+}
+
 - (NSTimeInterval)timeInterval
 {
     return [self.nowTime timeIntervalSinceDate:self.startTime];
+}
+
+- (NSTimeInterval)accurateTimeInterval
+{
+    return [self.nowTime timeIntervalSinceDate:self.accurateStartDate];
 }
 
 #pragma mark - Getters
@@ -314,6 +309,18 @@ static CGFloat const kDashSpacing = 10;
     return _taskNameLabel;
 }
 
+- (MirrorTrackingCircleView *)circleView
+{
+    if (!_circleView) {
+        _circleView = [MirrorTrackingCircleView new];
+        _circleView.backgroundColor = UIColor.clearColor;
+        MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:self.taskName];
+        _circleView.taskColor = [UIColor mirrorColorNamed:task.color];
+        _circleView.pulseColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:task.color]];
+    }
+    return _circleView;
+}
+
 - (UILabel *)timeIntervalLabel
 {
     if (!_timeIntervalLabel) {
@@ -324,147 +331,6 @@ static CGFloat const kDashSpacing = 10;
         _timeIntervalLabel.textAlignment = NSTextAlignmentCenter;
     }
     return _timeIntervalLabel;
-}
-
-- (UILabel *)startTimeLabelHH
-{
-    if (!_startTimeLabelHH) {
-        _startTimeLabelHH = [UILabel new];
-        _startTimeLabelHH.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _startTimeLabelHH.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _startTimeLabelHH.text = @"00";
-    }
-    return _startTimeLabelHH;
-}
-
-- (UILabel *)startTimeColonLabelA
-{
-    if (!_startTimeColonLabelA) {
-        _startTimeColonLabelA = [UILabel new];
-        _startTimeColonLabelA.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _startTimeColonLabelA.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _startTimeColonLabelA.text = @":";
-    }
-    return _startTimeColonLabelA;
-}
-
-- (UILabel *)startTimeLabelmm
-{
-    if (!_startTimeLabelmm) {
-        _startTimeLabelmm = [UILabel new];
-        _startTimeLabelmm.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _startTimeLabelmm.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _startTimeLabelmm.text = @"00";
-    }
-    return _startTimeLabelmm;
-}
-
-- (UILabel *)startTimeColonLabelB
-{
-    if (!_startTimeColonLabelB) {
-        _startTimeColonLabelB = [UILabel new];
-        _startTimeColonLabelB.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _startTimeColonLabelB.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _startTimeColonLabelB.text = @":";
-    }
-    return _startTimeColonLabelB;
-}
-
-- (UILabel *)startTimeLabelss
-{
-    if (!_startTimeLabelss) {
-        _startTimeLabelss = [UILabel new];
-        _startTimeLabelss.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _startTimeLabelss.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _startTimeLabelss.text = @"00";
-    }
-    return _startTimeLabelss;
-}
-
-- (UILabel *)dashLabel
-{
-    if (!_dashLabel) {
-        _dashLabel = [UILabel new];
-        _dashLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _dashLabel.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _dashLabel.text = @"-";
-    }
-    return _dashLabel;
-}
-
-- (UILabel *)nowTimeLabelHH
-{
-    if (!_nowTimeLabelHH) {
-        _nowTimeLabelHH = [UILabel new];
-        _nowTimeLabelHH.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _nowTimeLabelHH.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _nowTimeLabelHH.text = @"00";
-    }
-    return _nowTimeLabelHH;
-}
-
-- (UILabel *)nowTimeColonLabelA
-{
-    if (!_nowTimeColonLabelA) {
-        _nowTimeColonLabelA = [UILabel new];
-        _nowTimeColonLabelA.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _nowTimeColonLabelA.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _nowTimeColonLabelA.text = @":";
-    }
-    return _nowTimeColonLabelA;
-}
-
-- (UILabel *)nowTimeLabelmm
-{
-    if (!_nowTimeLabelmm) {
-        _nowTimeLabelmm = [UILabel new];
-        _nowTimeLabelmm.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _nowTimeLabelmm.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _nowTimeLabelmm.text = @"00";
-    }
-    return _nowTimeLabelmm;
-}
-
-- (UILabel *)nowTimeColonLabelB
-{
-    if (!_nowTimeColonLabelB) {
-        _nowTimeColonLabelB = [UILabel new];
-        _nowTimeColonLabelB.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _nowTimeColonLabelB.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _nowTimeColonLabelB.text = @":";
-    }
-    return _nowTimeColonLabelB;
-}
-
-
-- (UILabel *)nowTimeLabelss
-{
-    if (!_nowTimeLabelss) {
-        _nowTimeLabelss = [UILabel new];
-        _nowTimeLabelss.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _nowTimeLabelss.font = [UIFont fontWithName:kHintFont size:kHintSize];
-        _nowTimeLabelss.text = @"00";
-    }
-    return _nowTimeLabelss;
-}
-
-- (UILabel *)differentDayLabel
-{
-    if (!_differentDayLabel) {
-        _differentDayLabel = [UILabel new];
-        NSInteger color = [UIColor mirror_getPulseColorType:[MirrorStorage getTaskModelFromDB:self.taskName].color];
-        _differentDayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _differentDayLabel.font = [UIFont fontWithName:kHintFont size:13];
-        _differentDayLabel.backgroundColor = [UIColor mirrorColorNamed:color];
-        NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
-        style.alignment = NSTextAlignmentJustified;
-        style.firstLineHeadIndent = 10.0f;
-        style.headIndent = 5;
-        style.tailIndent = 5;
-        _differentDayLabel.layer.cornerRadius = 4;
-        _differentDayLabel.layer.masksToBounds = YES;
-    }
-    return _differentDayLabel;
 }
 
 - (UIButton *)stopButton

@@ -89,6 +89,7 @@
     [self.collectionView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
     }];
+    [self presentGoingOnTaskIfNeeded];
 }
 
 - (void)restartVC
@@ -162,7 +163,7 @@
     NSString *goingOnTask = [MirrorStorage isGoingOnTask];
     if (goingOnTask.length > 0) {
         if ([goingOnTask isEqualToString:selectedModel.taskName]) {
-            [self presentTrackingViewControllerWithTaskName:selectedModel.taskName animated:YES];
+            [self presentTrackingViewControllerWithTaskName:selectedModel.taskName accurateStartDate:nil animated:YES];
         } else {
             [self showStartNowUnavailableAlert];
         }
@@ -174,8 +175,9 @@
         return;
     }
 
-    [MirrorStorage startTask:selectedModel.taskName at:[NSDate now]];
-    [self presentTrackingViewControllerWithTaskName:selectedModel.taskName animated:YES];
+    NSDate *startDate = [NSDate now];
+    [MirrorStorage startTask:selectedModel.taskName at:startDate];
+    [self presentTrackingViewControllerWithTaskName:selectedModel.taskName accurateStartDate:startDate animated:YES];
 }
 
 - (BOOL)canStartTaskNow
@@ -188,6 +190,43 @@
     return lastRecord.endTime <= [[NSDate now] timeIntervalSince1970];
 }
 
+- (void)presentGoingOnTaskIfNeeded
+{
+    if (self.presentedViewController) {
+        return;
+    }
+
+    NSString *goingOnTask = [MirrorStorage isGoingOnTask];
+    if (goingOnTask.length == 0) {
+        return;
+    }
+
+    NSInteger taskIndex = NSNotFound;
+    for (NSInteger index = 0; index < self.data.count; index++) {
+        MirrorTaskModel *task = self.data[index];
+        if (!task.isAddTaskModel && [task.taskName isEqualToString:goingOnTask]) {
+            taskIndex = index;
+            break;
+        }
+    }
+    if (taskIndex == NSNotFound) {
+        return;
+    }
+
+    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:taskIndex inSection:0];
+    [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:NO];
+    [self.collectionView layoutIfNeeded];
+    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
+    if (cell) {
+        self.selectedCellFrame = cell.frame;
+    } else {
+        UICollectionViewLayoutAttributes *attributes = [self.collectionView layoutAttributesForItemAtIndexPath:indexPath];
+        self.selectedCellFrame = attributes ? attributes.frame : CGRectZero;
+    }
+
+    [self presentTrackingViewControllerWithTaskName:goingOnTask accurateStartDate:nil animated:NO];
+}
+
 - (void)showStartNowUnavailableAlert
 {
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"now_is_occupied"] message:nil preferredStyle:UIAlertControllerStyleAlert];
@@ -195,9 +234,9 @@
     [self presentViewController:alertController animated:YES completion:nil];
 }
 
-- (void)presentTrackingViewControllerWithTaskName:(NSString *)taskName animated:(BOOL)animated
+- (void)presentTrackingViewControllerWithTaskName:(NSString *)taskName accurateStartDate:(NSDate *)accurateStartDate animated:(BOOL)animated
 {
-    TimeTrackingViewController *timeTrackingVC = [[TimeTrackingViewController alloc] initWithTaskName:taskName];
+    TimeTrackingViewController *timeTrackingVC = [[TimeTrackingViewController alloc] initWithTaskName:taskName accurateStartDate:accurateStartDate];
     timeTrackingVC.transitioningDelegate = self;
     timeTrackingVC.modalPresentationStyle = UIModalPresentationCustom;
     timeTrackingVC.cellFrame = CGRectMake(self.collectionView.frame.origin.x + self.selectedCellFrame.origin.x, self.collectionView.frame.origin.y + self.selectedCellFrame.origin.y - self.collectionView.contentOffset.y, self.selectedCellFrame.size.width, self.selectedCellFrame.size.height);

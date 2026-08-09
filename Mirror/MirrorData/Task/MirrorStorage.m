@@ -262,11 +262,20 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 {
     NSDate *date = [self dateWithoutSeconds:accurateDate];
     NSMutableArray <MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (records.count == 0) {
+        return;
+    }
     MirrorRecordModel *recordToBeEditted = records[records.count-1]; // 最后(新)一个record
     long start = recordToBeEditted.startTime;
     long end = [date timeIntervalSince1970];
     long length = end - start;
     NSLog(@"%@计时结束 %ld", taskName, length);
+    
+    if (end <= start || length < kMinSeconds) {
+        [records removeObjectAtIndex:records.count-1];
+        [MirrorStorage saveMirrorRecords:records];
+        return;
+    }
     
     if (length >= kMinSeconds) { // 一分钟以上开始记录（00:00处切割）
         NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:start];
@@ -293,13 +302,17 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
             long startTimei = endTime0;
             long endTimei = startTimei + 86400;
             while (endTimei < end) {
-                MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:startTimei endTime:endTimei];
-                [records addObject:newRecord];
+                if (endTimei - startTimei >= kMinSeconds) {
+                    MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:startTimei endTime:endTimei];
+                    [records addObject:newRecord];
+                }
                 startTimei = startTimei + 86400;
                 endTimei = startTimei + 86400;
             }
-            MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:startTimei endTime:end];
-            [records addObject:newRecord];// 最后一个分段（新插入）
+            if (end - startTimei >= kMinSeconds) {
+                MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:startTimei endTime:end];
+                [records addObject:newRecord];// 最后一个分段（新插入）
+            }
         }
     } else {
         [records removeObjectAtIndex:records.count-1];

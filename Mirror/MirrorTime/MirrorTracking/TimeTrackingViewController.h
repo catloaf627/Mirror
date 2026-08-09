@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, assign) CGRect cellFrame;
 - (instancetype)initWithTaskName:(NSString *)taskName;
+- (instancetype)initWithTaskName:(NSString *)taskName accurateStartDate:(NSDate *)accurateStartDate;
 
 @end
 
