@@ -11,6 +11,8 @@
 #import "MirrorStorage.h"
 #import "LegendCollectionViewCell.h"
 #import "SpecificRecordsViewController.h"
+#import "MirrorLanguage.h"
+#import "MirrorTimeText.h"
 
 static CGFloat const kCellHeight = 30; // 一个legend的高度
 static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
@@ -87,9 +89,37 @@ static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     if (self.data.count > indexPath.item && self.data[indexPath.item].records.count > 0) {
-        SpecificRecordsViewController *recordsVC = [[SpecificRecordsViewController alloc] initWithRecords:self.data[indexPath.item].records];
-        [self.delegate.navigationController pushViewController:recordsVC animated:YES];
+        MirrorDataModel *data = self.data[indexPath.item];
+        NSString *format = [MirrorLanguage mirror_stringWithKey:@"check_task_records_for_period_?"];
+        NSString *rangeText = self.confirmationRangeText.length > 0 ? self.confirmationRangeText : [self timeRangeTextWithRecords:data.records];
+        NSString *message = [NSString stringWithFormat:format, data.taskModel.taskName, rangeText];
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                                 message:message
+                                                                          preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
+        [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            SpecificRecordsViewController *recordsVC = [[SpecificRecordsViewController alloc] initWithRecords:data.records];
+            [self.delegate.navigationController pushViewController:recordsVC animated:YES];
+        }]];
+        [self.delegate presentViewController:alertController animated:YES completion:nil];
     }
+}
+
+- (NSString *)timeRangeTextWithRecords:(NSMutableArray<MirrorRecordModel *> *)records
+{
+    long start = LONG_MAX;
+    long end = LONG_MIN;
+    for (MirrorRecordModel *record in records) {
+        start = MIN(start, record.startTime);
+        end = MAX(end, record.endTime);
+    }
+    
+    NSString *startText = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:start]];
+    NSString *endText = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:end]];
+    if ([startText isEqualToString:endText]) {
+        return startText;
+    }
+    return [NSString stringWithFormat:@"%@ - %@", startText, endText];
 }
 
 #pragma mark - HistogramDelegate

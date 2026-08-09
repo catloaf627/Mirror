@@ -156,6 +156,9 @@
     [mirrorDict setValue:ML(@"All records", @"所有记录", @"Todos los registros", @"Tous les enregistrements", @"すべての記録", @"모든 기록") forKey:@"all_records"];
     [mirrorDict setValue:ML(@"Records", @"记录", @"Registros", @"Enregistrements", @"記録", @"기록") forKey:@"records"];
     [mirrorDict setValue:ML(@"Occupied records", @"占用记录", @"Registros ocupados", @"Enregistrements occupés", @"使用中の記録", @"점유된 기록") forKey:@"occupied_records"];
+    [mirrorDict setValue:ML(@"Check all records of %@ for %@?", @"查看 %@ 在 %@ 的所有记录？", @"¿Revisar todos los registros de %@ para %@?", @"Voir tous les enregistrements de %@ pour %@ ?", @"%@ の %@ のすべての記録を確認しますか？", @"%@의 %@ 모든 기록을 확인할까요?") forKey:@"check_task_records_for_period_?"];
+    [mirrorDict setValue:ML(@"the year of %@", @"%@年", @"el año %@", @"l’année %@", @"%@年", @"%@년") forKey:@"period_year_format"];
+    [mirrorDict setValue:ML(@"the week from %@ to %@", @"%@ 至 %@ 这一周", @"la semana del %@ al %@", @"la semaine du %@ au %@", @"%@ から %@ までの週", @"%@부터 %@까지의 주") forKey:@"period_week_format"];
     
     // Motto
     [mirrorDict setValue:ML(@"Something you want to keep in mind?", @"想记下来什么？", @"¿Algo que quieras recordar?", @"Quelque chose à garder en tête ?", @"覚えておきたいことは？", @"기억하고 싶은 것이 있나요?") forKey:@"motto"];

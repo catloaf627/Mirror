@@ -441,6 +441,7 @@
     }
 
     // legend
+    self.legendView.confirmationRangeText = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:[self.keys[_selectedCellIndex] integerValue]]];
     [self.legendView updateWithData:data];
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);
@@ -515,6 +516,7 @@
         MirrorDataModel *data = [[MirrorDataModel alloc] initWithTask:taskByTaskName[taskName] records:recordsByTaskName[taskName]];
         [legendData addObject:data];
     }
+    self.legendView.confirmationRangeText = self.dateLabel.text;
     [self.legendView updateWithData:legendData];
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);

@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface LegendView : UIView <HistogramDelegate, PiechartDelegate>
 
 @property (nonatomic, weak) UIViewController<PushAllRecordsDelegate> *delegate;
+@property (nonatomic, copy) NSString *confirmationRangeText;
 - (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data;
 - (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data;
 - (CGFloat)legendViewHeight;

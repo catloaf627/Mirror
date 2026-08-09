@@ -357,6 +357,7 @@
         endTime = startTime + numberOfDaysIYear*86400;
     }
     
+    self.legendView.confirmationRangeText = [self confirmationRangeTextWithStartTime:startTime endTime:endTime];
     self.data = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:YES];
     // update label
     NSString *startDate = [MirrorTimeText YYYYmmddWeekday:[NSDate dateWithTimeIntervalSince1970:startTime]];
@@ -375,6 +376,40 @@
 - (void)updateSpanText:(NSString *)text
 {
     self.dateLabel.text = text;
+}
+
+- (NSString *)confirmationRangeTextWithStartTime:(long)startTime endTime:(long)endTime
+{
+    NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:startTime];
+    NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:endTime - 1];
+    SpanType spanType = self.typeSwitch.selectedSegmentIndex;
+    if (spanType == SpanTypeYear) {
+        NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+        NSDateComponents *components = [calendar components:NSCalendarUnitYear fromDate:startDate];
+        NSString *format = [MirrorLanguage mirror_stringWithKey:@"period_year_format"];
+        return [NSString stringWithFormat:format, [@(components.year) stringValue]];
+    } else if (spanType == SpanTypeMonth) {
+        return [[MirrorTimeText YYYYmm:startDate] stringByReplacingOccurrencesOfString:@"," withString:@""];
+    } else if (spanType == SpanTypeWeek) {
+        NSString *format = [MirrorLanguage mirror_stringWithKey:@"period_week_format"];
+        return [NSString stringWithFormat:format, [self numericDateWithWeekday:startDate], [self numericDateWithWeekday:endDate]];
+    }
+    return [MirrorTimeText YYYYmmdd:startDate];
+}
+
+- (NSString *)numericDateWithWeekday:(NSDate *)date
+{
+    NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    NSDateComponents *components = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitWeekday) fromDate:date];
+    NSString *weekday = @"";
+    if (components.weekday == 1) weekday = [MirrorLanguage mirror_stringWithKey:@"sunday"];
+    if (components.weekday == 2) weekday = [MirrorLanguage mirror_stringWithKey:@"monday"];
+    if (components.weekday == 3) weekday = [MirrorLanguage mirror_stringWithKey:@"tuesday"];
+    if (components.weekday == 4) weekday = [MirrorLanguage mirror_stringWithKey:@"wednesday"];
+    if (components.weekday == 5) weekday = [MirrorLanguage mirror_stringWithKey:@"thursday"];
+    if (components.weekday == 6) weekday = [MirrorLanguage mirror_stringWithKey:@"friday"];
+    if (components.weekday == 7) weekday = [MirrorLanguage mirror_stringWithKey:@"saturday"];
+    return [NSString stringWithFormat:@"%ld.%ld.%ld(%@)", (long)components.year, (long)components.month, (long)components.day, weekday];
 }
 
 #pragma mark - Getters
