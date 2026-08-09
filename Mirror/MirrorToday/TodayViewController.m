@@ -178,6 +178,11 @@
 
 - (void)tapTimeline:(UITapGestureRecognizer *)tapRecognizer
 {
+    // 震动反馈
+    UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc]
+        initWithStyle:UIImpactFeedbackStyleMedium];
+    [feedback impactOccurred];
+    // 显示添加task的逻辑
     CGPoint point = [tapRecognizer locationInView:self.timelineContentView];
     if ([self pointHitsRecordView:point]) {
         return;
@@ -188,24 +193,27 @@
 
 - (void)showEditMenu:(UITapGestureRecognizer *)recognizer
 {
-    if (@available(iOS 16.0, *)) {
-        UIView *view = recognizer.view;
-        self.selectedPeriodIndex = view.tag;
-        UIEditMenuInteraction *editMenuInteraction = nil;
-        for (id<UIInteraction> interaction in view.interactions) {
-            if ([interaction isKindOfClass:[UIEditMenuInteraction class]]) {
-                editMenuInteraction = (UIEditMenuInteraction *)interaction;
-                break;
-            }
+    // 震动反馈
+    UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc]
+        initWithStyle:UIImpactFeedbackStyleMedium];
+    [feedback impactOccurred];
+    // 显示编辑菜单的逻辑
+    UIView *view = recognizer.view;
+    self.selectedPeriodIndex = view.tag;
+    UIEditMenuInteraction *editMenuInteraction = nil;
+    for (id<UIInteraction> interaction in view.interactions) {
+        if ([interaction isKindOfClass:[UIEditMenuInteraction class]]) {
+            editMenuInteraction = (UIEditMenuInteraction *)interaction;
+            break;
         }
-        if (!editMenuInteraction) {
-            return;
-        }
-        
-        CGPoint point = [recognizer locationInView:view];
-        UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
-        [editMenuInteraction presentEditMenuWithConfiguration:configuration];
     }
+    if (!editMenuInteraction) {
+        return;
+    }
+    
+    CGPoint point = [recognizer locationInView:view];
+    UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
+    [editMenuInteraction presentEditMenuWithConfiguration:configuration];
 }
 
 - (UIMenu *)recordMenuForPeriodIndex:(NSInteger)periodIndex
