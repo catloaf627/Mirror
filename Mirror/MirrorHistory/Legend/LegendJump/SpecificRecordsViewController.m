@@ -15,20 +15,28 @@
 #import "MirrorNaviManager.h"
 
 #define kCellSpacing (20*kWidthRatio) // left right spacing
+static NSString * const kMirrorSpecificRecordsDeleteHintShownKey = @"MirrorSpecificRecordsDeleteHintShown";
 
 @interface SpecificRecordsViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, VCForPeriodCellProtocol>
 
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *records;
+@property (nonatomic, copy) NSString *titleKey;
 @end
 
 @implementation SpecificRecordsViewController
 
 - (instancetype)initWithRecords:(NSMutableArray<MirrorRecordModel *> *)records
 {
+    return [self initWithRecords:records titleKey:@"records"];
+}
+
+- (instancetype)initWithRecords:(NSMutableArray<MirrorRecordModel *> *)records titleKey:(NSString *)titleKey
+{
     self = [super init];
     if (self) {
         self.records = records;
+        self.titleKey = titleKey;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
 //        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
@@ -49,7 +57,7 @@
 - (void)restartVC
 {
     // update navibar
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"records"] leftButton:nil rightButton:nil];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:self.titleKey] leftButton:nil rightButton:nil];
     // 将vc.view里的所有subviews全部置为nil
     self.collectionView = nil;
     // 将vc.view里的所有subviews从父view上移除
@@ -60,7 +68,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"records"] leftButton:nil rightButton:nil];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:self.titleKey] leftButton:nil rightButton:nil];
 }
 
 
@@ -96,6 +104,11 @@
 
 - (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    if (indexPath.item != 0 || [[NSUserDefaults standardUserDefaults] boolForKey:kMirrorSpecificRecordsDeleteHintShownKey]) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kMirrorSpecificRecordsDeleteHintShownKey];
+    [(TaskPeriodCollectionViewCell *)cell previewDeleteButton];
 }
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
@@ -156,6 +169,14 @@
         _records = [NSMutableArray new];
     }
     return _records;
+}
+
+- (NSString *)titleKey
+{
+    if (!_titleKey) {
+        _titleKey = @"records";
+    }
+    return _titleKey;
 }
 
 

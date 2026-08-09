@@ -145,6 +145,7 @@
     [mirrorDict setValue:ML(@"Starts at", @"开始时间", @"Empieza a las", @"Commence à", @"開始時刻", @"시작 시간") forKey:@"starts_at"];
     [mirrorDict setValue:ML(@"OR", @"或", @"O", @"OU", @"または", @"또는") forKey:@"or"];
     [mirrorDict setValue:ML(@"A current or future time period is already occupied, so Start Now is unavailable", @"当前或未来时间段已被其他记录占用，无法立即开始计时", @"Ya hay un periodo actual o futuro ocupado, así que no se puede empezar ahora", @"Une période actuelle ou future est déjà occupée, le démarrage immédiat est indisponible", @"現在または未来の時間帯がすでに使用中のため、今すぐ開始できません", @"현재 또는 미래 시간대가 이미 사용 중이라 지금 시작할 수 없습니다") forKey:@"now_is_occupied"];
+    [mirrorDict setValue:ML(@"Check occupied records", @"查看占用记录", @"Revisar registros ocupados", @"Voir les enregistrements occupés", @"使用中の記録を確認", @"점유된 기록 확인") forKey:@"check_occupied_records"];
     [mirrorDict setValue:ML(@"Start now", @"开始计时", @"Empezar ahora", @"Commencer maintenant", @"今すぐ開始", @"지금 시작") forKey:@"start_now"];
     [mirrorDict setValue:ML(@" hours", @" 小时", @" horas", @" heures", @" 時間", @"시간") forKey:@"picker_hours"];
     [mirrorDict setValue:ML(@" mins", @" 分钟", @" min", @" min", @" 分", @"분") forKey:@"picker_mins"];
@@ -154,6 +155,7 @@
     // All records
     [mirrorDict setValue:ML(@"All records", @"所有记录", @"Todos los registros", @"Tous les enregistrements", @"すべての記録", @"모든 기록") forKey:@"all_records"];
     [mirrorDict setValue:ML(@"Records", @"记录", @"Registros", @"Enregistrements", @"記録", @"기록") forKey:@"records"];
+    [mirrorDict setValue:ML(@"Occupied records", @"占用记录", @"Registros ocupados", @"Enregistrements occupés", @"使用中の記録", @"점유된 기록") forKey:@"occupied_records"];
     
     // Motto
     [mirrorDict setValue:ML(@"Something you want to keep in mind?", @"想记下来什么？", @"¿Algo que quieras recordar?", @"Quelque chose à garder en tête ?", @"覚えておきたいことは？", @"기억하고 싶은 것이 있나요?") forKey:@"motto"];

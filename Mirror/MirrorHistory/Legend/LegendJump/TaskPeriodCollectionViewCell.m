@@ -203,6 +203,30 @@ static const CGFloat kCellRadius = 12;
     self.isDeleteButtonShown = NO;
 }
 
+- (void)previewDeleteButton
+{
+    CGFloat hintOffset = kDeleteButtonWidth * 0.35;
+    [UIView animateKeyframesWithDuration:0.8 delay:0 options:0 animations:^{
+        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.2 animations:^{
+            self.foregroundView.transform = CGAffineTransformMakeTranslation(-hintOffset, 0);
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.2 relativeDuration:0.2 animations:^{
+            self.foregroundView.transform = CGAffineTransformIdentity;
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.2 animations:^{
+            self.foregroundView.transform = CGAffineTransformMakeTranslation(-hintOffset, 0);
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.6 relativeDuration:0.4 animations:^{
+            self.foregroundView.transform = CGAffineTransformMakeTranslation(-kDeleteButtonWidth, 0);
+        }];
+    } completion:^(BOOL finished) {
+        self.isDeleteButtonShown = YES;
+    }];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.6 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self hideDeleteButtonAnimated:YES];
+    });
+}
+
 - (void)handleHorizontalPan:(UIPanGestureRecognizer *)panGestureRecognizer
 {
     CGFloat translationX = [panGestureRecognizer translationInView:self.foregroundView].x;

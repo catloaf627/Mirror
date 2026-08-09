@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface SpecificRecordsViewController : UIViewController
 
 - (instancetype)initWithRecords:(NSMutableArray<MirrorRecordModel *> *)records;
+- (instancetype)initWithRecords:(NSMutableArray<MirrorRecordModel *> *)records titleKey:(NSString *)titleKey;
 
 @end
 

@@ -19,6 +19,7 @@
 #import "MirrorTool.h"
 #import "MirrorSettings.h"
 #import "SettingsViewController.h"
+#import "SpecificRecordsViewController.h"
 #import "LeftAnimation.h"
 #import "CellAnimation.h"
 #import "MirrorLanguage.h"
@@ -303,8 +304,30 @@
 - (void)showStartNowUnavailableAlert
 {
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"now_is_occupied"] message:nil preferredStyle:UIAlertControllerStyleAlert];
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"check_occupied_records"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self showOccupiedRecords];
+    }]];
     [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)showOccupiedRecords
+{
+    NSMutableArray<MirrorRecordModel *> *occupiedRecords = [self occupiedRecords];
+    SpecificRecordsViewController *recordsVC = [[SpecificRecordsViewController alloc] initWithRecords:occupiedRecords titleKey:@"occupied_records"];
+    [self.navigationController pushViewController:recordsVC animated:YES];
+}
+
+- (NSMutableArray<MirrorRecordModel *> *)occupiedRecords
+{
+    NSMutableArray<MirrorRecordModel *> *occupiedRecords = [NSMutableArray new];
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    long now = [[NSDate now] timeIntervalSince1970];
+    for (MirrorRecordModel *record in records) {
+        if (record.endTime == 0 || record.endTime > now) {
+            [occupiedRecords addObject:record];
+        }
+    }
+    return occupiedRecords;
 }
 
 - (void)presentTrackingViewControllerWithTaskName:(NSString *)taskName accurateStartDate:(NSDate *)accurateStartDate animated:(BOOL)animated
