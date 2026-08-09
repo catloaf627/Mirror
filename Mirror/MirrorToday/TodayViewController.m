@@ -495,7 +495,7 @@
     CGPoint viewPoint = [self.timelineContentView convertPoint:point toView:self.view];
     CGFloat pickerX = MIN(MAX(viewPoint.x - pickerWidth/2, kLeftRightSpacing), CGRectGetWidth(bounds) - pickerWidth - kLeftRightSpacing);
     CGFloat pickerY = viewPoint.y + 8;
-    if (pickerY + pickerHeight > CGRectGetHeight(bounds) - kLeftRightSpacing) {
+    if (pickerY + pickerHeight > CGRectGetHeight(bounds) - self.tabBarController.tabBar.frame.size.height) {
         pickerY = viewPoint.y - pickerHeight - 8;
     }
     pickerY = MAX(kLeftRightSpacing, pickerY);
