@@ -13,7 +13,6 @@ NS_ASSUME_NONNULL_BEGIN
 typedef NS_ENUM(NSInteger, TaskNameExistsType) {
     TaskNameExistsTypeValid, // 库里没有这个taskname，taskname合格
     TaskNameExistsTypeExistsInCurrentTasks,
-    TaskNameExistsTypeExistsInArchivedTasks,
 };
 
 @interface MirrorStorage : NSObject
@@ -22,17 +21,13 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (NSString *)isGoingOnTask; // 返回为空意味着没有正在进行的task
 
-+ (NSMutableArray<MirrorTaskModel *> *)tasksWithoutArchiveWithAddNew;
++ (NSMutableArray<MirrorTaskModel *> *)tasksWithAddNew;
 
 // Actions
 
 + (void)createTask:(MirrorTaskModel *)task;
 
 + (void)deleteTask:(NSString *)taskName;
-
-+ (void)archiveTask:(NSString *)taskName;
-
-+ (void)cancelArchiveTask:(NSString *)taskName;
 
 + (void)switchHiddenTask:(NSString *)taskName;
 

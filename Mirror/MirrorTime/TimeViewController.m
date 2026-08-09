@@ -64,7 +64,6 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskCreateNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskArchiveNotification object:nil];// 比其他vc多监听一个archive通知
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
         
@@ -110,7 +109,7 @@
 - (void)reloadData
 {
     if (!_isLoaded) return;
-    self.data = [MirrorStorage tasksWithoutArchiveWithAddNew];
+    self.data = [MirrorStorage tasksWithAddNew];
     [self.collectionView reloadData];
 }
 
@@ -395,26 +394,12 @@
         return;
     }
     NSInteger destinationItem = MIN(destinationIndexPath.item, self.data.count - 2);
-    NSMutableArray<MirrorTaskModel *> *visibleTasks = [NSMutableArray new];
-    for (MirrorTaskModel *task in self.data) {
-        if (!task.isAddTaskModel) {
-            [visibleTasks addObject:task];
-        }
-    }
-    MirrorTaskModel *selectedTask = visibleTasks[sourceIndexPath.item];
-    [visibleTasks removeObjectAtIndex:sourceIndexPath.item];
-    [visibleTasks insertObject:selectedTask atIndex:destinationItem];
-
     NSMutableArray<MirrorTaskModel *> *allTasks = [MirrorStorage retriveMirrorTasks];
-    NSInteger visibleIndex = 0;
-    for (NSInteger index = 0; index < allTasks.count; index++) {
-        if (!allTasks[index].isArchived) {
-            allTasks[index] = visibleTasks[visibleIndex];
-            visibleIndex += 1;
-        }
-    }
+    MirrorTaskModel *selectedTask = allTasks[sourceIndexPath.item];
+    [allTasks removeObjectAtIndex:sourceIndexPath.item];
+    [allTasks insertObject:selectedTask atIndex:destinationItem];
     [MirrorStorage reorderTasks:allTasks];
-    self.data = [MirrorStorage tasksWithoutArchiveWithAddNew];
+    self.data = [MirrorStorage tasksWithAddNew];
 }
 
 #pragma mark - Getters
@@ -452,7 +437,7 @@
 - (NSMutableArray<MirrorTaskModel *> *)data
 {
     if (!_data) {
-        _data = [MirrorStorage tasksWithoutArchiveWithAddNew];
+        _data = [MirrorStorage tasksWithAddNew];
     }
     return _data;
 }

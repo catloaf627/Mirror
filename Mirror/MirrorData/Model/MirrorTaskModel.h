@@ -15,14 +15,13 @@ NS_ASSUME_NONNULL_BEGIN
 
 // 存在本地
 @property (nonatomic, strong) NSString *taskName;
-@property (nonatomic, assign) BOOL isArchived;
 @property (nonatomic, assign) BOOL isHidden;
 @property (nonatomic, assign) MirrorColorType color;
 @property (nonatomic, assign) long createdTime;
 // 外部赋值
 @property (nonatomic, assign) BOOL isAddTaskModel;
 
-- (instancetype)initWithTitle:(NSString *)taskName createdTime:(long)createTime colorType:(MirrorColorType)colorType isArchived:(BOOL)isArchived isHidden:(BOOL)isHidden isAddTask:(BOOL)isAddTaskModel;
+- (instancetype)initWithTitle:(NSString *)taskName createdTime:(long)createTime colorType:(MirrorColorType)colorType isHidden:(BOOL)isHidden isAddTask:(BOOL)isAddTaskModel;
 
 
 @end

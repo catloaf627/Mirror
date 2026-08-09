@@ -42,20 +42,15 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     [MirrorStorage p_startLiveActivityWithTaskName:record.taskName startDate:startDate colorType:task.color];
 }
 
-+ (NSMutableArray<MirrorTaskModel *> *)tasksWithoutArchiveWithAddNew
++ (NSMutableArray<MirrorTaskModel *> *)tasksWithAddNew
 {
     NSMutableArray <MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
-    NSMutableArray <MirrorTaskModel *> *tasksWithoutArchive = [NSMutableArray new];
-    for (int i=0; i<tasks.count; i++) {
-        if (!tasks[i].isArchived) {
-            [tasksWithoutArchive addObject:tasks[i]];
-        }
-    }
+    NSMutableArray <MirrorTaskModel *> *tasksWithAddNew = [tasks mutableCopy];
     if (tasks.count < kMaxTaskCnt) {
-        MirrorTaskModel *fakemodel = [[MirrorTaskModel alloc] initWithTitle:@"" createdTime:0 colorType:0 isArchived:NO isHidden:NO isAddTask:YES];
-        [tasksWithoutArchive addObject:fakemodel];
+        MirrorTaskModel *fakemodel = [[MirrorTaskModel alloc] initWithTitle:@"" createdTime:0 colorType:0 isHidden:NO isAddTask:YES];
+        [tasksWithAddNew addObject:fakemodel];
     }
-    return tasksWithoutArchive;
+    return tasksWithAddNew;
 }
 
 #pragma mark - Actions
@@ -101,36 +96,6 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     }
     // 通知
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskDeleteNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
-}
-
-+ (void)archiveTask:(NSString *)taskName
-{
-    NSMutableArray <MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
-    for (int i=0; i<tasks.count; i++) {
-        if ([tasks[i].taskName isEqualToString:taskName]) {
-            NSLog(@"Archive");
-            tasks[i].isArchived = YES;
-            break;
-        }
-    }
-    [MirrorStorage saveMirrorTasks:tasks];
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskArchiveNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
-}
-
-+ (void)cancelArchiveTask:(NSString *)taskName
-{
-    NSMutableArray <MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
-    for (int i=0; i<tasks.count; i++) {
-        if ([tasks[i].taskName isEqualToString:taskName]) {
-            NSLog(@"Cancel Archive");
-            tasks[i].isArchived = NO;
-            break;
-        }
-    }
-    [MirrorStorage saveMirrorTasks:tasks];
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskArchiveNotification object:nil userInfo:nil];
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
@@ -325,11 +290,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     NSMutableArray <MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
     for (int i=0; i<tasks.count; i++) {
         if ([tasks[i].taskName isEqualToString:newTaskName]) {
-            if (tasks[i].isArchived) {
-                return TaskNameExistsTypeExistsInArchivedTasks;
-            } else {
-                return TaskNameExistsTypeExistsInCurrentTasks;
-            }
+            return TaskNameExistsTypeExistsInCurrentTasks;
         }
     }
     return TaskNameExistsTypeValid;
@@ -626,7 +587,6 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     for (MirrorTaskModel *task in tasks) {
         [jsonTasks addObject:@{
             @"task_name": task.taskName ?: @"",
-            @"is_archived": @(task.isArchived),
             @"is_hidden": @(task.isHidden),
             @"color": @(task.color),
             @"created_time": @(task.createdTime)
@@ -665,14 +625,13 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     for (NSDictionary *jsonTask in jsonTasks) {
         if (![jsonTask isKindOfClass:NSDictionary.class]) return NO;
         NSString *taskName = jsonTask[@"task_name"];
-        NSNumber *isArchived = jsonTask[@"is_archived"];
         NSNumber *isHidden = jsonTask[@"is_hidden"];
         NSNumber *color = jsonTask[@"color"];
         NSNumber *createdTime = jsonTask[@"created_time"];
-        if (![taskName isKindOfClass:NSString.class] || ![isArchived isKindOfClass:NSNumber.class] || ![isHidden isKindOfClass:NSNumber.class] || ![color isKindOfClass:NSNumber.class] || ![createdTime isKindOfClass:NSNumber.class]) {
+        if (![taskName isKindOfClass:NSString.class] || ![isHidden isKindOfClass:NSNumber.class] || ![color isKindOfClass:NSNumber.class] || ![createdTime isKindOfClass:NSNumber.class]) {
             return NO;
         }
-        MirrorTaskModel *task = [[MirrorTaskModel alloc] initWithTitle:taskName createdTime:[createdTime longValue] colorType:[color integerValue] isArchived:[isArchived boolValue] isHidden:[isHidden boolValue] isAddTask:NO];
+        MirrorTaskModel *task = [[MirrorTaskModel alloc] initWithTitle:taskName createdTime:[createdTime longValue] colorType:[color integerValue] isHidden:[isHidden boolValue] isAddTask:NO];
         [parsedTasks addObject:task];
     }
 

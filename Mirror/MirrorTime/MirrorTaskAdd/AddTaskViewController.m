@@ -34,7 +34,7 @@ static CGFloat const kAddTaskVCPadding = 20;
 {
     self = [super init];
     if (self) {
-        _editingTaskName = taskName;
+        _editingTaskName = taskName; // if empty, then it's a create page, if not, then it's a edit page.
     }
     return self;
 }
@@ -68,7 +68,7 @@ static CGFloat const kAddTaskVCPadding = 20;
         [newNameIsEmptyAlert addAction:understandAction];
         [self presentViewController:newNameIsEmptyAlert animated:YES completion:nil];
     } else if (!textIsTheSame && existType != TaskNameExistsTypeValid) {
-        UIAlertController* newNameIsDuplicateAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"task_cannot_be_duplicated"] message: [MirrorLanguage mirror_stringWithKey:existType == TaskNameExistsTypeExistsInCurrentTasks ? @"this_task_exists_in_current_task_list" : @"this_task_exists_in_the_archived_task_list"] preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertController* newNameIsDuplicateAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"task_cannot_be_duplicated"] message: [MirrorLanguage mirror_stringWithKey:@"this_task_exists_in_current_task_list"] preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction* understandAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"gotcha"] style:UIAlertActionStyleDefault handler:nil];
         [newNameIsDuplicateAlert addAction:understandAction];
         [self presentViewController:newNameIsDuplicateAlert animated:YES completion:nil];
@@ -118,22 +118,29 @@ static CGFloat const kAddTaskVCPadding = 20;
         make.centerX.offset(0);
         make.width.mas_equalTo(kScreenWidth - 2*kAddTaskVCPadding);
     }];
-    [self.view addSubview:self.addTaskNameHint];
-    [self.addTaskNameHint mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.mas_equalTo(self.editTaskNameTextField.mas_bottom).offset(8);
-        make.centerX.offset(0);
-        make.width.mas_equalTo(kScreenWidth - 2*kAddTaskVCPadding);
-    }];
+    BOOL isEditingTask = self.editingTaskName.length > 0;
+    if (!isEditingTask) {
+        [self.view addSubview:self.addTaskNameHint];
+        [self.addTaskNameHint mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.top.mas_equalTo(self.editTaskNameTextField.mas_bottom).offset(8);
+            make.centerX.offset(0);
+            make.width.mas_equalTo(kScreenWidth - 2*kAddTaskVCPadding);
+        }];
+    }
     
     [self.view addSubview:self.collectionView];
     [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.mas_equalTo(self.addTaskNameHint.mas_bottom).offset(16);
+        if (isEditingTask) {
+            make.top.mas_equalTo(self.editTaskNameTextField.mas_bottom).offset(16);
+        } else {
+            make.top.mas_equalTo(self.addTaskNameHint.mas_bottom).offset(16);
+        }
         make.centerX.offset(0);
         make.width.mas_equalTo(kScreenWidth - 2*kAddTaskVCPadding);
         make.height.mas_equalTo([self p_colorBlockWidth]);
     }];
     
-    if (self.editingTaskName.length > 0) {
+    if (isEditingTask) {
         [self.discardButton setImage:[[UIImage systemImageNamed:@"delete.left"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
         [self.discardButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] forState:UIControlStateNormal];
         [self.createButton setTitle:[MirrorLanguage mirror_stringWithKey:@"save"] forState:UIControlStateNormal];
@@ -220,11 +227,11 @@ static CGFloat const kAddTaskVCPadding = 20;
     if (!_brandNewTaskModel) {
         if (self.editingTaskName.length > 0) {
             MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:self.editingTaskName];
-            _brandNewTaskModel = [[MirrorTaskModel alloc] initWithTitle:task.taskName createdTime:task.createdTime colorType:task.color isArchived:task.isArchived isHidden:task.isHidden isAddTask:NO];
+            _brandNewTaskModel = [[MirrorTaskModel alloc] initWithTitle:task.taskName createdTime:task.createdTime colorType:task.color isHidden:task.isHidden isAddTask:NO];
         } else {
             NSArray *allColorType = @[@(MirrorColorTypeCellPink), @(MirrorColorTypeCellOrange), @(MirrorColorTypeCellYellow), @(MirrorColorTypeCellGreen), @(MirrorColorTypeCellTeal), @(MirrorColorTypeCellBlue), @(MirrorColorTypeCellPurple),@(MirrorColorTypeCellGray)];
             MirrorColorType type = [allColorType[arc4random() % allColorType.count] integerValue]; // 随机生成一个颜色
-            _brandNewTaskModel = [[MirrorTaskModel alloc] initWithTitle:[MirrorLanguage mirror_stringWithKey:@"untitled"] createdTime:[@(0) longValue] colorType:type isArchived:NO isHidden:NO isAddTask:NO];
+            _brandNewTaskModel = [[MirrorTaskModel alloc] initWithTitle:[MirrorLanguage mirror_stringWithKey:@"untitled"] createdTime:[@(0) longValue] colorType:type isHidden:NO isAddTask:NO];
         }
     }
     return _brandNewTaskModel;
@@ -234,7 +241,7 @@ static CGFloat const kAddTaskVCPadding = 20;
 {
     if (!_editTaskNameTextField) {
         _editTaskNameTextField = [UITextField new];
-        _editTaskNameTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"enter_task_title"];
+        _editTaskNameTextField.placeholder = [MirrorLanguage mirror_stringWithKey:self.editingTaskName.length > 0 ? @"edit_task_title" : @"enter_task_title"];
         _editTaskNameTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _editTaskNameTextField.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
         _editTaskNameTextField.enabled = YES;

@@ -22,7 +22,7 @@
 - (void)config
 {
     [self addSubview:self.hintLabel];
-    NSArray *hints = @[[MirrorLanguage mirror_stringWithKey:@"timeVC_hint0"], [MirrorLanguage mirror_stringWithKey:@"timeVC_hint1"], [MirrorLanguage mirror_stringWithKey:@"timeVC_hint2"], [MirrorLanguage mirror_stringWithKey:@"timeVC_hint3"]];
+    NSArray *hints = @[[MirrorLanguage mirror_stringWithKey:@"timeVC_hint0"], [MirrorLanguage mirror_stringWithKey:@"timeVC_hint1"], [MirrorLanguage mirror_stringWithKey:@"timeVC_hint3"]];
     NSString *hint = hints[arc4random() % hints.count]; // 随机选一个hint
     self.hintLabel.text = hint;
     [self.hintLabel mas_makeConstraints:^(MASConstraintMaker *make) {

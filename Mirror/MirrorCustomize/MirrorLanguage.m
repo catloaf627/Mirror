@@ -58,11 +58,11 @@
     [mirrorDict setValue:ML(@"Edit", @"编辑", @"Editar", @"Modifier", @"編集", @"편집") forKey:@"edit"];
     [mirrorDict setValue:ML(@"Remove", @"移掉", @"Quitar", @"Retirer", @"取り除く", @"제거") forKey:@"remove"];
     [mirrorDict setValue:ML(@"Delete", @"删除", @"Eliminar", @"Supprimer", @"削除", @"삭제") forKey:@"delete"];
-    [mirrorDict setValue:ML(@"Archive", @"归档", @"Archivar", @"Archiver", @"アーカイブ", @"보관") forKey:@"archive"];
     [mirrorDict setValue:ML(@"Cancel", @"取消", @"Cancelar", @"Annuler", @"キャンセル", @"취소") forKey:@"cancel"];
     
     // Profile add cell
     [mirrorDict setValue:ML(@"Enter task title", @"输入任务名称", @"Ingresa el título de la tarea", @"Saisir le titre de la tâche", @"タスク名を入力", @"작업 제목 입력") forKey:@"enter_task_title"];
+    [mirrorDict setValue:ML(@"Edit task title", @"编辑任务名称", @"Edita el título de la tarea", @"Modifier le titre de la tâche", @"タスク名を編集", @"작업 제목 편집") forKey:@"edit_task_title"];
     [mirrorDict setValue:ML(@"Create", @"创建", @"Crear", @"Créer", @"作成", @"생성") forKey:@"create"];
     [mirrorDict setValue:ML(@"Discard", @"放弃", @"Descartar", @"Abandonner", @"破棄", @"취소") forKey:@"discard"];
     [mirrorDict setValue:ML(@"Untitled", @"未命名", @"Sin título", @"Sans titre", @"無題", @"제목 없음") forKey:@"untitled"];
@@ -71,7 +71,6 @@
     [mirrorDict setValue:ML(@"Gotcha", @"知道啦", @"Entendido", @"Compris", @"了解", @"알겠어요") forKey:@"gotcha"];
     [mirrorDict setValue:ML(@"Task cannot be duplicated", @"任务不可重复", @"La tarea no puede duplicarse", @"La tâche ne peut pas être dupliquée", @"タスクは重複できません", @"작업은 중복될 수 없습니다") forKey:@"task_cannot_be_duplicated"];
     [mirrorDict setValue:ML(@"This task exists in the current task list", @"这个任务已经存在于当前任务列表中", @"Esta tarea ya existe en la lista actual", @"Cette tâche existe déjà dans la liste actuelle", @"このタスクは現在のリストに存在します", @"이 작업은 현재 목록에 이미 있습니다") forKey:@"this_task_exists_in_current_task_list"];
-    [mirrorDict setValue:ML(@"This task exists in the archived task list. You can activate it in [Data]", @"这个任务已经存在于归档任务列表中。你可以在【数据】中重新激活此任务。", @"Esta tarea existe en la lista archivada. Puedes activarla en [Datos]", @"Cette tâche existe dans la liste archivée. Vous pouvez l'activer dans [Données]", @"このタスクはアーカイブ済みです。[データ]で再有効化できます", @"이 작업은 보관 목록에 있습니다. [데이터]에서 다시 활성화할 수 있습니다") forKey:@"this_task_exists_in_the_archived_task_list"];
     
     // Full screen
     [mirrorDict setValue:ML(@"Go!", @"开始!", @"¡Vamos!", @"C'est parti !", @"開始!", @"시작!") forKey:@"go"];
@@ -81,7 +80,6 @@
     // Task record
     [mirrorDict setValue:ML(@"Counting...", @"计时中...", @"Cronometrando...", @"Chronométrage...", @"計時中...", @"타이머 실행 중...") forKey:@"counting"];
     [mirrorDict setValue:ML(@"Lasted: ", @"持续时间：", @"Duración: ", @"Durée : ", @"経過時間: ", @"지속 시간: ") forKey:@"lasted"];
-    [mirrorDict setValue:ML(@" (Archived) ", @"（已归档）", @" (Archivada) ", @" (Archivée) ", @" (アーカイブ済み) ", @" (보관됨) ") forKey:@"archived_tag"];
     
     // Delete period
     [mirrorDict setValue:ML(@"Delete this time period? ", @"确定删除这个时间段？", @"¿Eliminar este periodo?", @"Supprimer cette période ?", @"この時間帯を削除しますか？", @"이 시간대를 삭제할까요?") forKey:@"delete_period_?"];
@@ -90,13 +88,11 @@
     // Time VC
     [mirrorDict setValue:ML(@"Go to edit page(upper right) to reorder tasks", @"进入编辑页面（右上角）可以编辑顺序", @"Ve a editar (arriba a la derecha) para reordenar tareas", @"Allez à la page d'édition (en haut à droite) pour réordonner les tâches", @"右上の編集ページでタスクを並べ替えられます", @"오른쪽 위 편집 화면에서 작업 순서를 바꿀 수 있습니다") forKey:@"timeVC_hint0"];
     [mirrorDict setValue:ML(@"Go to edit page(upper right) to edit tasks", @"进入编辑页面（右上角）可以编辑任务", @"Ve a editar (arriba a la derecha) para editar tareas", @"Allez à la page d'édition (en haut à droite) pour modifier les tâches", @"右上の編集ページでタスクを編集できます", @"오른쪽 위 편집 화면에서 작업을 편집할 수 있습니다") forKey:@"timeVC_hint1"];
-    [mirrorDict setValue:ML(@"Archived tasks will not be displayed on the main page", @"已经归档的任务将不会展示在主页面", @"Las tareas archivadas no se mostrarán en la página principal", @"Les tâches archivées ne s'afficheront pas sur la page principale", @"アーカイブ済みタスクはメイン画面に表示されません", @"보관된 작업은 메인 화면에 표시되지 않습니다") forKey:@"timeVC_hint2"];
     [mirrorDict setValue:ML(@"Up to 8 tasks can be created", @"最多可建立8个任务", @"Se pueden crear hasta 8 tareas", @"Jusqu'à 8 tâches peuvent être créées", @"最大8個のタスクを作成できます", @"최대 8개의 작업을 만들 수 있습니다") forKey:@"timeVC_hint3"];
     
     // All tasks
     [mirrorDict setValue:ML(@"Long press to reorder tasks", @"长按拖动可以编辑顺序", @"Mantén presionado para reordenar tareas", @"Appuyez longuement pour réordonner les tâches", @"長押しでタスクを並べ替え", @"길게 눌러 작업 순서 변경") forKey:@"alltasks_hint0"];
     [mirrorDict setValue:ML(@"Tap task name to edit", @"轻点任务名可编辑", @"Toca el nombre para editar", @"Touchez le nom pour modifier", @"タスク名をタップして編集", @"작업 이름을 눌러 편집") forKey:@"alltasks_hint1"];
-    [mirrorDict setValue:ML(@"Archived tasks will not be displayed on the main page", @"已经归档的任务将不会展示在主页面", @"Las tareas archivadas no se mostrarán en la página principal", @"Les tâches archivées ne s'afficheront pas sur la page principale", @"アーカイブ済みタスクはメイン画面に表示されません", @"보관된 작업은 메인 화면에 표시되지 않습니다") forKey:@"alltasks_hint2"];
     [mirrorDict setValue:ML(@"Up to 8 tasks can be created", @"最多可建立8个任务", @"Se pueden crear hasta 8 tareas", @"Jusqu'à 8 tâches peuvent être créées", @"最大8個のタスクを作成できます", @"최대 8개의 작업을 만들 수 있습니다") forKey:@"alltasks_hint3"];
     [mirrorDict setValue:ML(@"Delete this task? ", @"确定删除这个任务？", @"¿Eliminar esta tarea?", @"Supprimer cette tâche ?", @"このタスクを削除しますか？", @"이 작업을 삭제할까요?") forKey:@"delete_task_?"];
     [mirrorDict setValue:ML(@"Created at ", @"创建于 ", @"Creada el ", @"Créée le ", @"作成日 ", @"생성일 ") forKey:@"created_at"];

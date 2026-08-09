@@ -74,7 +74,6 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 #define kMinSeconds (60)
 
 // 系统声音 1050 - 1200 都还可以
-#define kAudioArchive (1104)
 #define kAudioClick (1123)
 
 // System Notifications
@@ -94,7 +93,6 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 // Data Notifications (MirrorStorage统一来发)
 #define MirrorTaskCreateNotification @"MirrorTaskCreateNotification"
 #define MirrorTaskDeleteNotification @"MirrorTaskDeleteNotification"
-#define MirrorTaskArchiveNotification @"MirrorTaskArchiveNotification"
 #define MirrorTaskHiddenNotification @"MirrorTaskHiddenNotification"
 #define MirrorTaskChangeOrderNotification @"MirrorTaskChangeOrderNotification"
 #define MirrorTaskEditNotification @"MirrorTaskEditNotification"

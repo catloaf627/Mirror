@@ -15,7 +15,6 @@
 		4A0D410229F13C5300F13EAE /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D410129F13C5300F13EAE /* LegendView.m */; };
 		4A10185E2B90876E00AA9677 /* LinechartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A10185D2B90876E00AA9677 /* LinechartView.m */; };
 		4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */; };
-		4A32A40529F8CAC500DCCF57 /* EditTaskCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A32A40429F8CAC500DCCF57 /* EditTaskCollectionViewCell.m */; };
 		4A37369429E2AEE900187280 /* PiechartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369329E2AEE900187280 /* PiechartView.m */; };
 		4A37369729E2BD3C00187280 /* SliceLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369629E2BD3C00187280 /* SliceLayer.m */; };
 		4A37369A29E3AD8700187280 /* MirrorSettings.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369929E3AD8700187280 /* MirrorSettings.m */; };
@@ -45,7 +44,6 @@
 		4AA353352A25D59400920404 /* HeatmapCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA353342A25D59400920404 /* HeatmapCollectionViewCell.m */; };
 		4AA353382A25D9BB00920404 /* ExportImportCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA353372A25D9BB00920404 /* ExportImportCollectionViewCell.m */; };
 		4AA3533B2A25DBDA00920404 /* ReportBugCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA3533A2A25DBDA00920404 /* ReportBugCollectionViewCell.m */; };
-		4AA353412A25E3FA00920404 /* HintHeader.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA353402A25E3FA00920404 /* HintHeader.m */; };
 		4AB1182E2B9851F7003CED03 /* LineChartCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AB1182D2B9851F7003CED03 /* LineChartCollectionViewCell.m */; };
 		4AB9C8BA29E911C8002358E2 /* HistogramCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AB9C8B929E911C8002358E2 /* HistogramCollectionViewCell.m */; };
 		4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */; };
@@ -63,7 +61,6 @@
 		4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171828DF613D008A6A18 /* TimeViewController.m */; };
 		4AE4171F28DF6155008A6A18 /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171E28DF6155008A6A18 /* SettingsViewController.m */; };
 		4AE5E8922A0253DA004228C1 /* SplitLineView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE5E8912A0253DA004228C1 /* SplitLineView.m */; };
-		4AE5E8952A02644E004228C1 /* HeartFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE5E8942A02644E004228C1 /* HeartFooter.m */; };
 		4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */; };
 		4AFA3B7729E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFA3B7629E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.m */; };
 		4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFB77A128DF4A380064CBCA /* AppDelegate.m */; };
@@ -114,8 +111,6 @@
 		4A10185D2B90876E00AA9677 /* LinechartView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LinechartView.m; sourceTree = "<group>"; };
 		4A32A3FC29F7782200DCCF57 /* MirrorTimeText.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorTimeText.h; sourceTree = "<group>"; };
 		4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTimeText.m; sourceTree = "<group>"; };
-		4A32A40329F8CAC500DCCF57 /* EditTaskCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = EditTaskCollectionViewCell.h; sourceTree = "<group>"; };
-		4A32A40429F8CAC500DCCF57 /* EditTaskCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = EditTaskCollectionViewCell.m; sourceTree = "<group>"; };
 		4A37369229E2AEE900187280 /* PiechartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PiechartView.h; sourceTree = "<group>"; };
 		4A37369329E2AEE900187280 /* PiechartView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PiechartView.m; sourceTree = "<group>"; };
 		4A37369529E2BD3C00187280 /* SliceLayer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SliceLayer.h; sourceTree = "<group>"; };
@@ -175,8 +170,6 @@
 		4AA353372A25D9BB00920404 /* ExportImportCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ExportImportCollectionViewCell.m; sourceTree = "<group>"; };
 		4AA353392A25DBDA00920404 /* ReportBugCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReportBugCollectionViewCell.h; sourceTree = "<group>"; };
 		4AA3533A2A25DBDA00920404 /* ReportBugCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReportBugCollectionViewCell.m; sourceTree = "<group>"; };
-		4AA3533F2A25E3FA00920404 /* HintHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HintHeader.h; sourceTree = "<group>"; };
-		4AA353402A25E3FA00920404 /* HintHeader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HintHeader.m; sourceTree = "<group>"; };
 		4AB1182C2B9851F7003CED03 /* LineChartCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineChartCollectionViewCell.h; sourceTree = "<group>"; };
 		4AB1182D2B9851F7003CED03 /* LineChartCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineChartCollectionViewCell.m; sourceTree = "<group>"; };
 		4AB9C8B829E911C8002358E2 /* HistogramCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HistogramCollectionViewCell.h; sourceTree = "<group>"; };
@@ -208,8 +201,6 @@
 		4AE4171E28DF6155008A6A18 /* SettingsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SettingsViewController.m; sourceTree = "<group>"; };
 		4AE5E8902A0253DA004228C1 /* SplitLineView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SplitLineView.h; sourceTree = "<group>"; };
 		4AE5E8912A0253DA004228C1 /* SplitLineView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SplitLineView.m; sourceTree = "<group>"; };
-		4AE5E8932A02644E004228C1 /* HeartFooter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HeartFooter.h; sourceTree = "<group>"; };
-		4AE5E8942A02644E004228C1 /* HeartFooter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HeartFooter.m; sourceTree = "<group>"; };
 		4AF5A32E2B9C5F98009A2FB3 /* HintFooter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HintFooter.h; sourceTree = "<group>"; };
 		4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HintFooter.m; sourceTree = "<group>"; };
 		4AFA3B7529E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WeekStartsOnCollectionViewCell.h; sourceTree = "<group>"; };
@@ -330,12 +321,6 @@
 		4A32A3FF29F8C88F00DCCF57 /* EditTasks */ = {
 			isa = PBXGroup;
 			children = (
-				4A32A40329F8CAC500DCCF57 /* EditTaskCollectionViewCell.h */,
-				4A32A40429F8CAC500DCCF57 /* EditTaskCollectionViewCell.m */,
-				4AA3533F2A25E3FA00920404 /* HintHeader.h */,
-				4AA353402A25E3FA00920404 /* HintHeader.m */,
-				4AE5E8932A02644E004228C1 /* HeartFooter.h */,
-				4AE5E8942A02644E004228C1 /* HeartFooter.m */,
 			);
 			path = EditTasks;
 			sourceTree = "<group>";
@@ -777,8 +762,6 @@
 				4ADDC5BD28E6DF8B006F02DE /* ColorCollectionViewCell.m in Sources */,
 				4A7CCD2629DBC7CF00879D9C /* TodayViewController.m in Sources */,
 				4A88212929F6035E009E422C /* CellAnimation.m in Sources */,
-				4AA353412A25E3FA00920404 /* HintHeader.m in Sources */,
-				4A32A40529F8CAC500DCCF57 /* EditTaskCollectionViewCell.m in Sources */,
 				4AB1182E2B9851F7003CED03 /* LineChartCollectionViewCell.m in Sources */,
 				4A410A2829EA51750007003B /* LegendCollectionViewCell.m in Sources */,
 				4A379B5728E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m in Sources */,
@@ -822,7 +805,6 @@
 				4AA3533B2A25DBDA00920404 /* ReportBugCollectionViewCell.m in Sources */,
 				4AC1FDC72A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m in Sources */,
 				4A379B5428E31BD200785CAE /* MirrorMacro.m in Sources */,
-				4AE5E8952A02644E004228C1 /* HeartFooter.m in Sources */,
 				4A379B4728E2F33C00785CAE /* MirrorLanguage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

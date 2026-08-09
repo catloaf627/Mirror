@@ -529,7 +529,7 @@
 
 - (void)showTaskPickerAtPoint:(CGPoint)point
 {
-    NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage tasksWithoutArchiveWithAddNew];
+    NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage tasksWithAddNew];
     NSMutableArray<MirrorTaskModel *> *availableTasks = [NSMutableArray new];
     for (MirrorTaskModel *task in tasks) {
         if (!task.isAddTaskModel) {

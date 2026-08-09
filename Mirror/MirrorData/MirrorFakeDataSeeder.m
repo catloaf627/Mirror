@@ -65,7 +65,6 @@ static NSInteger const kFakeDataEndDay = 9;
         MirrorTaskModel *task = [[MirrorTaskModel alloc] initWithTitle:plan.name
                                                            createdTime:(long)[startDate timeIntervalSince1970]
                                                              colorType:plan.color
-                                                            isArchived:NO
                                                               isHidden:NO
                                                              isAddTask:NO];
         [filteredTasks addObject:task];
