@@ -101,7 +101,17 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
     [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"import"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [MirrorFakeDataSeeder seedFakeData];
         [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
+        [self showExampleDataImportedAlert];
     }]];
+    [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)showExampleDataImportedAlert
+{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                             message:[MirrorLanguage mirror_stringWithKey:@"example_data_imported_message"]
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
     [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
 }
 
