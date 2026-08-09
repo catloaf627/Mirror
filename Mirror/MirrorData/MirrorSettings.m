@@ -182,7 +182,7 @@ static NSInteger const kMirrorLanguageChinese = 1;
 {
     NSNumber *spanType = [[NSUserDefaults standardUserDefaults] objectForKey:@"MirrorUserPreferredSpanType"];
     if (spanType==nil) {
-        [[NSUserDefaults standardUserDefaults] setInteger:SpanTypeWeek forKey:@"MirrorUserPreferredSpanType"];
+        [[NSUserDefaults standardUserDefaults] setInteger:SpanTypeYear forKey:@"MirrorUserPreferredSpanType"];
         return SpanTypeWeek; // 如果用户没有点过，默认展示week
     } else {
         return [spanType integerValue];
