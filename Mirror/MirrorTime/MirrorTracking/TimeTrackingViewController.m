@@ -19,7 +19,6 @@ static CGFloat const kPadding = 20;
 
 static CGFloat const kTaskNameSize = 35;
 static CGFloat const kIntervalSize = 70;
-static CGFloat const kHintSize = 25;
 
 static NSString *const kHintFont = @"TrebuchetMS-Italic";
 static CGFloat const kCircleLineWidth = 18;
@@ -50,7 +49,7 @@ static CGFloat const kCircleLineWidth = 18;
 
     CGContextSetLineWidth(context, kCircleLineWidth);
     CGContextSetLineCap(context, kCGLineCapRound);
-    [[UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellPlus] setStroke];
+    [[UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG] setStroke];
     CGContextAddArc(context, center.x, center.y, radius, startAngle, startAngle + 2*M_PI, 0);
     CGContextStrokePath(context);
 
@@ -174,23 +173,25 @@ static CGFloat const kCircleLineWidth = 18;
 - (void)p_setupUI
 {
     self.view.clipsToBounds = YES;
-    self.view.backgroundColor = [UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:self.taskName].color];
-    [self.view addSubview:self.taskNameLabel];
-    [self.taskNameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.offset(0);
-        make.centerY.offset(-190);
-        make.width.equalTo(@(kScreenWidth - 2*kPadding));
-    }];
+    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
     [self.view addSubview:self.circleView];
     [self.circleView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
         make.centerY.offset(-20);
         make.width.height.mas_equalTo(MIN(kScreenWidth - 2*kPadding, 280));
     }];
+
     [self.view addSubview:self.timeIntervalLabel];
     [self.timeIntervalLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.center.equalTo(self.circleView);
         make.width.equalTo(self.circleView).offset(-2*kCircleLineWidth - 16);
+    }];
+    
+    [self.view addSubview:self.taskNameLabel];
+    [self.taskNameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.offset(0);
+        make.bottom.equalTo(self.circleView.mas_top).offset(-36);
+        make.width.equalTo(@(kScreenWidth - 2*kPadding));
     }];
     
     [self.view addSubview:self.stopButton];
@@ -217,9 +218,8 @@ static CGFloat const kCircleLineWidth = 18;
 
 - (void)updateLabels
 {
-    NSDate *now = self.nowTime;
     BOOL canStop = [self canStopAndKeepRecord];
-    self.view.backgroundColor = canStop ? [UIColor mirrorColorNamed:MirrorColorTypeBackground] : [UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:self.taskName].color];
+    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
 
     if (canStop) {
         self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
