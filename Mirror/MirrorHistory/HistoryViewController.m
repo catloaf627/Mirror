@@ -276,7 +276,7 @@
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     [MirrorSettings changeSpanType:self.typeSwitch.selectedSegmentIndex];
-    self.offset = 0;
+    self.offset = 0-1; // show year by default
     [self reloadData];
 }
 
