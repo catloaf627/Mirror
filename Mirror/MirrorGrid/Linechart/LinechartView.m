@@ -85,8 +85,11 @@ static CGFloat const kTimelineLineWidth = 5;
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    CGFloat width =  kMinCellWidth > self.bounds.size.width/self.data.count ? kMinCellWidth : self.bounds.size.width/self.data.count;
-    return CGSizeMake(width, self.bounds.size.height);
+    if (self.data.count == 0) {
+        return CGSizeZero;
+    }
+    CGFloat width =  kMinCellWidth > collectionView.bounds.size.width/self.data.count ? kMinCellWidth : collectionView.bounds.size.width/self.data.count;
+    return CGSizeMake(width, collectionView.bounds.size.height);
 }
 
 #pragma mark - Refactor Data
