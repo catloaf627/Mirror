@@ -16,6 +16,7 @@
 
 static CGFloat const kCellHeight = 30; // 一个legend的高度
 static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
+static NSString * const kMirrorLegendClickableHintShownKey = @"MirrorLegendClickableHintShown";
 
 @interface LegendView () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
@@ -85,6 +86,20 @@ static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
 }
 
 #pragma mark - UICollectionViewDelegate
+
+- (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (indexPath.item != 0 || [[NSUserDefaults standardUserDefaults] boolForKey:kMirrorLegendClickableHintShownKey]) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kMirrorLegendClickableHintShownKey];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.3 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        NSIndexPath *firstIndexPath = [NSIndexPath indexPathForItem:0 inSection:0];
+        LegendCollectionViewCell *firstCell = (LegendCollectionViewCell *)[collectionView cellForItemAtIndexPath:firstIndexPath];
+        [firstCell layoutIfNeeded];
+        [firstCell animateColorSquareSelection];
+    });
+}
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {

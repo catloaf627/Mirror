@@ -40,6 +40,7 @@
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorDataModel *>  *data;
 @property (nonatomic, assign) NSInteger offset;
+@property (nonatomic, copy) NSString *legendConfirmationRangeText;
 // UI
 @property (nonatomic, strong) UISegmentedControl *typeSwitch;
 @property (nonatomic, strong) UIView *interactionView; //在这个view的范围内，点左侧offset-1,点右侧offset+1
@@ -134,6 +135,7 @@
     [self updateHint]; // reloaddata要顺便reload一下emptyhint的状态
     
     // legend
+    self.legendView.confirmationRangeText = self.legendConfirmationRangeText;
     [self.legendView updateWithData:self.data];
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);
@@ -357,7 +359,7 @@
         endTime = startTime + numberOfDaysIYear*86400;
     }
     
-    self.legendView.confirmationRangeText = [self confirmationRangeTextWithStartTime:startTime endTime:endTime];
+    self.legendConfirmationRangeText = [self confirmationRangeTextWithStartTime:startTime endTime:endTime];
     self.data = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:YES];
     // update label
     NSString *startDate = [MirrorTimeText YYYYmmddWeekday:[NSDate dateWithTimeIntervalSince1970:startTime]];
@@ -476,6 +478,7 @@
 {
     if (!_legendView) {
         _legendView = [[LegendView alloc] initWithData:self.data];
+        _legendView.confirmationRangeText = self.legendConfirmationRangeText;
         _legendView.delegate = self;
     }
     return _legendView;
