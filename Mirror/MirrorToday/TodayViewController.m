@@ -34,6 +34,10 @@
 @property (nonatomic, assign) CGFloat hourHeight;
 @property (nonatomic, assign) long pendingStartTimestamp;
 @property (nonatomic, assign) NSInteger selectedPeriodIndex;
+@property (nonatomic, assign) NSInteger editingPeriodIndex;
+@property (nonatomic, strong) UIDatePicker *editingStartPicker;
+@property (nonatomic, strong) UIDatePicker *editingEndPicker;
+@property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
 
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
@@ -264,7 +268,7 @@
     }
     
     MirrorRecordModel *record = records[periodIndex];
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
     
     UIDatePicker *startPicker = [UIDatePicker new];
     startPicker.datePickerMode = UIDatePickerModeTime;
@@ -272,6 +276,7 @@
     startPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
     startPicker.date = [NSDate dateWithTimeIntervalSince1970:record.startTime];
     startPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:record.endTime - kMinSeconds];
+    [startPicker addTarget:self action:@selector(startPickerValueChanged:) forControlEvents:UIControlEventValueChanged];
     if (periodIndex - 1 >= 0) {
         startPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex - 1].endTime];
     } else {
@@ -284,11 +289,16 @@
     endPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
     endPicker.date = [NSDate dateWithTimeIntervalSince1970:record.endTime];
     endPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:record.startTime + kMinSeconds];
+    [endPicker addTarget:self action:@selector(endPickerValueChanged:) forControlEvents:UIControlEventValueChanged];
     if (periodIndex + 1 <= records.count - 1) {
         endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex + 1].startTime];
     } else {
         endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp] + 24 * 3600];
     }
+    
+    self.editingPeriodIndex = periodIndex;
+    self.editingStartPicker = startPicker;
+    self.editingEndPicker = endPicker;
     
     UILabel *startLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"starts_at"]];
     UILabel *endLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"ends_at"]];
@@ -300,39 +310,85 @@
     
     [startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(24);
-        make.top.offset(76);
+        make.top.offset(58);
         make.width.mas_equalTo(90);
-        make.height.mas_equalTo(32);
+        make.height.mas_equalTo(30);
     }];
     [startPicker mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(startLabel.mas_right).offset(8);
         make.centerY.mas_equalTo(startLabel);
         make.right.offset(-24);
-        make.height.mas_equalTo(36);
+        make.height.mas_equalTo(34);
     }];
     [endLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(startLabel);
-        make.top.mas_equalTo(startLabel.mas_bottom).offset(12);
+        make.top.mas_equalTo(startLabel.mas_bottom).offset(8);
         make.width.mas_equalTo(90);
-        make.height.mas_equalTo(32);
+        make.height.mas_equalTo(30);
     }];
     [endPicker mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(endLabel.mas_right).offset(8);
         make.centerY.mas_equalTo(endLabel);
         make.right.offset(-24);
-        make.height.mas_equalTo(36);
+        make.height.mas_equalTo(34);
     }];
     
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
-    UIAlertAction *saveAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"save"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        if ([endPicker.date timeIntervalSince1970] - [startPicker.date timeIntervalSince1970] < kMinSeconds) {
-            return;
-        }
-        [MirrorStorage editPeriodAtIndex:periodIndex startAt:startPicker.date endAt:endPicker.date];
+    [self presentViewController:alertController animated:YES completion:^{
+        [self addEditingDismissTapRecognizer];
     }];
-    [alertController addAction:cancelAction];
-    [alertController addAction:saveAction];
-    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)addEditingDismissTapRecognizer
+{
+    if (self.editingDismissTapRecognizer != nil) {
+        return;
+    }
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissEditingPeriodAlert:)];
+    tapRecognizer.cancelsTouchesInView = NO;
+    self.editingDismissTapRecognizer = tapRecognizer;
+    [self.view.window addGestureRecognizer:tapRecognizer];
+}
+
+- (void)dismissEditingPeriodAlert:(UITapGestureRecognizer *)tapRecognizer
+{
+    UIViewController *presentedViewController = self.presentedViewController;
+    UIView *alertView = presentedViewController.view;
+    CGPoint tapPoint = [tapRecognizer locationInView:alertView];
+    if (CGRectContainsPoint(alertView.bounds, tapPoint)) {
+        return;
+    }
+    [self removeEditingDismissTapRecognizer];
+    self.editingStartPicker = nil;
+    self.editingEndPicker = nil;
+    [presentedViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)removeEditingDismissTapRecognizer
+{
+    [self.view.window removeGestureRecognizer:self.editingDismissTapRecognizer];
+    self.editingDismissTapRecognizer = nil;
+}
+
+- (void)startPickerValueChanged:(UIDatePicker *)picker
+{
+    NSDate *minimumEndDate = [picker.date dateByAddingTimeInterval:kMinSeconds];
+    self.editingEndPicker.minimumDate = minimumEndDate;
+    if ([self.editingEndPicker.date compare:minimumEndDate] == NSOrderedAscending) {
+        self.editingEndPicker.date = minimumEndDate;
+        [MirrorStorage editPeriodIsStartTime:NO to:round([minimumEndDate timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+    }
+    [MirrorStorage editPeriodIsStartTime:YES to:round([picker.date timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+}
+
+- (void)endPickerValueChanged:(UIDatePicker *)picker
+{
+    NSDate *maximumStartDate = [picker.date dateByAddingTimeInterval:-kMinSeconds];
+    self.editingStartPicker.maximumDate = maximumStartDate;
+    if ([self.editingStartPicker.date compare:maximumStartDate] == NSOrderedDescending) {
+        self.editingStartPicker.date = maximumStartDate;
+        [MirrorStorage editPeriodIsStartTime:YES to:round([maximumStartDate timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+    }
+    [MirrorStorage editPeriodIsStartTime:NO to:round([picker.date timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
 }
 
 #pragma mark - Timeline
