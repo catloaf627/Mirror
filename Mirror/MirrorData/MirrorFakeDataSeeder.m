@@ -44,7 +44,7 @@ static NSInteger const kFakeDataStartMonth = 1;
 static NSInteger const kFakeDataStartDay = 1;
 static NSInteger const kFakeDataEndYear = 2026;
 static NSInteger const kFakeDataEndMonth = 8;
-static NSInteger const kFakeDataEndDay = 7;
+static NSInteger const kFakeDataEndDay = 9;
 
 + (void)seedFakeData
 {
@@ -169,12 +169,40 @@ static NSInteger const kFakeDataEndDay = 7;
 
 + (void)addRecordWithName:(NSString *)name components:(NSDateComponents *)components hour:(NSInteger)hour minute:(NSInteger)minute durationMinutes:(NSInteger)durationMinutes records:(NSMutableArray<MirrorRecordModel *> *)records
 {
-    NSDate *startDate = [self dateWithYear:components.year month:components.month day:components.day hour:hour minute:minute];
-    NSDate *endDate = [startDate dateByAddingTimeInterval:durationMinutes * 60];
+    NSDate *dayStartDate = [self dateWithYear:components.year month:components.month day:components.day hour:0 minute:0];
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *nextDayStartDate = [calendar dateByAddingUnit:NSCalendarUnitDay value:1 toDate:dayStartDate options:0];
+    long startTime = round([[self dateWithYear:components.year month:components.month day:components.day hour:hour minute:minute] timeIntervalSince1970]);
+    long duration = durationMinutes * 60;
+    long dayEnd = round([nextDayStartDate timeIntervalSince1970]);
+    long endTime = startTime + duration;
+
+    BOOL didMoveRecord = YES;
+    while (didMoveRecord) {
+        didMoveRecord = NO;
+        for (MirrorRecordModel *record in records) {
+            if ([self startTime:startTime endTime:endTime overlapsRecord:record]) {
+                startTime = record.endTime;
+                endTime = startTime + duration;
+                didMoveRecord = YES;
+            }
+        }
+    }
+
+    if (endTime > dayEnd) {
+        return;
+    }
+
     MirrorRecordModel *record = [[MirrorRecordModel alloc] initWithTitle:name
-                                                                startTime:(long)round([startDate timeIntervalSince1970])
-                                                                  endTime:(long)round([endDate timeIntervalSince1970])];
+                                                                startTime:startTime
+                                                                  endTime:endTime];
     [records addObject:record];
+}
+
++ (BOOL)startTime:(long)startTime endTime:(long)endTime overlapsRecord:(MirrorRecordModel *)record
+{
+    return startTime < record.endTime && endTime > record.startTime;
 }
 
 + (NSDate *)dateWithYear:(NSInteger)year month:(NSInteger)month day:(NSInteger)day hour:(NSInteger)hour minute:(NSInteger)minute
