@@ -35,9 +35,12 @@
 @property (nonatomic, assign) long pendingStartTimestamp;
 @property (nonatomic, assign) NSInteger selectedPeriodIndex;
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
+@property (nonatomic, assign) BOOL isRecordEditMenuVisible;
+@property (nonatomic, assign) BOOL shouldSuppressNextTaskPicker;
 @property (nonatomic, strong) UIDatePicker *editingStartPicker;
 @property (nonatomic, strong) UIDatePicker *editingEndPicker;
 @property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
+@property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
 
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
@@ -182,6 +185,10 @@
 
 - (void)tapTimeline:(UITapGestureRecognizer *)tapRecognizer
 {
+    if ([self dismissVisibleRecordEditMenuIfNeeded] || self.shouldSuppressNextTaskPicker) {
+        self.shouldSuppressNextTaskPicker = NO;
+        return;
+    }
     // 震动反馈
     UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc]
         initWithStyle:UIImpactFeedbackStyleMedium];
@@ -242,6 +249,26 @@
 - (UIMenu *)editMenuInteraction:(UIEditMenuInteraction *)interaction menuForConfiguration:(UIEditMenuConfiguration *)configuration suggestedActions:(NSArray<UIMenuElement *> *)suggestedActions API_AVAILABLE(ios(16.0))
 {
     return [self recordMenuForPeriodIndex:self.selectedPeriodIndex];
+}
+
+- (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willPresentMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
+{
+    self.isRecordEditMenuVisible = YES;
+    self.visibleRecordEditMenuInteraction = interaction;
+}
+
+- (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willDismissMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
+{
+    if (interaction == self.visibleRecordEditMenuInteraction) {
+        self.isRecordEditMenuVisible = NO;
+        self.visibleRecordEditMenuInteraction = nil;
+        self.shouldSuppressNextTaskPicker = YES;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (!self.isRecordEditMenuVisible) {
+                self.shouldSuppressNextTaskPicker = NO;
+            }
+        });
+    }
 }
 
 - (void)deletePeriod:(UIButton *)sender
@@ -500,6 +527,7 @@
         UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
         [foregroundView addInteraction:editMenuInteraction];
         UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+        tapRecognizer.delegate = self;
         [foregroundView addGestureRecognizer:tapRecognizer];
     }
     [recordView addSubview:foregroundView];
@@ -713,6 +741,20 @@
     return NO;
 }
 
+- (BOOL)dismissVisibleRecordEditMenuIfNeeded
+{
+    if (!self.isRecordEditMenuVisible) {
+        return NO;
+    }
+    if (@available(iOS 16.0, *)) {
+        [self.visibleRecordEditMenuInteraction dismissMenu];
+    }
+    self.isRecordEditMenuVisible = NO;
+    self.visibleRecordEditMenuInteraction = nil;
+    self.shouldSuppressNextTaskPicker = NO;
+    return YES;
+}
+
 - (long)timestampForTimelineY:(CGFloat)y
 {
     CGFloat clampedY = MIN(MAX(y, 0), self.hourHeight * 24.0 - 1);
@@ -766,6 +808,15 @@
 {
     if (gestureRecognizer.view == self.taskPickerOverlayView) {
         return touch.view == self.taskPickerOverlayView;
+    }
+    if (self.isRecordEditMenuVisible) {
+        if (gestureRecognizer.view == self.timelineContentView) {
+            return YES;
+        }
+        if ([gestureRecognizer.view.interactions containsObject:self.visibleRecordEditMenuInteraction]) {
+            [self dismissVisibleRecordEditMenuIfNeeded];
+            return NO;
+        }
     }
     if (gestureRecognizer.view != self.timelineContentView) {
         return YES;
