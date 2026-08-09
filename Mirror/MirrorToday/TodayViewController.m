@@ -666,10 +666,9 @@
     [MirrorStorage insertPeriodWithTaskname:taskName startAt:[NSDate dateWithTimeIntervalSince1970:start] endAt:[NSDate dateWithTimeIntervalSince1970:end]];
 }
 
-- (long)endTimestampForNewRecordStartingAt:(long)start
+- (long)endTimestampForNewRecordStartingAt:(long)start // prevent overlap with period behind
 {
-    long dayEnd = [self todayStartTimestamp] + 24 * 3600;
-    long end = MIN(start + 3600, dayEnd);
+    long end = start + 3600;
     for (MirrorRecordModel *record in self.todayData) {
         if (record.startTime >= start) {
             end = MIN(end, record.startTime);

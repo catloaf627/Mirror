@@ -16,6 +16,12 @@ static NSInteger const kMaxTaskCnt = 8;
 static NSString * const kMirrorJSONFileName = @"mirror.json";
 static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwang.dev.Mirror";
 
+@interface MirrorStorage ()
+
++ (NSArray<MirrorRecordModel *> *)recordsBySplittingTaskName:(NSString *)taskName startDate:(NSDate *)startDate endDate:(NSDate *)endDate;
+
+@end
+
 @implementation MirrorStorage
 
 #pragma mark - Time VC需要的信息
@@ -178,11 +184,12 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 
 + (void)insertPeriodWithTaskname:(NSString *)taskName startAt:(NSDate *)startDate endAt:(NSDate *)endDate
 {
-    NSDate *dateWithoutSeconds = [self dateWithoutSeconds:startDate];
-    NSDate *endDateWithoutSeconds = [self dateWithoutSeconds:endDate];
-    MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:round([dateWithoutSeconds timeIntervalSince1970]) endTime:round([endDateWithoutSeconds timeIntervalSince1970])];
+    NSArray<MirrorRecordModel *> *newRecords = [self recordsBySplittingTaskName:taskName startDate:startDate endDate:endDate];
+    if (newRecords.count == 0) {
+        return;
+    }
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    [records addObject:newRecord];
+    [records addObjectsFromArray:newRecords];
     [records sortUsingComparator:^NSComparisonResult(MirrorRecordModel *record1, MirrorRecordModel *record2) {
         if (record1.startTime < record2.startTime) return NSOrderedAscending;
         if (record1.startTime > record2.startTime) return NSOrderedDescending;
@@ -192,6 +199,41 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     NSLog(@"Insert period start %@, end %@", [MirrorTool timeFromDate:startDate printTimeStamp:NO], [MirrorTool timeFromDate:endDate printTimeStamp:NO]);
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
++ (NSArray<MirrorRecordModel *> *)recordsBySplittingTaskName:(NSString *)taskName startDate:(NSDate *)startDate endDate:(NSDate *)endDate
+{
+    NSDate *dateWithoutSeconds = [self dateWithoutSeconds:startDate];
+    NSDate *endDateWithoutSeconds = [self dateWithoutSeconds:endDate];
+    long startTime = round([dateWithoutSeconds timeIntervalSince1970]);
+    long endTime = round([endDateWithoutSeconds timeIntervalSince1970]);
+    if (endTime - startTime < kMinSeconds) {
+        return @[];
+    }
+
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSMutableArray<MirrorRecordModel *> *records = [NSMutableArray new];
+    long currentStartTime = startTime;
+    NSDate *currentStartDate = dateWithoutSeconds;
+    while (currentStartTime < endTime) {
+        NSDate *nextDayDate = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:currentStartDate options:0];
+        NSDate *nextDayStartDate = [gregorian startOfDayForDate:nextDayDate];
+        long nextDayStartTime = round([nextDayStartDate timeIntervalSince1970]);
+        long currentEndTime = MIN(endTime, nextDayStartTime);
+        if (currentEndTime - currentStartTime >= kMinSeconds) {
+            MirrorRecordModel *record = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:currentStartTime endTime:currentEndTime];
+            [records addObject:record];
+            NSLog(@"Split record: %@, start %@, end %@, duration %ld",
+                  taskName,
+                  [MirrorTool timeFromDate:[NSDate dateWithTimeIntervalSince1970:currentStartTime] printTimeStamp:NO],
+                  [MirrorTool timeFromDate:[NSDate dateWithTimeIntervalSince1970:currentEndTime] printTimeStamp:NO],
+                  currentEndTime - currentStartTime);
+        }
+        currentStartTime = currentEndTime;
+        currentStartDate = [NSDate dateWithTimeIntervalSince1970:currentStartTime];
+    }
+    return records;
 }
 
 + (void)startTask:(NSString *)taskName at:(NSDate *)accurateDate
@@ -241,46 +283,14 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         [MirrorStorage saveMirrorRecords:records];
         return;
     }
-    
-    if (length >= kMinSeconds) { // 一分钟以上开始记录（00:00处切割）
-        NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:start];
-        NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:end];
-        NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-        NSDateComponents *startComponents = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth| NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute| NSCalendarUnitSecond fromDate:startDate];
-        NSDateComponents *endComponents = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth| NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute| NSCalendarUnitSecond fromDate:endDate];
-        startComponents.timeZone = [NSTimeZone systemTimeZone];
-        endComponents.timeZone = [NSTimeZone systemTimeZone];
-        BOOL isDefinitelyTheSameDay = startComponents.year == endComponents.year && startComponents.month == endComponents.month && startComponents.day == endComponents.day; // 日期一模一样
-        BOOL isTechnicallyTheSameDay = endComponents.hour == 0 && endComponents.minute == 0 && endComponents.second == 0 && ([endDate timeIntervalSince1970] - [startDate timeIntervalSince1970]) <= 86400; // 日期不一样结束时间为0点，且持续时间<=一天
-        if (isDefinitelyTheSameDay || isTechnicallyTheSameDay) { // 开始和结束在同一天，直接记录 (存在原处)
-            recordToBeEditted.endTime = round([date timeIntervalSince1970]);
-            records[records.count -1] = recordToBeEditted;
-        } else { //开始和结束不在同一天，在00:00处切割分段
-            NSDateComponents *endComponent0 = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth| NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute| NSCalendarUnitSecond fromDate:startDate];
-            endComponent0.hour = 23;
-            endComponent0.minute = 59;
-            endComponent0.second = 59;
-            long endTime0 = [[gregorian dateFromComponents:endComponent0] timeIntervalSince1970] + 1;
-            recordToBeEditted.endTime = endTime0;
-            records[records.count -1] = recordToBeEditted;
 
-            long startTimei = endTime0;
-            long endTimei = startTimei + 86400;
-            while (endTimei < end) {
-                if (endTimei - startTimei >= kMinSeconds) {
-                    MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:startTimei endTime:endTimei];
-                    [records addObject:newRecord];
-                }
-                startTimei = startTimei + 86400;
-                endTimei = startTimei + 86400;
-            }
-            if (end - startTimei >= kMinSeconds) {
-                MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:startTimei endTime:end];
-                [records addObject:newRecord];// 最后一个分段（新插入）
-            }
-        }
+    NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:start];
+    NSArray<MirrorRecordModel *> *splitRecords = [self recordsBySplittingTaskName:recordToBeEditted.taskName startDate:startDate endDate:date];
+    if (splitRecords.count == 0) {
+        [records removeObjectAtIndex:records.count-1];
     } else {
         [records removeObjectAtIndex:records.count-1];
+        [records addObjectsFromArray:splitRecords];
     }
     [MirrorStorage saveMirrorRecords:records];
 }
