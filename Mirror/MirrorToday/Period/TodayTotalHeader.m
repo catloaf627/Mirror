@@ -48,6 +48,22 @@
 
 - (void)p_setupUI
 {
+    if (self.todayViewLeft.superview) {
+        self.countLabel.text = self.count ? [[MirrorLanguage mirror_stringWithKey:@"total"] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:self.count]] : @"";
+        self.crownButton.hidden = self.count < 8*3600;
+        NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+        NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
+        components.timeZone = [NSTimeZone systemTimeZone];
+        components.hour = 0;
+        components.minute = 0;
+        components.second = 0;
+        long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
+        long endTime = startTime + 86400;
+        NSMutableArray<MirrorDataModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
+        [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
+        return;
+    }
+
     float viewWidth = kScreenWidth-2*kLeftRightSpacing;
 
     // split to 2 subviews: left 3/5, right 2/5

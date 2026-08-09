@@ -55,6 +55,7 @@
     
     // Profile edit cell
     [mirrorDict setValue:ML(@"Save", @"保存", @"Guardar", @"Enregistrer", @"保存", @"저장") forKey:@"save"];
+    [mirrorDict setValue:ML(@"Edit", @"编辑", @"Editar", @"Modifier", @"編集", @"편집") forKey:@"edit"];
     [mirrorDict setValue:ML(@"Remove", @"移掉", @"Quitar", @"Retirer", @"取り除く", @"제거") forKey:@"remove"];
     [mirrorDict setValue:ML(@"Delete", @"删除", @"Eliminar", @"Supprimer", @"削除", @"삭제") forKey:@"delete"];
     [mirrorDict setValue:ML(@"Archive", @"归档", @"Archivar", @"Archiver", @"アーカイブ", @"보관") forKey:@"archive"];
@@ -84,6 +85,7 @@
     
     // Delete period
     [mirrorDict setValue:ML(@"Delete this time period? ", @"确定删除这个时间段？", @"¿Eliminar este periodo?", @"Supprimer cette période ?", @"この時間帯を削除しますか？", @"이 시간대를 삭제할까요?") forKey:@"delete_period_?"];
+    [mirrorDict setValue:ML(@"Ends at", @"结束于", @"Termina a las", @"Se termine à", @"終了時刻", @"종료 시간") forKey:@"ends_at"];
     
     // Time VC
     [mirrorDict setValue:ML(@"Go to edit page(upper right) to reorder tasks", @"进入编辑页面（右上角）可以编辑顺序", @"Ve a editar (arriba a la derecha) para reordenar tareas", @"Allez à la page d'édition (en haut à droite) pour réordonner les tâches", @"右上の編集ページでタスクを並べ替えられます", @"오른쪽 위 편집 화면에서 작업 순서를 바꿀 수 있습니다") forKey:@"timeVC_hint0"];

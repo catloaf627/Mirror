@@ -211,6 +211,24 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
++ (void)insertPeriodWithTaskname:(NSString *)taskName startAt:(NSDate *)startDate endAt:(NSDate *)endDate
+{
+    NSDate *dateWithoutSeconds = [self dateWithoutSeconds:startDate];
+    NSDate *endDateWithoutSeconds = [self dateWithoutSeconds:endDate];
+    MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:round([dateWithoutSeconds timeIntervalSince1970]) endTime:round([endDateWithoutSeconds timeIntervalSince1970])];
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    [records addObject:newRecord];
+    [records sortUsingComparator:^NSComparisonResult(MirrorRecordModel *record1, MirrorRecordModel *record2) {
+        if (record1.startTime < record2.startTime) return NSOrderedAscending;
+        if (record1.startTime > record2.startTime) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
+    [MirrorStorage saveMirrorRecords:records];
+    NSLog(@"Insert period start %@, end %@", [MirrorTool timeFromDate:startDate printTimeStamp:NO], [MirrorTool timeFromDate:endDate printTimeStamp:NO]);
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
+    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
 + (void)startTask:(NSString *)taskName at:(NSDate *)accurateDate
 {
     [MirrorStorage p_startTask:taskName at:accurateDate];
@@ -350,6 +368,27 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     } else {
         records[index].endTime = timestamp;
     }
+    [MirrorStorage saveMirrorRecords:records];
+    NSLog(@"Period is edited");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
+    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
++ (void)editPeriodAtIndex:(NSInteger)index startAt:(NSDate *)startDate endAt:(NSDate *)endDate
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (index < 0 || index >= records.count) return;
+    
+    NSDate *dateWithoutSeconds = [self dateWithoutSeconds:startDate];
+    NSDate *endDateWithoutSeconds = [self dateWithoutSeconds:endDate];
+    if ([endDateWithoutSeconds timeIntervalSince1970] - [dateWithoutSeconds timeIntervalSince1970] < kMinSeconds) return;
+    records[index].startTime = round([dateWithoutSeconds timeIntervalSince1970]);
+    records[index].endTime = round([endDateWithoutSeconds timeIntervalSince1970]);
+    [records sortUsingComparator:^NSComparisonResult(MirrorRecordModel *record1, MirrorRecordModel *record2) {
+        if (record1.startTime < record2.startTime) return NSOrderedAscending;
+        if (record1.startTime > record2.startTime) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
     [MirrorStorage saveMirrorRecords:records];
     NSLog(@"Period is edited");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];

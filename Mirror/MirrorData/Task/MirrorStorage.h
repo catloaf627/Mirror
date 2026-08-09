@@ -44,6 +44,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)savePeriodWithTaskname:(NSString *)taskName startAt:(NSDate *)startDate endAt:(NSDate *)endDate; // 跳过start->stop，直接保存
 
++ (void)insertPeriodWithTaskname:(NSString *)taskName startAt:(NSDate *)startDate endAt:(NSDate *)endDate;
+
 + (void)startTask:(NSString *)taskName at:(NSDate *)accurateDate;
 
 + (void)stopTask:(NSString *)taskName at:(NSDate *)accurateDate;
@@ -57,6 +59,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 + (void)deletePeriodAtIndex:(NSInteger)index;
 
 + (void)editPeriodIsStartTime:(BOOL)isStartTime to:(long)timestamp periodIndex:(NSInteger)index;
+
++ (void)editPeriodAtIndex:(NSInteger)index startAt:(NSDate *)startDate endAt:(NSDate *)endDate;
 
 // Retrive
 + (NSMutableArray<MirrorTaskModel *> *)retriveMirrorTasks;

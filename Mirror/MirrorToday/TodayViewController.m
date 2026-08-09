@@ -15,24 +15,38 @@
 #import "LeftAnimation.h"
 #import "SettingsViewController.h"
 #import "MirrorLanguage.h"
-#import "TodayPeriodCollectionViewCell.h"
 #import "TodayTotalHeader.h"
 #import "MirrorStorage.h"
 #import "UIFont+MirrorFont.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
-#define kCellSpacing (20*kHeightRatio) // cell之间的上下间距
+#define kTimelineLeftWidth (52*kWidthRatio)
+#define kTimelineRightPadding (12*kWidthRatio)
+#define kTimelineRecordSpacing (6*kHeightRatio)
+#define kTimelineActionButtonWidth (72*kWidthRatio)
+#define kTimelineActionWidth (144*kWidthRatio)
+#define kTimelineMinimumTinyRecordHeight 10
+#define kTimelineTinyRecordThresholdSeconds (10 * 60)
+#define kTimelineTextHiddenThresholdSeconds (45 * 60)
 
-@interface TodayViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, EditPeriodForTodayProtocol, UIViewControllerTransitioningDelegate>
+@interface TodayViewController () <UIViewControllerTransitioningDelegate, UIGestureRecognizerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
+@property (nonatomic, assign) BOOL didScrollToDefaultHours;
+@property (nonatomic, assign) CGFloat hourHeight;
+@property (nonatomic, assign) long pendingStartTimestamp;
+
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
+
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *todayData;
+
 // UI
-@property (nonatomic, strong) UICollectionView *collectionView;
+@property (nonatomic, strong) TodayTotalHeader *todayHeader;
+@property (nonatomic, strong) UIScrollView *timelineScrollView;
+@property (nonatomic, strong) UIView *timelineContentView;
 @property (nonatomic, strong) UILabel *emptyHintLabel;
 
 @end
@@ -68,7 +82,8 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-- (void)viewDidLoad {
+- (void)viewDidLoad
+{
     [super viewDidLoad];
     [self p_setupUI];
     _isLoaded = YES;
@@ -80,14 +95,24 @@
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
 }
 
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    [self updateTimelineSizeIfNeeded];
+}
+
 - (void)restartVC
 {
     // 更新tabbar
     [[MirrorTabsManager sharedInstance] updateTodayTabItemWithTabController:self.tabBarController];
     if (!_isLoaded) return;
     // 将vc.view里的所有subviews全部置为nil
-    self.collectionView = nil;
+    self.todayHeader = nil;
+    self.timelineScrollView = nil;
+    self.timelineContentView = nil;
     self.emptyHintLabel = nil;
+    self.didScrollToDefaultHours = NO;
+    self.hourHeight = 0;
     // 将vc.view里的所有subviews从父view上移除
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
@@ -102,43 +127,52 @@
     /*
      调用reloadData后UI不刷新的bug折磨了我很久，一开始以为是其他页面遮挡了collection view导致的不刷新，多次改动collection view reload data的调用方式都没成功
      最后发现根本原因是：在整个页面还没有setupUI的时候就被通知reloadData
-     例子1：冷启后还没有进入TodayVC就切换了index settings，导致TodayVC还没有setup UI就被reload了，这以后再进入TodayVC，修改今日数据或是修改index settings，UI不会更新。
-        现象：新添的数据看不到、修改了的数据不生效、更新数据后today header上的饼状图也不生效...
-     例子2:冷启后还没有进入GirdVC就切换了heatmap settings，导致GirdVC还没有setup UI就被reload了，这以后再进入GirdVC，修改hidden数据或是修改heatmap settings，UI不会更新。
-        现象：选择隐藏/显示某些tasks以后，grid不更新...
-     例子2:冷启后还没有进入HistoryVC就切换了piechart settings on data，导致HistoryVC还没有setup UI就被reload了，这以后再进入HistoryVC，修改hidden数据或是修改piechart settings on data，UI不会更新。
-        现象：切换日/周/月/年的时候，legend不跟着更新...
-     具体technical原因不明。最后的解决办法是给每个VC都添加isLoaded属性，根本没被load过的VC被通知reload的时候直接返回不进行任何操作。
-    */
+     */
     if (!_isLoaded) return;
     self.todayData = [MirrorStorage getTodayData];
-    [self updateHint]; // reloaddata要顺便reload一下emptyhint的状态
-    [self.collectionView reloadData];
+    [self.todayHeader configWithRecords:self.todayData];
+    [self updateHint];
+    [self renderTimeline];
 }
 
 - (void)p_setupUI
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
 
-    [self.view addSubview:self.collectionView];
-    [self.collectionView reloadData];
-    [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.view addSubview:self.todayHeader];
+    [self.todayHeader configWithRecords:self.todayData];
+    [self.todayHeader mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
         make.left.offset(kLeftRightSpacing);
         make.right.offset(-kLeftRightSpacing);
+        make.height.mas_equalTo(kTodayHeaderHeight);
+    }];
+
+    [self.view addSubview:self.timelineScrollView];
+    [self.timelineScrollView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(self.todayHeader.mas_bottom);
+        make.left.right.offset(0);
         make.bottom.offset(-kTabBarHeight);
     }];
+
+    [self.timelineScrollView addSubview:self.timelineContentView];
+
     [self.view addSubview:self.emptyHintLabel];
     [self.emptyHintLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.bottom.left.right.offset(0);
+        make.top.mas_equalTo(self.timelineScrollView.mas_top);
+        make.left.right.bottom.mas_equalTo(self.timelineScrollView);
     }];
+    [self updateHint];
+
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapTimeline:)];
+    tapRecognizer.delegate = self;
+    [self.timelineContentView addGestureRecognizer:tapRecognizer];
 
     UIScreenEdgePanGestureRecognizer *edgeRecognizer = [UIScreenEdgePanGestureRecognizer new];
     edgeRecognizer.edges = UIRectEdgeLeft;
     [edgeRecognizer addTarget:self action:@selector(edgeGestureRecognizerAction:)];
     [self.view addGestureRecognizer:edgeRecognizer];
 }
-
 
 #pragma mark - Actions
 
@@ -150,64 +184,378 @@
     settingsVC.modalPresentationStyle = UIModalPresentationCustom;
     [self presentViewController:settingsVC animated:YES completion:nil];
 }
-#pragma mark - Collection view delegate
 
-
-- (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
+- (void)tapTimeline:(UITapGestureRecognizer *)tapRecognizer
 {
-    return 1;
-}
-
-- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
-{
-    return self.todayData.count;
-}
-
-- (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
-{
-    TodayPeriodCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[TodayPeriodCollectionViewCell identifier] forIndexPath:indexPath];
-    [cell configWithTaskname:self.todayData[indexPath.item].taskName periodIndex:self.todayData[indexPath.item].originalIndex];
-    cell.delegate = self;
-    return cell;
-}
-
-- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
-{
-    return CGSizeMake(kScreenWidth - 2*kCellSpacing, 80*kHeightRatio);
-}
-
-- (UICollectionReusableView *)collectionView:(UICollectionView *)collectionView viewForSupplementaryElementOfKind:(NSString *)kind atIndexPath:(NSIndexPath *)indexPath
-{
-    UICollectionReusableView *header;
-    if (kind == UICollectionElementKindSectionHeader) {
-        header = [collectionView dequeueReusableSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"header" forIndexPath:indexPath];
-        TodayTotalHeader* todayHeader = (TodayTotalHeader *)header;
-        [todayHeader configWithRecords:self.todayData];
+    CGPoint point = [tapRecognizer locationInView:self.timelineContentView];
+    if ([self pointHitsRecordView:point]) {
+        return;
     }
-    return header;
+    self.pendingStartTimestamp = [self timestampForTimelineY:point.y];
+    [self showTaskPickerAtPoint:point];
 }
 
-- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout referenceSizeForHeaderInSection:(NSInteger)section
+- (void)deletePeriod:(UIButton *)sender
 {
-    return CGSizeMake(kScreenWidth, kTodayHeaderHeight);
+    NSInteger periodIndex = sender.tag;
+    UIAlertController* deleteButtonAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_period_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+
+    UIAlertAction* deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+        [MirrorStorage deletePeriodAtIndex:periodIndex];
+    }];
+    UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
+
+    [deleteButtonAlert addAction:cancelAction];
+    [deleteButtonAlert addAction:deleteAction];
+    [self presentViewController:deleteButtonAlert animated:YES completion:nil];
+}
+
+- (void)editPeriod:(UIButton *)sender
+{
+    NSInteger periodIndex = sender.tag;
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return;
+    }
+    
+    MirrorRecordModel *record = records[periodIndex];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIDatePicker *startPicker = [UIDatePicker new];
+    startPicker.datePickerMode = UIDatePickerModeTime;
+    startPicker.timeZone = [NSTimeZone systemTimeZone];
+    startPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
+    startPicker.date = [NSDate dateWithTimeIntervalSince1970:record.startTime];
+    startPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:record.endTime - kMinSeconds];
+    if (periodIndex - 1 >= 0) {
+        startPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex - 1].endTime];
+    } else {
+        startPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp]];
+    }
+    
+    UIDatePicker *endPicker = [UIDatePicker new];
+    endPicker.datePickerMode = UIDatePickerModeTime;
+    endPicker.timeZone = [NSTimeZone systemTimeZone];
+    endPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
+    endPicker.date = [NSDate dateWithTimeIntervalSince1970:record.endTime];
+    endPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:record.startTime + kMinSeconds];
+    if (periodIndex + 1 <= records.count - 1) {
+        endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex + 1].startTime];
+    } else {
+        endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp] + 24 * 3600];
+    }
+    
+    UILabel *startLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"starts_at"]];
+    UILabel *endLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"ends_at"]];
+    UIView *contentView = alertController.view;
+    [contentView addSubview:startLabel];
+    [contentView addSubview:startPicker];
+    [contentView addSubview:endLabel];
+    [contentView addSubview:endPicker];
+    
+    [startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.offset(24);
+        make.top.offset(76);
+        make.width.mas_equalTo(90);
+        make.height.mas_equalTo(32);
+    }];
+    [startPicker mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(startLabel.mas_right).offset(8);
+        make.centerY.mas_equalTo(startLabel);
+        make.right.offset(-24);
+        make.height.mas_equalTo(36);
+    }];
+    [endLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(startLabel);
+        make.top.mas_equalTo(startLabel.mas_bottom).offset(12);
+        make.width.mas_equalTo(90);
+        make.height.mas_equalTo(32);
+    }];
+    [endPicker mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(endLabel.mas_right).offset(8);
+        make.centerY.mas_equalTo(endLabel);
+        make.right.offset(-24);
+        make.height.mas_equalTo(36);
+    }];
+    
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
+    UIAlertAction *saveAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"save"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        if ([endPicker.date timeIntervalSince1970] - [startPicker.date timeIntervalSince1970] < kMinSeconds) {
+            return;
+        }
+        [MirrorStorage editPeriodAtIndex:periodIndex startAt:startPicker.date endAt:endPicker.date];
+    }];
+    [alertController addAction:cancelAction];
+    [alertController addAction:saveAction];
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)showDeleteButton:(UISwipeGestureRecognizer *)swipeRecognizer
+{
+    [self setRecordView:swipeRecognizer.view.superview deleteVisible:YES animated:YES];
+}
+
+- (void)hideDeleteButton:(UISwipeGestureRecognizer *)swipeRecognizer
+{
+    [self setRecordView:swipeRecognizer.view.superview deleteVisible:NO animated:YES];
+}
+
+#pragma mark - Timeline
+
+- (void)updateTimelineSizeIfNeeded
+{
+    CGFloat visibleHeight = CGRectGetHeight(self.timelineScrollView.bounds);
+    CGFloat width = CGRectGetWidth(self.timelineScrollView.bounds);
+    if (visibleHeight <= 0 || width <= 0) {
+        return;
+    }
+
+    CGFloat newHourHeight = visibleHeight / 12.0;
+    CGSize contentSize = CGSizeMake(width, newHourHeight * 24.0);
+    BOOL needsRender = fabs(self.hourHeight - newHourHeight) > 0.5 || !CGSizeEqualToSize(self.timelineScrollView.contentSize, contentSize);
+    if (!needsRender) {
+        return;
+    }
+
+    self.hourHeight = newHourHeight;
+    self.timelineScrollView.contentSize = contentSize;
+    self.timelineContentView.frame = CGRectMake(0, 0, contentSize.width, contentSize.height);
+    [self renderTimeline];
+
+    if (!self.didScrollToDefaultHours) {
+        [self.timelineScrollView setContentOffset:CGPointMake(0, self.hourHeight * 7.0) animated:NO];
+        self.didScrollToDefaultHours = YES;
+    }
+}
+
+- (void)renderTimeline
+{
+    if (self.hourHeight <= 0 || CGRectGetWidth(self.timelineContentView.bounds) <= 0) {
+        return;
+    }
+
+    [self.timelineContentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [self renderHourLines];
+    [self renderRecords];
+}
+
+- (void)renderHourLines
+{
+    CGFloat width = CGRectGetWidth(self.timelineContentView.bounds);
+    for (NSInteger hour = 0; hour <= 24; hour++) {
+        CGFloat y = hour * self.hourHeight;
+        UIView *line = [UIView new];
+        line.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
+        line.alpha = 0.2;
+        [self.timelineContentView addSubview:line];
+        line.frame = CGRectMake(kTimelineLeftWidth, y, width - kTimelineLeftWidth - kTimelineRightPadding, 1);
+
+        if (hour < 24) {
+            UILabel *hourLabel = [UILabel new];
+            hourLabel.text = [NSString stringWithFormat:@"%02ld:00", (long)hour];
+            hourLabel.font = [UIFont mirrorMinFont];
+            hourLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+            hourLabel.alpha = 0.5;
+            hourLabel.textAlignment = NSTextAlignmentRight;
+            [self.timelineContentView addSubview:hourLabel];
+            hourLabel.frame = CGRectMake(0, y - 10, kTimelineLeftWidth - 8*kWidthRatio, 20);
+        }
+    }
+}
+
+- (void)renderRecords
+{
+    long dayStart = [self todayStartTimestamp];
+    long dayEnd = dayStart + 24 * 3600;
+    CGFloat recordX = kTimelineLeftWidth;
+    CGFloat recordWidth = CGRectGetWidth(self.timelineContentView.bounds) - recordX - kTimelineRightPadding;
+
+    for (MirrorRecordModel *record in self.todayData) {
+        long start = MAX(record.startTime, dayStart);
+        long end = MIN(record.endTime, dayEnd);
+        if (end <= start) {
+            continue;
+        }
+
+        long duration = end - start;
+        CGFloat top = ((CGFloat)(start - dayStart) / 3600.0) * self.hourHeight;
+        CGFloat height = ((CGFloat)duration / 3600.0) * self.hourHeight;
+        if (duration < kTimelineTinyRecordThresholdSeconds) {
+            height = MAX(height, kTimelineMinimumTinyRecordHeight);
+        }
+        BOOL showsText = duration >= kTimelineTextHiddenThresholdSeconds;
+        UIView *recordView = [self recordViewWithRecord:record frame:CGRectMake(recordX, top, recordWidth, height) showsText:showsText];
+        [self.timelineContentView addSubview:recordView];
+    }
+}
+
+- (UIView *)recordViewWithRecord:(MirrorRecordModel *)record frame:(CGRect)frame showsText:(BOOL)showsText
+{
+    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
+    UIColor *recordColor = task ? [UIColor mirrorColorNamed:task.color] : [UIColor mirrorColorNamed:MirrorColorTypeCellGray];
+
+    UIView *recordView = [[UIView alloc] initWithFrame:frame];
+    recordView.accessibilityIdentifier = @"TodayTimelineRecordView";
+    recordView.layer.cornerRadius = 5;
+    recordView.layer.masksToBounds = YES;
+    recordView.backgroundColor = [UIColor systemBlueColor];
+    UIFont *actionButtonFont = [UIFont mirrorLabelFont];
+
+    UIButton *deleteButton = [UIButton new];
+    deleteButton.tag = record.originalIndex;
+    deleteButton.backgroundColor = [UIColor systemRedColor];
+    deleteButton.titleLabel.font = actionButtonFont;
+    [deleteButton setTitle:showsText ? [MirrorLanguage mirror_stringWithKey:@"delete"] : @"" forState:UIControlStateNormal];
+    [deleteButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [deleteButton addTarget:self action:@selector(deletePeriod:) forControlEvents:UIControlEventTouchUpInside];
+    [recordView addSubview:deleteButton];
+    deleteButton.frame = CGRectMake(CGRectGetWidth(frame) - kTimelineActionButtonWidth, 0, kTimelineActionButtonWidth, CGRectGetHeight(frame));
+
+    UIButton *editButton = [UIButton new];
+    editButton.tag = record.originalIndex;
+    editButton.backgroundColor = [UIColor systemBlueColor];
+    editButton.titleLabel.font = actionButtonFont;
+    [editButton setTitle:showsText ? [MirrorLanguage mirror_stringWithKey:@"edit"] : @"" forState:UIControlStateNormal];
+    [editButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
+    [editButton addTarget:self action:@selector(editPeriod:) forControlEvents:UIControlEventTouchUpInside];
+    [recordView addSubview:editButton];
+    editButton.frame = CGRectMake(CGRectGetWidth(frame) - kTimelineActionWidth, 0, kTimelineActionButtonWidth, CGRectGetHeight(frame));
+
+    UIView *foregroundView = [[UIView alloc] initWithFrame:recordView.bounds];
+    foregroundView.backgroundColor = recordColor;
+    foregroundView.layer.cornerRadius = 5;
+    foregroundView.layer.masksToBounds = YES;
+    [recordView addSubview:foregroundView];
+
+    UISwipeGestureRecognizer *leftSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showDeleteButton:)];
+    leftSwipe.direction = UISwipeGestureRecognizerDirectionLeft;
+    [foregroundView addGestureRecognizer:leftSwipe];
+
+    UISwipeGestureRecognizer *rightSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(hideDeleteButton:)];
+    rightSwipe.direction = UISwipeGestureRecognizerDirectionRight;
+    [foregroundView addGestureRecognizer:rightSwipe];
+
+    if (showsText) {
+        UILabel *titleLabel = [UILabel new];
+        titleLabel.text = [NSString stringWithFormat:@"%@  %@", record.taskName, [self timeTextForRecord:record]];
+        titleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+        titleLabel.font = [UIFont mirrorHintFont_Card];
+        titleLabel.adjustsFontSizeToFitWidth = YES;
+        [foregroundView addSubview:titleLabel];
+
+        CGFloat labelPadding = 5*kWidthRatio;
+        CGFloat labelHeight = 15*kWidthRatio;
+        titleLabel.frame = CGRectMake(
+            labelPadding,
+            labelPadding,
+            CGRectGetWidth(frame) - 2*labelPadding,
+            labelHeight
+        );
+    }
+
+    return recordView;
+}
+
+- (void)setRecordView:(UIView *)recordView deleteVisible:(BOOL)deleteVisible animated:(BOOL)animated
+{
+    if (!recordView.subviews.count) {
+        return;
+    }
+    UIView *foregroundView = recordView.subviews.lastObject;
+    void (^animations)(void) = ^{
+        foregroundView.transform = deleteVisible ? CGAffineTransformMakeTranslation(-kTimelineActionWidth, 0) : CGAffineTransformIdentity;
+    };
+    if (animated) {
+        [UIView animateWithDuration:0.2 animations:animations];
+    } else {
+        animations();
+    }
+}
+
+#pragma mark - Add Records
+
+- (void)showTaskPickerAtPoint:(CGPoint)point
+{
+    NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage tasksWithoutArchiveWithAddNew];
+    NSMutableArray<MirrorTaskModel *> *availableTasks = [NSMutableArray new];
+    for (MirrorTaskModel *task in tasks) {
+        if (!task.isAddTaskModel) {
+            [availableTasks addObject:task];
+        }
+    }
+
+    if (availableTasks.count == 0) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"no_task"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alertController animated:YES completion:nil];
+        return;
+    }
+
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[self addRecordTitle] message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    for (MirrorTaskModel *task in availableTasks) {
+        [alertController addAction:[UIAlertAction actionWithTitle:task.taskName style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [self addRecordWithTaskName:task.taskName];
+        }]];
+    }
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
+
+    alertController.popoverPresentationController.sourceView = self.timelineContentView;
+    alertController.popoverPresentationController.sourceRect = CGRectMake(point.x, point.y, 1, 1);
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)addRecordWithTaskName:(NSString *)taskName
+{
+    long start = self.pendingStartTimestamp;
+    long end = [self endTimestampForNewRecordStartingAt:start];
+    if (end - start < kMinSeconds) {
+        return;
+    }
+    [MirrorStorage insertPeriodWithTaskname:taskName startAt:[NSDate dateWithTimeIntervalSince1970:start] endAt:[NSDate dateWithTimeIntervalSince1970:end]];
+}
+
+- (long)endTimestampForNewRecordStartingAt:(long)start
+{
+    long dayEnd = [self todayStartTimestamp] + 24 * 3600;
+    long end = MIN(start + 3600, dayEnd);
+    for (MirrorRecordModel *record in self.todayData) {
+        if (record.startTime >= start) {
+            end = MIN(end, record.startTime);
+            break;
+        }
+    }
+    return end;
 }
 
 #pragma mark - Getters
 
-- (UICollectionView *)collectionView
+- (TodayTotalHeader *)todayHeader
 {
-    if (!_collectionView) {
-        UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc]init];
-        layout.minimumLineSpacing = 10;
-        _collectionView = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:layout];
-        _collectionView.delegate = self;
-        _collectionView.dataSource = self;
-        _collectionView.backgroundColor = self.view.backgroundColor;
-        
-        [_collectionView registerClass:[TodayPeriodCollectionViewCell class] forCellWithReuseIdentifier:[TodayPeriodCollectionViewCell identifier]];
-        [_collectionView registerClass:[TodayTotalHeader class] forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"header"];
+    if (!_todayHeader) {
+        _todayHeader = [TodayTotalHeader new];
+        _todayHeader.backgroundColor = self.view.backgroundColor;
     }
-    return _collectionView;
+    return _todayHeader;
+}
+
+- (UIScrollView *)timelineScrollView
+{
+    if (!_timelineScrollView) {
+        _timelineScrollView = [UIScrollView new];
+        _timelineScrollView.backgroundColor = self.view.backgroundColor;
+        _timelineScrollView.showsVerticalScrollIndicator = NO;
+        _timelineScrollView.alwaysBounceVertical = YES;
+    }
+    return _timelineScrollView;
+}
+
+- (UIView *)timelineContentView
+{
+    if (!_timelineContentView) {
+        _timelineContentView = [UIView new];
+        _timelineContentView.backgroundColor = self.view.backgroundColor;
+    }
+    return _timelineContentView;
 }
 
 - (UILabel *)emptyHintLabel
@@ -218,7 +566,7 @@
         _emptyHintLabel.font = [UIFont mirrorHintFont];
         _emptyHintLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
         _emptyHintLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_data_today"];
-        _emptyHintLabel.hidden = self.todayData.count > 0;
+        _emptyHintLabel.userInteractionEnabled = NO;
     }
     return _emptyHintLabel;
 }
@@ -228,7 +576,6 @@
     self.emptyHintLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_data_today"];
     self.emptyHintLabel.hidden = self.todayData.count > 0;
 }
-
 
 - (UIButton *)settingsButton
 {
@@ -247,6 +594,76 @@
         _todayData = [MirrorStorage getTodayData];
     }
     return _todayData;
+}
+
+#pragma mark - Privates
+
+- (BOOL)pointHitsRecordView:(CGPoint)point
+{
+    for (UIView *subview in self.timelineContentView.subviews) {
+        if ([subview.accessibilityIdentifier isEqualToString:@"TodayTimelineRecordView"] && CGRectContainsPoint(subview.frame, point)) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (long)timestampForTimelineY:(CGFloat)y
+{
+    CGFloat clampedY = MIN(MAX(y, 0), self.hourHeight * 24.0 - 1);
+    NSInteger quarterHours = lround((clampedY / self.hourHeight) * 4.0);
+    quarterHours = MIN(MAX(quarterHours, 0), 24 * 4 - 1);
+    return [self todayStartTimestamp] + quarterHours * 15 * 60;
+}
+
+- (long)todayStartTimestamp
+{
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
+    components.timeZone = [NSTimeZone systemTimeZone];
+    components.hour = 0;
+    components.minute = 0;
+    components.second = 0;
+    return [[gregorian dateFromComponents:components] timeIntervalSince1970];
+}
+
+- (NSString *)timeTextForRecord:(MirrorRecordModel *)record
+{
+    return [NSString stringWithFormat:@"%@ - %@", [self shortTimeFromTimestamp:record.startTime], [self shortTimeFromTimestamp:record.endTime]];
+}
+
+- (NSString *)shortTimeFromTimestamp:(long)timestamp
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateStyle = NSDateFormatterNoStyle;
+    formatter.timeStyle = NSDateFormatterShortStyle;
+    return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
+}
+
+- (NSString *)addRecordTitle
+{
+    return [NSString stringWithFormat:@"%@ %@", [MirrorLanguage mirror_stringWithKey:@"starts_at"], [self shortTimeFromTimestamp:self.pendingStartTimestamp]];
+}
+
+- (UILabel *)pickerLabelWithText:(NSString *)text
+{
+    UILabel *label = [UILabel new];
+    label.text = text;
+    label.font = [UIFont mirrorHintFont];
+    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+    label.adjustsFontSizeToFitWidth = YES;
+    return label;
+}
+
+#pragma mark - UIGestureRecognizerDelegate
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{
+    if (gestureRecognizer.view != self.timelineContentView) {
+        return YES;
+    }
+    CGPoint point = [touch locationInView:self.timelineContentView];
+    return ![self pointHitsRecordView:point];
 }
 
 #pragma mark - Animations

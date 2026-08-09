@@ -49,6 +49,11 @@
     return [UIFont mirror_fontWithSize:13*kWidthRatio bold:NO];
 }
 
++ (UIFont *)mirrorMinFont
+{
+    return [UIFont mirror_fontWithSize:10*kWidthRatio bold:NO];
+}
+
 + (UIFont *)mirror_fontWithSize:(CGFloat)fontSize bold:(BOOL)bold
 {
     UIFont *font = [UIFont fontWithName:bold ? @"Trebuchet-BoldItalic":@"TrebuchetMS-Italic" size:fontSize];

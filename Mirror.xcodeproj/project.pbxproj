@@ -38,7 +38,6 @@
 		4A74FFEA2A33296800A7BFE7 /* SpecificRecordsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A74FFE92A33296700A7BFE7 /* SpecificRecordsViewController.m */; };
 		4A7CCD2629DBC7CF00879D9C /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A7CCD2529DBC7CF00879D9C /* TodayViewController.m */; };
 		4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A7EFA063027D3CB00904ED9 /* UIFont+MirrorFont.m */; };
-		4A88211629F26104009E422C /* TodayPeriodCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88211529F26104009E422C /* TodayPeriodCollectionViewCell.m */; };
 		4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88211829F2A2B8009E422C /* TodayTotalHeader.m */; };
 		4A88212929F6035E009E422C /* CellAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88212829F6035E009E422C /* CellAnimation.m */; };
 		4A88212C29F6066A009E422C /* TimeEditingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88212B29F6066A009E422C /* TimeEditingViewController.m */; };
@@ -163,8 +162,6 @@
 		4A7CCD2529DBC7CF00879D9C /* TodayViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TodayViewController.m; sourceTree = "<group>"; };
 		4A7EFA053027D3C300904ED9 /* UIFont+MirrorFont.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIFont+MirrorFont.h"; sourceTree = "<group>"; };
 		4A7EFA063027D3CB00904ED9 /* UIFont+MirrorFont.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIFont+MirrorFont.m"; sourceTree = "<group>"; };
-		4A88211429F26104009E422C /* TodayPeriodCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TodayPeriodCollectionViewCell.h; sourceTree = "<group>"; };
-		4A88211529F26104009E422C /* TodayPeriodCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TodayPeriodCollectionViewCell.m; sourceTree = "<group>"; };
 		4A88211729F2A2B8009E422C /* TodayTotalHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TodayTotalHeader.h; sourceTree = "<group>"; };
 		4A88211829F2A2B8009E422C /* TodayTotalHeader.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TodayTotalHeader.m; sourceTree = "<group>"; };
 		4A88212729F6035E009E422C /* CellAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CellAnimation.h; sourceTree = "<group>"; };
@@ -489,8 +486,6 @@
 		4A88211029F26094009E422C /* Period */ = {
 			isa = PBXGroup;
 			children = (
-				4A88211429F26104009E422C /* TodayPeriodCollectionViewCell.h */,
-				4A88211529F26104009E422C /* TodayPeriodCollectionViewCell.m */,
 				4A88211729F2A2B8009E422C /* TodayTotalHeader.h */,
 				4A88211829F2A2B8009E422C /* TodayTotalHeader.m */,
 			);
@@ -797,7 +792,6 @@
 				4AB1182E2B9851F7003CED03 /* LineChartCollectionViewCell.m in Sources */,
 				4A410A2829EA51750007003B /* LegendCollectionViewCell.m in Sources */,
 				4A379B5728E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m in Sources */,
-				4A88211629F26104009E422C /* TodayPeriodCollectionViewCell.m in Sources */,
 				4A406C1A29071939001E83A1 /* MirrorStorage.m in Sources */,
 				4ADDC5B728E476A8006F02DE /* LanguageCollectionViewCell.m in Sources */,
 				4AFB77B328DF4A3B0064CBCA /* main.m in Sources */,
