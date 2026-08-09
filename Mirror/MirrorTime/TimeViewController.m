@@ -15,7 +15,6 @@
 #import "MirrorNaviManager.h"
 #import "AddTaskViewController.h"
 #import "TimeTrackingViewController.h"
-#import "TimeEditingViewController.h"
 #import "MirrorStorage.h"
 #import "MirrorTool.h"
 #import "MirrorSettings.h"
@@ -160,25 +159,54 @@
     }
     // 点击了task model
     self.selectedCellFrame = [self.collectionView cellForItemAtIndexPath:selectedIndexPath].frame; // update selected cell frame的时机
-    TimeEditingViewController *timeEditingVC = [[TimeEditingViewController alloc] initWithTaskName:selectedModel.taskName];
-    timeEditingVC.transitioningDelegate = self; // 动画
-    timeEditingVC.modalPresentationStyle = UIModalPresentationCustom;
-    timeEditingVC.cellFrame = CGRectMake(self.collectionView.frame.origin.x + self.selectedCellFrame.origin.x, self.collectionView.frame.origin.y + self.selectedCellFrame.origin.y  - self.collectionView.contentOffset.y, self.selectedCellFrame.size.width, self.selectedCellFrame.size.height);
-    [self presentViewController:timeEditingVC animated:YES completion:nil];
+    NSString *goingOnTask = [MirrorStorage isGoingOnTask];
+    if (goingOnTask.length > 0) {
+        if ([goingOnTask isEqualToString:selectedModel.taskName]) {
+            [self presentTrackingViewControllerWithTaskName:selectedModel.taskName animated:YES];
+        } else {
+            [self showStartNowUnavailableAlert];
+        }
+        return;
+    }
+
+    if (![self canStartTaskNow]) {
+        [self showStartNowUnavailableAlert];
+        return;
+    }
+
+    [MirrorStorage startTask:selectedModel.taskName at:[NSDate now]];
+    [self presentTrackingViewControllerWithTaskName:selectedModel.taskName animated:YES];
+}
+
+- (BOOL)canStartTaskNow
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    MirrorRecordModel *lastRecord = records.lastObject;
+    if (lastRecord == nil) {
+        return YES;
+    }
+    return lastRecord.endTime <= [[NSDate now] timeIntervalSince1970];
+}
+
+- (void)showStartNowUnavailableAlert
+{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"now_is_occupied"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)presentTrackingViewControllerWithTaskName:(NSString *)taskName animated:(BOOL)animated
+{
+    TimeTrackingViewController *timeTrackingVC = [[TimeTrackingViewController alloc] initWithTaskName:taskName];
+    timeTrackingVC.transitioningDelegate = self;
+    timeTrackingVC.modalPresentationStyle = UIModalPresentationCustom;
+    timeTrackingVC.cellFrame = CGRectMake(self.collectionView.frame.origin.x + self.selectedCellFrame.origin.x, self.collectionView.frame.origin.y + self.selectedCellFrame.origin.y - self.collectionView.contentOffset.y, self.selectedCellFrame.size.width, self.selectedCellFrame.size.height);
+    [self presentViewController:timeTrackingVC animated:animated completion:nil];
 }
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     MirrorTaskModel *taskModel = self.data[indexPath.item];
-    // 如果在计时中，先打开计时页面
-    if (!taskModel.isAddTaskModel && [[MirrorStorage isGoingOnTask] isEqualToString:taskModel.taskName]) { // this task is ongoing
-        TimeTrackingViewController * timeTrackingVC = [[TimeTrackingViewController alloc] initWithTaskName:taskModel.taskName];
-        timeTrackingVC.transitioningDelegate = self;
-        timeTrackingVC.modalPresentationStyle = UIModalPresentationCustom;
-        timeTrackingVC.cellFrame = CGRectMake(self.collectionView.frame.origin.x + self.selectedCellFrame.origin.x, self.collectionView.frame.origin.y + self.selectedCellFrame.origin.y - self.collectionView.contentOffset.y, self.selectedCellFrame.size.width, self.selectedCellFrame.size.height);
-        [self presentViewController:timeTrackingVC animated:NO completion:nil]; // present time tracking vc 一定是通过 time editing vc 结束来的，所以不需要动画。
-    }
-    
     if (taskModel.isAddTaskModel) {
         TimeTrackerAddTaskCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[TimeTrackerAddTaskCollectionViewCell identifier] forIndexPath:indexPath];
         [cell setupAddTaskCell];
