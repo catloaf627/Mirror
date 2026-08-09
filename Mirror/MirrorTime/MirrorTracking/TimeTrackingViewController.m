@@ -27,6 +27,7 @@ static CGFloat const kCircleLineWidth = 18;
 
 @property (nonatomic, assign) BOOL isCountingDown;
 @property (nonatomic, assign) CGFloat progress;
+@property (nonatomic, assign) CGFloat startAngle;
 @property (nonatomic, strong) UIColor *taskColor;
 @property (nonatomic, strong) UIColor *pulseColor;
 
@@ -44,8 +45,9 @@ static CGFloat const kCircleLineWidth = 18;
     CGRect circleRect = CGRectInset(self.bounds, kCircleLineWidth/2 + 4, kCircleLineWidth/2 + 4);
     CGPoint center = CGPointMake(CGRectGetMidX(circleRect), CGRectGetMidY(circleRect));
     CGFloat radius = MIN(CGRectGetWidth(circleRect), CGRectGetHeight(circleRect))/2;
-    CGFloat startAngle = -M_PI_2;
-    CGFloat endAngle = startAngle + 2*M_PI*MAX(0, MIN(1, self.progress));
+    CGFloat progress = MAX(0, MIN(1, self.progress));
+    CGFloat startAngle = self.startAngle;
+    CGFloat endAngle = startAngle + 2*M_PI*progress;
 
     CGContextSetLineWidth(context, kCircleLineWidth);
     CGContextSetLineCap(context, kCGLineCapRound);
@@ -53,11 +55,13 @@ static CGFloat const kCircleLineWidth = 18;
     CGContextAddArc(context, center.x, center.y, radius, startAngle, startAngle + 2*M_PI, 0);
     CGContextStrokePath(context);
 
-    if (self.progress <= 0) {
+    if (progress <= 0) {
         return;
     }
 
-    NSInteger segmentCount = MAX(1, ceil(self.progress * 120));
+    BOOL drawsFullRing = !self.isCountingDown && progress >= 1;
+    NSInteger segmentCount = drawsFullRing ? 360 : MAX(1, ceil(progress * 180));
+    CGContextSetLineCap(context, kCGLineCapButt);
     for (NSInteger index = 0; index < segmentCount; index++) {
         CGFloat segmentStart = startAngle + (endAngle - startAngle) * index / segmentCount;
         CGFloat segmentEnd = startAngle + (endAngle - startAngle) * (index + 1) / segmentCount;
@@ -67,6 +71,17 @@ static CGFloat const kCircleLineWidth = 18;
         CGContextAddArc(context, center.x, center.y, radius, segmentStart, segmentEnd, 0);
         CGContextStrokePath(context);
     }
+
+    CGFloat startCapX = center.x + radius * cos(startAngle);
+    CGFloat startCapY = center.y + radius * sin(startAngle);
+    [self.taskColor setFill];
+    CGContextFillEllipseInRect(context, CGRectMake(startCapX - kCircleLineWidth/2, startCapY - kCircleLineWidth/2, kCircleLineWidth, kCircleLineWidth));
+
+    CGFloat capAngle = drawsFullRing ? startAngle : endAngle;
+    CGFloat endCapX = center.x + radius * cos(capAngle);
+    CGFloat endCapY = center.y + radius * sin(capAngle);
+    [[self colorBetween:self.taskColor and:self.pulseColor ratio:1] setFill];
+    CGContextFillEllipseInRect(context, CGRectMake(endCapX - kCircleLineWidth/2, endCapY - kCircleLineWidth/2, kCircleLineWidth, kCircleLineWidth));
 }
 
 - (UIColor *)colorBetween:(UIColor *)startColor and:(UIColor *)endColor ratio:(CGFloat)ratio
@@ -224,12 +239,14 @@ static CGFloat const kCircleLineWidth = 18;
     if (canStop) {
         self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
         self.circleView.isCountingDown = NO;
+        self.circleView.startAngle = [self hourCircleStartAngle];
         self.circleView.progress = [self hourCircleProgress];
         [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"stop"] forState:UIControlStateNormal];
     } else {
         NSTimeInterval countdown = MAX(0, kMinSeconds - self.accurateTimeInterval);
         self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:ceil(countdown)];
         self.circleView.isCountingDown = YES;
+        self.circleView.startAngle = -M_PI_2;
         self.circleView.progress = countdown / kMinSeconds;
         [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"give_up"] forState:UIControlStateNormal];
     }
@@ -240,11 +257,20 @@ static CGFloat const kCircleLineWidth = 18;
 - (CGFloat)hourCircleProgress
 {
     NSInteger elapsedMinutes = MAX(0, floor(self.timeInterval / 60.0));
-    NSInteger minuteInHour = elapsedMinutes % 60;
-    if (elapsedMinutes > 0 && minuteInHour == 0) {
+    if (elapsedMinutes >= 60) {
         return 1;
     }
-    return minuteInHour / 60.0;
+    return elapsedMinutes / 60.0;
+}
+
+- (CGFloat)hourCircleStartAngle
+{
+    NSInteger elapsedMinutes = MAX(0, floor(self.timeInterval / 60.0));
+    if (elapsedMinutes < 60) {
+        return -M_PI_2;
+    }
+    NSInteger minuteInHour = elapsedMinutes % 60;
+    return -M_PI_2 + 2*M_PI*(minuteInHour / 60.0);
 }
 
 - (void)stopButtonClicked
@@ -273,6 +299,7 @@ static CGFloat const kCircleLineWidth = 18;
 {
     NSMutableArray<MirrorRecordModel *> * records = [MirrorStorage retriveMirrorRecords];
     long startTimestamp = records[records.count -1].startTime;
+//    startTimestamp = startTimestamp - 3600*3;
     NSDate *startTime = [NSDate dateWithTimeIntervalSince1970:startTimestamp];
     return startTime;
 }
@@ -314,6 +341,7 @@ static CGFloat const kCircleLineWidth = 18;
     if (!_circleView) {
         _circleView = [MirrorTrackingCircleView new];
         _circleView.backgroundColor = UIColor.clearColor;
+        _circleView.startAngle = -M_PI_2;
         MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:self.taskName];
         _circleView.taskColor = [UIColor mirrorColorNamed:task.color];
         _circleView.pulseColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:task.color]];
@@ -329,6 +357,8 @@ static CGFloat const kCircleLineWidth = 18;
         _timeIntervalLabel.font = [UIFont fontWithName:kHintFont size:kIntervalSize];
         _timeIntervalLabel.text = [MirrorLanguage mirror_stringWithKey:@"go"];
         _timeIntervalLabel.textAlignment = NSTextAlignmentCenter;
+        _timeIntervalLabel.adjustsFontSizeToFitWidth = YES;
+        _timeIntervalLabel.minimumScaleFactor = 0.45;
     }
     return _timeIntervalLabel;
 }
