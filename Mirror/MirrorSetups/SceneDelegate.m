@@ -175,6 +175,12 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
 
 - (void)sceneDidBecomeActive:(UIScene *)scene {
     [MirrorStorage resumeGoingOnLiveActivityIfNeeded];
+    NSNumber *currentSecondsFromGMT = @([NSTimeZone systemTimeZone].secondsFromGMT);
+    if (![[MirrorStorage retriveSecondsFromGMT] isEqualToNumber:currentSecondsFromGMT]) {
+        [MirrorStorage saveSecondsFromGMT:currentSecondsFromGMT];
+        [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSignificantTimeChangeNotification object:nil userInfo:nil];
+    }
+
     BOOL appIsDark = [MirrorSettings appliedDarkMode];
     BOOL systemIsDark = [UIScreen mainScreen].traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark;
     if (appIsDark == systemIsDark) {

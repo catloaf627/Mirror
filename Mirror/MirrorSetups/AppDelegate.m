@@ -60,9 +60,9 @@
 
 - (void)applicationSignificantTimeChange:(UIApplication *)application
 {
-    // 用户当前的时区，和数据被执行零点切割的时区不一样了，需要修改所有时间数据
+    // 用户当前时区可能变化了；只保存新的时区偏移，不改用户原始记录时间。
     [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
-    // 发出一个重刷页面的通知（强制改时区可用、零点刷新也可用）
+    // 发出一个重刷页面的通知（强制改时区可用、零点刷新也可用）。
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSignificantTimeChangeNotification object:nil userInfo:nil];
 }
 

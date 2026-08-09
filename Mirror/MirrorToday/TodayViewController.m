@@ -488,7 +488,7 @@
     CGFloat recordX = kTimelineLeftWidth;
     CGFloat recordWidth = CGRectGetWidth(self.timelineContentView.bounds) - recordX - kTimelineRightPadding;
 
-    for (MirrorRecordModel *record in self.todayData) {
+    for (MirrorRecordModel *record in [MirrorStorage retriveMirrorRecords]) {
         long start = MAX(record.startTime, dayStart);
         long end = MIN(record.endTime, dayEnd);
         if (end <= start) {

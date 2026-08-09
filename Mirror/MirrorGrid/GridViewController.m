@@ -421,13 +421,22 @@
     _gridData = [MirrorStorage getGridData];
 }
 
+- (NSMutableArray<MirrorDataModel *> *)gridDataForTimestampKey:(NSString *)timestampKey
+{
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:[timestampKey integerValue]];
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    return self.gridData[[formatter stringFromDate:date]];
+}
+
 - (void)updateCharts // legend & histogram & piechart
 {
     if (self.keys.count <= _selectedCellIndex) { // 空数据保护
         return;
     }
     // data source
-    NSMutableArray<MirrorDataModel *> *data = self.gridData[self.keys[_selectedCellIndex]];
+    NSMutableArray<MirrorDataModel *> *data = [self gridDataForTimestampKey:self.keys[_selectedCellIndex]];
     // date label
     GridCollectionViewCell *cell = (GridCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:_selectedCellIndex inSection:0]];
     if (cell) { // 从did selected调用
@@ -490,7 +499,7 @@
     // data source
     NSMutableArray<NSMutableArray<MirrorDataModel *> *> *dataArr = [NSMutableArray new];
     for (NSInteger i=start; i<=end; i++) {
-        NSMutableArray<MirrorDataModel *> *data = self.gridData[self.keys[i]];
+        NSMutableArray<MirrorDataModel *> *data = [self gridDataForTimestampKey:self.keys[i]];
         if (data == nil) {
             data = [NSMutableArray new];
         }
@@ -671,11 +680,11 @@
 {
     GridCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[GridCollectionViewCell identifier] forIndexPath:indexPath];
     if (_selectedCellIndexesStart == -1 || _selectedCellIndexesEnd == -1) { // single select
-        [cell configWithData:self.gridData[self.keys[indexPath.item]] isSelected:indexPath.item==_selectedCellIndex];
+        [cell configWithData:[self gridDataForTimestampKey:self.keys[indexPath.item]] isSelected:indexPath.item==_selectedCellIndex];
     } else { // multi select
         NSInteger start = _selectedCellIndexesStart < _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
         NSInteger end = _selectedCellIndexesStart > _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
-        [cell configWithData:self.gridData[self.keys[indexPath.item]] isSelected:(indexPath.item<=end && indexPath.item>=start)];
+        [cell configWithData:[self gridDataForTimestampKey:self.keys[indexPath.item]] isSelected:(indexPath.item<=end && indexPath.item>=start)];
     }
     
     return cell;

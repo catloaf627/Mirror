@@ -108,10 +108,10 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 + (NSMutableArray<MirrorDataModel *> *)getAllRecordsInTaskOrderWithStart:(long)startTime end:(long)endTime shouldHideHidden:(BOOL)shouldHideHidden;
 
 /*
- 取出【所有任务】的所有records，并按照天来切割、并且在一天的范围内按照优先级排序（🪀、🌸、👾），切割好后通过零点的时间作为key来存储
- dateString0 =  【🪀, {originalIndex, 🪀, 06:00, 07:00}】  【🌸, {originalIndex, 🌸, 05:00, 06:00},
+ 取出【所有任务】的所有records，并按照天来切割、并且在一天的范围内按照优先级排序（🪀、🌸、👾），切割好后通过日期字符串作为key来存储（yyyy-MM-dd）
+ 2023-05-01 =  【🪀, {originalIndex, 🪀, 06:00, 07:00}】  【🌸, {originalIndex, 🌸, 05:00, 06:00},
                                                                 {originalIndex, 🌸, 07:00, 08:00}..】
- dateString1 =  【🪀, {originalIndex, 🪀, 06:00, 07:00}】  【🌸, {originalIndex, 🌸, 05:00, 06:00},    【👾, {originalIndex, 👾, 05:00, 06:00}
+ 2023-05-02 =  【🪀, {originalIndex, 🪀, 06:00, 07:00}】  【🌸, {originalIndex, 🌸, 05:00, 06:00},    【👾, {originalIndex, 👾, 05:00, 06:00}
                                                                 {originalIndex, 🌸, 07:00, 08:00}..】       {originalIndex, 👾, 09:00, 10:00}
                                                                                                             {originalIndex, 👾, 11:00, 12:00}..】
  适用场景：Grid vc

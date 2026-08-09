@@ -9,6 +9,7 @@
 #import "MirrorTool.h"
 #import <Masonry/Masonry.h>
 #import "MirrorTimeText.h"
+#import "UIFont+MirrorFont.h"
 
 static const CGFloat kLabelHeight = 20;
 
@@ -67,7 +68,7 @@ static const CGFloat kLabelHeight = 20;
         _coloredView = [UIView new];
         // cell自己的圆角
         CAShapeLayer * maskLayer = [CAShapeLayer layer];
-        maskLayer.path = [UIBezierPath bezierPathWithRoundedRect: self.bounds byRoundingCorners: UIRectCornerTopLeft | UIRectCornerTopRight cornerRadii: (CGSize){14., 14.}].CGPath;
+        maskLayer.path = [UIBezierPath bezierPathWithRoundedRect: self.bounds byRoundingCorners: UIRectCornerTopLeft | UIRectCornerTopRight cornerRadii: (CGSize){10., 10.}].CGPath;
         _coloredView.layer.mask = maskLayer;
     }
     return _coloredView;
@@ -78,7 +79,7 @@ static const CGFloat kLabelHeight = 20;
     if (!_timeLabel) {
         _timeLabel = [UILabel new];
         _timeLabel.textAlignment = NSTextAlignmentCenter;
-        _timeLabel.font = [UIFont systemFontOfSize:12];
+        _timeLabel.font = [UIFont mirrorMinFont];
     }
     return _timeLabel;
 }

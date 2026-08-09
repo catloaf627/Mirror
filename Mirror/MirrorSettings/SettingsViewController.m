@@ -241,7 +241,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
                     UIAlertController* alert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"import_data_?"] message:[MirrorLanguage mirror_stringWithKey:@"import_data_?_message"] preferredStyle:UIAlertControllerStyleAlert];
                     UIAlertAction* importAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"import"] style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
                         [MirrorStorage importJSONData:data]; // 所有的数据全部导入
-                        [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)]; // 导入后修改数据以适应本地system timezone
+                        [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)]; // 导入后只记录本机时区，不改 raw data
                         [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
                     }];
                     UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
