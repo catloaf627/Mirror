@@ -9,7 +9,7 @@
 #import <Masonry/Masonry.h>
 #import "MirrorStorage.h"
 #import "MirrorTaskModel.h"
-
+#import "UIFont+MirrorFont.h"
 static CGFloat const kPadding = 10;
 
 @interface LegendCollectionViewCell ()
@@ -64,7 +64,7 @@ static CGFloat const kPadding = 10;
 {
     if (!_label) {
         _label = [UILabel new];
-        _label.font = [UIFont systemFontOfSize:14];
+        _label.font = [UIFont mirrorLabelFont];
     }
     return _label;
 }
