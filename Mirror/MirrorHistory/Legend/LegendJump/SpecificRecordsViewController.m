@@ -14,7 +14,7 @@
 #import "MirrorLanguage.h"
 #import "MirrorNaviManager.h"
 
-static CGFloat const kCellSpacing = 20; // cell之间的上下间距
+#define kCellSpacing (20*kWidthRatio) // left right spacing
 
 @interface SpecificRecordsViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, VCForPeriodCellProtocol>
 
@@ -109,7 +109,7 @@ static CGFloat const kCellSpacing = 20; // cell之间的上下间距
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(kScreenWidth - 2*kCellSpacing, 80);
+    return CGSizeMake(kScreenWidth - 2*kCellSpacing, 80*kHeightRatio);
 }
 
 #pragma mark - Update UI after delete a record
@@ -139,7 +139,7 @@ static CGFloat const kCellSpacing = 20; // cell之间的上下间距
 {
     if (!_collectionView) {
         UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc]init];
-        layout.minimumLineSpacing = 10;
+        layout.minimumLineSpacing = 10*kHeightRatio;
         _collectionView = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:layout];
         _collectionView.delegate = self;
         _collectionView.dataSource = self;

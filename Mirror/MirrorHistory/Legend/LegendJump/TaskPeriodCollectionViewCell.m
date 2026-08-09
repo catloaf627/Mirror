@@ -13,11 +13,13 @@
 #import "MirrorSettings.h"
 #import "MirrorMacro.h"
 #import "MirrorTimeText.h"
+#import "UIFont+MirrorFont.h"
 
-static const CGFloat kHorizontalPadding = 20;
-static const CGFloat kVerticalPadding = 10;
-static const CGFloat kDeleteButtonWidth = 72;
 static const CGFloat kCellRadius = 12;
+#define kHorizontalPadding (20*kWidthRatio)
+#define kVerticalPadding (10*kHeightRatio)
+#define kDeleteButtonWidth (72*kWidthRatio)
+
 
 @interface TaskPeriodCollectionViewCell () <UIGestureRecognizerDelegate>
 
@@ -254,7 +256,7 @@ static const CGFloat kCellRadius = 12;
         _bottomRightLabel = [UILabel new];
         _bottomRightLabel.adjustsFontSizeToFitWidth = YES;
         _bottomRightLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _bottomRightLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:12];
+        _bottomRightLabel.font = [UIFont mirrorHintFont];
     }
     return _bottomRightLabel;
 }
@@ -265,7 +267,7 @@ static const CGFloat kCellRadius = 12;
     if (!_deleteButton) {
         _deleteButton = [UIButton new];
         _deleteButton.backgroundColor = [UIColor systemRedColor];
-        _deleteButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Bold" size:14];
+        _deleteButton.titleLabel.font = [UIFont mirrorLabelFont];
         [_deleteButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] forState:UIControlStateNormal];
         [_deleteButton setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
         [_deleteButton addTarget:self action:@selector(deletePeriod) forControlEvents:UIControlEventTouchUpInside];
@@ -318,7 +320,7 @@ static const CGFloat kCellRadius = 12;
         _dateLabel = [UILabel new];
         _dateLabel.adjustsFontSizeToFitWidth = YES;
         _dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _dateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:17];
+        _dateLabel.font = [UIFont mirrorLabelFont];
     }
     return _dateLabel;
 }
