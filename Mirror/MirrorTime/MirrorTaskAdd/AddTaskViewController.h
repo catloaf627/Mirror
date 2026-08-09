@@ -12,6 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface AddTaskViewController : UIViewController
 
+- (instancetype)initWithTaskName:(NSString *)taskName;
+
 @end
 
 NS_ASSUME_NONNULL_END

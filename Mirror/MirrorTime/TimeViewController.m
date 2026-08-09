@@ -21,7 +21,6 @@
 #import "SettingsViewController.h"
 #import "LeftAnimation.h"
 #import "CellAnimation.h"
-#import "AllTasksViewController.h"
 #import "MirrorLanguage.h"
 #import "HintFooter.h"
 
@@ -36,11 +35,13 @@
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
-@property (nonatomic, strong) UIButton *allTasksButton;
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorTaskModel *> *data;
 // Mark
 @property (nonatomic, assign) CGRect selectedCellFrame; // cell.x, cell.y, cell.width, cell.height
+@property (nonatomic, strong) NSIndexPath *movingIndexPath;
+@property (nonatomic, assign) CGPoint longPressStartPoint;
+@property (nonatomic, assign) BOOL didMoveLongPressedTask;
 // UI
 @property (nonatomic, strong) UICollectionView *collectionView;
 
@@ -85,7 +86,7 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.allTasksButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
     [self.collectionView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
     }];
@@ -98,7 +99,7 @@
     // update navibar
     [[MirrorTabsManager sharedInstance] updateTimeTabItemWithTabController:self.tabBarController];
     if (self.tabBarController.selectedIndex == 0) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.allTasksButton];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
     }
     // reset ui
     self.collectionView = nil;
@@ -140,12 +141,85 @@
     [self presentViewController:settingsVC animated:YES completion:nil];
 }
 
-- (void)goToAllTasks
+- (void)longPressTask:(UILongPressGestureRecognizer *)longPress
 {
-    [self.navigationController pushViewController:[AllTasksViewController new] animated:YES];
-//    [self.navigationController pushViewController:[AllTasksViewController new] animated:YES]; // gizmo
+    CGPoint location = [longPress locationInView:self.collectionView];
+    switch (longPress.state) {
+        case UIGestureRecognizerStateBegan:
+        {
+            NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:location];
+            if (![self canMoveTaskAtIndexPath:indexPath]) {
+                return;
+            }
+            self.movingIndexPath = indexPath;
+            self.longPressStartPoint = location;
+            self.didMoveLongPressedTask = NO;
+            UICollectionViewCell *selectedCell = [self.collectionView cellForItemAtIndexPath:indexPath];
+            selectedCell.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
+            selectedCell.layer.shadowRadius = 4;
+            selectedCell.layer.shadowOpacity = 1;
+            [self.collectionView beginInteractiveMovementForItemAtIndexPath:indexPath];
+        }
+            break;
+        case UIGestureRecognizerStateChanged:
+            if (self.movingIndexPath == nil) {
+                return;
+            }
+            CGFloat xOffset = location.x - self.longPressStartPoint.x;
+            CGFloat yOffset = location.y - self.longPressStartPoint.y;
+            if (sqrt(xOffset * xOffset + yOffset * yOffset) > 8) {
+                self.didMoveLongPressedTask = YES;
+            }
+            [self.collectionView updateInteractiveMovementTargetPosition:location];
+            break;
+        case UIGestureRecognizerStateEnded:
+            if (self.movingIndexPath == nil) {
+                return;
+            }
+            [self resetLongPressedCellShadow];
+            if (self.didMoveLongPressedTask) {
+                [self.collectionView endInteractiveMovement];
+            } else {
+                [self.collectionView cancelInteractiveMovement];
+                [self presentEditTaskSheetAtIndexPath:self.movingIndexPath];
+            }
+            self.movingIndexPath = nil;
+            self.didMoveLongPressedTask = NO;
+            break;
+        default:
+            [self resetLongPressedCellShadow];
+            [self.collectionView cancelInteractiveMovement];
+            self.movingIndexPath = nil;
+            self.didMoveLongPressedTask = NO;
+            break;
+    }
 }
 
+- (BOOL)canMoveTaskAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (indexPath == nil || indexPath.item >= self.data.count) {
+        return NO;
+    }
+    return !self.data[indexPath.item].isAddTaskModel;
+}
+
+- (void)resetLongPressedCellShadow
+{
+    UICollectionViewCell *selectedCell = [self.collectionView cellForItemAtIndexPath:self.movingIndexPath];
+    selectedCell.layer.shadowColor = [UIColor clearColor].CGColor;
+    selectedCell.layer.shadowRadius = 0;
+    selectedCell.layer.shadowOpacity = 0;
+}
+
+- (void)presentEditTaskSheetAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (![self canMoveTaskAtIndexPath:indexPath]) {
+        return;
+    }
+    MirrorTaskModel *task = self.data[indexPath.item];
+    AddTaskViewController *editVC = [[AddTaskViewController alloc] initWithTaskName:task.taskName];
+    [self.navigationController presentViewController:editVC animated:YES completion:nil];
+}
 
 #pragma mark - Collection view delegate
 
@@ -301,6 +375,48 @@
     return CGSizeMake(kScreenWidth, 30*kHeightRatio); // 起到提示效果
 }
 
+- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    return [self canMoveTaskAtIndexPath:indexPath];
+}
+
+- (NSIndexPath *)collectionView:(UICollectionView *)collectionView targetIndexPathForMoveFromItemAtIndexPath:(NSIndexPath *)originalIndexPath toProposedIndexPath:(NSIndexPath *)proposedIndexPath
+{
+    if ([self canMoveTaskAtIndexPath:proposedIndexPath]) {
+        return proposedIndexPath;
+    }
+    NSInteger lastTaskIndex = MAX(0, self.data.count - 2);
+    return [NSIndexPath indexPathForItem:lastTaskIndex inSection:0];
+}
+
+- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath
+{
+    if (![self canMoveTaskAtIndexPath:sourceIndexPath]) {
+        return;
+    }
+    NSInteger destinationItem = MIN(destinationIndexPath.item, self.data.count - 2);
+    NSMutableArray<MirrorTaskModel *> *visibleTasks = [NSMutableArray new];
+    for (MirrorTaskModel *task in self.data) {
+        if (!task.isAddTaskModel) {
+            [visibleTasks addObject:task];
+        }
+    }
+    MirrorTaskModel *selectedTask = visibleTasks[sourceIndexPath.item];
+    [visibleTasks removeObjectAtIndex:sourceIndexPath.item];
+    [visibleTasks insertObject:selectedTask atIndex:destinationItem];
+
+    NSMutableArray<MirrorTaskModel *> *allTasks = [MirrorStorage retriveMirrorTasks];
+    NSInteger visibleIndex = 0;
+    for (NSInteger index = 0; index < allTasks.count; index++) {
+        if (!allTasks[index].isArchived) {
+            allTasks[index] = visibleTasks[visibleIndex];
+            visibleIndex += 1;
+        }
+    }
+    [MirrorStorage reorderTasks:allTasks];
+    self.data = [MirrorStorage tasksWithoutArchiveWithAddNew];
+}
+
 #pragma mark - Getters
 
 - (UICollectionView *)collectionView
@@ -316,6 +432,8 @@
         [_collectionView registerClass:[TimeTrackerAddTaskCollectionViewCell class] forCellWithReuseIdentifier:[TimeTrackerAddTaskCollectionViewCell identifier]];
         [_collectionView registerClass:[UICollectionViewCell class] forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"header"];
         [_collectionView registerClass:[HintFooter class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"footer"];
+        UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressTask:)];
+        [_collectionView addGestureRecognizer:longPress];
     }
     return _collectionView;
 }
@@ -329,17 +447,6 @@
         [_settingsButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
     }
     return _settingsButton;
-}
-
-- (UIButton *)allTasksButton
-{
-    if (!_allTasksButton) {
-        _allTasksButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"tray.full"]  imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_allTasksButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        [_allTasksButton addTarget:self action:@selector(goToAllTasks) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _allTasksButton;
 }
 
 - (NSMutableArray<MirrorTaskModel *> *)data

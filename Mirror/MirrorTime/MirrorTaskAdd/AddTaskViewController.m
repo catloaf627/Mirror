@@ -18,6 +18,7 @@ static CGFloat const kAddTaskVCPadding = 20;
 @interface AddTaskViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) MirrorTaskModel *brandNewTaskModel; //新创建的task，由于OC不允许使用new作为property的前缀，这里使用了brand new
+@property (nonatomic, strong) NSString *editingTaskName;
 @property (nonatomic, strong) UITextField *editTaskNameTextField;
 @property (nonatomic, strong) UILabel *addTaskNameHint;
 @property (nonatomic, strong) UICollectionView *collectionView;
@@ -28,6 +29,15 @@ static CGFloat const kAddTaskVCPadding = 20;
 @end
 
 @implementation AddTaskViewController
+
+- (instancetype)initWithTaskName:(NSString *)taskName
+{
+    self = [super init];
+    if (self) {
+        _editingTaskName = taskName;
+    }
+    return self;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
@@ -49,6 +59,7 @@ static CGFloat const kAddTaskVCPadding = 20;
 {
     NSString *currentText = self.editTaskNameTextField.text;
     BOOL textIsEmpty = !currentText || [currentText isEqualToString:@""];
+    BOOL textIsTheSame = [currentText isEqualToString:self.editingTaskName];
     TaskNameExistsType existType = [MirrorStorage taskNameExists:currentText];
     if (textIsEmpty) {
         UIAlertController* newNameIsEmptyAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"name_field_cannot_be_empty"] message:nil preferredStyle:UIAlertControllerStyleAlert];
@@ -56,16 +67,23 @@ static CGFloat const kAddTaskVCPadding = 20;
         UIAlertAction* understandAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"gotcha"] style:UIAlertActionStyleDefault handler:nil];
         [newNameIsEmptyAlert addAction:understandAction];
         [self presentViewController:newNameIsEmptyAlert animated:YES completion:nil];
-    } else if (existType != TaskNameExistsTypeValid) {
+    } else if (!textIsTheSame && existType != TaskNameExistsTypeValid) {
         UIAlertController* newNameIsDuplicateAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"task_cannot_be_duplicated"] message: [MirrorLanguage mirror_stringWithKey:existType == TaskNameExistsTypeExistsInCurrentTasks ? @"this_task_exists_in_current_task_list" : @"this_task_exists_in_the_archived_task_list"] preferredStyle:UIAlertControllerStyleAlert];
         UIAlertAction* understandAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"gotcha"] style:UIAlertActionStyleDefault handler:nil];
         [newNameIsDuplicateAlert addAction:understandAction];
         [self presentViewController:newNameIsDuplicateAlert animated:YES completion:nil];
     } else {
         [self dismissViewControllerAnimated:YES completion:^{
-            self.brandNewTaskModel.taskName = currentText; //taskname退出时更新
-            self.brandNewTaskModel.createdTime = (long)[[NSDate now] timeIntervalSince1970]; //获取当前时间
-            [MirrorStorage createTask:self.brandNewTaskModel];
+            if (self.editingTaskName.length > 0) {
+                if (!textIsTheSame) {
+                    [MirrorStorage editTask:self.editingTaskName name:currentText];
+                }
+                [MirrorStorage editTask:currentText color:self.brandNewTaskModel.color];
+            } else {
+                self.brandNewTaskModel.taskName = currentText; //taskname退出时更新
+                self.brandNewTaskModel.createdTime = (long)[[NSDate now] timeIntervalSince1970]; //获取当前时间
+                [MirrorStorage createTask:self.brandNewTaskModel];
+            }
         }];
     }
 
@@ -73,12 +91,27 @@ static CGFloat const kAddTaskVCPadding = 20;
 
 - (void)clickDiscardButton
 {
-    [self dismissViewControllerAnimated:YES completion:nil];
+    if (self.editingTaskName.length == 0) {
+        [self dismissViewControllerAnimated:YES completion:nil];
+        return;
+    }
+    UIAlertController* deleteButtonAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_task_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+
+    UIAlertAction* deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+        [self dismissViewControllerAnimated:YES completion:^{
+            [MirrorStorage deleteTask:self.editingTaskName];
+        }];
+    }];
+    UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
+    [deleteButtonAlert addAction:cancelAction];
+    [deleteButtonAlert addAction:deleteAction];
+    [self presentViewController:deleteButtonAlert animated:YES completion:nil];
 }
 
 - (void)p_setupUI
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:self.brandNewTaskModel.color];
+    self.editTaskNameTextField.text = self.brandNewTaskModel.taskName;
     [self.view addSubview:self.editTaskNameTextField];
     [self.editTaskNameTextField mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(20);
@@ -100,6 +133,11 @@ static CGFloat const kAddTaskVCPadding = 20;
         make.height.mas_equalTo([self p_colorBlockWidth]);
     }];
     
+    if (self.editingTaskName.length > 0) {
+        [self.discardButton setImage:[[UIImage systemImageNamed:@"delete.left"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+        [self.discardButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] forState:UIControlStateNormal];
+        [self.createButton setTitle:[MirrorLanguage mirror_stringWithKey:@"save"] forState:UIControlStateNormal];
+    }
     [self.view addSubview:self.discardButton];
     [self.view addSubview:self.createButton];
     [self.discardButton mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -180,9 +218,14 @@ static CGFloat const kAddTaskVCPadding = 20;
 - (MirrorTaskModel *)brandNewTaskModel
 {
     if (!_brandNewTaskModel) {
-        NSArray *allColorType = @[@(MirrorColorTypeCellPink), @(MirrorColorTypeCellOrange), @(MirrorColorTypeCellYellow), @(MirrorColorTypeCellGreen), @(MirrorColorTypeCellTeal), @(MirrorColorTypeCellBlue), @(MirrorColorTypeCellPurple),@(MirrorColorTypeCellGray)];
-        MirrorColorType type = [allColorType[arc4random() % allColorType.count] integerValue]; // 随机生成一个颜色
-        _brandNewTaskModel = [[MirrorTaskModel alloc] initWithTitle:[MirrorLanguage mirror_stringWithKey:@"untitled"] createdTime:[@(0) longValue] colorType:type isArchived:NO isHidden:NO isAddTask:NO];
+        if (self.editingTaskName.length > 0) {
+            MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:self.editingTaskName];
+            _brandNewTaskModel = [[MirrorTaskModel alloc] initWithTitle:task.taskName createdTime:task.createdTime colorType:task.color isArchived:task.isArchived isHidden:task.isHidden isAddTask:NO];
+        } else {
+            NSArray *allColorType = @[@(MirrorColorTypeCellPink), @(MirrorColorTypeCellOrange), @(MirrorColorTypeCellYellow), @(MirrorColorTypeCellGreen), @(MirrorColorTypeCellTeal), @(MirrorColorTypeCellBlue), @(MirrorColorTypeCellPurple),@(MirrorColorTypeCellGray)];
+            MirrorColorType type = [allColorType[arc4random() % allColorType.count] integerValue]; // 随机生成一个颜色
+            _brandNewTaskModel = [[MirrorTaskModel alloc] initWithTitle:[MirrorLanguage mirror_stringWithKey:@"untitled"] createdTime:[@(0) longValue] colorType:type isArchived:NO isHidden:NO isAddTask:NO];
+        }
     }
     return _brandNewTaskModel;
 }
