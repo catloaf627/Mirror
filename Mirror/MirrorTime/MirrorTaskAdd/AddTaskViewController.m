@@ -12,6 +12,7 @@
 #import "MirrorLanguage.h"
 #import "UIColor+MirrorColor.h"
 #import "MirrorStorage.h"
+#import "UIFont+MirrorFont.h"
 
 static CGFloat const kAddTaskVCPadding = 20;
 
@@ -19,6 +20,7 @@ static CGFloat const kAddTaskVCPadding = 20;
 
 @property (nonatomic, strong) MirrorTaskModel *brandNewTaskModel; //新创建的task，由于OC不允许使用new作为property的前缀，这里使用了brand new
 @property (nonatomic, strong) NSString *editingTaskName;
+@property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UITextField *editTaskNameTextField;
 @property (nonatomic, strong) UILabel *addTaskNameHint;
 @property (nonatomic, strong) UICollectionView *collectionView;
@@ -95,9 +97,9 @@ static CGFloat const kAddTaskVCPadding = 20;
         [self dismissViewControllerAnimated:YES completion:nil];
         return;
     }
-    UIAlertController* deleteButtonAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_task_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController* deleteButtonAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_task_?"] message:[MirrorLanguage mirror_stringWithKey:@"delete_task_warning"] preferredStyle:UIAlertControllerStyleAlert];
 
-    UIAlertAction* deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
+    UIAlertAction* deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction * action) {
         [self dismissViewControllerAnimated:YES completion:^{
             [MirrorStorage deleteTask:self.editingTaskName];
         }];
@@ -111,14 +113,21 @@ static CGFloat const kAddTaskVCPadding = 20;
 - (void)p_setupUI
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:self.brandNewTaskModel.color];
+    BOOL isEditingTask = self.editingTaskName.length > 0;
+    self.titleLabel.text = [MirrorLanguage mirror_stringWithKey:isEditingTask ? @"edit_this_task" : @"create_a_new_task"];
     self.editTaskNameTextField.text = self.brandNewTaskModel.taskName;
-    [self.view addSubview:self.editTaskNameTextField];
-    [self.editTaskNameTextField mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.view addSubview:self.titleLabel];
+    [self.titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(20);
         make.centerX.offset(0);
         make.width.mas_equalTo(kScreenWidth - 2*kAddTaskVCPadding);
     }];
-    BOOL isEditingTask = self.editingTaskName.length > 0;
+    [self.view addSubview:self.editTaskNameTextField];
+    [self.editTaskNameTextField mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(self.titleLabel.mas_bottom).offset(16);
+        make.centerX.offset(0);
+        make.width.mas_equalTo(kScreenWidth - 2*kAddTaskVCPadding);
+    }];
     if (!isEditingTask) {
         [self.view addSubview:self.addTaskNameHint];
         [self.addTaskNameHint mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -237,13 +246,24 @@ static CGFloat const kAddTaskVCPadding = 20;
     return _brandNewTaskModel;
 }
 
+- (UILabel *)titleLabel
+{
+    if (!_titleLabel) {
+        _titleLabel = [UILabel new];
+        _titleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _titleLabel.font = [UIFont mirrorTitleFont];
+        _titleLabel.textAlignment = NSTextAlignmentCenter;
+    }
+    return _titleLabel;
+}
+
 - (UITextField *)editTaskNameTextField
 {
     if (!_editTaskNameTextField) {
         _editTaskNameTextField = [UITextField new];
         _editTaskNameTextField.placeholder = [MirrorLanguage mirror_stringWithKey:self.editingTaskName.length > 0 ? @"edit_task_title" : @"enter_task_title"];
         _editTaskNameTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _editTaskNameTextField.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
+        _editTaskNameTextField.font = [UIFont mirrorLabelFont];
         _editTaskNameTextField.enabled = YES;
         _editTaskNameTextField.textAlignment = NSTextAlignmentCenter;
     }
@@ -256,7 +276,7 @@ static CGFloat const kAddTaskVCPadding = 20;
         _addTaskNameHint = [UILabel new];
         _addTaskNameHint.text = [MirrorLanguage mirror_stringWithKey:@"add_taskname_hint"];
         _addTaskNameHint.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _addTaskNameHint.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:12];
+        _addTaskNameHint.font = [UIFont mirrorHintFont];
         _addTaskNameHint.textAlignment = NSTextAlignmentCenter;
         
     }
@@ -308,7 +328,7 @@ static CGFloat const kAddTaskVCPadding = 20;
         // title
         [_createButton setTitle:[MirrorLanguage mirror_stringWithKey:@"create"] forState:UIControlStateNormal];
         [_createButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
-        _createButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
+        _createButton.titleLabel.font = [UIFont mirrorButtonFont];
         // padding
         _createButton.titleEdgeInsets = UIEdgeInsetsMake(0, 20, 0, 0);
         // action
@@ -327,7 +347,7 @@ static CGFloat const kAddTaskVCPadding = 20;
         // title
         [_discardButton setTitle:[MirrorLanguage mirror_stringWithKey:@"discard"] forState:UIControlStateNormal];
         [_discardButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
-        _discardButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
+        _discardButton.titleLabel.font = [UIFont mirrorButtonFont];
         // padding
         _discardButton.titleEdgeInsets = UIEdgeInsetsMake(0, 20, 0, 0);
         // action
