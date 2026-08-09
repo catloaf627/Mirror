@@ -10,12 +10,18 @@
 #import "LineChartCollectionViewCell.h"
 #import "MirrorDataModel.h"
 #import "MirrorTool.h"
+#import "UIColor+MirrorColor.h"
+#import "UIFont+MirrorFont.h"
 
 static CGFloat const kMinCellWidth = 14;
+static CGFloat const kTimelineLeftWidth = 36;
+static CGFloat const kTimelineRightPadding = 4;
+static CGFloat const kTimelineLineWidth = 5;
 
 @interface LinechartView () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
 @property (nonatomic, strong) UICollectionView *collectionView;
+@property (nonatomic, strong) UIView *timelineView;
 
 @property (nonatomic, assign) long maxtime;
 @property (nonatomic, strong) NSMutableArray<NSMutableDictionary<NSString *, NSNumber *> *> *data;
@@ -36,10 +42,22 @@ static CGFloat const kMinCellWidth = 14;
 - (void)p_setupUI
 {
     self.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    [self addSubview:self.collectionView];
-    [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self addSubview:self.timelineView];
+    [self.timelineView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.top.bottom.mas_equalTo(self).offset(0);
     }];
+    [self addSubview:self.collectionView];
+    [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self).offset(kTimelineLeftWidth);
+        make.right.mas_equalTo(self).offset(-kTimelineRightPadding);
+        make.top.bottom.mas_equalTo(self).offset(0);
+    }];
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    [self renderTimeline];
 }
 
 #pragma mark - UICollectionViewDataSource
@@ -124,6 +142,7 @@ static CGFloat const kMinCellWidth = 14;
         [self.data addObject:onedayDict];
     }
     [self.collectionView reloadData];
+    [self renderTimeline];
     /*
      原数据
    { [taskA:10h, taskB:20h]
@@ -143,6 +162,48 @@ static CGFloat const kMinCellWidth = 14;
      */
 }
 
+- (void)renderTimeline
+{
+    [self.timelineView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    if (self.maxtime <= 0 || CGRectGetHeight(self.bounds) <= 0 || CGRectGetWidth(self.bounds) <= 0) {
+        return;
+    }
+    
+    long step = self.maxtime >= 3600 ? 3600 : 15 * 60;
+    long maxLineTime = (self.maxtime / step) * step;
+    CGFloat drawableHeight = MAX(CGRectGetHeight(self.bounds) - kTimelineLineWidth, 0);
+    CGFloat lineX = kTimelineLeftWidth;
+    CGFloat lineWidth = CGRectGetWidth(self.bounds) - kTimelineLeftWidth - kTimelineRightPadding;
+    
+    for (long time = 0; time <= maxLineTime; time += step) {
+        CGFloat percentage = time / (double)self.maxtime;
+        CGFloat y = kTimelineLineWidth / 2 + (1 - percentage) * drawableHeight;
+        
+        UIView *line = [UIView new];
+        line.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
+        line.alpha = 0.2;
+        [self.timelineView addSubview:line];
+        line.frame = CGRectMake(lineX, y, lineWidth, 1);
+        
+        UILabel *timeLabel = [UILabel new];
+        timeLabel.text = [self timelineTextWithSeconds:time];
+        timeLabel.font = [UIFont mirrorMinFont];
+        timeLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+        timeLabel.alpha = 0.5;
+        timeLabel.textAlignment = NSTextAlignmentRight;
+        [self.timelineView addSubview:timeLabel];
+        timeLabel.frame = CGRectMake(0, y - 10, kTimelineLeftWidth - 8, 20);
+    }
+}
+
+- (NSString *)timelineTextWithSeconds:(long)seconds
+{
+    if (seconds >= 3600) {
+        return [NSString stringWithFormat:@"%ldh", seconds / 3600];
+    }
+    return [NSString stringWithFormat:@"%ldm", seconds / 60];
+}
+
 #pragma mark - Getter
 
 - (UICollectionView *)collectionView
@@ -155,10 +216,20 @@ static CGFloat const kMinCellWidth = 14;
         layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
         _collectionView.delegate = self;
         _collectionView.dataSource = self;
-        _collectionView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _collectionView.backgroundColor = [UIColor clearColor];
         [_collectionView registerClass:[LineChartCollectionViewCell class] forCellWithReuseIdentifier:[LineChartCollectionViewCell identifier]];
     }
     return _collectionView;
+}
+
+- (UIView *)timelineView
+{
+    if (!_timelineView) {
+        _timelineView = [UIView new];
+        _timelineView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _timelineView.userInteractionEnabled = NO;
+    }
+    return _timelineView;
 }
 
 @end
