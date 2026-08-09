@@ -132,7 +132,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     [self.versionLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
-        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight);
+        make.bottom.mas_equalTo(self.view).offset(-20*kHeightRatio);
         make.height.mas_equalTo(20*kHeightRatio);
     }];
     
@@ -140,7 +140,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     [self.loveView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
-        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight);
+        make.bottom.mas_equalTo(self.view).offset(-20*kHeightRatio);
         make.height.mas_equalTo(20*kHeightRatio);
     }];
     self.loveView.hidden = YES;
@@ -512,7 +512,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     // 考虑到collectionView和version，这个label高度也要有极限的
     CGFloat collectionViewHeight = [self collectionViewHeight]; // collection view height (包含最后一个小的padding)
     CGFloat versionHeight = 20*kHeightRatio;
-    CGFloat maxHeight = kScreenHeight - 80*kHeightRatio - 20*kHeightRatio - collectionViewHeight - versionHeight - kTabBarHeight;
+    CGFloat maxHeight = kScreenHeight - 80*kHeightRatio - 20*kHeightRatio - collectionViewHeight - versionHeight - 20*kHeightRatio;
     return MIN(height, maxHeight);
 }
 

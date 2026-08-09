@@ -31,7 +31,7 @@
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kCellWidth (25*kWidthRatio)
 #define kCellSpacing (2.5*kWidthRatio)
-
+#define kGapInLine (10*kHeightRatio)
 @interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, PushAllRecordsDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
@@ -179,7 +179,7 @@
     [self.view addSubview:self.weekdayView];
     [self.weekdayView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
-        make.top.mas_equalTo(self.rightHint.mas_bottom).offset(2);
+        make.top.mas_equalTo(self.rightHint.mas_bottom);
         make.height.mas_equalTo(kCellWidth*7 + kCellSpacing*6);
         make.width.mas_equalTo([self weekdayViewWidth]);
     }];
@@ -187,40 +187,40 @@
     [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.weekdayView.mas_right).offset(kCellSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.rightHint.mas_bottom).offset(2);
+        make.top.mas_equalTo(self.rightHint.mas_bottom);
         make.height.mas_equalTo(kCellWidth*7 + kCellSpacing*6);
     }];
     [self.view addSubview:self.dateLabel];
     [self.dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.collectionView.mas_bottom).offset(20*kHeightRatio);
+        make.top.mas_equalTo(self.collectionView.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo(20*kHeightRatio);
     }];
     [self.view addSubview:self.legendView];
     [self.legendView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(20*kHeightRatio);
+        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
     [self.view addSubview:self.histogramView];
     [self.histogramView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio);
-        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight - 20*kHeightRatio);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
+        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
     self.histogramView.hidden = [MirrorSettings appliedPieChartRecord];
     [self.view addSubview:self.piechartView];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
         if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
+            make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
             make.centerX.offset(0);
             make.width.height.mas_equalTo(width);
         } else {
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio);
+            make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
             make.centerX.offset(0);
             make.width.height.mas_equalTo(width);
         }
@@ -230,8 +230,8 @@
     [self.linechartView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(20*kHeightRatio);
-        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight - 20*kHeightRatio);
+        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(kGapInLine);
+        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
     self.linechartView.hidden = YES;
     _selectedCellIndexesStart = -1;
@@ -453,10 +453,10 @@
     if (self.piechartView.superview) { //security
         [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
             if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度
-                make.top.mas_equalTo(self.legendView.mas_bottom).offset(10 + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
+                make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
                 make.width.height.mas_equalTo(width);
             } else {
-                make.top.mas_equalTo(self.legendView.mas_bottom).offset(10);
+                make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
                 make.width.height.mas_equalTo(width);
             }
         }];
@@ -880,7 +880,14 @@
 
 - (NSArray *)leftWidthLeftHeight
 {
-    CGFloat leftHeight = kScreenHeight - self.navigationController.navigationBar.frame.origin.y - self.navigationController.navigationBar.frame.size.height - kCellWidth - 2 - (kCellWidth*7 + kCellSpacing*6) - 20*kHeightRatio - 20*kHeightRatio - 20*kHeightRatio - [self.legendView legendViewHeight] - 15 - 15 - kTabBarHeight;
+    CGFloat navi = self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height;
+    CGFloat leftRightTimeHint_noGapBelow = kCellWidth;
+    CGFloat grid_plusGapBelow = (kCellWidth*7 + kCellSpacing*6) + kGapInLine;
+    CGFloat dataLabel_plusGapBelow = 20*kHeightRatio + kGapInLine;
+    CGFloat legend_plusGapBelow = [self.legendView legendViewHeight] + kGapInLine;
+    CGFloat tabbar_plusGapAbove = self.tabBarController.tabBar.frame.size.height + kGapInLine;
+    
+    CGFloat leftHeight = kScreenHeight - navi - leftRightTimeHint_noGapBelow - grid_plusGapBelow - dataLabel_plusGapBelow - legend_plusGapBelow - tabbar_plusGapAbove;
     CGFloat leftWidth = kScreenWidth - 2*kLeftRightSpacing;
     return @[@(leftWidth), @(leftHeight)];
 }

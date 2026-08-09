@@ -28,6 +28,7 @@
 #import "UIFont+MirrorFont.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
+#define kGapInLine (10*kHeightRatio)
 
 @interface HistoryViewController () <UIViewControllerTransitioningDelegate, PushAllRecordsDelegate>
 
@@ -148,10 +149,10 @@
     if (self.piechartView.superview) { //security
         [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
             if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度
-                make.top.mas_equalTo(self.legendView.mas_bottom).offset(10 + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
+                make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
                 make.width.height.mas_equalTo(width);
             } else {
-                make.top.mas_equalTo(self.legendView.mas_bottom).offset(10);
+                make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
                 make.width.height.mas_equalTo(width);
             }
         }];
@@ -176,7 +177,7 @@
     [self.view addSubview:self.interactionView];
     [self.interactionView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.mas_equalTo(self.view);
-        make.top.mas_equalTo(self.typeSwitch.mas_bottom).offset(10*kHeightRatio);
+        make.top.mas_equalTo(self.typeSwitch.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo(60*kHeightRatio);
     }];
     [self.interactionView addSubview:self.dateLabel];
@@ -188,38 +189,38 @@
     [self.interactionView addSubview:self.leftArrow];
     [self.leftArrow mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.mas_equalTo(self.dateLabel);
-        make.right.mas_equalTo(self.dateLabel.mas_left).offset(-10*kWidthRatio);
+        make.right.mas_equalTo(self.dateLabel.mas_left).offset(-kLeftRightSpacing);
     }];
     [self.interactionView addSubview:self.rightArrow];
     [self.rightArrow mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.mas_equalTo(self.dateLabel);
-        make.left.mas_equalTo(self.dateLabel.mas_right).offset(10*kWidthRatio);
+        make.left.mas_equalTo(self.dateLabel.mas_right).offset(kLeftSheetRatio);
     }];
     [self.view addSubview:self.legendView];
     [self.legendView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.interactionView.mas_bottom).offset(10*kHeightRatio);
+        make.top.mas_equalTo(self.interactionView.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
     [self.view addSubview:self.histogramView];
     [self.histogramView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio);
-        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight - 20*kHeightRatio);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
+        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
     self.histogramView.hidden = ![MirrorSettings appliedHistogramData];
 
     [self.view addSubview:self.piechartView];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
-        if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
+        if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度，手动让piechart居中
+            make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2.0);
             make.centerX.offset(0);
             make.width.height.mas_equalTo(width);
         } else {
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio);
+            make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
             make.centerX.offset(0);
             make.width.height.mas_equalTo(width);
         }
@@ -553,7 +554,12 @@
 
 - (NSArray *)leftWidthLeftHeight
 {
-    CGFloat leftHeight = kScreenHeight - self.navigationController.navigationBar.frame.origin.y - self.navigationController.navigationBar.frame.size.height - 32*kHeightRatio -  10*kHeightRatio - 60*kHeightRatio - 10*kHeightRatio - [self.legendView legendViewHeight] - 10*kHeightRatio - 20*kHeightRatio -  kTabBarHeight;
+    CGFloat navi = self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height;
+    CGFloat typeSwitch_plusGapBelow = 32*kHeightRatio + kGapInLine;
+    CGFloat interaction_plusGapBelow = 60*kHeightRatio + kGapInLine;
+    CGFloat legend_plusGapBelow = [self.legendView legendViewHeight] + kGapInLine;
+    CGFloat tabbar_plusGapAbove = self.tabBarController.tabBar.frame.size.height + kGapInLine;
+    CGFloat leftHeight = kScreenHeight - navi - typeSwitch_plusGapBelow - interaction_plusGapBelow - legend_plusGapBelow - tabbar_plusGapAbove;
     CGFloat leftWidth = kScreenWidth - 2*kLeftRightSpacing;
 
     return @[@(leftWidth), @(leftHeight)];

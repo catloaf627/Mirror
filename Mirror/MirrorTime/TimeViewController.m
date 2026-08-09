@@ -121,7 +121,7 @@
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
-        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight);
+        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height);
     }];
     UIScreenEdgePanGestureRecognizer *edgeRecognizer = [UIScreenEdgePanGestureRecognizer new];
     edgeRecognizer.edges = UIRectEdgeLeft;

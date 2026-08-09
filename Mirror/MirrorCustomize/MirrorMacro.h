@@ -56,8 +56,6 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 #define kStatusBarHeight (CGFloat)(kIs_iPhoneX?(44.0):(20.0))
 /*导航栏高度*/
 #define kNavBarHeight (44)
-/*TabBar高度*/
-#define kTabBarHeight (CGFloat)(49.0 + MirrorBottomSafeAreaHeight())
 /*顶部安全区域远离高度*/
 #define kTopBarSafeHeight (CGFloat)(kIs_iPhoneX?(44.0):(0))
  /*底部安全区域远离高度*/
