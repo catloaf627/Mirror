@@ -39,13 +39,6 @@
 
 @implementation MirrorFakeDataSeeder
 
-static NSInteger const kFakeDataStartYear = 2026;
-static NSInteger const kFakeDataStartMonth = 1;
-static NSInteger const kFakeDataStartDay = 1;
-static NSInteger const kFakeDataEndYear = 2026;
-static NSInteger const kFakeDataEndMonth = 8;
-static NSInteger const kFakeDataEndDay = 9;
-
 + (void)seedFakeData
 {
     NSArray<MirrorFakeTaskPlan *> *plans = [self fakeTaskPlans];
@@ -59,7 +52,8 @@ static NSInteger const kFakeDataEndDay = 9;
         }
     }
 
-    NSDate *startDate = [self dateWithYear:kFakeDataStartYear month:kFakeDataStartMonth day:kFakeDataStartDay hour:0 minute:0];
+    NSDate *endDate = [self startOfToday];
+    NSDate *startDate = [self dateByAddingYears:-1 toDate:endDate];
 
     for (MirrorFakeTaskPlan *plan in plans) {
         MirrorTaskModel *task = [[MirrorTaskModel alloc] initWithTitle:plan.name
@@ -81,12 +75,14 @@ static NSInteger const kFakeDataEndDay = 9;
     NSMutableArray<MirrorRecordModel *> *fakeRecords = [NSMutableArray new];
     NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
     calendar.timeZone = [NSTimeZone systemTimeZone];
-    NSDate *endDate = [self dateWithYear:kFakeDataEndYear month:kFakeDataEndMonth day:kFakeDataEndDay hour:0 minute:0];
     NSInteger totalDays = [calendar components:NSCalendarUnitDay fromDate:startDate toDate:endDate options:0].day;
     for (NSInteger dayIndex = 0; dayIndex <= totalDays; dayIndex++) {
         NSDate *currentDate = [calendar dateByAddingUnit:NSCalendarUnitDay value:dayIndex toDate:startDate options:0];
         NSDateComponents *components = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitWeekday fromDate:currentDate];
         [self appendRecordsForDateComponents:components dayIndex:dayIndex records:fakeRecords];
+        if (dayIndex == totalDays) {
+            [self addRecordWithName:@"Read" components:components hour:22 minute:15 durationMinutes:45 records:fakeRecords];
+        }
     }
 
     [fakeRecords sortUsingComparator:^NSComparisonResult(MirrorRecordModel *first, MirrorRecordModel *second) {
@@ -160,10 +156,6 @@ static NSInteger const kFakeDataEndDay = 9;
         NSInteger duration = isWeekend ? 120 : 75 + (dayIndex % 3) * 15;
         [self addRecordWithName:@"Study" components:components hour:isWeekend ? 14 : 19 minute:0 durationMinutes:duration records:records];
     }
-
-    if (components.year == kFakeDataEndYear && components.month == kFakeDataEndMonth && components.day == kFakeDataEndDay) {
-        [self addRecordWithName:@"Read" components:components hour:22 minute:15 durationMinutes:45 records:records];
-    }
 }
 
 + (void)addRecordWithName:(NSString *)name components:(NSDateComponents *)components hour:(NSInteger)hour minute:(NSInteger)minute durationMinutes:(NSInteger)durationMinutes records:(NSMutableArray<MirrorRecordModel *> *)records
@@ -202,6 +194,20 @@ static NSInteger const kFakeDataEndDay = 9;
 + (BOOL)startTime:(long)startTime endTime:(long)endTime overlapsRecord:(MirrorRecordModel *)record
 {
     return startTime < record.endTime && endTime > record.startTime;
+}
+
++ (NSDate *)startOfToday
+{
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    return [calendar startOfDayForDate:[NSDate date]];
+}
+
++ (NSDate *)dateByAddingYears:(NSInteger)years toDate:(NSDate *)date
+{
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    return [calendar dateByAddingUnit:NSCalendarUnitYear value:years toDate:date options:0];
 }
 
 + (NSDate *)dateWithYear:(NSInteger)year month:(NSInteger)month day:(NSInteger)day hour:(NSInteger)hour minute:(NSInteger)minute

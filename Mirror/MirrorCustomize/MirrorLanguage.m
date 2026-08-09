@@ -38,8 +38,11 @@
     [mirrorDict setValue:ML(@"Download from iCloud", @"从 iCloud 下载", @"Descargar desde iCloud", @"Télécharger depuis iCloud", @"iCloudからダウンロード", @"iCloud에서 다운로드") forKey:@"download_from_icloud"];
     [mirrorDict setValue:ML(@"Download from iCloud?", @"确认从 iCloud 下载？", @"¿Descargar desde iCloud?", @"Télécharger depuis iCloud ?", @"iCloudからダウンロードしますか？", @"iCloud에서 다운로드할까요?") forKey:@"download_from_icloud_?"];
     [mirrorDict setValue:ML(@"There are %@ records on your iCloud. Downloading will replace your current data.", @"你的 iCloud 上有 %@ 条记录。下载后会替换当前数据。", @"Hay %@ registros en tu iCloud. La descarga reemplazará tus datos actuales.", @"Il y a %@ enregistrements sur votre iCloud. Le téléchargement remplacera vos données actuelles.", @"iCloudに%@件の記録があります。ダウンロードすると現在のデータが置き換えられます。", @"iCloud에 %@개의 기록이 있습니다. 다운로드하면 현재 데이터가 대체됩니다.") forKey:@"icloud_records_message"];
+    [mirrorDict setValue:ML(@"Detected %@ records from your iCloud. Do you want to download them?", @"检测到你的 iCloud 上有 %@ 条记录。要下载吗？", @"Se detectaron %@ registros en tu iCloud. ¿Quieres descargarlos?", @"%@ enregistrements ont été détectés dans votre iCloud. Voulez-vous les télécharger ?", @"iCloudに%@件の記録が見つかりました。ダウンロードしますか？", @"iCloud에서 %@개의 기록을 찾았습니다. 다운로드할까요?") forKey:@"icloud_records_detected_message"];
     [mirrorDict setValue:ML(@"Download", @"下载", @"Descargar", @"Télécharger", @"ダウンロード", @"다운로드") forKey:@"download"];
     [mirrorDict setValue:ML(@"No iCloud data", @"没有 iCloud 数据", @"No hay datos en iCloud", @"Aucune donnée iCloud", @"iCloudデータがありません", @"iCloud 데이터 없음") forKey:@"no_icloud_data"];
+    [mirrorDict setValue:ML(@"Import example data?", @"导入示例数据？", @"¿Importar datos de ejemplo?", @"Importer des données d’exemple ?", @"サンプルデータを読み込みますか？", @"예시 데이터를 가져올까요?") forKey:@"import_example_data_?"];
+    [mirrorDict setValue:ML(@"No iCloud records were found. You can start with one year of example records.", @"没有找到 iCloud 记录。你可以先导入一年的示例记录。", @"No se encontraron registros de iCloud. Puedes empezar con un año de registros de ejemplo.", @"Aucun enregistrement iCloud n’a été trouvé. Vous pouvez commencer avec un an d’exemples.", @"iCloudの記録は見つかりませんでした。1年分のサンプル記録から始められます。", @"iCloud 기록을 찾지 못했습니다. 1년치 예시 기록으로 시작할 수 있습니다.") forKey:@"import_example_data_message"];
     [mirrorDict setValue:ML(@"Export/Import data", @"导出/导入数据", @"Exportar/importar datos", @"Exporter/importer les données", @"データの書き出し/読み込み", @"데이터 내보내기/가져오기") forKey:@"export_import_data"];
     [mirrorDict setValue:ML(@"Export or import data?", @"选择导入或是导出", @"¿Exportar o importar datos?", @"Exporter ou importer les données ?", @"データを書き出すか読み込みますか？", @"데이터를 내보내거나 가져올까요?") forKey:@"export_or_import"];
     [mirrorDict setValue:ML(@"Export data", @"导出数据", @"Exportar datos", @"Exporter les données", @"データを書き出す", @"데이터 내보내기") forKey:@"export_data"];
@@ -88,8 +91,8 @@
     [mirrorDict setValue:ML(@"Ends at", @"结束于", @"Termina a las", @"Se termine à", @"終了時刻", @"종료 시간") forKey:@"ends_at"];
     
     // Time VC
-    [mirrorDict setValue:ML(@"Go to edit page(upper right) to reorder tasks", @"进入编辑页面（右上角）可以编辑顺序", @"Ve a editar (arriba a la derecha) para reordenar tareas", @"Allez à la page d'édition (en haut à droite) pour réordonner les tâches", @"右上の編集ページでタスクを並べ替えられます", @"오른쪽 위 편집 화면에서 작업 순서를 바꿀 수 있습니다") forKey:@"timeVC_hint0"];
-    [mirrorDict setValue:ML(@"Go to edit page(upper right) to edit tasks", @"进入编辑页面（右上角）可以编辑任务", @"Ve a editar (arriba a la derecha) para editar tareas", @"Allez à la page d'édition (en haut à droite) pour modifier les tâches", @"右上の編集ページでタスクを編集できます", @"오른쪽 위 편집 화면에서 작업을 편집할 수 있습니다") forKey:@"timeVC_hint1"];
+    [mirrorDict setValue:ML(@"Long press to reorder tasks", @"长按可以调整任务顺序", @"Mantén presionado para reordenar tareas", @"Appuyez longuement pour réordonner les tâches", @"長押しでタスクを並べ替えられます", @"길게 눌러 작업 순서를 바꿀 수 있습니다") forKey:@"timeVC_hint0"];
+    [mirrorDict setValue:ML(@"Long press to edit tasks", @"长按可以编辑任务", @"Mantén presionado para editar tareas", @"Appuyez longuement pour modifier les tâches", @"長押しでタスクを編集できます", @"길게 눌러 작업을 편집할 수 있습니다") forKey:@"timeVC_hint1"];
     [mirrorDict setValue:ML(@"Up to 8 tasks can be created", @"最多可建立8个任务", @"Se pueden crear hasta 8 tareas", @"Jusqu'à 8 tâches peuvent être créées", @"最大8個のタスクを作成できます", @"최대 8개의 작업을 만들 수 있습니다") forKey:@"timeVC_hint3"];
     
     // All tasks
