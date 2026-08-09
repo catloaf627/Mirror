@@ -29,7 +29,6 @@ typedef NS_ENUM(NSInteger, BottomRightType) {
 - (void)configWithTaskname:(NSString *)taskName periodIndex:(NSInteger)index type:(BottomRightType)type;
 - (void)showDeleteButton;
 - (void)toggleDeleteButton;
-- (void)previewDeleteButton;
 
 
 @end

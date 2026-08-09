@@ -15,7 +15,6 @@
 #import "MirrorNaviManager.h"
 
 #define kCellSpacing (20*kWidthRatio) // left right spacing
-static NSString * const kMirrorSpecificRecordsDeleteHintShownKey = @"MirrorSpecificRecordsDeleteHintShown";
 
 @interface SpecificRecordsViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, VCForPeriodCellProtocol>
 
@@ -100,15 +99,6 @@ static NSString * const kMirrorSpecificRecordsDeleteHintShownKey = @"MirrorSpeci
 - (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
     return self.records.count;
-}
-
-- (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (indexPath.item != 0 || [[NSUserDefaults standardUserDefaults] boolForKey:kMirrorSpecificRecordsDeleteHintShownKey]) {
-        return;
-    }
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kMirrorSpecificRecordsDeleteHintShownKey];
-    [(TaskPeriodCollectionViewCell *)cell previewDeleteButton];
 }
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
