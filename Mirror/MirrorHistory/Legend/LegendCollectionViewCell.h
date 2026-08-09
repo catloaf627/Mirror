@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSString *)identifier;
 - (void)configCellWithTaskname:(NSString *)taskName;
+- (void)animateColorSquareSelection;
 
 @end
 

@@ -52,6 +52,31 @@ static CGFloat const kPadding = 10;
     }];
 }
 
+- (void)prepareForReuse
+{
+    [super prepareForReuse];
+    self.coloredView.transform = CGAffineTransformIdentity;
+}
+
+- (void)animateColorSquareSelection
+{
+    self.coloredView.transform = CGAffineTransformIdentity;
+    [UIView animateKeyframesWithDuration:1.0 delay:0 options:UIViewKeyframeAnimationOptionCalculationModeCubic animations:^{
+        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.2 animations:^{
+            self.coloredView.transform = CGAffineTransformMakeScale(1.35, 1.35);
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.2 relativeDuration:0.2 animations:^{
+            self.coloredView.transform = CGAffineTransformMakeScale(1.15, 1.15);
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.4 relativeDuration:0.2 animations:^{
+            self.coloredView.transform = CGAffineTransformMakeScale(1.3, 1.3);
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.6 relativeDuration:0.4 animations:^{
+            self.coloredView.transform = CGAffineTransformIdentity;
+        }];
+    } completion:nil];
+}
+
 - (UIView *)coloredView
 {
     if (!_coloredView) {

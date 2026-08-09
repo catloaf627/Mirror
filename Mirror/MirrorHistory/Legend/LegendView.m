@@ -89,6 +89,9 @@ static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
     if (self.data.count > indexPath.item && self.data[indexPath.item].records.count > 0) {
+        [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+        LegendCollectionViewCell *cell = (LegendCollectionViewCell *)[collectionView cellForItemAtIndexPath:indexPath];
+        [cell animateColorSquareSelection];
         MirrorDataModel *data = self.data[indexPath.item];
         NSString *format = [MirrorLanguage mirror_stringWithKey:@"check_task_records_for_period_?"];
         NSString *rangeText = self.confirmationRangeText.length > 0 ? self.confirmationRangeText : [self timeRangeTextWithRecords:data.records];
