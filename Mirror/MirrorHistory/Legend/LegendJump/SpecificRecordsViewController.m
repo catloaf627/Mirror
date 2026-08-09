@@ -125,6 +125,13 @@ static NSString * const kMirrorSpecificRecordsDeleteHintShownKey = @"MirrorSpeci
     return CGSizeMake(kScreenWidth - 2*kCellSpacing, 80*kHeightRatio);
 }
 
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    TaskPeriodCollectionViewCell *cell = (TaskPeriodCollectionViewCell *)[collectionView cellForItemAtIndexPath:indexPath];
+    [cell toggleDeleteButton];
+}
+
 #pragma mark - Update UI after delete a record
 
 // 只是简单删掉了被删掉的那个cell，数据源并没有得到彻底的update（original index的改动是手动计算的，并没有经过数据库重新计算、校对），这么写容易出现crash但也没什么更好的办法

@@ -70,7 +70,8 @@ static const CGFloat kCellRadius = 12;
     self.backgroundColor = [UIColor mirrorColorNamed:task.color];
     self.contentView.backgroundColor = [UIColor systemRedColor];
     self.foregroundView.backgroundColor = [UIColor mirrorColorNamed:task.color];
-    NSString *prefix =  [MirrorSettings appliedShowIndex] ? [[@"No." stringByAppendingString:[@(self.periodIndex) stringValue]] stringByAppendingString:@" "] : @"";
+    NSString *prefix = @"";
+//    prefix = [[@"No." stringByAppendingString:[@(self.periodIndex) stringValue]] stringByAppendingString:@" "]; // show index to debug
     self.dateLabel.text = [prefix stringByAppendingString:[MirrorTimeText YYYYmmddWeekdayWithStart:allRecords[self.periodIndex].startTime]];
     long start = allRecords[self.periodIndex].startTime;
     long end =  allRecords[self.periodIndex].endTime;
@@ -201,6 +202,20 @@ static const CGFloat kCellRadius = 12;
         animations();
     }
     self.isDeleteButtonShown = NO;
+}
+
+- (void)showDeleteButton
+{
+    [self showDeleteButtonAnimated:YES];
+}
+
+- (void)toggleDeleteButton
+{
+    if (self.isDeleteButtonShown) {
+        [self hideDeleteButtonAnimated:YES];
+    } else {
+        [self showDeleteButtonAnimated:YES];
+    }
 }
 
 - (void)previewDeleteButton
