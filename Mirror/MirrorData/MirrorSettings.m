@@ -43,6 +43,11 @@ static NSInteger const kMirrorLanguageChinese = 1;
     }
 }
 
++ (BOOL)hasPreferredLanguage
+{
+    return [[NSUserDefaults standardUserDefaults] objectForKey:kMirrorPreferredLanguageKey] != nil;
+}
+
 + (NSInteger)preferredLanguageKey
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -62,11 +67,13 @@ static NSInteger const kMirrorLanguageChinese = 1;
 + (void)changeLanguageWithKey:(NSInteger)languageKey
 {
     if (languageKey < 0 || languageKey > 5) return;
-    if ([MirrorSettings preferredLanguageKey] == languageKey) return;
+    BOOL languageChanged = [MirrorSettings preferredLanguageKey] != languageKey;
     
     [[NSUserDefaults standardUserDefaults] setInteger:languageKey forKey:kMirrorPreferredLanguageKey];
     [[NSUserDefaults standardUserDefaults] setBool:languageKey == kMirrorLanguageChinese forKey:@"MirrorUserPreferredChinese"];
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchLanguageNotification object:nil];
+    if (languageChanged) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchLanguageNotification object:nil];
+    }
 }
 
 + (BOOL)appliedWeekStarsOnMonday

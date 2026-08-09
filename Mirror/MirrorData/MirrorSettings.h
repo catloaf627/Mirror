@@ -19,6 +19,7 @@ NS_ASSUME_NONNULL_BEGIN
 // Language
 + (BOOL)appliedChinese;
 + (void)switchLanguage;
++ (BOOL)hasPreferredLanguage;
 + (NSInteger)preferredLanguageKey;
 + (void)changeLanguageWithKey:(NSInteger)languageKey;
 

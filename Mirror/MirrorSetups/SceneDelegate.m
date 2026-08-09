@@ -18,6 +18,10 @@
 
 @interface SceneDelegate ()<UITabBarControllerDelegate>
 
+@property (nonatomic, assign) BOOL didStartInitialICloudCheck;
+@property (nonatomic, strong) NSNumber *initialICloudRecordCount;
+@property (nonatomic, assign) BOOL isShowingInitialLanguageAlert;
+
 @end
 
 static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPromptShown";
@@ -57,21 +61,58 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
         [defaults setBool:YES forKey:kMirrorInitialDataPromptShownKey];
         return;
     }
+    [self startInitialICloudCheckIfNeeded];
+    if (![MirrorSettings hasPreferredLanguage]) {
+        [self showInitialLanguageAlert];
+        return;
+    }
+    if (!self.initialICloudRecordCount) {
+        return;
+    }
+    
+    [defaults setBool:YES forKey:kMirrorInitialDataPromptShownKey];
+    if (self.initialICloudRecordCount.integerValue > 0) {
+        [self showInitialICloudDownloadAlertWithRecordCount:self.initialICloudRecordCount];
+    } else {
+        [self showInitialExampleDataAlert];
+    }
+}
 
+- (void)startInitialICloudCheckIfNeeded
+{
+    if (self.didStartInitialICloudCheck) {
+        return;
+    }
+    self.didStartInitialICloudCheck = YES;
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
         NSNumber *recordCount = [MirrorStorage iCloudRecordCount];
         dispatch_async(dispatch_get_main_queue(), ^{
-            if ([defaults boolForKey:kMirrorInitialDataPromptShownKey]) {
-                return;
-            }
-            [defaults setBool:YES forKey:kMirrorInitialDataPromptShownKey];
-            if (recordCount.integerValue > 0) {
-                [self showInitialICloudDownloadAlertWithRecordCount:recordCount];
-            } else {
-                [self showInitialExampleDataAlert];
-            }
+            self.initialICloudRecordCount = recordCount;
+            [self showInitialDataPromptIfNeeded];
         });
     });
+}
+
+- (void)showInitialLanguageAlert
+{
+    if (self.isShowingInitialLanguageAlert) {
+        return;
+    }
+    self.isShowingInitialLanguageAlert = YES;
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                             message:nil
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    NSArray<NSString *> *languages = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어"];
+    for (NSInteger i=0; i<languages.count; i++) {
+        [alertController addAction:[UIAlertAction actionWithTitle:languages[i] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [MirrorSettings changeLanguageWithKey:i];
+            self.isShowingInitialLanguageAlert = NO;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self showInitialDataPromptIfNeeded];
+            });
+        }]];
+    }
+    [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
 }
 
 - (void)showInitialICloudDownloadAlertWithRecordCount:(NSNumber *)recordCount
