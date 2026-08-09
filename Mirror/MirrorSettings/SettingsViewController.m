@@ -532,8 +532,18 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     }];
     
     [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
-    alertController.popoverPresentationController.sourceView = self.view;
-    alertController.popoverPresentationController.sourceRect = CGRectMake(self.view.bounds.size.width/2, self.view.bounds.size.height/2, 0, 0);
+    UIPopoverPresentationController *popoverPresentationController = alertController.popoverPresentationController;
+    NSIndexPath *languageIndexPath = [NSIndexPath indexPathForItem:MirrorSettingTypeLanguage inSection:0];
+    UICollectionViewCell *languageCell = [self.collectionView cellForItemAtIndexPath:languageIndexPath];
+    if (languageCell) {
+        popoverPresentationController.sourceView = languageCell.contentView;
+        popoverPresentationController.sourceRect = CGRectMake(CGRectGetMidX(languageCell.contentView.bounds), CGRectGetMaxY(languageCell.contentView.bounds), 1, 1);
+    } else {
+        UICollectionViewLayoutAttributes *attributes = [self.collectionView layoutAttributesForItemAtIndexPath:languageIndexPath];
+        popoverPresentationController.sourceView = self.collectionView;
+        popoverPresentationController.sourceRect = attributes.frame;
+    }
+    popoverPresentationController.permittedArrowDirections = UIPopoverArrowDirectionUp;
     [self presentViewController:alertController animated:YES completion:nil];
 }
 
