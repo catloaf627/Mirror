@@ -26,11 +26,11 @@
 #import "LeftAnimation.h"
 #import "HiddenViewController.h"
 #import "HiddenAnimation.h"
+#import "UIFont+MirrorFont.h"
 
-static CGFloat const kLeftRightSpacing = 20;
-static CGFloat const kCellWidth = 25;
-static CGFloat const kCellSpacing = 2.5;
-static CGFloat const kFontSize = 14;
+#define kLeftRightSpacing (20*kWidthRatio)
+#define kCellWidth (25*kWidthRatio)
+#define kCellSpacing (2.5*kWidthRatio)
 
 @interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, PushAllRecordsDelegate>
 
@@ -181,7 +181,7 @@ static CGFloat const kFontSize = 14;
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.top.mas_equalTo(self.rightHint.mas_bottom).offset(2);
         make.height.mas_equalTo(kCellWidth*7 + kCellSpacing*6);
-        make.width.mas_equalTo(kCellWidth);
+        make.width.mas_equalTo([self weekdayViewWidth]);
     }];
     [self.view addSubview:self.collectionView];
     [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -194,33 +194,33 @@ static CGFloat const kFontSize = 14;
     [self.dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.collectionView.mas_bottom).offset(20);
-        make.height.mas_equalTo(20);
+        make.top.mas_equalTo(self.collectionView.mas_bottom).offset(20*kHeightRatio);
+        make.height.mas_equalTo(20*kHeightRatio);
     }];
     [self.view addSubview:self.legendView];
     [self.legendView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(20);
+        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(20*kHeightRatio);
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
     [self.view addSubview:self.histogramView];
     [self.histogramView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom).offset(10);
-        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight - 20);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio);
+        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight - 20*kHeightRatio);
     }];
     self.histogramView.hidden = [MirrorSettings appliedPieChartRecord];
     [self.view addSubview:self.piechartView];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
         if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(10 + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
+            make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
             make.centerX.offset(0);
             make.width.height.mas_equalTo(width);
         } else {
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(10);
+            make.top.mas_equalTo(self.legendView.mas_bottom).offset(10*kHeightRatio);
             make.centerX.offset(0);
             make.width.height.mas_equalTo(width);
         }
@@ -230,8 +230,8 @@ static CGFloat const kFontSize = 14;
     [self.linechartView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(20);
-        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight - 20);
+        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(20*kHeightRatio);
+        make.bottom.mas_equalTo(self.view).offset(-kTabBarHeight - 20*kHeightRatio);
     }];
     self.linechartView.hidden = YES;
     _selectedCellIndexesStart = -1;
@@ -499,6 +499,29 @@ static CGFloat const kFontSize = 14;
     [self.linechartView refactorData:dataArr];
 }
 
+- (CGFloat)weekdayViewWidth
+{
+    NSArray<NSString *> *weekdayKeys = @[
+        @"monday",
+        @"tuesday",
+        @"wednesday",
+        @"thursday",
+        @"friday",
+        @"saturday",
+        @"sunday"
+    ];
+    UIFont *font = [UIFont mirrorHintFont];
+    CGFloat maxWidth = 0;
+    
+    for (NSString *weekdayKey in weekdayKeys) {
+        NSString *weekday = [MirrorLanguage mirror_stringWithKey:weekdayKey];
+        CGFloat weekdayWidth = [weekday sizeWithAttributes:@{NSFontAttributeName: font}].width;
+        maxWidth = MAX(maxWidth, weekdayWidth);
+    }
+    [self updateHints]; // if not add this line, hint will disappear due to the update of weekdayview size
+    return ceil(maxWidth);
+}
+
 - (void)updateWeekdayView
 {
     if (!_weekdayView) return;  //security
@@ -506,81 +529,81 @@ static CGFloat const kFontSize = 14;
     BOOL appliedWeekStarsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
     UIColor *textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     UILabel *day0 = [UILabel new];
-    day0.adjustsFontSizeToFitWidth = YES;
+    day0.textAlignment = NSTextAlignmentRight;
     day0.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"monday"] : [MirrorLanguage mirror_stringWithKey:@"sunday"];
     day0.textColor = textColor;
-    day0.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+    day0.font = [UIFont mirrorHintFont];
     [_weekdayView addSubview:day0];
     [day0 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
         make.top.offset(0);
-        make.height.offset(kCellWidth);
+        make.height.mas_equalTo(kCellWidth);
     }];
     UILabel *day1 = [UILabel new];
-    day1.adjustsFontSizeToFitWidth = YES;
+    day1.textAlignment = NSTextAlignmentRight;
     day1.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"tuesday"] : [MirrorLanguage mirror_stringWithKey:@"monday"];
     day1.textColor = textColor;
-    day1.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+    day1.font = [UIFont mirrorHintFont];
     [_weekdayView addSubview:day1];
     [day1 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
         make.top.mas_equalTo(day0.mas_bottom).offset(kCellSpacing);
-        make.height.offset(kCellWidth);
+        make.height.mas_equalTo(kCellWidth);
     }];
     UILabel *day2 = [UILabel new];
-    day2.adjustsFontSizeToFitWidth = YES;
+    day2.textAlignment = NSTextAlignmentRight;
     day2.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"wednesday"] : [MirrorLanguage mirror_stringWithKey:@"tuesday"];
     day2.textColor = textColor;
-    day2.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+    day2.font = [UIFont mirrorHintFont];
     [_weekdayView addSubview:day2];
     [day2 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
         make.top.mas_equalTo(day1.mas_bottom).offset(kCellSpacing);
-        make.height.offset(kCellWidth);
+        make.height.mas_equalTo(kCellWidth);
     }];
     UILabel *day3 = [UILabel new];
-    day3.adjustsFontSizeToFitWidth = YES;
+    day3.textAlignment = NSTextAlignmentRight;
     day3.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"thursday"] : [MirrorLanguage mirror_stringWithKey:@"wednesday"];
     day3.textColor = textColor;
-    day3.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+    day3.font = [UIFont mirrorHintFont];
     [_weekdayView addSubview:day3];
     [day3 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
         make.top.mas_equalTo(day2.mas_bottom).offset(kCellSpacing);
-        make.height.offset(kCellWidth);
+        make.height.mas_equalTo(kCellWidth);
     }];
     UILabel *day4 = [UILabel new];
-    day4.adjustsFontSizeToFitWidth = YES;
+    day4.textAlignment = NSTextAlignmentRight;
     day4.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"friday"] : [MirrorLanguage mirror_stringWithKey:@"thursday"];
     day4.textColor = textColor;
-    day4.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+    day4.font = [UIFont mirrorHintFont];
     [_weekdayView addSubview:day4];
     [day4 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
         make.top.mas_equalTo(day3.mas_bottom).offset(kCellSpacing);
-        make.height.offset(kCellWidth);
+        make.height.mas_equalTo(kCellWidth);
     }];
     UILabel *day5 = [UILabel new];
-    day5.adjustsFontSizeToFitWidth = YES;
+    day5.textAlignment = NSTextAlignmentRight;
     day5.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"saturday"] : [MirrorLanguage mirror_stringWithKey:@"friday"];
     day5.textColor = textColor;
-    day5.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+    day5.font = [UIFont mirrorHintFont];
     [_weekdayView addSubview:day5];
     [day5 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
         make.top.mas_equalTo(day4.mas_bottom).offset(kCellSpacing);
-        make.height.offset(kCellWidth);
+        make.height.mas_equalTo(kCellWidth);
     }];
     UILabel *day6 = [UILabel new];
-    day6.adjustsFontSizeToFitWidth = YES;
+    day6.textAlignment = NSTextAlignmentRight;
     day6.text = appliedWeekStarsOnMonday ? [MirrorLanguage mirror_stringWithKey:@"sunday"] : [MirrorLanguage mirror_stringWithKey:@"saturday"];
     day6.textColor = textColor;
-    day6.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+    day6.font = [UIFont mirrorHintFont];
     [_weekdayView addSubview:day6];
     [day6 mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
         make.top.mas_equalTo(day5.mas_bottom).offset(kCellSpacing);
-        make.height.offset(kCellWidth);
+        make.height.mas_equalTo(kCellWidth);
     }];
 }
 
@@ -710,7 +733,7 @@ static CGFloat const kFontSize = 14;
     if (!_leftHint) {
         _leftHint = [UILabel new];
         _leftHint.textAlignment = NSTextAlignmentLeft;
-        _leftHint.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+        _leftHint.font = [UIFont mirrorLabelFont];
         _leftHint.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     }
     return _leftHint;
@@ -721,7 +744,7 @@ static CGFloat const kFontSize = 14;
     if (!_rightHint) {
         _rightHint = [UILabel new];
         _rightHint.textAlignment = NSTextAlignmentRight;
-        _rightHint.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+        _rightHint.font = [UIFont mirrorLabelFont];
         _rightHint.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     }
     return _rightHint;
@@ -732,7 +755,7 @@ static CGFloat const kFontSize = 14;
     if (!_dateLabel) {
         _dateLabel = [UILabel new];
         _dateLabel.textAlignment = NSTextAlignmentCenter;
-        _dateLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:kFontSize];
+        _dateLabel.font = [UIFont mirrorLabelFont];
         _dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     }
     return _dateLabel;
@@ -857,9 +880,8 @@ static CGFloat const kFontSize = 14;
 
 - (NSArray *)leftWidthLeftHeight
 {
-    CGFloat leftHeight = kScreenHeight - self.navigationController.navigationBar.frame.origin.y - self.navigationController.navigationBar.frame.size.height - kCellWidth - 2 - (kCellWidth*7 + kCellSpacing*6) - 20 -20 -20 - [self.legendView legendViewHeight] - 10 - 20 - kTabBarHeight;
+    CGFloat leftHeight = kScreenHeight - self.navigationController.navigationBar.frame.origin.y - self.navigationController.navigationBar.frame.size.height - kCellWidth - 2 - (kCellWidth*7 + kCellSpacing*6) - 20*kHeightRatio - 20*kHeightRatio - 20*kHeightRatio - [self.legendView legendViewHeight] - 15 - 15 - kTabBarHeight;
     CGFloat leftWidth = kScreenWidth - 2*kLeftRightSpacing;
-
     return @[@(leftWidth), @(leftHeight)];
 }
 

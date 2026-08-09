@@ -12,6 +12,7 @@
 #import "MirrorSettings.h"
 #import "HiddenCollectionViewCell.h"
 #import "MirrorStorage.h"
+#import "MirrorMacro.h"
 
 @interface HiddenViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, UIGestureRecognizerDelegate>
 
@@ -48,10 +49,10 @@
 {
     [self.view addSubview:self.collectionView];
     [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.top.offset(20);
-        make.bottom.equalTo(self.view.mas_bottom).offset(-20);
-        make.left.offset(20);
-        make.right.offset(-20);
+        make.top.offset(20*kHeightRatio);
+        make.bottom.equalTo(self.view.mas_bottom).offset(-20*kHeightRatio);
+        make.left.offset(20*kWidthRatio);
+        make.right.offset(-20*kWidthRatio);
     }];
     
 }
@@ -70,7 +71,7 @@
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(self.collectionView.frame.size.width, 40);
+    return CGSizeMake(self.collectionView.frame.size.width, 40*kHeightRatio);
 }
 
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath

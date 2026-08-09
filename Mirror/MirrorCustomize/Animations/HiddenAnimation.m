@@ -7,6 +7,8 @@
 
 #import "HiddenAnimation.h"
 #import "MirrorStorage.h"
+#import "MirrorMacro.h"
+
 @implementation HiddenAnimation
 
 - (NSTimeInterval)transitionDuration:(id<UIViewControllerContextTransitioning>)transitionContext{
@@ -42,9 +44,9 @@
     CGFloat width = [UIScreen mainScreen].bounds.size.width/2;
     CGFloat height = [UIScreen mainScreen].bounds.size.height/2;
     if ([MirrorStorage retriveMirrorTasks].count <= 8) { // 有n个task，n<=8
-        height = 20 + (40 * [MirrorStorage retriveMirrorTasks].count) + 20; // 全展示出来，无需滚动
+        height = 20*kHeightRatio + ([MirrorStorage retriveMirrorTasks].count * kHeightRatio * 40) + 20*kHeightRatio; // 全展示出来，无需滚动
     } else {
-        height = 20 + (40 * 8 + 20) + 20; // 展示八个半，可以滚动（露出半个提示用户这里可滚动）
+        height = 20*kHeightRatio + (40*kHeightRatio * 8 + 20*kHeightRatio) + 20*kHeightRatio; // 展示八个半，可以滚动（露出半个提示用户这里可滚动）
     }
     if (_isPresent) { // present
         transView.frame = self.buttonFrame;

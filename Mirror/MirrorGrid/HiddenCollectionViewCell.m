@@ -10,8 +10,10 @@
 #import <Masonry/Masonry.h>
 #import "MirrorStorage.h"
 #import "MirrorTaskModel.h"
+#import "UIFont+MirrorFont.h"
+#import "MirrorMacro.h"
 
-static CGFloat const kPadding = 10;
+#define kPadding (10*kWidthRatio)
 
 @interface HiddenCollectionViewCell ()
 
@@ -81,6 +83,7 @@ static CGFloat const kPadding = 10;
     if (!_label) {
         _label = [UILabel new];
         _label.adjustsFontSizeToFitWidth = YES;
+        _label.font = [UIFont mirrorLabelFont];
     }
     return _label;
 }
