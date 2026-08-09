@@ -10,7 +10,7 @@
 #import "UIColor+MirrorColor.h"
 #import <Masonry/Masonry.h>
 
-static CGFloat const kPointSize = 10;
+static CGFloat const kLineWidth = 5;
 
 @implementation LineChartCollectionViewCell
 
@@ -32,20 +32,20 @@ static CGFloat const kPointSize = 10;
     for (id key in onedaydata.allKeys) {
         // point
         CGFloat percentage = [onedaydata[key] longValue] / (double)maxtime;
-        UIView *point = [[UIView alloc] initWithFrame:CGRectMake(self.frame.size.width/2-kPointSize/2, (1-percentage)*self.frame.size.height-kPointSize/2, kPointSize, kPointSize)];
+        UIView *point = [[UIView alloc] initWithFrame:CGRectMake(self.frame.size.width/2-kLineWidth/2, (1-percentage)*self.frame.size.height-kLineWidth/2, kLineWidth, kLineWidth)];
         point.backgroundColor = [UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:key].color];
-        point.layer.cornerRadius = kPointSize/2;
+        point.layer.cornerRadius = kLineWidth/2;
         [self addSubview:point];
         // leftday line
         if (leftdaydata != nil) {
             CGFloat percentage_left = [leftdaydata[key] longValue] / (double)maxtime;
             UIBezierPath *path = [UIBezierPath bezierPath];
-            [path moveToPoint:CGPointMake(kPointSize/2,kPointSize/2)];
-            [path addLineToPoint:CGPointMake(-self.frame.size.width+kPointSize/2, (percentage*self.frame.size.height-percentage_left*self.frame.size.height)+kPointSize/2)];
+            [path moveToPoint:CGPointMake(kLineWidth/2,kLineWidth/2)];
+            [path addLineToPoint:CGPointMake(-self.frame.size.width+kLineWidth/2, (percentage*self.frame.size.height-percentage_left*self.frame.size.height)+kLineWidth/2)];
             CAShapeLayer *shapeLayer = [CAShapeLayer layer];
             shapeLayer.path = [path CGPath];
             shapeLayer.strokeColor = [[UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:key].color] CGColor];
-            shapeLayer.lineWidth = 3.0;
+            shapeLayer.lineWidth = kLineWidth;
             shapeLayer.fillColor = [[UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:key].color] CGColor];
             [point.layer addSublayer:shapeLayer];
         }
@@ -53,12 +53,12 @@ static CGFloat const kPointSize = 10;
         if (rightdaydata != nil) {
             CGFloat percentage_right = [rightdaydata[key] longValue] / (double)maxtime;
             UIBezierPath *path = [UIBezierPath bezierPath];
-            [path moveToPoint:CGPointMake(kPointSize/2,kPointSize/2)];
-            [path addLineToPoint:CGPointMake(self.frame.size.width+kPointSize/2, (percentage*self.frame.size.height-percentage_right*self.frame.size.height)+kPointSize/2)];
+            [path moveToPoint:CGPointMake(kLineWidth/2,kLineWidth/2)];
+            [path addLineToPoint:CGPointMake(self.frame.size.width+kLineWidth/2, (percentage*self.frame.size.height-percentage_right*self.frame.size.height)+kLineWidth/2)];
             CAShapeLayer *shapeLayer = [CAShapeLayer layer];
             shapeLayer.path = [path CGPath];
             shapeLayer.strokeColor = [[UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:key].color] CGColor];
-            shapeLayer.lineWidth = 3.0;
+            shapeLayer.lineWidth = kLineWidth;
             shapeLayer.fillColor = [[UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:key].color] CGColor];
             [point.layer addSublayer:shapeLayer];
         }

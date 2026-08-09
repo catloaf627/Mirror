@@ -230,7 +230,7 @@
     [self.linechartView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(kGapInLine);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
     self.linechartView.hidden = YES;
@@ -495,6 +495,30 @@
         }
         [dataArr addObject:data];
     }
+    // legend
+    NSMutableArray<MirrorDataModel *> *legendData = [NSMutableArray new];
+    NSMutableDictionary<NSString *, NSMutableArray<MirrorRecordModel *> *> *recordsByTaskName = [NSMutableDictionary new];
+    NSMutableDictionary<NSString *, MirrorTaskModel *> *taskByTaskName = [NSMutableDictionary new];
+    NSMutableArray<NSString *> *taskNames = [NSMutableArray new];
+    for (NSMutableArray<MirrorDataModel *> *oneDayData in dataArr) {
+        for (MirrorDataModel *oneTaskData in oneDayData) {
+            NSString *taskName = oneTaskData.taskModel.taskName;
+            if (![recordsByTaskName.allKeys containsObject:taskName]) {
+                recordsByTaskName[taskName] = [NSMutableArray new];
+                taskByTaskName[taskName] = oneTaskData.taskModel;
+                [taskNames addObject:taskName];
+            }
+            [recordsByTaskName[taskName] addObjectsFromArray:oneTaskData.records];
+        }
+    }
+    for (NSString *taskName in taskNames) {
+        MirrorDataModel *data = [[MirrorDataModel alloc] initWithTask:taskByTaskName[taskName] records:recordsByTaskName[taskName]];
+        [legendData addObject:data];
+    }
+    [self.legendView updateWithData:legendData];
+    [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
+        make.height.mas_equalTo([self.legendView legendViewHeight]);
+    }];
     self.linechartView.hidden = NO;
     [self.linechartView refactorData:dataArr];
 }
