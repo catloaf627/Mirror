@@ -53,7 +53,6 @@
 		4AB9C8BA29E911C8002358E2 /* HistogramCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AB9C8B929E911C8002358E2 /* HistogramCollectionViewCell.m */; };
 		4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */; };
 		4AC1FDC02A03B05100CDCED9 /* MirrorDataModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBF2A03B05100CDCED9 /* MirrorDataModel.m */; };
-		4AC1FDC42A04122400CDCED9 /* AllRecordsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDC32A04122400CDCED9 /* AllRecordsViewController.m */; };
 		4AC1FDC72A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDC62A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m */; };
 		4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ACB422D29EEA411005EECC4 /* LeftAnimation.m */; };
 		4ADCD21A302410C600578A81 /* MirrorFakeDataSeeder.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADCD219302410C600578A81 /* MirrorFakeDataSeeder.m */; };
@@ -195,8 +194,6 @@
 		4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorRecordModel.m; sourceTree = "<group>"; };
 		4AC1FDBE2A03B05100CDCED9 /* MirrorDataModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorDataModel.h; sourceTree = "<group>"; };
 		4AC1FDBF2A03B05100CDCED9 /* MirrorDataModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorDataModel.m; sourceTree = "<group>"; };
-		4AC1FDC22A04122400CDCED9 /* AllRecordsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AllRecordsViewController.h; sourceTree = "<group>"; };
-		4AC1FDC32A04122400CDCED9 /* AllRecordsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AllRecordsViewController.m; sourceTree = "<group>"; };
 		4AC1FDC52A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DownloadFromCloudCollectionViewCell.h; sourceTree = "<group>"; };
 		4AC1FDC62A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DownloadFromCloudCollectionViewCell.m; sourceTree = "<group>"; };
 		4ACB422C29EEA411005EECC4 /* LeftAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LeftAnimation.h; sourceTree = "<group>"; };
@@ -481,8 +478,6 @@
 		4A74FFEB2A33302100A7BFE7 /* LegendJump */ = {
 			isa = PBXGroup;
 			children = (
-				4AC1FDC22A04122400CDCED9 /* AllRecordsViewController.h */,
-				4AC1FDC32A04122400CDCED9 /* AllRecordsViewController.m */,
 				4A74FFE82A33296700A7BFE7 /* SpecificRecordsViewController.h */,
 				4A74FFE92A33296700A7BFE7 /* SpecificRecordsViewController.m */,
 				4A410A3229EA6BB60007003B /* TaskPeriodCollectionViewCell.h */,
@@ -834,7 +829,6 @@
 				4A10185E2B90876E00AA9677 /* LinechartView.m in Sources */,
 				4A3DC9302A0106F700679C11 /* GridViewController.m in Sources */,
 				4A3DC9332A0109DA00679C11 /* GridCollectionViewCell.m in Sources */,
-				4AC1FDC42A04122400CDCED9 /* AllRecordsViewController.m in Sources */,
 				4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */,
 				015564E428E1A78E008AB06C /* TimeTrackerTaskCollectionViewCell.m in Sources */,
 				4A3DC92C29FCE3D200679C11 /* MirrorNaviManager.m in Sources */,
