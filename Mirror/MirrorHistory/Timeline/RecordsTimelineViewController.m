@@ -19,8 +19,16 @@ static CGFloat const kTimelineX = 28;
 static CGFloat const kDotSize = 10;
 static CGFloat const kRowMinHeight = 72;
 static CGFloat const kTextLeftPadding = 18;
+static NSInteger const kTimelineBatchSize = 100;
+static CGFloat const kTimelineLoadThreshold = 48;
 
-@interface RecordsTimelineViewController () <UIEditMenuInteractionDelegate>
+typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
+    TimelineBatchScrollPositionTop,
+    TimelineBatchScrollPositionNearTop,
+    TimelineBatchScrollPositionNearBottom,
+};
+
+@interface RecordsTimelineViewController () <UIEditMenuInteractionDelegate, UIScrollViewDelegate>
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
@@ -28,10 +36,13 @@ static CGFloat const kTextLeftPadding = 18;
 @property (nonatomic, strong) MirrorDataModel *data;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *records;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *highlightedRecords;
+@property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *sortedTimelineRecords;
 @property (nonatomic, copy) NSString *titleKey;
 @property (nonatomic, weak) UIView *firstHighlightedRow;
 @property (nonatomic, assign) NSInteger selectedPeriodIndex;
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
+@property (nonatomic, assign) NSInteger timelineBatchStartIndex;
+@property (nonatomic, assign) BOOL isRenderingTimelineBatch;
 @property (nonatomic, strong) UIDatePicker *editingStartPicker;
 @property (nonatomic, strong) UIDatePicker *editingEndPicker;
 @property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
@@ -100,6 +111,8 @@ static CGFloat const kTextLeftPadding = 18;
     self.scrollView = nil;
     self.contentView = nil;
     self.deleteFutureRecordsButton = nil;
+    self.sortedTimelineRecords = nil;
+    self.timelineBatchStartIndex = 0;
     self.firstHighlightedRow = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self p_setupUI];
@@ -115,6 +128,8 @@ static CGFloat const kTextLeftPadding = 18;
     self.scrollView = nil;
     self.contentView = nil;
     self.deleteFutureRecordsButton = nil;
+    self.sortedTimelineRecords = nil;
+    self.timelineBatchStartIndex = 0;
     self.firstHighlightedRow = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self p_setupUI];
@@ -198,17 +213,57 @@ static CGFloat const kTextLeftPadding = 18;
 
 - (void)buildTimelineRows
 {
-    UIView *previousRow = nil;
-    self.firstHighlightedRow = nil;
-    NSMutableArray<MirrorRecordModel *> *records = [[[self timelineRecords] sortedArrayUsingComparator:^NSComparisonResult(MirrorRecordModel *record0, MirrorRecordModel *record1) {
+    self.sortedTimelineRecords = [[[self timelineRecords] sortedArrayUsingComparator:^NSComparisonResult(MirrorRecordModel *record0, MirrorRecordModel *record1) {
         if (record0.startTime < record1.startTime) return NSOrderedAscending;
         if (record0.startTime > record1.startTime) return NSOrderedDescending;
         return NSOrderedSame;
     }] mutableCopy];
+    self.timelineBatchStartIndex = [self initialTimelineBatchStartIndex];
+    [self renderTimelineBatchAtStartIndex:self.timelineBatchStartIndex scrollPosition:TimelineBatchScrollPositionTop];
     
-    for (NSInteger index = 0; index < records.count; index++) {
-        BOOL isHighlighted = [self shouldHighlightRecord:records[index]];
-        UIView *row = [self timelineRowWithRecord:records[index] isFirst:index == 0 isLast:index == records.count - 1 isHighlighted:isHighlighted];
+    if (self.firstHighlightedRow) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self scrollToFirstHighlightedRow];
+        });
+    }
+}
+
+- (NSInteger)initialTimelineBatchStartIndex
+{
+    if (self.highlightedRecords.count == 0 || self.sortedTimelineRecords.count <= kTimelineBatchSize) {
+        return 0;
+    }
+    
+    for (NSInteger index = 0; index < self.sortedTimelineRecords.count; index++) {
+        if ([self shouldHighlightRecord:self.sortedTimelineRecords[index]]) {
+            NSInteger maxStartIndex = MAX((NSInteger)self.sortedTimelineRecords.count - kTimelineBatchSize, 0);
+            return MIN(index, maxStartIndex);
+        }
+    }
+    return 0;
+}
+
+- (void)renderTimelineBatchAtStartIndex:(NSInteger)startIndex scrollPosition:(TimelineBatchScrollPosition)scrollPosition
+{
+    if (self.isRenderingTimelineBatch) {
+        return;
+    }
+    
+    self.isRenderingTimelineBatch = YES;
+    [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    self.firstHighlightedRow = nil;
+    
+    NSInteger totalCount = self.sortedTimelineRecords.count;
+    NSInteger maxStartIndex = MAX(totalCount - kTimelineBatchSize, 0);
+    NSInteger safeStartIndex = MIN(MAX(startIndex, 0), maxStartIndex);
+    NSInteger endIndex = MIN(safeStartIndex + kTimelineBatchSize, totalCount);
+    self.timelineBatchStartIndex = safeStartIndex;
+    
+    UIView *previousRow = nil;
+    for (NSInteger index = safeStartIndex; index < endIndex; index++) {
+        MirrorRecordModel *record = self.sortedTimelineRecords[index];
+        BOOL isHighlighted = [self shouldHighlightRecord:record];
+        UIView *row = [self timelineRowWithRecord:record isFirst:index == 0 isLast:index == totalCount - 1 isHighlighted:isHighlighted];
         if (isHighlighted && self.firstHighlightedRow == nil) {
             self.firstHighlightedRow = row;
         }
@@ -225,7 +280,9 @@ static CGFloat const kTextLeftPadding = 18;
         previousRow = row;
     }
     
-    [self.contentView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.contentView mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.edges.mas_equalTo(self.scrollView);
+        make.width.mas_equalTo(self.scrollView);
         if (previousRow) {
             make.bottom.mas_equalTo(previousRow.mas_bottom).offset(20 * kHeightRatio);
         } else {
@@ -233,11 +290,18 @@ static CGFloat const kTextLeftPadding = 18;
         }
     }];
     
-    if (self.firstHighlightedRow) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self scrollToFirstHighlightedRow];
-        });
-    }
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.view layoutIfNeeded];
+        CGFloat maxOffsetY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
+        if (scrollPosition == TimelineBatchScrollPositionNearTop) {
+            self.scrollView.contentOffset = CGPointMake(0, MIN(kTimelineLoadThreshold + 1, maxOffsetY));
+        } else if (scrollPosition == TimelineBatchScrollPositionNearBottom) {
+            self.scrollView.contentOffset = CGPointMake(0, MAX(maxOffsetY - kTimelineLoadThreshold - 1, 0));
+        } else {
+            self.scrollView.contentOffset = CGPointZero;
+        }
+        self.isRenderingTimelineBatch = NO;
+    });
 }
 
 - (BOOL)shouldHighlightRecord:(MirrorRecordModel *)record
@@ -252,11 +316,37 @@ static CGFloat const kTextLeftPadding = 18;
 
 - (void)scrollToFirstHighlightedRow
 {
+    self.isRenderingTimelineBatch = YES;
     [self.view layoutIfNeeded];
     CGRect rowRect = [self.firstHighlightedRow.superview convertRect:self.firstHighlightedRow.frame toView:self.scrollView];
     CGFloat targetY = MAX(rowRect.origin.y - 16 * kHeightRatio, 0);
     CGFloat maxY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
     [self.scrollView setContentOffset:CGPointMake(0, MIN(targetY, maxY)) animated:NO];
+    self.isRenderingTimelineBatch = NO;
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    if (self.isRenderingTimelineBatch || self.sortedTimelineRecords.count <= kTimelineBatchSize) {
+        return;
+    }
+    
+    CGFloat maxOffsetY = scrollView.contentSize.height - CGRectGetHeight(scrollView.bounds);
+    if (maxOffsetY <= 0) {
+        return;
+    }
+    
+    if (scrollView.contentOffset.y >= maxOffsetY - kTimelineLoadThreshold) {
+        NSInteger nextStartIndex = self.timelineBatchStartIndex + kTimelineBatchSize;
+        if (nextStartIndex < self.sortedTimelineRecords.count) {
+            [self renderTimelineBatchAtStartIndex:nextStartIndex scrollPosition:TimelineBatchScrollPositionNearTop];
+        }
+    } else if (scrollView.contentOffset.y <= kTimelineLoadThreshold) {
+        NSInteger previousStartIndex = self.timelineBatchStartIndex - kTimelineBatchSize;
+        if (previousStartIndex >= 0) {
+            [self renderTimelineBatchAtStartIndex:previousStartIndex scrollPosition:TimelineBatchScrollPositionNearBottom];
+        }
+    }
 }
 
 - (UIView *)timelineRowWithRecord:(MirrorRecordModel *)record isFirst:(BOOL)isFirst isLast:(BOOL)isLast isHighlighted:(BOOL)isHighlighted
@@ -628,6 +718,7 @@ static CGFloat const kTextLeftPadding = 18;
         _scrollView = [UIScrollView new];
         _scrollView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
         _scrollView.alwaysBounceVertical = YES;
+        _scrollView.delegate = self;
     }
     return _scrollView;
 }
