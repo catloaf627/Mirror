@@ -12,7 +12,18 @@ NS_ASSUME_NONNULL_BEGIN
 
 static CGFloat const kInterspacing = 16;
 
+@class TimeTrackerTaskCollectionViewCell;
+
+@protocol TimeTrackerTaskCollectionViewCellDelegate <NSObject>
+
+- (void)timeTrackerTaskCollectionViewCellDidTapEdit:(TimeTrackerTaskCollectionViewCell *)cell;
+- (void)timeTrackerTaskCollectionViewCellDidTapDelete:(TimeTrackerTaskCollectionViewCell *)cell;
+
+@end
+
 @interface TimeTrackerTaskCollectionViewCell : UICollectionViewCell
+
+@property (nonatomic, weak) id<TimeTrackerTaskCollectionViewCellDelegate> delegate;
 
 + (NSString *)identifier;
 - (void)configWithTaskname:(NSString *)taskName;

@@ -30,7 +30,7 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
-@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate>
+@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
@@ -181,7 +181,6 @@
                 [self.collectionView endInteractiveMovement];
             } else {
                 [self.collectionView cancelInteractiveMovement];
-                [self presentEditTaskSheetAtIndexPath:self.movingIndexPath];
             }
             self.movingIndexPath = nil;
             self.didMoveLongPressedTask = NO;
@@ -219,6 +218,22 @@
     MirrorTaskModel *task = self.data[indexPath.item];
     AddTaskViewController *editVC = [[AddTaskViewController alloc] initWithTaskName:task.taskName];
     [self.navigationController presentViewController:editVC animated:YES completion:nil];
+}
+
+- (void)presentDeleteTaskAlertAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (![self canMoveTaskAtIndexPath:indexPath]) {
+        return;
+    }
+    NSString *taskName = self.data[indexPath.item].taskName;
+    UIAlertController *deleteTaskAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_task_?"] message:[MirrorLanguage mirror_stringWithKey:@"delete_task_warning"] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
+    UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        [MirrorStorage deleteTask:taskName];
+    }];
+    [deleteTaskAlert addAction:cancelAction];
+    [deleteTaskAlert addAction:deleteAction];
+    [self presentViewController:deleteTaskAlert animated:YES completion:nil];
 }
 
 #pragma mark - Collection view delegate
@@ -348,6 +363,7 @@
         return cell;
     } else {
         TimeTrackerTaskCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[TimeTrackerTaskCollectionViewCell identifier] forIndexPath:indexPath];
+        cell.delegate = self;
         [cell configWithTaskname:taskModel.taskName];
         return cell;
     }
@@ -423,6 +439,20 @@
     [allTasks insertObject:selectedTask atIndex:destinationItem];
     [MirrorStorage reorderTasks:allTasks];
     self.data = [MirrorStorage tasksWithAddNew];
+}
+
+#pragma mark - TimeTrackerTaskCollectionViewCellDelegate
+
+- (void)timeTrackerTaskCollectionViewCellDidTapEdit:(TimeTrackerTaskCollectionViewCell *)cell
+{
+    NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
+    [self presentEditTaskSheetAtIndexPath:indexPath];
+}
+
+- (void)timeTrackerTaskCollectionViewCellDidTapDelete:(TimeTrackerTaskCollectionViewCell *)cell
+{
+    NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
+    [self presentDeleteTaskAlertAtIndexPath:indexPath];
 }
 
 #pragma mark - Getters
