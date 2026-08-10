@@ -11,15 +11,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@protocol HistogramDelegate <NSObject>  // 让对应的legend闪一下
+@class HistogramView;
 
-- (void)twinkleTaskname:(NSString *)taskname;
+@protocol HistogramDelegate <NSObject>
+
+- (void)histogramView:(HistogramView *)histogramView didSelectData:(MirrorDataModel *)data;
 
 @end
 
 @interface HistogramView : UIView
 
-@property (nonatomic, weak) UIView<HistogramDelegate> *delegate;
+@property (nonatomic, weak) id<HistogramDelegate> delegate;
 
 - (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data;
 - (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data;

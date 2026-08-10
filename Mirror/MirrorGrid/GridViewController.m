@@ -19,6 +19,7 @@
 #import "HistogramView.h"
 #import "PiechartView.h"
 #import "LinechartView.h"
+#import "RecordsTimelineViewController.h"
 #import "MirrorTimeText.h"
 #import "MirrorTool.h"
 #import "MirrorTabsManager.h"
@@ -30,7 +31,7 @@
 #define kCellWidth (25*kWidthRatio)
 #define kCellSpacing (2.5*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
-@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate>
+@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, HistogramDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
@@ -623,6 +624,15 @@
 
 #pragma mark - Collection view delegate
 
+- (void)histogramView:(HistogramView *)histogramView didSelectData:(MirrorDataModel *)data
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
+    MirrorDataModel *allData = [[MirrorDataModel alloc] initWithTask:data.taskModel records:allRecords];
+    RecordsTimelineViewController *recordsVC = [[RecordsTimelineViewController alloc] initWithData:allData highlightedRecords:data.records];
+    [self.navigationController pushViewController:recordsVC animated:YES];
+}
+
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
     [self updateHints];
@@ -718,6 +728,7 @@
 {
     if (!_histogramView) {
         _histogramView = [[HistogramView alloc] initWithData:[NSMutableArray new]];
+        _histogramView.delegate = self;
     }
     return _histogramView;
 }

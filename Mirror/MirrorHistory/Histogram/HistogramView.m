@@ -133,7 +133,10 @@ static CGFloat const kPrettyCountShowHalf = 5.5;
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    [self.delegate twinkleTaskname:self.data[indexPath.item].taskModel.taskName];
+    if (self.data.count <= indexPath.item) {
+        return;
+    }
+    [self.delegate histogramView:self didSelectData:self.data[indexPath.item]];
 }
 
 #pragma mark - Getters

@@ -19,6 +19,7 @@
 #import "MirrorLanguage.h"
 #import "MirrorSettings.h"
 #import "PiechartView.h"
+#import "RecordsTimelineViewController.h"
 #import "MirrorTaskModel.h"
 #import "MirrorTool.h"
 #import "MirrorStorage.h"
@@ -28,7 +29,7 @@
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
 
-@interface HistoryViewController () <UIViewControllerTransitioningDelegate>
+@interface HistoryViewController () <UIViewControllerTransitioningDelegate, HistogramDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
@@ -242,6 +243,15 @@
 
 #pragma mark - Actions
 
+- (void)histogramView:(HistogramView *)histogramView didSelectData:(MirrorDataModel *)data
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
+    MirrorDataModel *allData = [[MirrorDataModel alloc] initWithTask:data.taskModel records:allRecords];
+    RecordsTimelineViewController *recordsVC = [[RecordsTimelineViewController alloc] initWithData:allData highlightedRecords:data.records];
+    [self.navigationController pushViewController:recordsVC animated:YES];
+}
+
 - (void)tapGestureRecognizerAction:(UITapGestureRecognizer *)tap // 热区范围为左右1/3
 {
     CGPoint touchPoint = [tap locationInView:self.view];
@@ -445,6 +455,7 @@
 {
     if (!_histogramView) {
         _histogramView = [[HistogramView alloc] initWithData:self.data];
+        _histogramView.delegate = self;
     }
     return _histogramView;
 }

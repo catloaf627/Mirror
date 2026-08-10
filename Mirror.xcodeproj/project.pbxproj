@@ -64,6 +64,7 @@
 		4AFB77A528DF4A380064CBCA /* SceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFB77A428DF4A380064CBCA /* SceneDelegate.m */; };
 		4AFB77AD28DF4A3B0064CBCA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4AFB77AC28DF4A3B0064CBCA /* Assets.xcassets */; };
 		4AFB77B328DF4A3B0064CBCA /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFB77B228DF4A3B0064CBCA /* main.m */; };
+		4AFBD1A13029558E006A6350 /* RecordsTimelineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFBD1A03029558E006A6350 /* RecordsTimelineViewController.m */; };
 		863C4586B60A413E3A3FA00B /* Pods_Mirror.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D92DFFBA0C7141AB1910C6F /* Pods_Mirror.framework */; };
 /* End PBXBuildFile section */
 
@@ -204,6 +205,8 @@
 		4AFB77AC28DF4A3B0064CBCA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4AFB77B128DF4A3B0064CBCA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4AFB77B228DF4A3B0064CBCA /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		4AFBD19F3029558E006A6350 /* RecordsTimelineViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RecordsTimelineViewController.h; sourceTree = "<group>"; };
+		4AFBD1A03029558E006A6350 /* RecordsTimelineViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RecordsTimelineViewController.m; sourceTree = "<group>"; };
 		7D92DFFBA0C7141AB1910C6F /* Pods_Mirror.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Mirror.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BCE97AF04F189BBAB1043B98 /* Pods-Mirror.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mirror.release.xcconfig"; path = "Target Support Files/Pods-Mirror/Pods-Mirror.release.xcconfig"; sourceTree = "<group>"; };
 		FFB541C46D21D3EBC8327409 /* Pods-Mirror.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Mirror.debug.xcconfig"; path = "Target Support Files/Pods-Mirror/Pods-Mirror.debug.xcconfig"; sourceTree = "<group>"; };
@@ -294,6 +297,7 @@
 				4A410A2A29EA5D750007003B /* Legend */,
 				4A410A2B29EA5D800007003B /* Histogram */,
 				4A410A2929EA5D650007003B /* PieChart */,
+				4AFBD19E30295561006A6350 /* Timeline */,
 			);
 			path = MirrorHistory;
 			sourceTree = "<group>";
@@ -566,6 +570,15 @@
 			path = Mirror;
 			sourceTree = "<group>";
 		};
+		4AFBD19E30295561006A6350 /* Timeline */ = {
+			isa = PBXGroup;
+			children = (
+				4AFBD19F3029558E006A6350 /* RecordsTimelineViewController.h */,
+				4AFBD1A03029558E006A6350 /* RecordsTimelineViewController.m */,
+			);
+			path = Timeline;
+			sourceTree = "<group>";
+		};
 		F9B0C7CCC00DFAFF4ADCBE2F /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -775,6 +788,7 @@
 				4A379B4428E03D0B00785CAE /* MirrorTabsManager.m in Sources */,
 				4A10185E2B90876E00AA9677 /* LinechartView.m in Sources */,
 				4A3DC9302A0106F700679C11 /* GridViewController.m in Sources */,
+				4AFBD1A13029558E006A6350 /* RecordsTimelineViewController.m in Sources */,
 				4A3DC9332A0109DA00679C11 /* GridCollectionViewCell.m in Sources */,
 				4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */,
 				015564E428E1A78E008AB06C /* TimeTrackerTaskCollectionViewCell.m in Sources */,
