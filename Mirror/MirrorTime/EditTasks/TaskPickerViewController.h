@@ -13,6 +13,7 @@ typedef void (^TaskPickerCompletion)(MirrorTaskModel *task);
 @interface TaskPickerViewController : UIViewController
 
 - (instancetype)initWithTasks:(NSArray<MirrorTaskModel *> *)tasks
+                sourceTaskName:(NSString *)sourceTaskName
                    completion:(TaskPickerCompletion)completion;
 
 @end

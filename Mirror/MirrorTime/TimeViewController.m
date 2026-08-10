@@ -258,7 +258,7 @@
         return;
     }
     CGRect anchorFrame = [self.collectionView convertRect:cell.frame toView:self.view];
-    TaskColorCirclePickerViewController *colorPicker = [[TaskColorCirclePickerViewController alloc] initWithColors:[self taskColorOptions] selectedColor:task.color anchorFrame:anchorFrame completion:^(MirrorColorType color) {
+    TaskColorCirclePickerViewController *colorPicker = [[TaskColorCirclePickerViewController alloc] initWithColors:[self taskColorOptions] selectedColor:task.color taskName:task.taskName anchorFrame:anchorFrame completion:^(MirrorColorType color) {
         [MirrorStorage editTask:task.taskName color:color];
     }];
     [self presentViewController:colorPicker animated:YES completion:nil];
@@ -270,8 +270,9 @@
         return;
     }
     
+    MirrorTaskModel *sourceTask = self.data[indexPath.item];
     NSArray<MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
-    TaskPickerViewController *taskPicker = [[TaskPickerViewController alloc] initWithTasks:tasks completion:^(MirrorTaskModel *task) {
+    TaskPickerViewController *taskPicker = [[TaskPickerViewController alloc] initWithTasks:tasks sourceTaskName:sourceTask.taskName completion:^(MirrorTaskModel *task) {
     }];
     [self presentViewController:taskPicker animated:YES completion:nil];
 }

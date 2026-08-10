@@ -14,6 +14,7 @@ typedef void (^TaskColorCirclePickerCompletion)(MirrorColorType color);
 
 - (instancetype)initWithColors:(NSArray<NSNumber *> *)colors
                  selectedColor:(MirrorColorType)selectedColor
+                       taskName:(NSString *)taskName
                    anchorFrame:(CGRect)anchorFrame
                      completion:(TaskColorCirclePickerCompletion)completion;
 

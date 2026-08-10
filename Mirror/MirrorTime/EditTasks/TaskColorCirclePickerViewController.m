@@ -5,20 +5,25 @@
 
 #import "TaskColorCirclePickerViewController.h"
 #import <Masonry/Masonry.h>
+#import "UIFont+MirrorFont.h"
+#import "MirrorLanguage.h"
 
 static NSInteger const kTaskColorPickerColumnCount = 4;
 static CGFloat const kTaskColorPickerSpacing = 4;
-static CGFloat const kTaskColorPickerButtonSize = 20;
+static CGFloat const kTaskColorPickerWidth = 180;
+static CGFloat const kTaskColorPickerButtonSize = 30;
 static CGFloat const kTaskColorPickerSelectedBorderWidth = 2;
-static CGFloat const kTaskColorPickerBackdropAlpha = 0.2;
+static CGFloat const kTaskColorPickerBackdropAlpha = 0.5;
 static CGFloat const kTaskColorPickerShadowOpacity = 0.25;
 static CGFloat const kTaskColorPickerShadowRadius = 10;
 static CGFloat const kTaskColorPickerShadowYOffset = 4;
+static CGFloat const kTaskColorPickerTitleSpacing = 12;
 
 @interface TaskColorCirclePickerViewController () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) NSArray<NSNumber *> *colors;
 @property (nonatomic, assign) MirrorColorType selectedColor;
+@property (nonatomic, copy) NSString *taskName;
 @property (nonatomic, copy) TaskColorCirclePickerCompletion completion;
 @property (nonatomic, assign) CGRect anchorFrame;
 @property (nonatomic, strong) UIView *pickerView;
@@ -30,6 +35,7 @@ static CGFloat const kTaskColorPickerShadowYOffset = 4;
 
 - (instancetype)initWithColors:(NSArray<NSNumber *> *)colors
                  selectedColor:(MirrorColorType)selectedColor
+                       taskName:(NSString *)taskName
                    anchorFrame:(CGRect)anchorFrame
                      completion:(TaskColorCirclePickerCompletion)completion
 {
@@ -37,6 +43,7 @@ static CGFloat const kTaskColorPickerShadowYOffset = 4;
     if (self) {
         _colors = colors;
         _selectedColor = selectedColor;
+        _taskName = [taskName copy];
         _anchorFrame = anchorFrame;
         _completion = completion;
         _colorButtons = [NSMutableArray new];
@@ -59,6 +66,20 @@ static CGFloat const kTaskColorPickerShadowYOffset = 4;
     [self.view addSubview:self.pickerView];
     [self.pickerView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.center.mas_equalTo(self.view);
+        make.width.mas_equalTo(kTaskColorPickerWidth);
+    }];
+    
+    UILabel *titleLabel = [self pickerTitleLabelWithText:[MirrorLanguage mirror_stringWithKey:@"pick_color_for_task" with1Placeholder:self.taskName]];
+    [self.pickerView addSubview:titleLabel];
+    [titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.top.mas_equalTo(self.pickerView);
+    }];
+    
+    UIView *colorGridView = [UIView new];
+    [self.pickerView addSubview:colorGridView];
+    [colorGridView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.mas_equalTo(self.pickerView);
+        make.top.mas_equalTo(titleLabel.mas_bottom).offset(kTaskColorPickerTitleSpacing);
     }];
     
     for (NSInteger index = 0; index < self.colors.count; index++) {
@@ -72,17 +93,30 @@ static CGFloat const kTaskColorPickerShadowYOffset = 4;
         button.layer.borderWidth = color == self.selectedColor ? kTaskColorPickerSelectedBorderWidth : 0;
         button.layer.borderColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:color]].CGColor;
         [button addTarget:self action:@selector(selectColor:) forControlEvents:UIControlEventTouchUpInside];
-        [self.pickerView addSubview:button];
+        [colorGridView addSubview:button];
         [self.colorButtons addObject:button];
         [button mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.left.mas_equalTo(self.pickerView).offset(column * (buttonSize + kTaskColorPickerSpacing));
-            make.top.mas_equalTo(self.pickerView).offset(row * (buttonSize + kTaskColorPickerSpacing));
+            make.left.mas_equalTo(colorGridView).offset(column * (buttonSize + kTaskColorPickerSpacing));
+            make.top.mas_equalTo(colorGridView).offset(row * (buttonSize + kTaskColorPickerSpacing));
             make.width.height.mas_equalTo(buttonSize);
             if (index == self.colors.count - 1) {
-                make.right.bottom.mas_equalTo(self.pickerView);
+                make.right.bottom.mas_equalTo(colorGridView);
+                make.bottom.mas_equalTo(self.pickerView);
             }
         }];
     }
+}
+
+- (UILabel *)pickerTitleLabelWithText:(NSString *)text
+{
+    UILabel *label = [UILabel new];
+    label.text = text;
+    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    label.font = [UIFont mirrorLabelFont];
+    label.textAlignment = NSTextAlignmentCenter;
+    label.numberOfLines = 1;
+    label.adjustsFontSizeToFitWidth = YES;
+    return label;
 }
 
 - (void)selectColor:(UIButton *)button

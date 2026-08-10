@@ -7,8 +7,9 @@
 #import <Masonry/Masonry.h>
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
+#import "MirrorLanguage.h"
 
-static CGFloat const kTaskPickerBackdropAlpha = 0.2;
+static CGFloat const kTaskPickerBackdropAlpha = 0.5;
 static CGFloat const kTaskPickerShadowOpacity = 0.25;
 static CGFloat const kTaskPickerShadowRadius = 10;
 static CGFloat const kTaskPickerShadowYOffset = 4;
@@ -18,10 +19,12 @@ static CGFloat const kTaskPickerDotSize = 16;
 static CGFloat const kTaskPickerHorizontalPadding = 12;
 static CGFloat const kTaskPickerRowSpacing = 8;
 static CGFloat const kTaskPickerCornerRadius = 12;
+static CGFloat const kTaskPickerTitleSpacing = 12;
 
 @interface TaskPickerViewController () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) NSArray<MirrorTaskModel *> *tasks;
+@property (nonatomic, copy) NSString *sourceTaskName;
 @property (nonatomic, copy) TaskPickerCompletion completion;
 @property (nonatomic, strong) UIView *pickerView;
 @property (nonatomic, strong) NSMutableArray<UIButton *> *taskButtons;
@@ -31,11 +34,13 @@ static CGFloat const kTaskPickerCornerRadius = 12;
 @implementation TaskPickerViewController
 
 - (instancetype)initWithTasks:(NSArray<MirrorTaskModel *> *)tasks
+                sourceTaskName:(NSString *)sourceTaskName
                    completion:(TaskPickerCompletion)completion
 {
     self = [super init];
     if (self) {
         _tasks = tasks;
+        _sourceTaskName = [sourceTaskName copy];
         _completion = completion;
         _taskButtons = [NSMutableArray new];
         self.modalPresentationStyle = UIModalPresentationOverFullScreen;
@@ -58,6 +63,12 @@ static CGFloat const kTaskPickerCornerRadius = 12;
         make.width.mas_equalTo(kTaskPickerRowWidth);
     }];
     
+    UILabel *titleLabel = [self pickerTitleLabelWithText:[MirrorLanguage mirror_stringWithKey:@"merge_task_to" with1Placeholder:self.sourceTaskName]];
+    [self.pickerView addSubview:titleLabel];
+    [titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.top.mas_equalTo(self.pickerView);
+    }];
+    
     UIView *previousRow = nil;
     for (NSInteger index = 0; index < self.tasks.count; index++) {
         MirrorTaskModel *task = self.tasks[index];
@@ -70,7 +81,7 @@ static CGFloat const kTaskPickerCornerRadius = 12;
             if (previousRow) {
                 make.top.mas_equalTo(previousRow.mas_bottom).offset(kTaskPickerRowSpacing);
             } else {
-                make.top.mas_equalTo(self.pickerView);
+                make.top.mas_equalTo(titleLabel.mas_bottom).offset(kTaskPickerTitleSpacing);
             }
             if (index == self.tasks.count - 1) {
                 make.bottom.mas_equalTo(self.pickerView);
@@ -78,6 +89,18 @@ static CGFloat const kTaskPickerCornerRadius = 12;
         }];
         previousRow = button;
     }
+}
+
+- (UILabel *)pickerTitleLabelWithText:(NSString *)text
+{
+    UILabel *label = [UILabel new];
+    label.text = text;
+    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    label.font = [UIFont mirrorLabelFont];
+    label.textAlignment = NSTextAlignmentCenter;
+    label.numberOfLines = 1;
+    label.adjustsFontSizeToFitWidth = YES;
+    return label;
 }
 
 - (UIButton *)taskButtonWithTask:(MirrorTaskModel *)task index:(NSInteger)index

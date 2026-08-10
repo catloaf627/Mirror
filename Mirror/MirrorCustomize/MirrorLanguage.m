@@ -179,6 +179,8 @@
     NSMutableDictionary *mirrorDict = [NSMutableDictionary new];
 
     // Time
+    [mirrorDict setValue:ML(@"Pick a color for %@", @"为 %@ 选择颜色", @"Elige un color para %@", @"Choisir une couleur pour %@", @"%@ の色を選択", @"%@ 색상 선택") forKey:@"pick_color_for_task"];
+    [mirrorDict setValue:ML(@"Merge %@ to", @"将 %@ 合并到", @"Fusionar %@ con", @"Fusionner %@ avec", @"%@ の結合先", @"%@ 병합 대상") forKey:@"merge_task_to"];
     [mirrorDict setValue:ML(@"%@h ", @"%@时", @"%@ h ", @"%@ h ", @"%@時間", @"%@시간") forKey:@"h"];
     [mirrorDict setValue:ML(@"%@m ", @"%@分", @"%@ min ", @"%@ min ", @"%@分", @"%@분") forKey:@"m"];
     [mirrorDict setValue:ML(@"%@s", @"%@秒", @"%@ s", @"%@ s", @"%@秒", @"%@초") forKey:@"s"];
