@@ -30,7 +30,6 @@
 		4A406C1A29071939001E83A1 /* MirrorStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A406C1929071939001E83A1 /* MirrorStorage.m */; };
 		4A410A2829EA51750007003B /* LegendCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A410A2729EA51750007003B /* LegendCollectionViewCell.m */; };
 		4A410A3429EA6BB60007003B /* TaskPeriodCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A410A3329EA6BB60007003B /* TaskPeriodCollectionViewCell.m */; };
-		4A74FFEA2A33296800A7BFE7 /* SpecificRecordsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A74FFE92A33296700A7BFE7 /* SpecificRecordsViewController.m */; };
 		4A7CCD2629DBC7CF00879D9C /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A7CCD2529DBC7CF00879D9C /* TodayViewController.m */; };
 		4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A7EFA063027D3CB00904ED9 /* UIFont+MirrorFont.m */; };
 		4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88211829F2A2B8009E422C /* TodayTotalHeader.m */; };
@@ -139,8 +138,6 @@
 		4A410A2729EA51750007003B /* LegendCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LegendCollectionViewCell.m; sourceTree = "<group>"; };
 		4A410A3229EA6BB60007003B /* TaskPeriodCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskPeriodCollectionViewCell.h; sourceTree = "<group>"; };
 		4A410A3329EA6BB60007003B /* TaskPeriodCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskPeriodCollectionViewCell.m; sourceTree = "<group>"; };
-		4A74FFE82A33296700A7BFE7 /* SpecificRecordsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SpecificRecordsViewController.h; sourceTree = "<group>"; };
-		4A74FFE92A33296700A7BFE7 /* SpecificRecordsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SpecificRecordsViewController.m; sourceTree = "<group>"; };
 		4A7CCD2429DBC7CF00879D9C /* TodayViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TodayViewController.h; sourceTree = "<group>"; };
 		4A7CCD2529DBC7CF00879D9C /* TodayViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TodayViewController.m; sourceTree = "<group>"; };
 		4A7EFA053027D3C300904ED9 /* UIFont+MirrorFont.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIFont+MirrorFont.h"; sourceTree = "<group>"; };
@@ -445,8 +442,6 @@
 		4A74FFEB2A33302100A7BFE7 /* LegendJump */ = {
 			isa = PBXGroup;
 			children = (
-				4A74FFE82A33296700A7BFE7 /* SpecificRecordsViewController.h */,
-				4A74FFE92A33296700A7BFE7 /* SpecificRecordsViewController.m */,
 				4A410A3229EA6BB60007003B /* TaskPeriodCollectionViewCell.h */,
 				4A410A3329EA6BB60007003B /* TaskPeriodCollectionViewCell.m */,
 			);
@@ -779,7 +774,6 @@
 				4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */,
 				4A406C112906FC00001E83A1 /* ToggleCollectionViewCell.m in Sources */,
 				4AE4171F28DF6155008A6A18 /* SettingsViewController.m in Sources */,
-				4A74FFEA2A33296800A7BFE7 /* SpecificRecordsViewController.m in Sources */,
 				4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */,
 				4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */,
 				4AFB77A528DF4A380064CBCA /* SceneDelegate.m in Sources */,

@@ -25,7 +25,9 @@ static CGFloat const kTextLeftPadding = 18;
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) MirrorDataModel *data;
+@property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *records;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *highlightedRecords;
+@property (nonatomic, copy) NSString *titleKey;
 @property (nonatomic, weak) UIView *firstHighlightedRow;
 @property (nonatomic, assign) NSInteger selectedPeriodIndex;
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
@@ -49,11 +51,29 @@ static CGFloat const kTextLeftPadding = 18;
     if (self) {
         self.data = data;
         self.highlightedRecords = highlightedRecords;
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
+        [self addObservers];
     }
     return self;
+}
+
+- (instancetype)initWithRecords:(NSMutableArray<MirrorRecordModel *> *)records titleKey:(NSString *)titleKey
+{
+    self = [super init];
+    if (self) {
+        self.records = records;
+        self.titleKey = titleKey;
+        [self addObservers];
+    }
+    return self;
+}
+
+- (void)addObservers
+{
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
+    if (self.titleKey.length == 0) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
+    }
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
 }
 
 - (void)dealloc
@@ -70,12 +90,12 @@ static CGFloat const kTextLeftPadding = 18;
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:self.data.taskModel.taskName leftButton:nil rightButton:nil];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[self navigationTitle] leftButton:nil rightButton:nil];
 }
 
 - (void)restartVC
 {
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:self.data.taskModel.taskName leftButton:nil rightButton:nil];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[self navigationTitle] leftButton:nil rightButton:nil];
     self.scrollView = nil;
     self.contentView = nil;
     self.firstHighlightedRow = nil;
@@ -85,12 +105,49 @@ static CGFloat const kTextLeftPadding = 18;
 
 - (void)reloadData
 {
-    self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
+    if (self.titleKey.length > 0) {
+        [self reloadCustomRecords];
+    } else {
+        self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
+    }
     self.scrollView = nil;
     self.contentView = nil;
     self.firstHighlightedRow = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self p_setupUI];
+}
+
+- (NSString *)navigationTitle
+{
+    if (self.titleKey.length > 0) {
+        return [MirrorLanguage mirror_stringWithKey:self.titleKey];
+    }
+    return self.data.taskModel.taskName;
+}
+
+- (void)reloadCustomRecords
+{
+    NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
+    NSMutableSet<NSNumber *> *visibleOriginalIndexes = [NSMutableSet new];
+    for (MirrorRecordModel *record in self.records) {
+        [visibleOriginalIndexes addObject:@(record.originalIndex)];
+    }
+    
+    NSMutableArray<MirrorRecordModel *> *updatedRecords = [NSMutableArray new];
+    for (MirrorRecordModel *record in allRecords) {
+        if ([visibleOriginalIndexes containsObject:@(record.originalIndex)]) {
+            [updatedRecords addObject:record];
+        }
+    }
+    self.records = updatedRecords;
+}
+
+- (NSMutableArray<MirrorRecordModel *> *)timelineRecords
+{
+    if (self.titleKey.length > 0) {
+        return self.records;
+    }
+    return self.data.records;
 }
 
 - (void)p_setupUI
@@ -115,7 +172,7 @@ static CGFloat const kTextLeftPadding = 18;
 {
     UIView *previousRow = nil;
     self.firstHighlightedRow = nil;
-    NSMutableArray<MirrorRecordModel *> *records = [[self.data.records sortedArrayUsingComparator:^NSComparisonResult(MirrorRecordModel *record0, MirrorRecordModel *record1) {
+    NSMutableArray<MirrorRecordModel *> *records = [[[self timelineRecords] sortedArrayUsingComparator:^NSComparisonResult(MirrorRecordModel *record0, MirrorRecordModel *record1) {
         if (record0.startTime < record1.startTime) return NSOrderedAscending;
         if (record0.startTime > record1.startTime) return NSOrderedDescending;
         return NSOrderedSame;
@@ -323,6 +380,28 @@ static CGFloat const kTextLeftPadding = 18;
     return [self recordMenuForPeriodIndex:self.selectedPeriodIndex];
 }
 
+- (void)removeCustomRecordWithOriginalIndex:(NSInteger)originalIndex
+{
+    NSInteger indexToRemove = NSNotFound;
+    for (NSInteger index = 0; index < self.records.count; index++) {
+        if (self.records[index].originalIndex == originalIndex) {
+            indexToRemove = index;
+            break;
+        }
+    }
+    if (indexToRemove == NSNotFound) {
+        return;
+    }
+    
+    [self.records removeObjectAtIndex:indexToRemove];
+    for (MirrorRecordModel *record in self.records) {
+        if (record.originalIndex > originalIndex) {
+            record.originalIndex = record.originalIndex - 1;
+        }
+    }
+    [self reloadData];
+}
+
 - (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willPresentMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
 {
     self.visibleRecordEditMenuInteraction = interaction;
@@ -342,6 +421,9 @@ static CGFloat const kTextLeftPadding = 18;
     
     UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [MirrorStorage deletePeriodAtIndex:periodIndex];
+        if (self.titleKey.length > 0) {
+            [self removeCustomRecordWithOriginalIndex:periodIndex];
+        }
     }];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
     

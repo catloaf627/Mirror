@@ -19,7 +19,7 @@
 #import "MirrorTool.h"
 #import "MirrorSettings.h"
 #import "SettingsViewController.h"
-#import "SpecificRecordsViewController.h"
+#import "RecordsTimelineViewController.h"
 #import "LeftAnimation.h"
 #import "CellAnimation.h"
 #import "MirrorLanguage.h"
@@ -451,12 +451,7 @@ typedef void (^TaskColorCirclePickerCompletion)(MirrorColorType color);
 
 - (BOOL)canStartTaskNow
 {
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    MirrorRecordModel *lastRecord = records.lastObject;
-    if (lastRecord == nil) {
-        return YES;
-    }
-    return lastRecord.endTime <= [[NSDate now] timeIntervalSince1970];
+    return [self occupiedRecords].count == 0;
 }
 
 - (void)presentGoingOnTaskIfNeeded
@@ -508,7 +503,7 @@ typedef void (^TaskColorCirclePickerCompletion)(MirrorColorType color);
 - (void)showOccupiedRecords
 {
     NSMutableArray<MirrorRecordModel *> *occupiedRecords = [self occupiedRecords];
-    SpecificRecordsViewController *recordsVC = [[SpecificRecordsViewController alloc] initWithRecords:occupiedRecords titleKey:@"occupied_records"];
+    RecordsTimelineViewController *recordsVC = [[RecordsTimelineViewController alloc] initWithRecords:occupiedRecords titleKey:@"occupied_records"];
     [self.navigationController pushViewController:recordsVC animated:YES];
 }
 
