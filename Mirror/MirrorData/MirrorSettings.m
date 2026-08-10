@@ -91,18 +91,15 @@ static NSInteger const kMirrorLanguageChinese = 1;
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchWeekStartsOnNotification object:nil];
 }
 
-+ (BOOL)appliedHistogramData
++ (BOOL)appliedPieChartData
 {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredHistogramData"];
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredPiechartData"];
 }
 
 + (void)switchChartTypeData
 {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredHistogramData"]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MirrorUserPreferredHistogramData"];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MirrorUserPreferredHistogramData"];
-    }
+    BOOL usesPiechart = [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredPiechartData"];
+    [[NSUserDefaults standardUserDefaults] setBool:!usesPiechart forKey:@"MirrorUserPreferredPiechartData"];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchChartTypeDataNotification object:nil];
 }
 

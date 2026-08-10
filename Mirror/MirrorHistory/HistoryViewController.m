@@ -138,9 +138,9 @@
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
     
-    // histogram
+    // progress list
     [self.taskProgressListView updateWithData:self.data];
-    self.taskProgressListView.hidden = ![MirrorSettings appliedHistogramData];
+    self.taskProgressListView.hidden = [MirrorSettings appliedPieChartData];
     
     // piechart
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
@@ -156,7 +156,7 @@
             }
         }];
     }
-    self.piechartView.hidden = [MirrorSettings appliedHistogramData];
+    self.piechartView.hidden = ![MirrorSettings appliedPieChartData];
 
 }
 
@@ -209,7 +209,7 @@
         make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
-    self.taskProgressListView.hidden = ![MirrorSettings appliedHistogramData];
+    self.taskProgressListView.hidden = [MirrorSettings appliedPieChartData];
 
     [self.view addSubview:self.piechartView];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
@@ -224,7 +224,7 @@
             make.width.height.mas_equalTo(width);
         }
     }];
-    self.piechartView.hidden = [MirrorSettings appliedHistogramData];
+    self.piechartView.hidden = ![MirrorSettings appliedPieChartData];
     // empty hint
     [self.view addSubview:self.emptyHintLabel];
     [self.emptyHintLabel mas_makeConstraints:^(MASConstraintMaker *make) {

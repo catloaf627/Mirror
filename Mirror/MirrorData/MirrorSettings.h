@@ -32,7 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)switchShowIndex;
 
 // Pie chart
-+ (BOOL)appliedHistogramData;
++ (BOOL)appliedPieChartData;
 + (void)switchChartTypeData;
 + (BOOL)appliedPieChartRecord;
 + (void)switchChartTypeRecord;

@@ -77,8 +77,8 @@
 
 - (void)updateHistoryTabItemWithTabController:(UITabBarController *)tabbarController
 {
-    BOOL isHistogram = [MirrorSettings appliedHistogramData];
-    [self updateTabbar:tabbarController.tabBar index:3 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"data"] imageName:isHistogram? @"chart.bar":@"chart.pie" selectedImageName:isHistogram?@"chart.bar.fill":@"chart.pie.fill"];
+    BOOL usesPiechart = [MirrorSettings appliedPieChartData];
+    [self updateTabbar:tabbarController.tabBar index:3 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"data"] imageName:usesPiechart? @"chart.pie":@"list.bullet" selectedImageName:usesPiechart?@"chart.pie.fill":@"list.bullet"];
 }
 
 - (void)updateTabbar:(UITabBar *)tabbar index:(NSInteger)index tabbarItemWithTitle:(NSString *)title imageName:(NSString *)imageName selectedImageName:(NSString *)selectedImageName
