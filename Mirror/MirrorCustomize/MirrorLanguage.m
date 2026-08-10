@@ -160,6 +160,8 @@
     [mirrorDict setValue:ML(@"All records", @"所有记录", @"Todos los registros", @"Tous les enregistrements", @"すべての記録", @"모든 기록") forKey:@"all_records"];
     [mirrorDict setValue:ML(@"Records", @"记录", @"Registros", @"Enregistrements", @"記録", @"기록") forKey:@"records"];
     [mirrorDict setValue:ML(@"Occupied records", @"占用记录", @"Registros ocupados", @"Enregistrements occupés", @"使用中の記録", @"점유된 기록") forKey:@"occupied_records"];
+    [mirrorDict setValue:ML(@"Delete all records after now so Start Now can be used", @"删除当前时间之后的所有记录以便开始计时", @"Eliminar todos los registros posteriores a ahora para poder empezar", @"Supprimer tous les enregistrements après maintenant pour démarrer", @"今以降のすべての記録を削除して開始できるようにする", @"지금 이후의 모든 기록을 삭제해 시작할 수 있게 하기") forKey:@"delete_future_records_to_start_counting"];
+    [mirrorDict setValue:ML(@"Delete all records after now?", @"删除当前时间之后的所有记录？", @"¿Eliminar todos los registros posteriores a ahora?", @"Supprimer tous les enregistrements après maintenant ?", @"今以降のすべての記録を削除しますか？", @"지금 이후의 모든 기록을 삭제할까요?") forKey:@"delete_future_records_?"];
     [mirrorDict setValue:ML(@"Check all records of %@ for %@?", @"查看 %@ 在 %@ 的所有记录？", @"¿Revisar todos los registros de %@ para %@?", @"Voir tous les enregistrements de %@ pour %@ ?", @"%@ の %@ のすべての記録を確認しますか？", @"%@의 %@ 모든 기록을 확인할까요?") forKey:@"check_task_records_for_period_?"];
     [mirrorDict setValue:ML(@"the year of %@", @"%@年", @"el año %@", @"l’année %@", @"%@年", @"%@년") forKey:@"period_year_format"];
     [mirrorDict setValue:ML(@"the week from %@ to %@", @"%@ 至 %@ 这一周", @"la semana del %@ al %@", @"la semaine du %@ au %@", @"%@ から %@ までの週", @"%@부터 %@까지의 주") forKey:@"period_week_format"];

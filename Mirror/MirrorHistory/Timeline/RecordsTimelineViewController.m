@@ -24,6 +24,7 @@ static CGFloat const kTextLeftPadding = 18;
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
+@property (nonatomic, strong) UIButton *deleteFutureRecordsButton;
 @property (nonatomic, strong) MirrorDataModel *data;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *records;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *highlightedRecords;
@@ -98,6 +99,7 @@ static CGFloat const kTextLeftPadding = 18;
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[self navigationTitle] leftButton:nil rightButton:nil];
     self.scrollView = nil;
     self.contentView = nil;
+    self.deleteFutureRecordsButton = nil;
     self.firstHighlightedRow = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self p_setupUI];
@@ -112,6 +114,7 @@ static CGFloat const kTextLeftPadding = 18;
     }
     self.scrollView = nil;
     self.contentView = nil;
+    self.deleteFutureRecordsButton = nil;
     self.firstHighlightedRow = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self p_setupUI];
@@ -150,13 +153,38 @@ static CGFloat const kTextLeftPadding = 18;
     return self.data.records;
 }
 
+- (BOOL)isOccupiedRecordsPage
+{
+    return [self.titleKey isEqualToString:@"occupied_records"];
+}
+
+- (BOOL)shouldShowDeleteFutureRecordsButton
+{
+    return [self isOccupiedRecordsPage] && self.records.count > 0;
+}
+
 - (void)p_setupUI
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    if ([self shouldShowDeleteFutureRecordsButton]) {
+        [self.view addSubview:self.deleteFutureRecordsButton];
+        [self.deleteFutureRecordsButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.left.mas_equalTo(self.view).offset(kHorizontalPadding * kWidthRatio);
+            make.right.mas_equalTo(self.view).offset(-kHorizontalPadding * kWidthRatio);
+            make.bottom.mas_equalTo(self.view).offset(-16 * kHeightRatio);
+            make.height.mas_equalTo(56 * kHeightRatio);
+        }];
+    }
+    
     [self.view addSubview:self.scrollView];
     [self.scrollView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.bottom.mas_equalTo(self.view);
+        make.left.right.mas_equalTo(self.view);
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
+        if ([self shouldShowDeleteFutureRecordsButton]) {
+            make.bottom.mas_equalTo(self.deleteFutureRecordsButton.mas_top).offset(-12 * kHeightRatio);
+        } else {
+            make.bottom.mas_equalTo(self.view);
+        }
     }];
     
     [self.scrollView addSubview:self.contentView];
@@ -314,6 +342,35 @@ static CGFloat const kTextLeftPadding = 18;
     }];
     
     return row;
+}
+
+#pragma mark - Actions
+
+- (void)deleteFutureRecords
+{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_future_records_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
+    UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        [self deleteAllVisibleFutureRecords];
+    }];
+    [alertController addAction:cancelAction];
+    [alertController addAction:deleteAction];
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)deleteAllVisibleFutureRecords
+{
+    NSArray<MirrorRecordModel *> *recordsToDelete = [self.records sortedArrayUsingComparator:^NSComparisonResult(MirrorRecordModel *record0, MirrorRecordModel *record1) {
+        if (record0.originalIndex > record1.originalIndex) return NSOrderedAscending;
+        if (record0.originalIndex < record1.originalIndex) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
+    
+    for (MirrorRecordModel *record in recordsToDelete) {
+        [MirrorStorage deletePeriodAtIndex:record.originalIndex];
+    }
+    self.records = [NSMutableArray new];
+    [self reloadData];
 }
 
 #pragma mark - Edit Menu
@@ -589,6 +646,23 @@ static CGFloat const kTextLeftPadding = 18;
         _contentView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
     }
     return _contentView;
+}
+
+- (UIButton *)deleteFutureRecordsButton
+{
+    if (!_deleteFutureRecordsButton) {
+        _deleteFutureRecordsButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        _deleteFutureRecordsButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellPlus];
+        _deleteFutureRecordsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+        _deleteFutureRecordsButton.titleLabel.font = [UIFont mirrorHintFont];
+        _deleteFutureRecordsButton.titleLabel.numberOfLines = 2;
+        _deleteFutureRecordsButton.titleLabel.textAlignment = NSTextAlignmentCenter;
+        _deleteFutureRecordsButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+        _deleteFutureRecordsButton.layer.cornerRadius = 8 * kWidthRatio;
+        [_deleteFutureRecordsButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete_future_records_to_start_counting"] forState:UIControlStateNormal];
+        [_deleteFutureRecordsButton addTarget:self action:@selector(deleteFutureRecords) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _deleteFutureRecordsButton;
 }
 
 @end
