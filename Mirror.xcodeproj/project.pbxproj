@@ -11,7 +11,7 @@
 		4A099FAA29DCFE54002683A1 /* MirrorTaskModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A099FA929DCFE54002683A1 /* MirrorTaskModel.m */; };
 		4A099FAE29DD57AE002683A1 /* MirrorTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A099FAD29DD57AE002683A1 /* MirrorTool.m */; };
 		4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FB29EFE6BD00F13EAE /* HistoryViewController.m */; };
-		4A0D40FF29F1269700F13EAE /* HistogramView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FE29F1269600F13EAE /* HistogramView.m */; };
+		4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */; };
 		4A0D410229F13C5300F13EAE /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D410129F13C5300F13EAE /* LegendView.m */; };
 		4A10185E2B90876E00AA9677 /* LinechartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A10185D2B90876E00AA9677 /* LinechartView.m */; };
 		4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */; };
@@ -101,8 +101,8 @@
 		4A099FAD29DD57AE002683A1 /* MirrorTool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTool.m; sourceTree = "<group>"; };
 		4A0D40FA29EFE6BD00F13EAE /* HistoryViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HistoryViewController.h; sourceTree = "<group>"; };
 		4A0D40FB29EFE6BD00F13EAE /* HistoryViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HistoryViewController.m; sourceTree = "<group>"; };
-		4A0D40FD29F1269600F13EAE /* HistogramView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HistogramView.h; sourceTree = "<group>"; };
-		4A0D40FE29F1269600F13EAE /* HistogramView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HistogramView.m; sourceTree = "<group>"; };
+		4A0D40FD29F1269600F13EAE /* TaskProgressListView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskProgressListView.h; sourceTree = "<group>"; };
+		4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskProgressListView.m; sourceTree = "<group>"; };
 		4A0D410029F13C5300F13EAE /* LegendView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegendView.h; sourceTree = "<group>"; };
 		4A0D410129F13C5300F13EAE /* LegendView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LegendView.m; sourceTree = "<group>"; };
 		4A10185C2B90876E00AA9677 /* LinechartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LinechartView.h; sourceTree = "<group>"; };
@@ -434,8 +434,8 @@
 		4A410A2B29EA5D800007003B /* Histogram */ = {
 			isa = PBXGroup;
 			children = (
-				4A0D40FD29F1269600F13EAE /* HistogramView.h */,
-				4A0D40FE29F1269600F13EAE /* HistogramView.m */,
+				4A0D40FD29F1269600F13EAE /* TaskProgressListView.h */,
+				4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */,
 				4AB9C8B829E911C8002358E2 /* HistogramCollectionViewCell.h */,
 				4AB9C8B929E911C8002358E2 /* HistogramCollectionViewCell.m */,
 			);
@@ -774,7 +774,7 @@
 				4ADDC5C828E73935006F02DE /* AddTaskViewController.m in Sources */,
 				4AE5E8922A0253DA004228C1 /* SplitLineView.m in Sources */,
 				4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */,
-				4A0D40FF29F1269700F13EAE /* HistogramView.m in Sources */,
+				4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */,
 				4A37369429E2AEE900187280 /* PiechartView.m in Sources */,
 				4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */,
 				4A406C112906FC00001E83A1 /* ToggleCollectionViewCell.m in Sources */,

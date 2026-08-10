@@ -1,5 +1,5 @@
 //
-//  HistogramView.h
+//  TaskProgressListView.h
 //  Mirror
 //
 //  Created by Yuqing Wang on 2023/4/20.
@@ -11,17 +11,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class HistogramView;
+@class TaskProgressListView;
 
-@protocol HistogramDelegate <NSObject>
+@protocol TaskProgressListDelegate <NSObject>
 
-- (void)histogramView:(HistogramView *)histogramView didSelectData:(MirrorDataModel *)data;
+- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorDataModel *)data;
 
 @end
 
-@interface HistogramView : UIView
+@interface TaskProgressListView : UIView
 
-@property (nonatomic, weak) id<HistogramDelegate> delegate;
+@property (nonatomic, weak) id<TaskProgressListDelegate> delegate;
 
 - (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data;
 - (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data;

@@ -16,7 +16,7 @@
 #import "MirrorStorage.h"
 #import "MirrorSettings.h"
 #import "LegendView.h"
-#import "HistogramView.h"
+#import "TaskProgressListView.h"
 #import "PiechartView.h"
 #import "LinechartView.h"
 #import "RecordsTimelineViewController.h"
@@ -31,7 +31,7 @@
 #define kCellWidth (25*kWidthRatio)
 #define kCellSpacing (2.5*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
-@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, HistogramDelegate>
+@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, TaskProgressListDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
@@ -54,7 +54,7 @@
 ///one day (single selection)
 @property (nonatomic, strong) UILabel *dateLabel;
 @property (nonatomic, strong) LegendView *legendView;
-@property (nonatomic, strong) HistogramView *histogramView;
+@property (nonatomic, strong) TaskProgressListView *taskProgressListView;
 @property (nonatomic, strong) PiechartView *piechartView;
 ///several days (multiple selection)
 @property (nonatomic, strong) LinechartView *linechartView;
@@ -124,7 +124,7 @@
     self.dateLabel = nil;
     self.weekdayView = nil;
     self.legendView = nil;
-    self.histogramView = nil;
+    self.taskProgressListView = nil;
     self.piechartView = nil;
     self.linechartView = nil;
     // 将vc.view里的所有subviews从父view上移除
@@ -141,9 +141,9 @@
     if (!_isLoaded) return;
     if ([MirrorSettings appliedPieChartRecord]) {
         self.piechartView.hidden = NO;
-        self.histogramView.hidden = YES;
+        self.taskProgressListView.hidden = YES;
     } else {
-        self.histogramView.hidden = NO;
+        self.taskProgressListView.hidden = NO;
         self.piechartView.hidden = YES;
     }
     [self updateWeekdayView];
@@ -201,14 +201,14 @@
         make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
-    [self.view addSubview:self.histogramView];
-    [self.histogramView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.view addSubview:self.taskProgressListView];
+    [self.taskProgressListView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
         make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
-    self.histogramView.hidden = [MirrorSettings appliedPieChartRecord];
+    self.taskProgressListView.hidden = [MirrorSettings appliedPieChartRecord];
     [self.view addSubview:self.piechartView];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -455,7 +455,7 @@
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
     // histogram
-    [self.histogramView updateWithData:data];
+    [self.taskProgressListView updateWithData:data];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     [self.piechartView updateWithData:data width:width enableInteractive:YES];
     // piechart
@@ -624,7 +624,7 @@
 
 #pragma mark - Collection view delegate
 
-- (void)histogramView:(HistogramView *)histogramView didSelectData:(MirrorDataModel *)data
+- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorDataModel *)data
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
@@ -724,13 +724,13 @@
     return _legendView;
 }
 
-- (HistogramView *)histogramView
+- (TaskProgressListView *)taskProgressListView
 {
-    if (!_histogramView) {
-        _histogramView = [[HistogramView alloc] initWithData:[NSMutableArray new]];
-        _histogramView.delegate = self;
+    if (!_taskProgressListView) {
+        _taskProgressListView = [[TaskProgressListView alloc] initWithData:[NSMutableArray new]];
+        _taskProgressListView.delegate = self;
     }
-    return _histogramView;
+    return _taskProgressListView;
 }
 
 - (PiechartView *)piechartView

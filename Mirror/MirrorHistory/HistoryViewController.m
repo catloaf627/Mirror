@@ -14,7 +14,7 @@
 #import <Masonry/Masonry.h>
 #import "LeftAnimation.h"
 #import "SettingsViewController.h"
-#import "HistogramView.h"
+#import "TaskProgressListView.h"
 #import "LegendView.h"
 #import "MirrorLanguage.h"
 #import "MirrorSettings.h"
@@ -29,7 +29,7 @@
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
 
-@interface HistoryViewController () <UIViewControllerTransitioningDelegate, HistogramDelegate>
+@interface HistoryViewController () <UIViewControllerTransitioningDelegate, TaskProgressListDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
@@ -46,7 +46,7 @@
 @property (nonatomic, strong) UIImageView *rightArrow;
 @property (nonatomic, strong) UILabel *dateLabel;
 @property (nonatomic, strong) LegendView *legendView;
-@property (nonatomic, strong) HistogramView *histogramView;
+@property (nonatomic, strong) TaskProgressListView *taskProgressListView;
 @property (nonatomic, strong) PiechartView *piechartView;
 @property (nonatomic, strong) UILabel *emptyHintLabel;
 
@@ -109,7 +109,7 @@
     self.rightArrow = nil;
     self.dateLabel = nil;
     self.legendView = nil;
-    self.histogramView = nil;
+    self.taskProgressListView = nil;
     self.piechartView = nil;
     self.emptyHintLabel = nil;
     // 将vc.view里的所有subviews从父view上移除
@@ -139,8 +139,8 @@
     }];
     
     // histogram
-    [self.histogramView updateWithData:self.data];
-    self.histogramView.hidden = ![MirrorSettings appliedHistogramData];
+    [self.taskProgressListView updateWithData:self.data];
+    self.taskProgressListView.hidden = ![MirrorSettings appliedHistogramData];
     
     // piechart
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
@@ -202,14 +202,14 @@
         make.top.mas_equalTo(self.interactionView.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
-    [self.view addSubview:self.histogramView];
-    [self.histogramView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.view addSubview:self.taskProgressListView];
+    [self.taskProgressListView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
         make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
-    self.histogramView.hidden = ![MirrorSettings appliedHistogramData];
+    self.taskProgressListView.hidden = ![MirrorSettings appliedHistogramData];
 
     [self.view addSubview:self.piechartView];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
@@ -243,7 +243,7 @@
 
 #pragma mark - Actions
 
-- (void)histogramView:(HistogramView *)histogramView didSelectData:(MirrorDataModel *)data
+- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorDataModel *)data
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
@@ -451,13 +451,13 @@
     return _legendView;
 }
 
-- (HistogramView *)histogramView
+- (TaskProgressListView *)taskProgressListView
 {
-    if (!_histogramView) {
-        _histogramView = [[HistogramView alloc] initWithData:self.data];
-        _histogramView.delegate = self;
+    if (!_taskProgressListView) {
+        _taskProgressListView = [[TaskProgressListView alloc] initWithData:self.data];
+        _taskProgressListView.delegate = self;
     }
-    return _histogramView;
+    return _taskProgressListView;
 }
 
 - (PiechartView *)piechartView
