@@ -24,21 +24,18 @@
 #import "MirrorTabsManager.h"
 #import "SettingsViewController.h"
 #import "LeftAnimation.h"
-#import "HiddenViewController.h"
-#import "HiddenAnimation.h"
 #import "UIFont+MirrorFont.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kCellWidth (25*kWidthRatio)
 #define kCellSpacing (2.5*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
-@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, PushAllRecordsDelegate>
+@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
-@property (nonatomic, strong) UIButton *typeButton;
 // Data source
 @property (nonatomic, strong) NSMutableArray<NSString *> *keys;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> *gridData;
@@ -106,7 +103,7 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.typeButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
     // scroll to today
     if (_selectedCellIndex < [self.collectionView numberOfItemsInSection:0]) { // safty
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:_selectedCellIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
@@ -120,7 +117,6 @@
     [[MirrorTabsManager sharedInstance] updateGridTabItemWithTabController:self.tabBarController];
     if (!_isLoaded) return;
     // 将vc.view里的所有subviews全部置为nil
-    self.typeButton = nil;
     self.leftHint = nil;
     self.rightHint = nil;
     self.collectionView = nil;
@@ -134,7 +130,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.typeButton];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
     }
     [self p_setupUI];
 }
@@ -253,17 +249,6 @@
     settingsVC.transitioningDelegate = self;
     settingsVC.modalPresentationStyle = UIModalPresentationCustom;
     [self presentViewController:settingsVC animated:YES completion:nil];
-}
-
-- (void)goToHiddenVC
-{
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    HiddenViewController *hiddenVC = [HiddenViewController new];
-    hiddenVC.showShadeButton = YES;
-    hiddenVC.transitioningDelegate = self;
-    hiddenVC.modalPresentationStyle = UIModalPresentationCustom;
-    hiddenVC.buttonFrame = [self.typeButton convertRect:self.typeButton.bounds toView:[[[UIApplication sharedApplication] delegate] window]];
-    [self presentViewController:hiddenVC animated:YES completion:nil];
 }
 
 #pragma mark - update data
@@ -430,6 +415,20 @@
     return self.gridData[[formatter stringFromDate:date]];
 }
 
+- (NSMutableArray<MirrorDataModel *> *)legendDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
+{
+    if (self.keys.count <= startIndex || self.keys.count <= endIndex) {
+        return [NSMutableArray new];
+    }
+    
+    long startTime = [self.keys[startIndex] integerValue];
+    NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:[self.keys[endIndex] integerValue]];
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    long endTime = [[gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:endDate options:0] timeIntervalSince1970];
+    return [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
+}
+
 - (void)updateCharts // legend & histogram & piechart
 {
     if (self.keys.count <= _selectedCellIndex) { // 空数据保护
@@ -450,8 +449,7 @@
     }
 
     // legend
-    self.legendView.confirmationRangeText = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:[self.keys[_selectedCellIndex] integerValue]]];
-    [self.legendView updateWithData:data];
+    [self.legendView updateWithData:[self legendDataFromIndex:_selectedCellIndex toIndex:_selectedCellIndex]];
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
@@ -506,27 +504,7 @@
         [dataArr addObject:data];
     }
     // legend
-    NSMutableArray<MirrorDataModel *> *legendData = [NSMutableArray new];
-    NSMutableDictionary<NSString *, NSMutableArray<MirrorRecordModel *> *> *recordsByTaskName = [NSMutableDictionary new];
-    NSMutableDictionary<NSString *, MirrorTaskModel *> *taskByTaskName = [NSMutableDictionary new];
-    NSMutableArray<NSString *> *taskNames = [NSMutableArray new];
-    for (NSMutableArray<MirrorDataModel *> *oneDayData in dataArr) {
-        for (MirrorDataModel *oneTaskData in oneDayData) {
-            NSString *taskName = oneTaskData.taskModel.taskName;
-            if (![recordsByTaskName.allKeys containsObject:taskName]) {
-                recordsByTaskName[taskName] = [NSMutableArray new];
-                taskByTaskName[taskName] = oneTaskData.taskModel;
-                [taskNames addObject:taskName];
-            }
-            [recordsByTaskName[taskName] addObjectsFromArray:oneTaskData.records];
-        }
-    }
-    for (NSString *taskName in taskNames) {
-        MirrorDataModel *data = [[MirrorDataModel alloc] initWithTask:taskByTaskName[taskName] records:recordsByTaskName[taskName]];
-        [legendData addObject:data];
-    }
-    self.legendView.confirmationRangeText = self.dateLabel.text;
-    [self.legendView updateWithData:legendData];
+    [self.legendView updateWithData:[self legendDataFromIndex:start toIndex:end]];
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
@@ -732,7 +710,6 @@
 {
     if (!_legendView) {
         _legendView = [[LegendView alloc] initWithData:[NSMutableArray new]];
-        _legendView.delegate = self;
     }
     return _legendView;
 }
@@ -741,7 +718,6 @@
 {
     if (!_histogramView) {
         _histogramView = [[HistogramView alloc] initWithData:[NSMutableArray new]];
-        _histogramView.delegate = self.legendView;
     }
     return _histogramView;
 }
@@ -750,7 +726,6 @@
 {
     if (!_piechartView) {
         _piechartView = [[PiechartView alloc] initWithData:[NSMutableArray new] width:0 enableInteractive:NO];
-        _piechartView.delegate = self.legendView;
     }
     return _piechartView;
 }
@@ -835,18 +810,6 @@
     return _settingsButton;
 }
 
-- (UIButton *)typeButton
-{
-    if (!_typeButton) {
-        _typeButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"checkmark.square"]  imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_typeButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        [_typeButton addTarget:self action:@selector(goToHiddenVC) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _typeButton;
-}
-
-
 - (NSMutableArray<NSString *> *)keys
 {
     if (!_keys) {
@@ -893,16 +856,9 @@
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
 {
-    if ([presented isKindOfClass:SettingsViewController.class]) { // Settings
-        LeftAnimation *animation = [LeftAnimation new];
-        animation.isPresent = YES;
-        return animation;
-    } else { // Hidden VC
-        HiddenAnimation *animation = [HiddenAnimation new];
-        animation.isPresent = YES;
-        animation.buttonFrame = [self.typeButton convertRect:self.typeButton.bounds toView:[[[UIApplication sharedApplication] delegate] window]];
-        return animation;
-    }
+    LeftAnimation *animation = [LeftAnimation new];
+    animation.isPresent = YES;
+    return animation;
 }
 
 - (id<UIViewControllerInteractiveTransitioning>)interactionControllerForPresentation:(id<UIViewControllerAnimatedTransitioning>)animator

@@ -30,9 +30,6 @@
 		4A406C1A29071939001E83A1 /* MirrorStorage.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A406C1929071939001E83A1 /* MirrorStorage.m */; };
 		4A410A2829EA51750007003B /* LegendCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A410A2729EA51750007003B /* LegendCollectionViewCell.m */; };
 		4A410A3429EA6BB60007003B /* TaskPeriodCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A410A3329EA6BB60007003B /* TaskPeriodCollectionViewCell.m */; };
-		4A6848C22A21FEB200C8D439 /* HiddenViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A6848C12A21FEB200C8D439 /* HiddenViewController.m */; };
-		4A6848C52A22003200C8D439 /* HiddenAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A6848C42A22003200C8D439 /* HiddenAnimation.m */; };
-		4A6848C82A22249A00C8D439 /* HiddenCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A6848C72A22249A00C8D439 /* HiddenCollectionViewCell.m */; };
 		4A74FFEA2A33296800A7BFE7 /* SpecificRecordsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A74FFE92A33296700A7BFE7 /* SpecificRecordsViewController.m */; };
 		4A7CCD2629DBC7CF00879D9C /* TodayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A7CCD2529DBC7CF00879D9C /* TodayViewController.m */; };
 		4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A7EFA063027D3CB00904ED9 /* UIFont+MirrorFont.m */; };
@@ -141,12 +138,6 @@
 		4A410A2729EA51750007003B /* LegendCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LegendCollectionViewCell.m; sourceTree = "<group>"; };
 		4A410A3229EA6BB60007003B /* TaskPeriodCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskPeriodCollectionViewCell.h; sourceTree = "<group>"; };
 		4A410A3329EA6BB60007003B /* TaskPeriodCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskPeriodCollectionViewCell.m; sourceTree = "<group>"; };
-		4A6848C02A21FEB200C8D439 /* HiddenViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HiddenViewController.h; sourceTree = "<group>"; };
-		4A6848C12A21FEB200C8D439 /* HiddenViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HiddenViewController.m; sourceTree = "<group>"; };
-		4A6848C32A22003200C8D439 /* HiddenAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HiddenAnimation.h; sourceTree = "<group>"; };
-		4A6848C42A22003200C8D439 /* HiddenAnimation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HiddenAnimation.m; sourceTree = "<group>"; };
-		4A6848C62A22249A00C8D439 /* HiddenCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HiddenCollectionViewCell.h; sourceTree = "<group>"; };
-		4A6848C72A22249A00C8D439 /* HiddenCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HiddenCollectionViewCell.m; sourceTree = "<group>"; };
 		4A74FFE82A33296700A7BFE7 /* SpecificRecordsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SpecificRecordsViewController.h; sourceTree = "<group>"; };
 		4A74FFE92A33296700A7BFE7 /* SpecificRecordsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SpecificRecordsViewController.m; sourceTree = "<group>"; };
 		4A7CCD2429DBC7CF00879D9C /* TodayViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TodayViewController.h; sourceTree = "<group>"; };
@@ -474,10 +465,6 @@
 				4A3DC92F2A0106F600679C11 /* GridViewController.m */,
 				4A3DC9312A0109DA00679C11 /* GridCollectionViewCell.h */,
 				4A3DC9322A0109DA00679C11 /* GridCollectionViewCell.m */,
-				4A6848C02A21FEB200C8D439 /* HiddenViewController.h */,
-				4A6848C12A21FEB200C8D439 /* HiddenViewController.m */,
-				4A6848C62A22249A00C8D439 /* HiddenCollectionViewCell.h */,
-				4A6848C72A22249A00C8D439 /* HiddenCollectionViewCell.m */,
 				4A1018542B9085CB00AA9677 /* Linechart */,
 			);
 			path = MirrorGrid;
@@ -490,8 +477,6 @@
 				4ACB422D29EEA411005EECC4 /* LeftAnimation.m */,
 				4A88212729F6035E009E422C /* CellAnimation.h */,
 				4A88212829F6035E009E422C /* CellAnimation.m */,
-				4A6848C32A22003200C8D439 /* HiddenAnimation.h */,
-				4A6848C42A22003200C8D439 /* HiddenAnimation.m */,
 			);
 			path = Animations;
 			sourceTree = "<group>";
@@ -750,7 +735,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4A6848C22A21FEB200C8D439 /* HiddenViewController.m in Sources */,
 				4AFA3B7729E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.m in Sources */,
 				4AB9C8BA29E911C8002358E2 /* HistogramCollectionViewCell.m in Sources */,
 				4ADCD21A302410C600578A81 /* MirrorFakeDataSeeder.m in Sources */,
@@ -770,12 +754,10 @@
 				4AFB77B328DF4A3B0064CBCA /* main.m in Sources */,
 				4AA353352A25D59400920404 /* HeatmapCollectionViewCell.m in Sources */,
 				4A0D410229F13C5300F13EAE /* LegendView.m in Sources */,
-				4A6848C52A22003200C8D439 /* HiddenAnimation.m in Sources */,
 				4A37369A29E3AD8700187280 /* MirrorSettings.m in Sources */,
 				4A37369729E2BD3C00187280 /* SliceLayer.m in Sources */,
 				4A88212F29F671F7009E422C /* TimeTrackingViewController.m in Sources */,
 				4AC1FDC02A03B05100CDCED9 /* MirrorDataModel.m in Sources */,
-				4A6848C82A22249A00C8D439 /* HiddenCollectionViewCell.m in Sources */,
 				4ADDC5C828E73935006F02DE /* AddTaskViewController.m in Sources */,
 				4AE5E8922A0253DA004228C1 /* SplitLineView.m in Sources */,
 				4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */,

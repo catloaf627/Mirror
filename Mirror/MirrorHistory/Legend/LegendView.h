@@ -8,19 +8,11 @@
 #import <UIKit/UIKit.h>
 #import "MirrorMacro.h"
 #import "MirrorDataModel.h"
-#import "HistogramView.h"
-#import "PiechartView.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
-@protocol PushAllRecordsDelegate <NSObject> // push viewcontroller用
+@interface LegendView : UIView
 
-@end
-
-@interface LegendView : UIView <HistogramDelegate, PiechartDelegate>
-
-@property (nonatomic, weak) UIViewController<PushAllRecordsDelegate> *delegate;
-@property (nonatomic, copy) NSString *confirmationRangeText;
 - (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data;
 - (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data;
 - (CGFloat)legendViewHeight;

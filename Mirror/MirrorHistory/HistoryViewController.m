@@ -23,24 +23,21 @@
 #import "MirrorTool.h"
 #import "MirrorStorage.h"
 #import "MirrorTimeText.h"
-#import "HiddenViewController.h"
-#import "HiddenAnimation.h"
 #import "UIFont+MirrorFont.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
 
-@interface HistoryViewController () <UIViewControllerTransitioningDelegate, PushAllRecordsDelegate>
+@interface HistoryViewController () <UIViewControllerTransitioningDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
-@property (nonatomic, strong) UIButton *typeButton;
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorDataModel *>  *data;
+@property (nonatomic, strong) NSMutableArray<MirrorDataModel *>  *legendData;
 @property (nonatomic, assign) NSInteger offset;
-@property (nonatomic, copy) NSString *legendConfirmationRangeText;
 // UI
 @property (nonatomic, strong) UISegmentedControl *typeSwitch;
 @property (nonatomic, strong) UIView *interactionView; //在这个view的范围内，点左侧offset-1,点右侧offset+1
@@ -96,7 +93,7 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.typeButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
 }
 
 - (void)restartVC
@@ -118,7 +115,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 3) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.typeButton];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
     }
     [self p_setupUI];
 }
@@ -135,8 +132,7 @@
     [self updateHint]; // reloaddata要顺便reload一下emptyhint的状态
     
     // legend
-    self.legendView.confirmationRangeText = self.legendConfirmationRangeText;
-    [self.legendView updateWithData:self.data];
+    [self.legendView updateWithData:self.legendData];
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
@@ -246,17 +242,6 @@
 
 #pragma mark - Actions
 
-- (void)goToHiddenVC
-{
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    HiddenViewController *hiddenVC = [HiddenViewController new];
-    hiddenVC.showShadeButton = NO;
-    hiddenVC.transitioningDelegate = self;
-    hiddenVC.modalPresentationStyle = UIModalPresentationCustom;
-    hiddenVC.buttonFrame = [self.typeButton convertRect:self.typeButton.bounds toView:[[[UIApplication sharedApplication] delegate] window]];
-    [self presentViewController:hiddenVC animated:YES completion:nil];
-}
-
 - (void)tapGestureRecognizerAction:(UITapGestureRecognizer *)tap // 热区范围为左右1/3
 {
     CGPoint touchPoint = [tap locationInView:self.view];
@@ -359,7 +344,7 @@
         endTime = startTime + numberOfDaysIYear*86400;
     }
     
-    self.legendConfirmationRangeText = [self confirmationRangeTextWithStartTime:startTime endTime:endTime];
+    self.legendData = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
     self.data = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:YES];
     // update label
     NSString *startDate = [MirrorTimeText YYYYmmddWeekday:[NSDate dateWithTimeIntervalSince1970:startTime]];
@@ -380,40 +365,6 @@
     self.dateLabel.text = text;
 }
 
-- (NSString *)confirmationRangeTextWithStartTime:(long)startTime endTime:(long)endTime
-{
-    NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:startTime];
-    NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:endTime - 1];
-    SpanType spanType = self.typeSwitch.selectedSegmentIndex;
-    if (spanType == SpanTypeYear) {
-        NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-        NSDateComponents *components = [calendar components:NSCalendarUnitYear fromDate:startDate];
-        NSString *format = [MirrorLanguage mirror_stringWithKey:@"period_year_format"];
-        return [NSString stringWithFormat:format, [@(components.year) stringValue]];
-    } else if (spanType == SpanTypeMonth) {
-        return [[MirrorTimeText YYYYmm:startDate] stringByReplacingOccurrencesOfString:@"," withString:@""];
-    } else if (spanType == SpanTypeWeek) {
-        NSString *format = [MirrorLanguage mirror_stringWithKey:@"period_week_format"];
-        return [NSString stringWithFormat:format, [self numericDateWithWeekday:startDate], [self numericDateWithWeekday:endDate]];
-    }
-    return [MirrorTimeText YYYYmmdd:startDate];
-}
-
-- (NSString *)numericDateWithWeekday:(NSDate *)date
-{
-    NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    NSDateComponents *components = [calendar components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitWeekday) fromDate:date];
-    NSString *weekday = @"";
-    if (components.weekday == 1) weekday = [MirrorLanguage mirror_stringWithKey:@"sunday"];
-    if (components.weekday == 2) weekday = [MirrorLanguage mirror_stringWithKey:@"monday"];
-    if (components.weekday == 3) weekday = [MirrorLanguage mirror_stringWithKey:@"tuesday"];
-    if (components.weekday == 4) weekday = [MirrorLanguage mirror_stringWithKey:@"wednesday"];
-    if (components.weekday == 5) weekday = [MirrorLanguage mirror_stringWithKey:@"thursday"];
-    if (components.weekday == 6) weekday = [MirrorLanguage mirror_stringWithKey:@"friday"];
-    if (components.weekday == 7) weekday = [MirrorLanguage mirror_stringWithKey:@"saturday"];
-    return [NSString stringWithFormat:@"%ld.%ld.%ld(%@)", (long)components.year, (long)components.month, (long)components.day, weekday];
-}
-
 #pragma mark - Getters
 
 - (NSMutableArray<MirrorDataModel *> *)data
@@ -422,6 +373,14 @@
         _data = [NSMutableArray new];
     }
     return _data;
+}
+
+- (NSMutableArray<MirrorDataModel *> *)legendData
+{
+    if (!_legendData) {
+        _legendData = [NSMutableArray new];
+    }
+    return _legendData;
 }
 
 - (UISegmentedControl *)typeSwitch
@@ -477,9 +436,7 @@
 - (LegendView *)legendView
 {
     if (!_legendView) {
-        _legendView = [[LegendView alloc] initWithData:self.data];
-        _legendView.confirmationRangeText = self.legendConfirmationRangeText;
-        _legendView.delegate = self;
+        _legendView = [[LegendView alloc] initWithData:self.legendData];
     }
     return _legendView;
 }
@@ -488,7 +445,6 @@
 {
     if (!_histogramView) {
         _histogramView = [[HistogramView alloc] initWithData:self.data];
-        _histogramView.delegate = self.legendView;
     }
     return _histogramView;
 }
@@ -497,7 +453,6 @@
 {
     if (!_piechartView) {
         _piechartView = [[PiechartView alloc] initWithData:self.data width:MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]) enableInteractive:YES];
-        _piechartView.delegate = self.legendView;
     }
     return _piechartView;
 }
@@ -513,17 +468,6 @@
     return _settingsButton;
 }
 
-- (UIButton *)typeButton
-{
-    if (!_typeButton) {
-        _typeButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"checkmark.square"]  imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_typeButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        [_typeButton addTarget:self action:@selector(goToHiddenVC) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _typeButton;
-}
-
 - (UILabel *)emptyHintLabel
 {
     if (!_emptyHintLabel) {
@@ -532,7 +476,7 @@
         _emptyHintLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:16];
         _emptyHintLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
         _emptyHintLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_data"];
-        _emptyHintLabel.hidden = self.data.count > 0;
+        _emptyHintLabel.hidden = self.legendData.count > 0;
     }
     return _emptyHintLabel;
 }
@@ -540,7 +484,7 @@
 - (void)updateHint
 {
     self.emptyHintLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_data"];
-    self.emptyHintLabel.hidden = self.data.count > 0;
+    self.emptyHintLabel.hidden = self.legendData.count > 0;
 }
 
 #pragma mark - Animations
@@ -571,16 +515,9 @@
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
 {
-    if ([presented isKindOfClass:SettingsViewController.class]) { // Settings
-        LeftAnimation *animation = [LeftAnimation new];
-        animation.isPresent = YES;
-        return animation;
-    } else { // Hidden VC
-        HiddenAnimation *animation = [HiddenAnimation new];
-        animation.isPresent = YES;
-        animation.buttonFrame = [self.typeButton convertRect:self.typeButton.bounds toView:[[[UIApplication sharedApplication] delegate] window]];
-        return animation;
-    }
+    LeftAnimation *animation = [LeftAnimation new];
+    animation.isPresent = YES;
+    return animation;
 }
 
 - (id<UIViewControllerInteractiveTransitioning>)interactionControllerForPresentation:(id<UIViewControllerAnimatedTransitioning>)animator
