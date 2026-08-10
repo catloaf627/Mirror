@@ -52,7 +52,7 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.view.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:kTaskPickerBackdropAlpha];
+    self.view.backgroundColor = [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:kTaskPickerBackdropAlpha]; // dim view
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissPicker)];
     tapGesture.delegate = self;
     [self.view addGestureRecognizer:tapGesture];
