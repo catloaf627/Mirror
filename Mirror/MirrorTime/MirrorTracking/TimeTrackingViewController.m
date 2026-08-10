@@ -118,6 +118,8 @@ static CGFloat const kCircleLineWidth = 18;
 @property (nonatomic, strong) NSDate *nowTime;
 @property (nonatomic, strong) NSDate *startTime;
 @property (nonatomic, strong) NSDate *accurateStartDate;
+@property (nonatomic, strong) UIColor *taskColor;
+@property (nonatomic, assign) MirrorColorType taskColorType;
 @property (nonatomic, assign) NSTimeInterval timeInterval;
 @property (nonatomic, assign) NSTimeInterval accurateTimeInterval;
 
@@ -141,6 +143,9 @@ static CGFloat const kCircleLineWidth = 18;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
         self.taskName = taskName;
         self.accurateStartDate = accurateStartDate;
+        MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
+        self.taskColorType = task.color;
+        self.taskColor = [UIColor mirrorColorNamed:task.color];
     }
     return self;
 }
@@ -175,14 +180,6 @@ static CGFloat const kCircleLineWidth = 18;
     [super viewDidDisappear:animated];
     [self.timer invalidate];
     self.timer = nil;
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-    [super viewWillDisappear:animated];
-    for (UIView *subview in self.view.subviews) {
-        subview.alpha = 0; // 为了避免退场动画出现时subview的布局出现问题。
-    }
 }
 
 - (void)p_setupUI
@@ -342,9 +339,8 @@ static CGFloat const kCircleLineWidth = 18;
         _circleView = [MirrorTrackingCircleView new];
         _circleView.backgroundColor = UIColor.clearColor;
         _circleView.startAngle = -M_PI_2;
-        MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:self.taskName];
-        _circleView.taskColor = [UIColor mirrorColorNamed:task.color];
-        _circleView.pulseColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:task.color]];
+        _circleView.taskColor = self.taskColor;
+        _circleView.pulseColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:self.taskColorType]];
     }
     return _circleView;
 }
@@ -386,6 +382,7 @@ static CGFloat const kCircleLineWidth = 18;
 {
     CellAnimation *animation = [CellAnimation new];
     animation.isPresent = NO;
+    animation.cellColor = self.taskColor;
     animation.cellFrame = self.cellFrame;
     return animation;
 }

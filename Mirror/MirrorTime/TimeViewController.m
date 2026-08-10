@@ -42,6 +42,7 @@
 @property (nonatomic, strong) NSMutableArray<MirrorTaskModel *> *data;
 // Mark
 @property (nonatomic, assign) CGRect selectedCellFrame; // cell.x, cell.y, cell.width, cell.height
+@property (nonatomic, strong) UIColor *selectedTaskColor;
 @property (nonatomic, strong) NSIndexPath *movingIndexPath;
 @property (nonatomic, assign) CGPoint longPressStartPoint;
 @property (nonatomic, assign) BOOL didMoveLongPressedTask;
@@ -337,6 +338,7 @@
         return;
     }
     self.selectedCellFrame = selectedCell.frame; // update selected cell frame的时机
+    self.selectedTaskColor = [UIColor mirrorColorNamed:selectedModel.color];
     NSString *goingOnTask = [MirrorStorage isGoingOnTask];
     if (goingOnTask.length > 0) {
         if ([goingOnTask isEqualToString:selectedModel.taskName]) {
@@ -378,6 +380,7 @@
         MirrorTaskModel *task = self.data[index];
         if (!task.isAddTaskModel && [task.taskName isEqualToString:goingOnTask]) {
             taskIndex = index;
+            self.selectedTaskColor = [UIColor mirrorColorNamed:task.color];
             break;
         }
     }
@@ -601,6 +604,7 @@
     } else { // Time editing / Time tracking
         CellAnimation *animation = [CellAnimation new];
         animation.isPresent = YES;
+        animation.cellColor = self.selectedTaskColor;
         animation.cellFrame = CGRectMake(self.collectionView.frame.origin.x + self.selectedCellFrame.origin.x, self.collectionView.frame.origin.y -  self.collectionView.contentOffset.y + self.selectedCellFrame.origin.y, self.selectedCellFrame.size.width, self.selectedCellFrame.size.height);
         return animation;
     }

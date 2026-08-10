@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface CellAnimation : NSObject<UIViewControllerAnimatedTransitioning>
 
 @property (nonatomic, assign) BOOL isPresent; // is present or is dismiss
+@property (nonatomic, strong) UIColor *cellColor;
 @property (nonatomic, assign) CGRect cellFrame;
 
 @end
