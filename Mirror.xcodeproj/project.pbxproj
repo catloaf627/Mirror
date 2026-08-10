@@ -319,6 +319,10 @@
 		4A32A3FF29F8C88F00DCCF57 /* EditTasks */ = {
 			isa = PBXGroup;
 			children = (
+				4A1F8C36302A43DF00045430 /* TaskColorCirclePickerViewController.h */,
+				4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */,
+				4A1F8C39302A450200045430 /* TaskPickerViewController.h */,
+				4A1F8C3A302A452000045430 /* TaskPickerViewController.m */,
 			);
 			path = EditTasks;
 			sourceTree = "<group>";
@@ -351,10 +355,6 @@
 				4A083B8C2904AA69002B91EB /* MirrorTracking */,
 				4ADDC5BF28E6FB3D006F02DE /* MirrorTaskAdd */,
 				4A32A3FF29F8C88F00DCCF57 /* EditTasks */,
-				4A1F8C36302A43DF00045430 /* TaskColorCirclePickerViewController.h */,
-				4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */,
-				4A1F8C39302A450200045430 /* TaskPickerViewController.h */,
-				4A1F8C3A302A452000045430 /* TaskPickerViewController.m */,
 			);
 			path = MirrorTime;
 			sourceTree = "<group>";
