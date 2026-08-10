@@ -279,6 +279,7 @@ static CGFloat const kCircleLineWidth = 18;
 {
     self.view.clipsToBounds = YES;
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    self.view.alpha = 0.9;
     [self.view addSubview:self.circleView];
     [self.circleView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
