@@ -237,7 +237,8 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     for (NSInteger index = 0; index < self.sortedTimelineRecords.count; index++) {
         if ([self shouldHighlightRecord:self.sortedTimelineRecords[index]]) {
             NSInteger maxStartIndex = MAX((NSInteger)self.sortedTimelineRecords.count - kTimelineBatchSize, 0);
-            return MIN(index, maxStartIndex);
+            NSInteger leadingRecordCount = kTimelineBatchSize / 2;
+            return MIN(MAX(index - leadingRecordCount, 0), maxStartIndex);
         }
     }
     return 0;
@@ -253,6 +254,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     self.firstHighlightedRow = nil;
     
+    NSInteger oldStartIndex = self.timelineBatchStartIndex;
     NSInteger totalCount = self.sortedTimelineRecords.count;
     NSInteger maxStartIndex = MAX(totalCount - kTimelineBatchSize, 0);
     NSInteger safeStartIndex = MIN(MAX(startIndex, 0), maxStartIndex);
@@ -296,7 +298,17 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         if (scrollPosition == TimelineBatchScrollPositionNearTop) {
             self.scrollView.contentOffset = CGPointMake(0, MIN(kTimelineLoadThreshold + 1, maxOffsetY));
         } else if (scrollPosition == TimelineBatchScrollPositionNearBottom) {
-            self.scrollView.contentOffset = CGPointMake(0, MAX(maxOffsetY - kTimelineLoadThreshold - 1, 0));
+            CGFloat targetOffsetY = MAX(maxOffsetY - kTimelineLoadThreshold - 1, 0);
+            NSInteger previousRecordIndex = oldStartIndex - 1;
+            if (previousRecordIndex >= 0 && previousRecordIndex < self.sortedTimelineRecords.count) {
+                MirrorRecordModel *previousRecord = self.sortedTimelineRecords[previousRecordIndex];
+                UIView *previousRow = [self visibleTimelineRowWithOriginalIndex:previousRecord.originalIndex];
+                if (previousRow) {
+                    CGRect rowRect = [previousRow.superview convertRect:previousRow.frame toView:self.scrollView];
+                    targetOffsetY = MIN(MAX(rowRect.origin.y, 0), maxOffsetY);
+                }
+            }
+            self.scrollView.contentOffset = CGPointMake(0, targetOffsetY);
         } else {
             self.scrollView.contentOffset = CGPointZero;
         }
@@ -325,6 +337,16 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     self.isRenderingTimelineBatch = NO;
 }
 
+- (UIView *)visibleTimelineRowWithOriginalIndex:(NSInteger)originalIndex
+{
+    for (UIView *row in self.contentView.subviews) {
+        if (row.tag == originalIndex) {
+            return row;
+        }
+    }
+    return nil;
+}
+
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
     if (self.isRenderingTimelineBatch || self.sortedTimelineRecords.count <= kTimelineBatchSize) {
@@ -342,8 +364,8 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
             [self renderTimelineBatchAtStartIndex:nextStartIndex scrollPosition:TimelineBatchScrollPositionNearTop];
         }
     } else if (scrollView.contentOffset.y <= kTimelineLoadThreshold) {
-        NSInteger previousStartIndex = self.timelineBatchStartIndex - kTimelineBatchSize;
-        if (previousStartIndex >= 0) {
+        NSInteger previousStartIndex = self.timelineBatchStartIndex - kTimelineBatchSize + 1;
+        if (self.timelineBatchStartIndex > 0) {
             [self renderTimelineBatchAtStartIndex:previousStartIndex scrollPosition:TimelineBatchScrollPositionNearBottom];
         }
     }
