@@ -19,7 +19,7 @@ static CGFloat const kTimelineX = 28;
 static CGFloat const kDotSize = 10;
 static CGFloat const kRowMinHeight = 72;
 static CGFloat const kTextLeftPadding = 18;
-static NSInteger const kTimelineBatchSize = 100;
+static NSInteger const kTimelineBatchSize = 50;
 static CGFloat const kTimelineLoadThreshold = 48;
 
 typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {

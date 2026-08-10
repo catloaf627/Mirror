@@ -54,7 +54,7 @@
     }
 
     NSDate *endDate = [self startOfToday];
-    NSDate *startDate = [self dateByAddingYears:-10 toDate:endDate];
+    NSDate *startDate = [self dateByAddingYears:-1 toDate:endDate];
 
     for (MirrorFakeTaskPlan *plan in plans) {
         MirrorTaskModel *task = [[MirrorTaskModel alloc] initWithTitle:plan.name
