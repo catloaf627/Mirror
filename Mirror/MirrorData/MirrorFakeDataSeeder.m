@@ -7,6 +7,7 @@
 #import "MirrorTaskModel.h"
 #import "MirrorRecordModel.h"
 #import "MirrorStorage.h"
+#import "MirrorLanguage.h"
 #import "UIColor+MirrorColor.h"
 #import "MirrorMacro.h"
 
@@ -42,7 +43,7 @@
 + (void)seedFakeData
 {
     NSArray<MirrorFakeTaskPlan *> *plans = [self fakeTaskPlans];
-    NSSet<NSString *> *fakeTaskNames = [NSSet setWithArray:[plans valueForKey:@"name"]];
+    NSSet<NSString *> *fakeTaskNames = [self allLocalizedFakeTaskNames];
 
     NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
     NSMutableArray<MirrorTaskModel *> *filteredTasks = [NSMutableArray new];
@@ -81,7 +82,7 @@
         NSDateComponents *components = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitWeekday fromDate:currentDate];
         [self appendRecordsForDateComponents:components dayIndex:dayIndex records:fakeRecords];
         if (dayIndex == totalDays) {
-            [self addRecordWithName:@"Read" components:components hour:22 minute:15 durationMinutes:45 records:fakeRecords];
+            [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Read"] components:components hour:22 minute:15 durationMinutes:45 records:fakeRecords];
         }
     }
 
@@ -104,13 +105,29 @@
 + (NSArray<MirrorFakeTaskPlan *> *)fakeTaskPlans
 {
     return @[
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Gym" color:MirrorColorTypeCellBlue createdHour:7 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Tennis" color:MirrorColorTypeCellGreen createdHour:18 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Code" color:MirrorColorTypeCellYellow createdHour:9 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Swim" color:MirrorColorTypeCellTeal createdHour:17 createdMinute:45],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Read" color:MirrorColorTypeCellPink createdHour:21 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:@"Study" color:MirrorColorTypeCellPurple createdHour:20 createdMinute:0]
+        [[MirrorFakeTaskPlan alloc] initWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Gym"] color:MirrorColorTypeCellBlue createdHour:7 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Tennis"] color:MirrorColorTypeCellGreen createdHour:18 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Code"] color:MirrorColorTypeCellYellow createdHour:9 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Swim"] color:MirrorColorTypeCellTeal createdHour:17 createdMinute:45],
+        [[MirrorFakeTaskPlan alloc] initWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Read"] color:MirrorColorTypeCellPink createdHour:21 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Study"] color:MirrorColorTypeCellPurple createdHour:20 createdMinute:0]
     ];
+}
+
++ (NSSet<NSString *> *)allLocalizedFakeTaskNames
+{
+    NSMutableSet<NSString *> *taskNames = [NSMutableSet new];
+    for (NSString *englishName in [self fakeTaskEnglishNames]) {
+        for (NSString *localizedName in [MirrorLanguage localizedSampleTaskNamesForEnglishName:englishName]) {
+            [taskNames addObject:localizedName];
+        }
+    }
+    return taskNames;
+}
+
++ (NSArray<NSString *> *)fakeTaskEnglishNames
+{
+    return @[@"Gym", @"Tennis", @"Code", @"Swim", @"Read", @"Study"];
 }
 
 + (void)appendRecordsForDateComponents:(NSDateComponents *)components dayIndex:(NSInteger)dayIndex records:(NSMutableArray<MirrorRecordModel *> *)records
@@ -123,38 +140,38 @@
     BOOL isWinter = month == 12 || month <= 2;
     
     NSInteger dailyReadDuration = 25 + (dayIndex % 5) * 10;
-    [self addRecordWithName:@"Read" components:components hour:isWeekend ? 20 : 21 minute:(dayIndex % 2) * 15 durationMinutes:dailyReadDuration records:records];
+    [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Read"] components:components hour:isWeekend ? 20 : 21 minute:(dayIndex % 2) * 15 durationMinutes:dailyReadDuration records:records];
 
     if (dayIndex % 2 == 0) {
         NSInteger duration = 55 + ((dayIndex % 5 == 0) ? 10 : 0);
-        [self addRecordWithName:@"Gym" components:components hour:7 minute:(dayIndex % 3) * 10 durationMinutes:duration records:records];
+        [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Gym"] components:components hour:7 minute:(dayIndex % 3) * 10 durationMinutes:duration records:records];
     }
 
     if ((isWinter && (weekday == 3 || weekday == 5 || (weekday == 7 && dayIndex % 2 == 0))) || (!isWinter && weekday == 7 && dayIndex % 3 != 0)) {
         NSInteger hour = isWeekend ? 10 : 18;
         NSInteger duration = isWinter ? 90 + (dayIndex % 2) * 15 : 75;
-        [self addRecordWithName:@"Tennis" components:components hour:hour minute:30 durationMinutes:duration records:records];
+        [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Tennis"] components:components hour:hour minute:30 durationMinutes:duration records:records];
     }
 
     if (isWeekday) {
         NSInteger duration = 150 + (dayIndex % 4) * 30;
-        [self addRecordWithName:@"Code" components:components hour:9 minute:30 durationMinutes:duration records:records];
+        [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Code"] components:components hour:9 minute:30 durationMinutes:duration records:records];
         if (weekday == 3 || weekday == 5) {
-            [self addRecordWithName:@"Code" components:components hour:14 minute:0 durationMinutes:90 + (dayIndex % 3) * 20 records:records];
+            [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Code"] components:components hour:14 minute:0 durationMinutes:90 + (dayIndex % 3) * 20 records:records];
         }
     } else if (dayIndex % 5 == 0) {
-        [self addRecordWithName:@"Code" components:components hour:15 minute:0 durationMinutes:80 records:records];
+        [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Code"] components:components hour:15 minute:0 durationMinutes:80 records:records];
     }
 
     if ((isSummer && (weekday == 2 || weekday == 4 || weekday == 7 || dayIndex % 6 == 0)) || (!isSummer && dayIndex % 17 == 0)) {
         NSInteger hour = isSummer ? (isWeekend ? 11 : 17) : 16;
         NSInteger duration = isSummer ? 45 + (dayIndex % 3) * 15 : 40;
-        [self addRecordWithName:@"Swim" components:components hour:hour minute:15 durationMinutes:duration records:records];
+        [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Swim"] components:components hour:hour minute:15 durationMinutes:duration records:records];
     }
 
     if (weekday == 3 || weekday == 5 || (weekday == 1 && dayIndex % 2 == 0)) {
         NSInteger duration = isWeekend ? 120 : 75 + (dayIndex % 3) * 15;
-        [self addRecordWithName:@"Study" components:components hour:isWeekend ? 14 : 19 minute:0 durationMinutes:duration records:records];
+        [self addRecordWithName:[MirrorLanguage localizedSampleTaskNameWithEnglishName:@"Study"] components:components hour:isWeekend ? 14 : 19 minute:0 durationMinutes:duration records:records];
     }
 }
 

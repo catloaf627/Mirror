@@ -46,7 +46,7 @@
     [mirrorDict setValue:ML(@"No iCloud data", @"没有 iCloud 数据", @"No hay datos en iCloud", @"Aucune donnée iCloud", @"iCloudデータがありません", @"iCloud 데이터 없음") forKey:@"no_icloud_data"];
     [mirrorDict setValue:ML(@"Import example data?", @"导入示例数据？", @"¿Importar datos de ejemplo?", @"Importer des données d’exemple ?", @"サンプルデータを読み込みますか？", @"예시 데이터를 가져올까요?") forKey:@"import_example_data_?"];
     [mirrorDict setValue:ML(@"No iCloud records were found. You can start with one year of example records.", @"没有找到 iCloud 记录。你可以先导入一年的示例记录。", @"No se encontraron registros de iCloud. Puedes empezar con un año de registros de ejemplo.", @"Aucun enregistrement iCloud n’a été trouvé. Vous pouvez commencer avec un an d’exemples.", @"iCloudの記録は見つかりませんでした。1年分のサンプル記録から始められます。", @"iCloud 기록을 찾지 못했습니다. 1년치 예시 기록으로 시작할 수 있습니다.") forKey:@"import_example_data_message"];
-    [mirrorDict setValue:ML(@"Example data is ready. When you're done learning the app, long press a task to delete it.", @"示例数据已导入。熟悉 App 后，可以长按任务来删除它。", @"Los datos de ejemplo están listos. Cuando termines de aprender la app, mantén presionada una tarea para eliminarla.", @"Les données d’exemple sont prêtes. Quand vous aurez terminé de découvrir l’app, appuyez longuement sur une tâche pour la supprimer.", @"サンプルデータの準備ができました。アプリに慣れたら、タスクを長押しして削除できます。", @"예시 데이터가 준비되었습니다. 앱 사용법을 익힌 뒤에는 작업을 길게 눌러 삭제할 수 있습니다.") forKey:@"example_data_imported_message"];
+    [mirrorDict setValue:ML(@"Example data is ready. When you're done learning the app, swipe right on a task to delete it.", @"示例数据已导入。熟悉 App 后，可以向右滑动任务来删除它。", @"Los datos de ejemplo están listos. Cuando termines de aprender la app, desliza una tarea hacia la derecha para eliminarla.", @"Les données d’exemple sont prêtes. Quand vous aurez terminé de découvrir l’app, faites glisser une tâche vers la droite pour la supprimer.", @"サンプルデータの準備ができました。アプリに慣れたら、タスクを右にスワイプして削除できます。", @"예시 데이터가 준비되었습니다. 앱 사용법을 익힌 뒤에는 작업을 오른쪽으로 밀어 삭제할 수 있습니다.") forKey:@"example_data_imported_message"];
     [mirrorDict setValue:ML(@"Export/Import data", @"导出/导入数据", @"Exportar/importar datos", @"Exporter/importer les données", @"データの書き出し/読み込み", @"데이터 내보내기/가져오기") forKey:@"export_import_data"];
     [mirrorDict setValue:ML(@"Export or import data?", @"选择导入或是导出", @"¿Exportar o importar datos?", @"Exporter ou importer les données ?", @"データを書き出すか読み込みますか？", @"데이터를 내보내거나 가져올까요?") forKey:@"export_or_import"];
     [mirrorDict setValue:ML(@"Export data", @"导出数据", @"Exportar datos", @"Exporter les données", @"データを書き出す", @"데이터 내보내기") forKey:@"export_data"];
@@ -203,6 +203,26 @@
     }
     
     return translations.firstObject;
+}
+
++ (NSString *)localizedSampleTaskNameWithEnglishName:(NSString *)englishName
+{
+    return [MirrorLanguage localizedValue:[MirrorLanguage localizedSampleTaskNamesForEnglishName:englishName]
+                              languageKey:[MirrorSettings preferredLanguageKey]
+                                fallback:englishName];
+}
+
++ (NSArray<NSString *> *)localizedSampleTaskNamesForEnglishName:(NSString *)englishName
+{
+    NSDictionary<NSString *, NSArray<NSString *> *> *taskNames = @{
+        @"Gym": ML(@"Gym", @"健身", @"Gimnasio", @"Sport", @"ジム", @"운동"),
+        @"Tennis": ML(@"Tennis", @"网球", @"Tenis", @"Tennis", @"テニス", @"테니스"),
+        @"Code": ML(@"Code", @"编程", @"Programar", @"Coder", @"コーディング", @"코딩"),
+        @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Natation", @"水泳", @"수영"),
+        @"Read": ML(@"Read", @"阅读", @"Leer", @"Lire", @"読書", @"독서"),
+        @"Study": ML(@"Study", @"学习", @"Estudiar", @"Étudier", @"勉強", @"공부")
+    };
+    return taskNames[englishName] ?: ML(englishName, englishName, englishName, englishName, englishName, englishName);
 }
 
 @end
