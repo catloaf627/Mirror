@@ -504,7 +504,8 @@
 - (void)edgeGestureRecognizerAction:(UIScreenEdgePanGestureRecognizer *)pan
 {
     //产生百分比
-    CGFloat process = [pan translationInView:self.view].x / (self.view.frame.size.width);
+    CGFloat sheetWidth = self.view.frame.size.width * kLeftSheetRatio;
+    CGFloat process = [pan translationInView:self.view].x / sheetWidth;
     
     process = MIN(1.0,(MAX(0.0, process)));
     if (pan.state == UIGestureRecognizerStateBegan) {

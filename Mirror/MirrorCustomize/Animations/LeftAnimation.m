@@ -43,21 +43,22 @@
     
     CGFloat width = [UIScreen mainScreen].bounds.size.width;
     CGFloat height = [UIScreen mainScreen].bounds.size.height;
+    CGFloat sheetWidth = width * kLeftSheetRatio;
     
     if (_isPresent) { // present
-        transView.frame = CGRectMake(-width*kLeftSheetRatio, 0, width/2, height);
+        transView.frame = CGRectMake(-sheetWidth, 0, sheetWidth, height);
         [transitionContext containerView].backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
         [UIView animateWithDuration:[self transitionDuration:transitionContext] animations:^{
-            transView.frame = CGRectMake(0, 0, width*kLeftSheetRatio, height);
+            transView.frame = CGRectMake(0, 0, sheetWidth, height);
             [transitionContext containerView].backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.3];
         } completion:^(BOOL finished) {
              [transitionContext completeTransition:!transitionContext.transitionWasCancelled];
         }];
     } else { // dismiss
-        transView.frame = CGRectMake(0, 0, width*kLeftSheetRatio, height);
+        transView.frame = CGRectMake(0, 0, sheetWidth, height);
         [transitionContext containerView].backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0.3];
         [UIView animateWithDuration:[self transitionDuration:transitionContext] animations:^{
-            transView.frame = CGRectMake(-width*kLeftSheetRatio, 0, width*kLeftSheetRatio, height);
+            transView.frame = CGRectMake(-sheetWidth, 0, sheetWidth, height);
             [transitionContext containerView].backgroundColor = [UIColor colorWithRed:0 green:0 blue:0 alpha:0];
         } completion:^(BOOL finished) {
              [transitionContext completeTransition:!transitionContext.transitionWasCancelled];

@@ -142,7 +142,7 @@ static CGFloat const kDotSize = 8;
     
     UIView *barTrack = [UIView new];
     barTrack.backgroundColor = taskColor;
-    barTrack.alpha = 0.35;
+    barTrack.alpha = 0.7;
     barTrack.layer.cornerRadius = kBarHeight / 2;
     barTrack.layer.masksToBounds = YES;
     [row addSubview:barTrack];
