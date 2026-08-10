@@ -199,7 +199,7 @@
     }
 
     long now = round([[NSDate date] timeIntervalSince1970]);
-    if (endTime > dayEnd) {
+    if (endTime > dayEnd || endTime >= now) {
         return;
     }
 
