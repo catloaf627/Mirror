@@ -98,7 +98,7 @@
     // Time VC
     [mirrorDict setValue:ML(@"Long press to reorder tasks", @"长按可以调整任务顺序", @"Mantén presionado para reordenar tareas", @"Appuyez longuement pour réordonner les tâches", @"長押しでタスクを並べ替えられます", @"길게 눌러 작업 순서를 바꿀 수 있습니다") forKey:@"timeVC_hint0"];
     [mirrorDict setValue:ML(@"Swipe left to edit tasks", @"左滑可以编辑任务", @"Desliza a la izquierda para editar tareas", @"Balayez vers la gauche pour modifier les tâches", @"左にスワイプしてタスクを編集できます", @"왼쪽으로 밀어 작업을 편집할 수 있습니다") forKey:@"timeVC_hint1"];
-    [mirrorDict setValue:ML(@"Swipe right to delete tasks", @"右滑可以删除任务", @"Desliza a la derecha para eliminar tareas", @"Balayez vers la droite pour supprimer les tâches", @"右にスワイプしてタスクを削除できます", @"오른쪽으로 밀어 작업을 삭제할 수 있습니다") forKey:@"timeVC_hint2"];
+    [mirrorDict setValue:ML(@"Swipe right to delete or merge tasks", @"右滑可以删除或合并任务", @"Desliza a la derecha para eliminar o fusionar tareas", @"Balayez vers la droite pour supprimer ou fusionner les tâches", @"右にスワイプしてタスクを削除または結合できます", @"오른쪽으로 밀어 작업을 삭제하거나 병합할 수 있습니다") forKey:@"timeVC_hint2"];
     [mirrorDict setValue:ML(@"Up to 8 tasks can be created", @"最多可建立8个任务", @"Se pueden crear hasta 8 tareas", @"Jusqu'à 8 tâches peuvent être créées", @"最大8個のタスクを作成できます", @"최대 8개의 작업을 만들 수 있습니다") forKey:@"timeVC_hint3"];
     
     // All tasks
