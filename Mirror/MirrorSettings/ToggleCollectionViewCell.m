@@ -25,7 +25,8 @@
     self.contentView.layer.cornerRadius = 14;
     self.toggle.onTintColor = [UIColor mirrorColorPulsed:color]; // toggle颜色使用pulse
     self.label.text = [MirrorLanguage mirror_stringWithKey:title];
-    
+    self.label.textColor = [UIColor mirrorColorPulsed:color];
+
     [self.contentView addSubview:self.toggle];
     [self.toggle mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerY.offset(0);
@@ -44,7 +45,6 @@
 {
     if (!_label) {
         _label = [UILabel new];
-        _label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _label.font = [UIFont mirrorLabelFont];
         _label.adjustsFontSizeToFitWidth = YES;
     }

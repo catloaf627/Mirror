@@ -759,19 +759,16 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (!_deleteFutureRecordsButton) {
         _deleteFutureRecordsButton = [UIButton buttonWithType:UIButtonTypeSystem];
         _deleteFutureRecordsButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
-        _deleteFutureRecordsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeCellPinkPulse];
+        _deleteFutureRecordsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
         _deleteFutureRecordsButton.titleLabel.font = [UIFont mirrorLabelFont];
         _deleteFutureRecordsButton.titleLabel.adjustsFontSizeToFitWidth = YES;
         _deleteFutureRecordsButton.layer.cornerRadius = 14;
         _deleteFutureRecordsButton.layer.borderWidth = 1;
-        _deleteFutureRecordsButton.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellPlus].CGColor;
-        _deleteFutureRecordsButton.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
-        _deleteFutureRecordsButton.layer.shadowRadius = 2;
-        _deleteFutureRecordsButton.layer.shadowOpacity = 0.12;
+        _deleteFutureRecordsButton.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint].CGColor;
         UIImage *trashImage = [[UIImage systemImageNamed:@"trash"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         [_deleteFutureRecordsButton setImage:trashImage forState:UIControlStateNormal];
         [_deleteFutureRecordsButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete_future_records_to_start_counting"] forState:UIControlStateNormal];
-        [_deleteFutureRecordsButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeCellPinkPulse] forState:UIControlStateNormal];
+        [_deleteFutureRecordsButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeTextHint] forState:UIControlStateNormal];
         _deleteFutureRecordsButton.imageEdgeInsets = UIEdgeInsetsMake(0, 0, 0, 8 * kWidthRatio);
         _deleteFutureRecordsButton.titleEdgeInsets = UIEdgeInsetsMake(0, 8 * kWidthRatio, 0, 0);
         [_deleteFutureRecordsButton addTarget:self action:@selector(deleteFutureRecords) forControlEvents:UIControlEventTouchUpInside];

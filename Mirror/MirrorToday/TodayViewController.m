@@ -631,7 +631,7 @@
 
         UILabel *taskLabel = [[UILabel alloc] initWithFrame:CGRectMake(42, rowY, pickerWidth - 56, rowHeight)];
         taskLabel.text = task.taskName;
-        taskLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        taskLabel.textColor = [UIColor mirrorColorPulsed:task.color];
         taskLabel.font = [UIFont mirrorTitleFont_Card];
         taskLabel.adjustsFontSizeToFitWidth = YES;
         [pickerView addSubview:taskLabel];
