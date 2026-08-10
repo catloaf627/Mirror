@@ -66,14 +66,7 @@ static CGFloat const kTimelineLineWidth = 5;
     LineChartCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[LineChartCollectionViewCell identifier] forIndexPath:indexPath];
     // onedaydata
     NSMutableDictionary<NSString *,NSNumber *> *onedaydata = self.data[indexPath.item];
-    // leftdaydata
-    NSMutableDictionary<NSString *,NSNumber *> *leftdaydata = nil;
-    if (indexPath.item - 1 >= 0) leftdaydata = self.data[indexPath.item - 1];
-    // rightdaydata
-    NSMutableDictionary<NSString *,NSNumber *> *rightdaydata = nil;
-    if (indexPath.item + 1 < [collectionView numberOfItemsInSection:0]) rightdaydata = self.data[indexPath.item + 1];
-    
-    [cell configCellWithOnedaydata:onedaydata leftdaydata:leftdaydata rightdaydata:rightdaydata maxtime:self.maxtime];
+    [cell configCellWithOnedaydata:onedaydata maxtime:self.maxtime];
     return cell;
 }
 
