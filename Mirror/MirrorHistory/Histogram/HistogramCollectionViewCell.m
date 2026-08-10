@@ -43,7 +43,7 @@ static const CGFloat kLabelHeight = 20;
     
     [self addSubview:self.timeLabel];
     self.timeLabel.text = [MirrorTimeText XdXhXmXsShort:[MirrorTool getTotalTimeOfPeriods:data[index].records]];
-    self.timeLabel.textColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:data[index].taskModel.color]];
+    self.timeLabel.textColor = [UIColor mirrorColorPulsed:data[index].taskModel.color];
     [self.timeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.offset(0);
         make.bottom.mas_equalTo(self.coloredView.mas_top);

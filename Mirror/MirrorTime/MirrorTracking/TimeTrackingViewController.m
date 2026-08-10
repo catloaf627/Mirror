@@ -434,7 +434,7 @@ static CGFloat const kCircleLineWidth = 18;
         _circleView.backgroundColor = UIColor.clearColor;
         _circleView.startAngle = -M_PI_2;
         _circleView.taskColor = self.taskColor;
-        _circleView.pulseColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:self.taskColorType]];
+        _circleView.pulseColor = [UIColor mirrorColorPulsed:self.taskColorType];
     }
     return _circleView;
 }

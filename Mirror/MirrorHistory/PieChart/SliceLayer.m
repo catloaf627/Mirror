@@ -34,7 +34,7 @@
         _textLayer.alignmentMode = kCAAlignmentCenter;
         _textLayer.string = self.text;
         _textLayer.fontSize = h/2;
-        _textLayer.foregroundColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:self.colorType]].CGColor;
+        _textLayer.foregroundColor = [UIColor mirrorColorPulsed:self.colorType].CGColor;
         _textLayer.contentsScale = [UIScreen mainScreen].scale; // 解决catextlayer文字模糊的问题
         [self.superlayer addSublayer:_textLayer]; // 添加在superlayer上，否则text会被slice切割
     }

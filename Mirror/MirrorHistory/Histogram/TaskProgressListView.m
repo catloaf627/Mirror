@@ -99,7 +99,7 @@ static CGFloat const kDotSize = 8;
     [row addGestureRecognizer:tapRecognizer];
     
     UIColor *taskColor = [UIColor mirrorColorNamed:data.taskModel.color];
-    UIColor *pulseColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:data.taskModel.color]];
+    UIColor *pulseColor = [UIColor mirrorColorPulsed:data.taskModel.color];
     long totalTime = [MirrorTool getTotalTimeOfPeriods:data.records];
     CGFloat percentage = maxTime > 0 ? totalTime / (CGFloat)maxTime : 0;
     

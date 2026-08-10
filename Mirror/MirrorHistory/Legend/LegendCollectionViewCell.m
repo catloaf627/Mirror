@@ -36,7 +36,7 @@ static CGFloat const kPadding = 10;
     
     [self.contentView addSubview:self.coloredView];
     self.coloredView.backgroundColor = task.isHidden ? [UIColor mirrorColorNamed:MirrorColorTypeBackground] : [UIColor mirrorColorNamed:task.color];
-    self.coloredView.layer.borderColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:task.color]].CGColor;
+    self.coloredView.layer.borderColor = [UIColor mirrorColorPulsed:task.color].CGColor;
     self.coloredView.layer.borderWidth = 2;
     [self.coloredView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.width.height.equalTo(@20);
@@ -46,14 +46,14 @@ static CGFloat const kPadding = 10;
     
     [self.coloredView addSubview:self.checkMark];
     self.checkMark.hidden = task.isHidden;
-    self.checkMark.tintColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:task.color]];
+    self.checkMark.tintColor = [UIColor mirrorColorPulsed:task.color];
     [self.checkMark mas_makeConstraints:^(MASConstraintMaker *make) {
         make.center.offset(0);
         make.width.height.equalTo(@20);
     }];
     
     [self.contentView addSubview:self.label];
-    self.label.textColor = [UIColor mirrorColorNamed: [UIColor mirror_getPulseColorType:task.color]];
+    self.label.textColor = [UIColor mirrorColorPulsed:task.color];
     self.label.text = task.taskName;
     [self.label mas_makeConstraints:^(MASConstraintMaker *make) {
         make.height.equalTo(@20);

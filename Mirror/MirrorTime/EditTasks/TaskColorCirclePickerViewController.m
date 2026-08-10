@@ -91,7 +91,7 @@ static CGFloat const kTaskColorPickerTitleSpacing = 12;
         button.tag = color;
         button.backgroundColor = [UIColor mirrorColorNamed:color];
         button.layer.borderWidth = color == self.selectedColor ? kTaskColorPickerSelectedBorderWidth : 0;
-        button.layer.borderColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:color]].CGColor;
+        button.layer.borderColor = [UIColor mirrorColorPulsed:color].CGColor;
         [button addTarget:self action:@selector(selectColor:) forControlEvents:UIControlEventTouchUpInside];
         [colorGridView addSubview:button];
         [self.colorButtons addObject:button];

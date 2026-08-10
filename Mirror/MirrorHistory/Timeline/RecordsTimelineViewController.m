@@ -375,7 +375,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 {
     UIView *row = [UIView new];
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
-    UIColor *pulseColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:task.color]];
+    UIColor *pulseColor = [UIColor mirrorColorPulsed:task.color];
     UIColor *taskColor = [UIColor mirrorColorNamed:task.color];
     row.backgroundColor = isHighlighted ? [pulseColor colorWithAlphaComponent:0.12] : [UIColor clearColor];
     row.tag = record.originalIndex;

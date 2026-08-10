@@ -99,44 +99,46 @@
     }
 }
 
-+ (MirrorColorType)mirror_getPulseColorType:(MirrorColorType)color
+// Only 8 colors can be pulsed.
+
++ (UIColor *)mirrorColorPulsed:(MirrorColorType)colorType
 {
-    switch (color) {
+    switch (colorType) {
         case MirrorColorTypeCellPink:
-            return MirrorColorTypeCellPinkPulse;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellPinkPulse];
         case MirrorColorTypeCellOrange:
-            return MirrorColorTypeCellOrangePulse;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellOrangePulse];
         case MirrorColorTypeCellYellow:
-            return MirrorColorTypeCellYellowPulse;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellYellowPulse];
         case MirrorColorTypeCellGreen:
-            return MirrorColorTypeCellGreenPulse;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellGreenPulse];
         case MirrorColorTypeCellTeal:
-            return MirrorColorTypeCellTealPulse;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellTealPulse];
         case MirrorColorTypeCellBlue:
-            return MirrorColorTypeCellBluePulse;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellBluePulse];
         case MirrorColorTypeCellPurple:
-            return MirrorColorTypeCellPurplePulse;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellPurplePulse];
         case MirrorColorTypeCellGray:
-            return MirrorColorTypeCellGrayPulse;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
             
         case MirrorColorTypeCellPinkPulse:
-            return MirrorColorTypeCellPink;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellPink];
         case MirrorColorTypeCellOrangePulse:
-            return MirrorColorTypeCellOrange;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellOrange];
         case MirrorColorTypeCellYellowPulse:
-            return MirrorColorTypeCellYellow;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellYellow];
         case MirrorColorTypeCellGreenPulse:
-            return MirrorColorTypeCellGreen;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellGreen];
         case MirrorColorTypeCellTealPulse:
-            return MirrorColorTypeCellTeal;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellTeal];
         case MirrorColorTypeCellBluePulse:
-            return MirrorColorTypeCellBlue;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellBlue];
         case MirrorColorTypeCellPurplePulse:
-            return MirrorColorTypeCellPurple;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellPurple];
         case MirrorColorTypeCellGrayPulse:
-            return MirrorColorTypeCellGray;
+            return [UIColor mirrorColorNamed:MirrorColorTypeCellGray];
         default:
-            return MirrorColorTypeBackground;
+            return [UIColor mirrorColorNamed:MirrorColorTypeBackground];
     }
 }
 
