@@ -14,6 +14,7 @@
 #import "MirrorStorage.h"
 #import "MirrorTool.h"
 #import "CellAnimation.h"
+#import <QuartzCore/QuartzCore.h>
 
 static CGFloat const kPadding = 20;
 
@@ -30,15 +31,104 @@ static CGFloat const kCircleLineWidth = 18;
 @property (nonatomic, assign) CGFloat startAngle;
 @property (nonatomic, strong) UIColor *taskColor;
 @property (nonatomic, strong) UIColor *pulseColor;
+@property (nonatomic, strong) CAShapeLayer *trackLayer;
+@property (nonatomic, strong) CAGradientLayer *gradientLayer;
+@property (nonatomic, strong) CAShapeLayer *progressMaskLayer;
+@property (nonatomic, strong) CAShapeLayer *startCapLayer;
+@property (nonatomic, strong) CAShapeLayer *endCapLayer;
 
 @end
 
 @implementation MirrorTrackingCircleView
 
-- (void)drawRect:(CGRect)rect
+- (instancetype)initWithFrame:(CGRect)frame
 {
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    if (!context) {
+    self = [super initWithFrame:frame];
+    if (self) {
+        [self setupLayers];
+    }
+    return self;
+}
+
+- (instancetype)initWithCoder:(NSCoder *)coder
+{
+    self = [super initWithCoder:coder];
+    if (self) {
+        [self setupLayers];
+    }
+    return self;
+}
+
+- (void)setupLayers
+{
+    self.backgroundColor = UIColor.clearColor;
+    self.trackLayer = [CAShapeLayer layer];
+    self.trackLayer.fillColor = UIColor.clearColor.CGColor;
+    self.trackLayer.lineCap = kCALineCapRound;
+    self.trackLayer.lineWidth = kCircleLineWidth;
+    [self.layer addSublayer:self.trackLayer];
+
+    self.gradientLayer = [CAGradientLayer layer];
+    if (@available(iOS 12.0, *)) {
+        self.gradientLayer.type = kCAGradientLayerConic;
+    }
+    self.gradientLayer.startPoint = CGPointMake(0.5, 0.5);
+    self.gradientLayer.endPoint = CGPointMake(1, 0.5);
+    [self.layer addSublayer:self.gradientLayer];
+
+    self.progressMaskLayer = [CAShapeLayer layer];
+    self.progressMaskLayer.fillColor = UIColor.clearColor.CGColor;
+    self.progressMaskLayer.strokeColor = UIColor.blackColor.CGColor;
+    self.progressMaskLayer.lineCap = kCALineCapButt;
+    self.progressMaskLayer.lineWidth = kCircleLineWidth;
+    self.gradientLayer.mask = self.progressMaskLayer;
+
+    self.startCapLayer = [CAShapeLayer layer];
+    [self.layer addSublayer:self.startCapLayer];
+
+    self.endCapLayer = [CAShapeLayer layer];
+    [self.layer addSublayer:self.endCapLayer];
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    [self updateCircleLayers];
+}
+
+- (void)setIsCountingDown:(BOOL)isCountingDown
+{
+    _isCountingDown = isCountingDown;
+    [self updateCircleLayers];
+}
+
+- (void)setProgress:(CGFloat)progress
+{
+    _progress = progress;
+    [self updateCircleLayers];
+}
+
+- (void)setStartAngle:(CGFloat)startAngle
+{
+    _startAngle = startAngle;
+    [self updateCircleLayers];
+}
+
+- (void)setTaskColor:(UIColor *)taskColor
+{
+    _taskColor = taskColor;
+    [self updateCircleLayers];
+}
+
+- (void)setPulseColor:(UIColor *)pulseColor
+{
+    _pulseColor = pulseColor;
+    [self updateCircleLayers];
+}
+
+- (void)updateCircleLayers
+{
+    if (CGRectIsEmpty(self.bounds) || !self.taskColor || !self.pulseColor) {
         return;
     }
 
@@ -48,58 +138,49 @@ static CGFloat const kCircleLineWidth = 18;
     CGFloat progress = MAX(0, MIN(1, self.progress));
     CGFloat startAngle = self.startAngle;
     CGFloat endAngle = startAngle + 2*M_PI*progress;
-
-    CGContextSetLineWidth(context, kCircleLineWidth);
-    CGContextSetLineCap(context, kCGLineCapRound);
-    [[UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG] setStroke];
-    CGContextAddArc(context, center.x, center.y, radius, startAngle, startAngle + 2*M_PI, 0);
-    CGContextStrokePath(context);
-
-    if (progress <= 0) {
-        return;
-    }
-
     BOOL drawsFullRing = !self.isCountingDown && progress >= 1;
-    NSInteger segmentCount = drawsFullRing ? 360 : MAX(1, ceil(progress * 180));
-    CGContextSetLineCap(context, kCGLineCapButt);
-    for (NSInteger index = 0; index < segmentCount; index++) {
-        CGFloat segmentStart = startAngle + (endAngle - startAngle) * index / segmentCount;
-        CGFloat segmentEnd = startAngle + (endAngle - startAngle) * (index + 1) / segmentCount;
-        CGFloat ratio = segmentCount == 1 ? 1 : (CGFloat)index / (segmentCount - 1);
-        UIColor *color = [self colorBetween:self.taskColor and:self.pulseColor ratio:ratio];
-        [color setStroke];
-        CGContextAddArc(context, center.x, center.y, radius, segmentStart, segmentEnd, 0);
-        CGContextStrokePath(context);
-    }
-
-    CGFloat startCapX = center.x + radius * cos(startAngle);
-    CGFloat startCapY = center.y + radius * sin(startAngle);
-    [self.taskColor setFill];
-    CGContextFillEllipseInRect(context, CGRectMake(startCapX - kCircleLineWidth/2, startCapY - kCircleLineWidth/2, kCircleLineWidth, kCircleLineWidth));
-
-    CGFloat capAngle = drawsFullRing ? startAngle : endAngle;
+    CGFloat anglePadding = 3 * M_PI / 180;
+    CGFloat drawStartAngle = drawsFullRing ? startAngle : startAngle - anglePadding;
+    CGFloat drawEndAngle = drawsFullRing ? endAngle : endAngle + anglePadding;
+    CGFloat capRadius = kCircleLineWidth/2;
+    CGFloat gradientProgress = drawsFullRing ? 1 : MIN(1, MAX(0.01, (drawEndAngle - drawStartAngle) / (2*M_PI)));
+    CGPoint gradientEndPoint = CGPointMake(0.5 + cos(drawStartAngle)/2, 0.5 + sin(drawStartAngle)/2);
+    UIBezierPath *trackPath = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:startAngle endAngle:startAngle + 2*M_PI clockwise:YES];
+    UIBezierPath *progressPath = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:drawStartAngle endAngle:drawEndAngle clockwise:YES];
+    CGFloat startCapX = center.x + radius * cos(drawStartAngle);
+    CGFloat startCapY = center.y + radius * sin(drawStartAngle);
+    CGFloat capAngle = drawsFullRing ? drawStartAngle : drawEndAngle;
     CGFloat endCapX = center.x + radius * cos(capAngle);
     CGFloat endCapY = center.y + radius * sin(capAngle);
-    [[self colorBetween:self.taskColor and:self.pulseColor ratio:1] setFill];
-    CGContextFillEllipseInRect(context, CGRectMake(endCapX - kCircleLineWidth/2, endCapY - kCircleLineWidth/2, kCircleLineWidth, kCircleLineWidth));
-}
 
-- (UIColor *)colorBetween:(UIColor *)startColor and:(UIColor *)endColor ratio:(CGFloat)ratio
-{
-    CGFloat startRed = 0;
-    CGFloat startGreen = 0;
-    CGFloat startBlue = 0;
-    CGFloat startAlpha = 0;
-    CGFloat endRed = 0;
-    CGFloat endGreen = 0;
-    CGFloat endBlue = 0;
-    CGFloat endAlpha = 0;
-    [startColor getRed:&startRed green:&startGreen blue:&startBlue alpha:&startAlpha];
-    [endColor getRed:&endRed green:&endGreen blue:&endBlue alpha:&endAlpha];
-    return [UIColor colorWithRed:startRed + (endRed - startRed)*ratio
-                           green:startGreen + (endGreen - startGreen)*ratio
-                            blue:startBlue + (endBlue - startBlue)*ratio
-                           alpha:startAlpha + (endAlpha - startAlpha)*ratio];
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+
+    self.trackLayer.frame = self.bounds;
+    self.trackLayer.path = trackPath.CGPath;
+    self.trackLayer.strokeColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG].CGColor;
+
+    self.gradientLayer.frame = self.bounds;
+    self.gradientLayer.startPoint = CGPointMake(0.5, 0.5);
+    self.gradientLayer.endPoint = gradientEndPoint;
+    self.gradientLayer.transform = CATransform3DIdentity;
+    self.gradientLayer.colors = @[(id)self.taskColor.CGColor, (id)self.pulseColor.CGColor, (id)self.pulseColor.CGColor];
+    self.gradientLayer.locations = @[@0, @(gradientProgress), @1];
+    self.gradientLayer.hidden = progress <= 0;
+
+    self.progressMaskLayer.frame = self.bounds;
+    self.progressMaskLayer.path = progressPath.CGPath;
+    self.progressMaskLayer.hidden = progress <= 0;
+
+    self.startCapLayer.path = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(startCapX - capRadius, startCapY - capRadius, 2*capRadius, 2*capRadius)].CGPath;
+    self.startCapLayer.fillColor = self.taskColor.CGColor;
+    self.startCapLayer.hidden = progress <= 0;
+
+    self.endCapLayer.path = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(endCapX - capRadius, endCapY - capRadius, 2*capRadius, 2*capRadius)].CGPath;
+    self.endCapLayer.fillColor = self.pulseColor.CGColor;
+    self.endCapLayer.hidden = progress <= 0;
+
+    [CATransaction commit];
 }
 
 @end
