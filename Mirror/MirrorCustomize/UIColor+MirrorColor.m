@@ -147,7 +147,7 @@
 
 + (UIColor *)mirror_darkPink
 {
-    return [UIColor colorWithRed:170/255.0 green:117/255.0 blue:120/255.0 alpha:1]; // 莫兰迪深粉 #AA7578
+    return [UIColor colorWithRed:90/255.0 green:48/255.0 blue:53/255.0 alpha:1]; // 莫兰迪深粉 #5A3035
 }
 
 + (UIColor *)mirror_lightOrange
@@ -157,7 +157,7 @@
 
 + (UIColor *)mirror_darkOrange
 {
-    return [UIColor colorWithRed:160/255.0 green:106/255.0 blue:80/255.0 alpha:1]; // 莫兰迪深橘 #A06A50
+    return [UIColor colorWithRed:90/255.0 green:52/255.0 blue:36/255.0 alpha:1]; // 莫兰迪深橘 #5A3424
 }
 
 + (UIColor *)mirror_lightYellow
@@ -167,7 +167,7 @@
 
 + (UIColor *)mirror_darkYellow
 {
-    return [UIColor colorWithRed:168/255.0 green:132/255.0 blue:98/255.0 alpha:1]; // 莫兰迪深黄（棕）#A88462
+    return [UIColor colorWithRed:93/255.0 green:69/255.0 blue:42/255.0 alpha:1]; // 莫兰迪深黄（棕）#5D452A
 }
 
 + (UIColor *)mirror_lightGreen
@@ -177,7 +177,7 @@
 
 + (UIColor *)mirror_darkGreen
 {
-    return [UIColor colorWithRed:103/255.0 green:119/255.0 blue:91/255.0 alpha:1]; // 莫兰迪深绿 #67755B
+    return [UIColor colorWithRed:51/255.0 green:64/255.0 blue:45/255.0 alpha:1]; // 莫兰迪深绿 #33402D
 }
 
 + (UIColor *)mirror_lightTeal
@@ -187,7 +187,7 @@
 
 + (UIColor *)mirror_darkTeal
 {
-    return [UIColor colorWithRed:62/255.0 green:130/255.0 blue:141/255.0 alpha:1]; // 莫兰迪深青 #3E828D
+    return [UIColor colorWithRed:33/255.0 green:74/255.0 blue:80/255.0 alpha:1]; // 莫兰迪深青 #214A50
 }
 
 + (UIColor *)mirror_lightBlue
@@ -197,7 +197,7 @@
 
 + (UIColor *)mirror_darkBlue
 {
-    return [UIColor colorWithRed:104/255.0 green:120/255.0 blue:137/255.0 alpha:1]; // 莫兰迪深蓝 #687889
+    return [UIColor colorWithRed:53/255.0 green:64/255.0 blue:76/255.0 alpha:1]; // 莫兰迪深蓝 #35404C
 }
 
 + (UIColor *)mirror_lightPurple
@@ -207,7 +207,7 @@
 
 + (UIColor *)mirror_darkPurple
 {
-    return [UIColor colorWithRed:105/255.0 green:100/255.0 blue:123/255.0 alpha:1]; // 莫兰迪深紫 #69647B
+    return [UIColor colorWithRed:57/255.0 green:54/255.0 blue:74/255.0 alpha:1]; // 莫兰迪深紫 #39364A
 }
 
 + (UIColor *)mirror_lightGray
@@ -217,7 +217,7 @@
 
 + (UIColor *)mirror_darkGray
 {
-    return [UIColor colorWithRed:104/255.0 green:104/255.0 blue:104/255.0 alpha:1]; // 莫兰迪深灰 #686868
+    return [UIColor colorWithRed:61/255.0 green:61/255.0 blue:61/255.0 alpha:1]; // 莫兰迪深灰 #3D3D3D
 }
 
 @end
