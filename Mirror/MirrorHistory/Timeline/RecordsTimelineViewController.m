@@ -172,7 +172,7 @@ static CGFloat const kTextLeftPadding = 18;
             make.left.mas_equalTo(self.view).offset(kHorizontalPadding * kWidthRatio);
             make.right.mas_equalTo(self.view).offset(-kHorizontalPadding * kWidthRatio);
             make.bottom.mas_equalTo(self.view).offset(-16 * kHeightRatio);
-            make.height.mas_equalTo(56 * kHeightRatio);
+            make.height.mas_equalTo(48 * kHeightRatio);
         }];
     }
     
@@ -348,14 +348,7 @@ static CGFloat const kTextLeftPadding = 18;
 
 - (void)deleteFutureRecords
 {
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_future_records_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
-    UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        [self deleteAllVisibleFutureRecords];
-    }];
-    [alertController addAction:cancelAction];
-    [alertController addAction:deleteAction];
-    [self presentViewController:alertController animated:YES completion:nil];
+    [self deleteAllVisibleFutureRecords];
 }
 
 - (void)deleteAllVisibleFutureRecords
@@ -652,14 +645,22 @@ static CGFloat const kTextLeftPadding = 18;
 {
     if (!_deleteFutureRecordsButton) {
         _deleteFutureRecordsButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        _deleteFutureRecordsButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellPlus];
-        _deleteFutureRecordsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _deleteFutureRecordsButton.titleLabel.font = [UIFont mirrorHintFont];
-        _deleteFutureRecordsButton.titleLabel.numberOfLines = 2;
-        _deleteFutureRecordsButton.titleLabel.textAlignment = NSTextAlignmentCenter;
+        _deleteFutureRecordsButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
+        _deleteFutureRecordsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeCellPinkPulse];
+        _deleteFutureRecordsButton.titleLabel.font = [UIFont mirrorLabelFont];
         _deleteFutureRecordsButton.titleLabel.adjustsFontSizeToFitWidth = YES;
-        _deleteFutureRecordsButton.layer.cornerRadius = 8 * kWidthRatio;
+        _deleteFutureRecordsButton.layer.cornerRadius = 14;
+        _deleteFutureRecordsButton.layer.borderWidth = 1;
+        _deleteFutureRecordsButton.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellPlus].CGColor;
+        _deleteFutureRecordsButton.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
+        _deleteFutureRecordsButton.layer.shadowRadius = 2;
+        _deleteFutureRecordsButton.layer.shadowOpacity = 0.12;
+        UIImage *trashImage = [[UIImage systemImageNamed:@"trash"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        [_deleteFutureRecordsButton setImage:trashImage forState:UIControlStateNormal];
         [_deleteFutureRecordsButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete_future_records_to_start_counting"] forState:UIControlStateNormal];
+        [_deleteFutureRecordsButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeCellPinkPulse] forState:UIControlStateNormal];
+        _deleteFutureRecordsButton.imageEdgeInsets = UIEdgeInsetsMake(0, 0, 0, 8 * kWidthRatio);
+        _deleteFutureRecordsButton.titleEdgeInsets = UIEdgeInsetsMake(0, 8 * kWidthRatio, 0, 0);
         [_deleteFutureRecordsButton addTarget:self action:@selector(deleteFutureRecords) forControlEvents:UIControlEventTouchUpInside];
     }
     return _deleteFutureRecordsButton;
