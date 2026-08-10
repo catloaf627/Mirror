@@ -273,8 +273,20 @@
     MirrorTaskModel *sourceTask = self.data[indexPath.item];
     NSArray<MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
     TaskPickerViewController *taskPicker = [[TaskPickerViewController alloc] initWithTasks:tasks sourceTaskName:sourceTask.taskName completion:^(MirrorTaskModel *task) {
+        [self presentMergeTaskAlertWithSourceTask:sourceTask targetTask:task];
     }];
     [self presentViewController:taskPicker animated:YES completion:nil];
+}
+
+- (void)presentMergeTaskAlertWithSourceTask:(MirrorTaskModel *)sourceTask targetTask:(MirrorTaskModel *)targetTask
+{
+    UIAlertController *mergeTaskAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge_tasks_?"] message:[MirrorLanguage mirror_stringWithKey:@"merge_task_warning"] preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
+    UIAlertAction *mergeAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+    }];
+    [mergeTaskAlert addAction:cancelAction];
+    [mergeTaskAlert addAction:mergeAction];
+    [self presentViewController:mergeTaskAlert animated:YES completion:nil];
 }
 
 - (void)showTaskEditErrorWithTitleKey:(NSString *)titleKey

@@ -105,8 +105,11 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
 
 - (UIButton *)taskButtonWithTask:(MirrorTaskModel *)task index:(NSInteger)index
 {
+    BOOL isSourceTask = [task.taskName isEqualToString:self.sourceTaskName];
     UIButton *button = [UIButton new];
     button.tag = index;
+    button.enabled = !isSourceTask;
+    button.alpha = isSourceTask ? 0.2 : 1;
     button.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
     button.layer.cornerRadius = kTaskPickerCornerRadius;
     button.layer.masksToBounds = YES;
@@ -146,11 +149,16 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
     if (button.tag < 0 || button.tag >= self.tasks.count) {
         return;
     }
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    if (self.completion) {
-        self.completion(self.tasks[button.tag]);
+    MirrorTaskModel *task = self.tasks[button.tag];
+    if ([task.taskName isEqualToString:self.sourceTaskName]) {
+        return;
     }
-    [self dismissViewControllerAnimated:YES completion:nil];
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [self dismissViewControllerAnimated:YES completion:^{
+        if (self.completion) {
+            self.completion(task);
+        }
+    }];
 }
 
 - (void)dismissPicker
