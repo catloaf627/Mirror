@@ -636,6 +636,10 @@ typedef void (^TaskColorCirclePickerCompletion)(MirrorColorType color);
     [self presentDeleteTaskAlertAtIndexPath:indexPath];
 }
 
+- (void)timeTrackerTaskCollectionViewCellDidTapMerge:(TimeTrackerTaskCollectionViewCell *)cell
+{
+}
+
 #pragma mark - Getters
 
 - (UICollectionView *)collectionView

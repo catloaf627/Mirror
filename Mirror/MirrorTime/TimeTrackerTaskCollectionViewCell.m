@@ -25,6 +25,7 @@ static CGFloat const kCornerRadius = 14;
 @property (nonatomic, strong) UIButton *editButton;
 @property (nonatomic, strong) UIButton *colorButton;
 @property (nonatomic, strong) UIButton *deleteButton;
+@property (nonatomic, strong) UIButton *mergeButton;
 @property (nonatomic, assign) BOOL didSetupUI;
 
 @end
@@ -54,10 +55,17 @@ static CGFloat const kCornerRadius = 14;
     self.backgroundColor = [UIColor clearColor];
     self.clipsToBounds = YES;
     [self addSubview:self.deleteButton];
+    [self addSubview:self.mergeButton];
     [self addSubview:self.editButton];
     [self addSubview:self.colorButton];
     [self.deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.top.offset(kShadowWidth);
+        make.width.mas_equalTo(self.mas_width).multipliedBy(0.5);
+        make.height.mas_equalTo(self.mas_height).multipliedBy(0.5).offset(-kShadowWidth);
+    }];
+    [self.mergeButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.offset(kShadowWidth);
+        make.top.mas_equalTo(self.deleteButton.mas_bottom);
         make.bottom.offset(-kShadowWidth);
         make.width.mas_equalTo(self.mas_width).multipliedBy(0.5);
     }];
@@ -74,6 +82,7 @@ static CGFloat const kCornerRadius = 14;
         make.width.mas_equalTo(self.mas_width).multipliedBy(0.5);
     }];
     self.deleteButton.alpha = 0;
+    self.mergeButton.alpha = 0;
     self.editButton.alpha = 0;
     self.colorButton.alpha = 0;
     [self bringSubviewToFront:self.contentView];
@@ -114,6 +123,7 @@ static CGFloat const kCornerRadius = 14;
     [super prepareForReuse];
     self.contentView.transform = CGAffineTransformIdentity;
     self.deleteButton.alpha = 0;
+    self.mergeButton.alpha = 0;
     self.editButton.alpha = 0;
     self.colorButton.alpha = 0;
 }
@@ -123,6 +133,7 @@ static CGFloat const kCornerRadius = 14;
     [super layoutSubviews];
     CGFloat iconOffset = CGRectGetWidth(self.deleteButton.bounds) / 6.0;
     self.deleteButton.imageEdgeInsets = UIEdgeInsetsMake(0, -iconOffset, 0, iconOffset);
+    self.mergeButton.imageEdgeInsets = UIEdgeInsetsMake(0, -iconOffset, 0, iconOffset);
     self.editButton.imageEdgeInsets = UIEdgeInsetsMake(0, iconOffset, 0, -iconOffset);
     self.colorButton.imageEdgeInsets = UIEdgeInsetsMake(0, iconOffset, 0, -iconOffset);
 }
@@ -180,6 +191,12 @@ static CGFloat const kCornerRadius = 14;
     [self.delegate timeTrackerTaskCollectionViewCellDidTapDelete:self];
 }
 
+- (void)tapMergeButton
+{
+    [self setContentOffset:0 animated:YES];
+    [self.delegate timeTrackerTaskCollectionViewCellDidTapMerge:self];
+}
+
 - (BOOL)dismissActionButtonsIfNeeded
 {
     if (CGAffineTransformIsIdentity(self.contentView.transform)) {
@@ -219,6 +236,7 @@ static CGFloat const kCornerRadius = 14;
 - (void)updateActionButtonVisibilityWithOffset:(CGFloat)offset
 {
     self.deleteButton.alpha = offset > 0 ? 1 : 0;
+    self.mergeButton.alpha = offset > 0 ? 1 : 0;
     self.editButton.alpha = offset < 0 ? 1 : 0;
     self.colorButton.alpha = offset < 0 ? 1 : 0;
 }
@@ -293,7 +311,7 @@ static CGFloat const kCornerRadius = 14;
         _deleteButton.layer.cornerRadius = kCornerRadius;
         _deleteButton.layer.masksToBounds = YES;
         if (@available(iOS 11.0, *)) {
-            _deleteButton.layer.maskedCorners = kCALayerMinXMinYCorner | kCALayerMinXMaxYCorner;
+            _deleteButton.layer.maskedCorners = kCALayerMinXMinYCorner;
         }
         _deleteButton.tintColor = [UIColor whiteColor];
         _deleteButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"delete"];
@@ -301,6 +319,24 @@ static CGFloat const kCornerRadius = 14;
         [_deleteButton addTarget:self action:@selector(tapDeleteButton) forControlEvents:UIControlEventTouchUpInside];
     }
     return _deleteButton;
+}
+
+- (UIButton *)mergeButton
+{
+    if (!_mergeButton) {
+        _mergeButton = [UIButton new];
+        _mergeButton.backgroundColor = [UIColor systemOrangeColor];
+        _mergeButton.layer.cornerRadius = kCornerRadius;
+        _mergeButton.layer.masksToBounds = YES;
+        if (@available(iOS 11.0, *)) {
+            _mergeButton.layer.maskedCorners = kCALayerMinXMaxYCorner;
+        }
+        _mergeButton.tintColor = [UIColor whiteColor];
+        _mergeButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"merge"];
+        [_mergeButton setImage:[UIImage systemImageNamed:@"inset.filled.righthalf.arrow.right.rectangle"] forState:UIControlStateNormal];
+        [_mergeButton addTarget:self action:@selector(tapMergeButton) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _mergeButton;
 }
 
 @end
