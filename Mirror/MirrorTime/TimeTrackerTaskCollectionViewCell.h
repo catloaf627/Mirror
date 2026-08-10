@@ -17,6 +17,7 @@ static CGFloat const kInterspacing = 16;
 @protocol TimeTrackerTaskCollectionViewCellDelegate <NSObject>
 
 - (void)timeTrackerTaskCollectionViewCellDidTapEdit:(TimeTrackerTaskCollectionViewCell *)cell;
+- (void)timeTrackerTaskCollectionViewCellDidTapColor:(TimeTrackerTaskCollectionViewCell *)cell;
 - (void)timeTrackerTaskCollectionViewCellDidTapDelete:(TimeTrackerTaskCollectionViewCell *)cell;
 
 @end

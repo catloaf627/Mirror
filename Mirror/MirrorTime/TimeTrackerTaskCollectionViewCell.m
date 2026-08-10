@@ -23,6 +23,7 @@ static CGFloat const kCornerRadius = 14;
 @property (nonatomic, strong) UILabel *taskNameLabel;
 @property (nonatomic, strong) UILabel *hintLabel;
 @property (nonatomic, strong) UIButton *editButton;
+@property (nonatomic, strong) UIButton *colorButton;
 @property (nonatomic, strong) UIButton *deleteButton;
 @property (nonatomic, assign) BOOL didSetupUI;
 
@@ -54,6 +55,7 @@ static CGFloat const kCornerRadius = 14;
     self.clipsToBounds = YES;
     [self addSubview:self.deleteButton];
     [self addSubview:self.editButton];
+    [self addSubview:self.colorButton];
     [self.deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.top.offset(kShadowWidth);
         make.bottom.offset(-kShadowWidth);
@@ -62,11 +64,18 @@ static CGFloat const kCornerRadius = 14;
     [self.editButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.offset(-kShadowWidth);
         make.top.offset(kShadowWidth);
+        make.width.mas_equalTo(self.mas_width).multipliedBy(0.5);
+        make.height.mas_equalTo(self.mas_height).multipliedBy(0.5).offset(-kShadowWidth);
+    }];
+    [self.colorButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.offset(-kShadowWidth);
+        make.top.mas_equalTo(self.editButton.mas_bottom);
         make.bottom.offset(-kShadowWidth);
         make.width.mas_equalTo(self.mas_width).multipliedBy(0.5);
     }];
     self.deleteButton.alpha = 0;
     self.editButton.alpha = 0;
+    self.colorButton.alpha = 0;
     [self bringSubviewToFront:self.contentView];
     
     [self.contentView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -106,6 +115,7 @@ static CGFloat const kCornerRadius = 14;
     self.contentView.transform = CGAffineTransformIdentity;
     self.deleteButton.alpha = 0;
     self.editButton.alpha = 0;
+    self.colorButton.alpha = 0;
 }
 
 - (void)layoutSubviews
@@ -114,6 +124,7 @@ static CGFloat const kCornerRadius = 14;
     CGFloat iconOffset = CGRectGetWidth(self.deleteButton.bounds) / 6.0;
     self.deleteButton.imageEdgeInsets = UIEdgeInsetsMake(0, -iconOffset, 0, iconOffset);
     self.editButton.imageEdgeInsets = UIEdgeInsetsMake(0, iconOffset, 0, -iconOffset);
+    self.colorButton.imageEdgeInsets = UIEdgeInsetsMake(0, iconOffset, 0, -iconOffset);
 }
 
 #pragma mark - Actions
@@ -157,6 +168,12 @@ static CGFloat const kCornerRadius = 14;
     [self.delegate timeTrackerTaskCollectionViewCellDidTapEdit:self];
 }
 
+- (void)tapColorButton
+{
+    [self setContentOffset:0 animated:YES];
+    [self.delegate timeTrackerTaskCollectionViewCellDidTapColor:self];
+}
+
 - (void)tapDeleteButton
 {
     [self setContentOffset:0 animated:YES];
@@ -194,6 +211,7 @@ static CGFloat const kCornerRadius = 14;
 {
     self.deleteButton.alpha = offset > 0 ? 1 : 0;
     self.editButton.alpha = offset < 0 ? 1 : 0;
+    self.colorButton.alpha = offset < 0 ? 1 : 0;
 }
 
 #pragma mark - Getters
@@ -230,7 +248,7 @@ static CGFloat const kCornerRadius = 14;
         _editButton.layer.cornerRadius = kCornerRadius;
         _editButton.layer.masksToBounds = YES;
         if (@available(iOS 11.0, *)) {
-            _editButton.layer.maskedCorners = kCALayerMaxXMinYCorner | kCALayerMaxXMaxYCorner;
+            _editButton.layer.maskedCorners = kCALayerMaxXMinYCorner;
         }
         _editButton.tintColor = [UIColor whiteColor];
         _editButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"edit"];
@@ -238,6 +256,24 @@ static CGFloat const kCornerRadius = 14;
         [_editButton addTarget:self action:@selector(tapEditButton) forControlEvents:UIControlEventTouchUpInside];
     }
     return _editButton;
+}
+
+- (UIButton *)colorButton
+{
+    if (!_colorButton) {
+        _colorButton = [UIButton new];
+        _colorButton.backgroundColor = [UIColor systemYellowColor];
+        _colorButton.layer.cornerRadius = kCornerRadius;
+        _colorButton.layer.masksToBounds = YES;
+        if (@available(iOS 11.0, *)) {
+            _colorButton.layer.maskedCorners = kCALayerMaxXMaxYCorner;
+        }
+        _colorButton.tintColor = [UIColor whiteColor];
+        _colorButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"edit"];
+        [_colorButton setImage:[UIImage systemImageNamed:@"paintpalette"] forState:UIControlStateNormal];
+        [_colorButton addTarget:self action:@selector(tapColorButton) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _colorButton;
 }
 
 - (UIButton *)deleteButton

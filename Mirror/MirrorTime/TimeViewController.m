@@ -30,6 +30,127 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
+static CGFloat const kTaskColorPickerSize = 160;
+static CGFloat const kTaskColorPickerButtonSize = 28;
+static CGFloat const kTaskColorPickerButtonCornerRadius = 14;
+static CGFloat const kTaskColorPickerSelectedBorderWidth = 2;
+static CGFloat const kTaskColorPickerBackdropAlpha = 0.2;
+static CGFloat const kTaskColorPickerShadowOpacity = 0.25;
+static CGFloat const kTaskColorPickerShadowRadius = 10;
+static CGFloat const kTaskColorPickerShadowYOffset = 4;
+
+typedef void (^TaskColorCirclePickerCompletion)(MirrorColorType color);
+
+@interface TaskColorCirclePickerViewController : UIViewController<UIGestureRecognizerDelegate>
+
+- (instancetype)initWithColors:(NSArray<NSNumber *> *)colors selectedColor:(MirrorColorType)selectedColor completion:(TaskColorCirclePickerCompletion)completion;
+
+@end
+
+@interface TaskColorCirclePickerViewController ()
+
+@property (nonatomic, strong) NSArray<NSNumber *> *colors;
+@property (nonatomic, assign) MirrorColorType selectedColor;
+@property (nonatomic, copy) TaskColorCirclePickerCompletion completion;
+@property (nonatomic, strong) UIView *circleView;
+@property (nonatomic, strong) NSMutableArray<UIButton *> *colorButtons;
+
+@end
+
+@implementation TaskColorCirclePickerViewController
+
+- (instancetype)initWithColors:(NSArray<NSNumber *> *)colors selectedColor:(MirrorColorType)selectedColor completion:(TaskColorCirclePickerCompletion)completion
+{
+    self = [super init];
+    if (self) {
+        _colors = colors;
+        _selectedColor = selectedColor;
+        _completion = completion;
+        _colorButtons = [NSMutableArray new];
+        self.modalPresentationStyle = UIModalPresentationOverFullScreen;
+        self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    self.view.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:kTaskColorPickerBackdropAlpha];
+    UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissPicker)];
+    tapGesture.delegate = self;
+    [self.view addGestureRecognizer:tapGesture];
+    
+    [self.view addSubview:self.circleView];
+    [self.circleView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.center.mas_equalTo(self.view);
+        make.width.height.mas_equalTo(kTaskColorPickerSize);
+    }];
+    
+    for (NSNumber *colorNumber in self.colors) {
+        UIButton *button = [UIButton new];
+        MirrorColorType color = colorNumber.integerValue;
+        button.tag = color;
+        button.backgroundColor = [UIColor mirrorColorNamed:color];
+        button.layer.cornerRadius = kTaskColorPickerButtonCornerRadius;
+        button.layer.borderWidth = color == self.selectedColor ? kTaskColorPickerSelectedBorderWidth : 0;
+        button.layer.borderColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:color]].CGColor;
+        [button addTarget:self action:@selector(selectColor:) forControlEvents:UIControlEventTouchUpInside];
+        [self.circleView addSubview:button];
+        [self.colorButtons addObject:button];
+    }
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    CGFloat radius = CGRectGetWidth(self.circleView.bounds) / 2.0 - kTaskColorPickerButtonSize;
+    CGPoint center = CGPointMake(CGRectGetMidX(self.circleView.bounds), CGRectGetMidY(self.circleView.bounds));
+    for (NSInteger index = 0; index < self.colorButtons.count; index++) {
+        CGFloat angle = (-M_PI_2) + (2 * M_PI * index / self.colorButtons.count);
+        UIButton *button = self.colorButtons[index];
+        button.frame = CGRectMake(center.x + cos(angle) * radius - kTaskColorPickerButtonSize / 2.0,
+                                  center.y + sin(angle) * radius - kTaskColorPickerButtonSize / 2.0,
+                                  kTaskColorPickerButtonSize,
+                                  kTaskColorPickerButtonSize);
+    }
+    self.circleView.layer.cornerRadius = CGRectGetWidth(self.circleView.bounds) / 2.0;
+}
+
+- (void)selectColor:(UIButton *)button
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    if (self.completion) {
+        self.completion(button.tag);
+    }
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)dismissPicker
+{
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{
+    return ![touch.view isDescendantOfView:self.circleView];
+}
+
+- (UIView *)circleView
+{
+    if (!_circleView) {
+        _circleView = [UIView new];
+        _circleView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _circleView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
+        _circleView.layer.shadowOpacity = kTaskColorPickerShadowOpacity;
+        _circleView.layer.shadowRadius = kTaskColorPickerShadowRadius;
+        _circleView.layer.shadowOffset = CGSizeMake(0, kTaskColorPickerShadowYOffset);
+    }
+    return _circleView;
+}
+
+@end
+
 @interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
@@ -216,8 +337,58 @@
         return;
     }
     MirrorTaskModel *task = self.data[indexPath.item];
-    AddTaskViewController *editVC = [[AddTaskViewController alloc] initWithTaskName:task.taskName];
-    [self.navigationController presentViewController:editVC animated:YES completion:nil];
+    UIAlertController *editAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit_task_title"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [editAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.text = task.taskName;
+        textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"edit_task_title"];
+        textField.textAlignment = NSTextAlignmentCenter;
+    }];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
+    UIAlertAction *saveAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"save"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *newTaskName = editAlert.textFields.firstObject.text;
+        BOOL textIsEmpty = !newTaskName || [newTaskName isEqualToString:@""];
+        BOOL textIsTheSame = [newTaskName isEqualToString:task.taskName];
+        TaskNameExistsType existType = [MirrorStorage taskNameExists:newTaskName];
+        if (textIsEmpty) {
+            [self showTaskEditErrorWithTitleKey:@"name_field_cannot_be_empty"];
+            return;
+        }
+        if (!textIsTheSame && existType != TaskNameExistsTypeValid) {
+            [self showTaskEditErrorWithTitleKey:@"task_cannot_be_duplicated"];
+            return;
+        }
+        if (!textIsTheSame) {
+            [MirrorStorage editTask:task.taskName name:newTaskName];
+        }
+    }];
+    [editAlert addAction:cancelAction];
+    [editAlert addAction:saveAction];
+    [self presentViewController:editAlert animated:YES completion:nil];
+}
+
+- (void)presentColorTaskSheetAtIndexPath:(NSIndexPath *)indexPath
+{
+    if (![self canMoveTaskAtIndexPath:indexPath]) {
+        return;
+    }
+    MirrorTaskModel *task = self.data[indexPath.item];
+    TaskColorCirclePickerViewController *colorPicker = [[TaskColorCirclePickerViewController alloc] initWithColors:[self taskColorOptions] selectedColor:task.color completion:^(MirrorColorType color) {
+        [MirrorStorage editTask:task.taskName color:color];
+    }];
+    [self presentViewController:colorPicker animated:YES completion:nil];
+}
+
+- (void)showTaskEditErrorWithTitleKey:(NSString *)titleKey
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:titleKey] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertAction *understandAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"gotcha"] style:UIAlertActionStyleDefault handler:nil];
+    [alert addAction:understandAction];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (NSArray<NSNumber *> *)taskColorOptions
+{
+    return @[@(MirrorColorTypeCellPink), @(MirrorColorTypeCellOrange), @(MirrorColorTypeCellYellow), @(MirrorColorTypeCellGreen), @(MirrorColorTypeCellTeal), @(MirrorColorTypeCellBlue), @(MirrorColorTypeCellPurple), @(MirrorColorTypeCellGray)];
 }
 
 - (void)presentDeleteTaskAlertAtIndexPath:(NSIndexPath *)indexPath
@@ -447,6 +618,12 @@
 {
     NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
     [self presentEditTaskSheetAtIndexPath:indexPath];
+}
+
+- (void)timeTrackerTaskCollectionViewCellDidTapColor:(TimeTrackerTaskCollectionViewCell *)cell
+{
+    NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
+    [self presentColorTaskSheetAtIndexPath:indexPath];
 }
 
 - (void)timeTrackerTaskCollectionViewCellDidTapDelete:(TimeTrackerTaskCollectionViewCell *)cell
