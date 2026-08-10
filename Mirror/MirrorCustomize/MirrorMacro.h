@@ -93,6 +93,7 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 // Data Notifications (MirrorStorage统一来发)
 #define MirrorTaskCreateNotification @"MirrorTaskCreateNotification"
 #define MirrorTaskDeleteNotification @"MirrorTaskDeleteNotification"
+#define MirrorTaskMergeNotification @"MirrorTaskMergeNotification"
 #define MirrorTaskHiddenNotification @"MirrorTaskHiddenNotification"
 #define MirrorTaskChangeOrderNotification @"MirrorTaskChangeOrderNotification"
 #define MirrorTaskEditNotification @"MirrorTaskEditNotification"

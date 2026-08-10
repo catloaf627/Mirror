@@ -111,6 +111,39 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
+// 将一个任务合并到另一个任务；例如把“英语”的所有记录改名为“学习”，再从任务列表删除“英语”。
++ (void)mergeTask:(NSString *)sourceTaskName toTask:(NSString *)targetTaskName
+{
+    if (sourceTaskName.length == 0 || targetTaskName.length == 0 || [sourceTaskName isEqualToString:targetTaskName]) {
+        return;
+    }
+    
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    for (MirrorRecordModel *record in records) {
+        if ([record.taskName isEqualToString:sourceTaskName]) {
+            record.taskName = targetTaskName;
+        }
+    }
+    [MirrorStorage saveMirrorRecords:records];
+    
+    NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
+    NSInteger sourceTaskIndex = NSNotFound;
+    for (NSInteger index = 0; index < tasks.count; index++) {
+        if ([tasks[index].taskName isEqualToString:sourceTaskName]) {
+            sourceTaskIndex = index;
+            break;
+        }
+    }
+    if (sourceTaskIndex != NSNotFound) {
+        [tasks removeObjectAtIndex:sourceTaskIndex];
+    }
+    [MirrorStorage saveMirrorTasks:tasks];
+    
+    NSLog(@"Merge task");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskMergeNotification object:nil userInfo:nil];
+    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
 // 切换任务隐藏状态；例如把“工作”设为 hidden 后，Grid/History 这类隐藏过滤数据源不再统计它。
 + (void)switchHiddenTask:(NSString *)taskName
 {

@@ -29,6 +29,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)deleteTask:(NSString *)taskName;
 
++ (void)mergeTask:(NSString *)sourceTaskName toTask:(NSString *)targetTaskName;
+
 + (void)switchHiddenTask:(NSString *)taskName;
 
 + (void)editTask:(NSString *)oldName name:(NSString *)newName;
