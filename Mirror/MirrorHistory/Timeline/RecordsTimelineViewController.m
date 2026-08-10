@@ -11,6 +11,7 @@
 #import "MirrorTool.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
+#import "MirrorLanguage.h"
 #import "MirrorMacro.h"
 
 static CGFloat const kHorizontalPadding = 20;
@@ -19,13 +20,19 @@ static CGFloat const kDotSize = 10;
 static CGFloat const kRowMinHeight = 72;
 static CGFloat const kTextLeftPadding = 18;
 
-@interface RecordsTimelineViewController ()
+@interface RecordsTimelineViewController () <UIEditMenuInteractionDelegate>
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) MirrorDataModel *data;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *highlightedRecords;
 @property (nonatomic, weak) UIView *firstHighlightedRow;
+@property (nonatomic, assign) NSInteger selectedPeriodIndex;
+@property (nonatomic, assign) NSInteger editingPeriodIndex;
+@property (nonatomic, strong) UIDatePicker *editingStartPicker;
+@property (nonatomic, strong) UIDatePicker *editingEndPicker;
+@property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
+@property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
 
@@ -43,6 +50,8 @@ static CGFloat const kTextLeftPadding = 18;
         self.data = data;
         self.highlightedRecords = highlightedRecords;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
     }
     return self;
 }
@@ -67,6 +76,16 @@ static CGFloat const kTextLeftPadding = 18;
 - (void)restartVC
 {
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:self.data.taskModel.taskName leftButton:nil rightButton:nil];
+    self.scrollView = nil;
+    self.contentView = nil;
+    self.firstHighlightedRow = nil;
+    [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [self p_setupUI];
+}
+
+- (void)reloadData
+{
+    self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
     self.scrollView = nil;
     self.contentView = nil;
     self.firstHighlightedRow = nil;
@@ -162,7 +181,13 @@ static CGFloat const kTextLeftPadding = 18;
     UIColor *pulseColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:task.color]];
     UIColor *taskColor = [UIColor mirrorColorNamed:task.color];
     row.backgroundColor = isHighlighted ? [pulseColor colorWithAlphaComponent:0.12] : [UIColor clearColor];
-    row.layer.cornerRadius = 8;
+    row.tag = record.originalIndex;
+    if (@available(iOS 16.0, *)) {
+        UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
+        [row addInteraction:editMenuInteraction];
+        UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+        [row addGestureRecognizer:tapRecognizer];
+    }
     
     UIView *topLine = [UIView new];
     topLine.backgroundColor = pulseColor;
@@ -232,6 +257,225 @@ static CGFloat const kTextLeftPadding = 18;
     }];
     
     return row;
+}
+
+#pragma mark - Edit Menu
+
+- (void)showEditMenu:(UITapGestureRecognizer *)recognizer
+{
+    UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+    [feedback impactOccurred];
+    
+    UIView *view = recognizer.view;
+    self.selectedPeriodIndex = view.tag;
+    
+    if (@available(iOS 16.0, *)) {
+        UIEditMenuInteraction *editMenuInteraction = nil;
+        for (id<UIInteraction> interaction in view.interactions) {
+            if ([interaction isKindOfClass:[UIEditMenuInteraction class]]) {
+                editMenuInteraction = (UIEditMenuInteraction *)interaction;
+                break;
+            }
+        }
+        if (!editMenuInteraction) {
+            return;
+        }
+        
+        CGPoint point = [recognizer locationInView:view];
+        UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
+        [editMenuInteraction presentEditMenuWithConfiguration:configuration];
+    }
+}
+
+- (UIMenu *)recordMenuForPeriodIndex:(NSInteger)periodIndex
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return nil;
+    }
+    
+    UIAction *editAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        UIButton *button = [UIButton new];
+        button.tag = periodIndex;
+        [self editPeriod:button];
+    }];
+    UIAction *deleteAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        UIButton *button = [UIButton new];
+        button.tag = periodIndex;
+        [self deletePeriod:button];
+    }];
+    deleteAction.attributes = UIMenuElementAttributesDestructive;
+    return [UIMenu menuWithTitle:@"" children:@[editAction, deleteAction]];
+}
+
+- (UIMenu *)editMenuInteraction:(UIEditMenuInteraction *)interaction menuForConfiguration:(UIEditMenuConfiguration *)configuration suggestedActions:(NSArray<UIMenuElement *> *)suggestedActions API_AVAILABLE(ios(16.0))
+{
+    return [self recordMenuForPeriodIndex:self.selectedPeriodIndex];
+}
+
+- (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willPresentMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
+{
+    self.visibleRecordEditMenuInteraction = interaction;
+}
+
+- (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willDismissMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
+{
+    if (interaction == self.visibleRecordEditMenuInteraction) {
+        self.visibleRecordEditMenuInteraction = nil;
+    }
+}
+
+- (void)deletePeriod:(UIButton *)sender
+{
+    NSInteger periodIndex = sender.tag;
+    UIAlertController *deleteButtonAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_period_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [MirrorStorage deletePeriodAtIndex:periodIndex];
+    }];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
+    
+    [deleteButtonAlert addAction:cancelAction];
+    [deleteButtonAlert addAction:deleteAction];
+    [self presentViewController:deleteButtonAlert animated:YES completion:nil];
+}
+
+- (void)editPeriod:(UIButton *)sender
+{
+    NSInteger periodIndex = sender.tag;
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return;
+    }
+    
+    MirrorRecordModel *record = records[periodIndex];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIDatePicker *startPicker = [UIDatePicker new];
+    startPicker.datePickerMode = UIDatePickerModeDateAndTime;
+    startPicker.timeZone = [NSTimeZone systemTimeZone];
+    startPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
+    startPicker.date = [NSDate dateWithTimeIntervalSince1970:record.startTime];
+    startPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:record.endTime - kMinSeconds];
+    [startPicker addTarget:self action:@selector(startPickerValueChanged:) forControlEvents:UIControlEventValueChanged];
+    if (periodIndex - 1 >= 0) {
+        startPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex - 1].endTime];
+    }
+    
+    UIDatePicker *endPicker = [UIDatePicker new];
+    endPicker.datePickerMode = UIDatePickerModeDateAndTime;
+    endPicker.timeZone = [NSTimeZone systemTimeZone];
+    endPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
+    endPicker.date = [NSDate dateWithTimeIntervalSince1970:record.endTime];
+    endPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:record.startTime + kMinSeconds];
+    [endPicker addTarget:self action:@selector(endPickerValueChanged:) forControlEvents:UIControlEventValueChanged];
+    if (periodIndex + 1 <= records.count - 1) {
+        endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex + 1].startTime];
+    }
+    
+    self.editingPeriodIndex = periodIndex;
+    self.editingStartPicker = startPicker;
+    self.editingEndPicker = endPicker;
+    
+    UILabel *startLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"starts_at"]];
+    UILabel *endLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"ends_at"]];
+    UIView *contentView = alertController.view;
+    [contentView addSubview:startLabel];
+    [contentView addSubview:startPicker];
+    [contentView addSubview:endLabel];
+    [contentView addSubview:endPicker];
+    
+    [startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.offset(24);
+        make.top.offset(58);
+        make.width.mas_equalTo(90);
+        make.height.mas_equalTo(30);
+    }];
+    [startPicker mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(startLabel.mas_right).offset(8);
+        make.centerY.mas_equalTo(startLabel);
+        make.right.offset(-24);
+        make.height.mas_equalTo(34);
+    }];
+    [endLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(startLabel);
+        make.top.mas_equalTo(startLabel.mas_bottom).offset(8);
+        make.width.mas_equalTo(90);
+        make.height.mas_equalTo(30);
+    }];
+    [endPicker mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(endLabel.mas_right).offset(8);
+        make.centerY.mas_equalTo(endLabel);
+        make.right.offset(-24);
+        make.height.mas_equalTo(34);
+    }];
+    
+    [self presentViewController:alertController animated:YES completion:^{
+        [self addEditingDismissTapRecognizer];
+    }];
+}
+
+- (void)addEditingDismissTapRecognizer
+{
+    if (self.editingDismissTapRecognizer != nil) {
+        return;
+    }
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissEditingPeriodAlert:)];
+    tapRecognizer.cancelsTouchesInView = NO;
+    self.editingDismissTapRecognizer = tapRecognizer;
+    [self.view.window addGestureRecognizer:tapRecognizer];
+}
+
+- (void)dismissEditingPeriodAlert:(UITapGestureRecognizer *)tapRecognizer
+{
+    UIViewController *presentedViewController = self.presentedViewController;
+    UIView *alertView = presentedViewController.view;
+    CGPoint tapPoint = [tapRecognizer locationInView:alertView];
+    if (CGRectContainsPoint(alertView.bounds, tapPoint)) {
+        return;
+    }
+    [self removeEditingDismissTapRecognizer];
+    self.editingStartPicker = nil;
+    self.editingEndPicker = nil;
+    [presentedViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)removeEditingDismissTapRecognizer
+{
+    [self.view.window removeGestureRecognizer:self.editingDismissTapRecognizer];
+    self.editingDismissTapRecognizer = nil;
+}
+
+- (void)startPickerValueChanged:(UIDatePicker *)picker
+{
+    NSDate *minimumEndDate = [picker.date dateByAddingTimeInterval:kMinSeconds];
+    self.editingEndPicker.minimumDate = minimumEndDate;
+    if ([self.editingEndPicker.date compare:minimumEndDate] == NSOrderedAscending) {
+        self.editingEndPicker.date = minimumEndDate;
+        [MirrorStorage editPeriodIsStartTime:NO to:round([minimumEndDate timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+    }
+    [MirrorStorage editPeriodIsStartTime:YES to:round([picker.date timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+}
+
+- (void)endPickerValueChanged:(UIDatePicker *)picker
+{
+    NSDate *maximumStartDate = [picker.date dateByAddingTimeInterval:-kMinSeconds];
+    self.editingStartPicker.maximumDate = maximumStartDate;
+    if ([self.editingStartPicker.date compare:maximumStartDate] == NSOrderedDescending) {
+        self.editingStartPicker.date = maximumStartDate;
+        [MirrorStorage editPeriodIsStartTime:YES to:round([maximumStartDate timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+    }
+    [MirrorStorage editPeriodIsStartTime:NO to:round([picker.date timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+}
+
+- (UILabel *)pickerLabelWithText:(NSString *)text
+{
+    UILabel *label = [UILabel new];
+    label.text = text;
+    label.font = [UIFont mirrorHintFont];
+    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+    label.adjustsFontSizeToFitWidth = YES;
+    return label;
 }
 
 #pragma mark - Getters
