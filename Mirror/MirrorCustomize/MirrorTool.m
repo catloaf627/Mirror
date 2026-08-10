@@ -6,6 +6,7 @@
 //
 
 #import "MirrorTool.h"
+#import "MirrorLanguage.h"
 #import "MirrorSettings.h"
 
 @implementation MirrorTool
@@ -69,6 +70,25 @@
     } else {
         return [NSString stringWithFormat: @"%ld.%ld.%ld,%@,%ld:%ld:%ld", year, month, day, weekday, hour, minute, second];
     }
+}
+
++ (NSString *)localizedTimeFromTimestamp:(long)timestamp
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateStyle = NSDateFormatterMediumStyle;
+    formatter.timeStyle = NSDateFormatterShortStyle;
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    formatter.locale = [MirrorTool formatterLocaleForCurrentLanguage];
+    return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
+}
+
++ (NSLocale *)formatterLocaleForCurrentLanguage
+{
+    NSString *localeIdentifier = [MirrorLanguage mirror_stringWithKey:@"locale_Identifier"];
+    if (localeIdentifier.length == 0) {
+        localeIdentifier = @"en";
+    }
+    return [NSLocale localeWithLocaleIdentifier:localeIdentifier];
 }
 
 + (long)getDayGapFromTheFirstDayThisWeek

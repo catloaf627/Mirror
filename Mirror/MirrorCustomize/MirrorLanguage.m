@@ -21,6 +21,9 @@
 {
     NSMutableDictionary *mirrorDict = [NSMutableDictionary new];
     
+    // locale
+    [mirrorDict setValue:ML(@"en", @"zh-Hans", @"es", @"fr", @"ja", @"ko") forKey:@"locale_Identifier"];
+    
     // tabs
     [mirrorDict setValue:ML(@"Start", @"计时", @"Iniciar", @"Démarrer", @"開始", @"시작") forKey:@"start"];
     [mirrorDict setValue:ML(@"Today", @"今天", @"Hoy", @"Aujourd'hui", @"今日", @"오늘") forKey:@"today"];

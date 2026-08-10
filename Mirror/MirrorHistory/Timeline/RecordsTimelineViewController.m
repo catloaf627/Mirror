@@ -238,7 +238,7 @@ static CGFloat const kTextLeftPadding = 18;
     timeLabel.font = [UIFont mirrorLabelFont];
     timeLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     timeLabel.adjustsFontSizeToFitWidth = YES;
-    timeLabel.text = [NSString stringWithFormat:@"%@ - %@", [MirrorTool timeFromTimestamp:record.startTime printTimeStamp:NO], [MirrorTool timeFromTimestamp:record.endTime printTimeStamp:NO]];
+    timeLabel.text = [NSString stringWithFormat:@"%@ - %@", [MirrorTool localizedTimeFromTimestamp:record.startTime], [MirrorTool localizedTimeFromTimestamp:record.endTime]];
     [row addSubview:timeLabel];
     [timeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.mas_equalTo(dateLabel);
@@ -268,6 +268,7 @@ static CGFloat const kTextLeftPadding = 18;
     
     UIView *view = recognizer.view;
     self.selectedPeriodIndex = view.tag;
+    [self shakeSelectedRow:view];
     
     if (@available(iOS 16.0, *)) {
         UIEditMenuInteraction *editMenuInteraction = nil;
@@ -285,6 +286,15 @@ static CGFloat const kTextLeftPadding = 18;
         UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
         [editMenuInteraction presentEditMenuWithConfiguration:configuration];
     }
+}
+
+- (void)shakeSelectedRow:(UIView *)row
+{
+    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    animation.values = @[@0, @(-4 * kWidthRatio), @(4 * kWidthRatio), @(-2 * kWidthRatio), @(2 * kWidthRatio), @0];
+    animation.duration = 0.18;
+    [row.layer addAnimation:animation forKey:@"selectedRowShake"];
 }
 
 - (UIMenu *)recordMenuForPeriodIndex:(NSInteger)periodIndex
