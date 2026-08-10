@@ -104,7 +104,7 @@ static CGFloat const kDotSize = 8;
     CGFloat percentage = maxTime > 0 ? totalTime / (CGFloat)maxTime : 0;
     
     UIView *dot = [UIView new];
-    dot.backgroundColor = pulseColor;
+    dot.backgroundColor = taskColor;
     dot.layer.cornerRadius = kDotSize / 2;
     [row addSubview:dot];
     [dot mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -115,7 +115,7 @@ static CGFloat const kDotSize = 8;
     
     UILabel *titleLabel = [UILabel new];
     titleLabel.text = data.taskModel.taskName;
-    titleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    titleLabel.textColor = pulseColor;
     titleLabel.font = [UIFont mirrorTitleFont_Card];
     titleLabel.adjustsFontSizeToFitWidth = YES;
     [row addSubview:titleLabel];
@@ -141,8 +141,7 @@ static CGFloat const kDotSize = 8;
     }];
     
     UIView *barTrack = [UIView new];
-    barTrack.backgroundColor = taskColor;
-    barTrack.alpha = 0.7;
+    barTrack.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
     barTrack.layer.cornerRadius = kBarHeight / 2;
     barTrack.layer.masksToBounds = YES;
     [row addSubview:barTrack];
@@ -154,7 +153,7 @@ static CGFloat const kDotSize = 8;
     }];
     
     UIView *bar = [UIView new];
-    bar.backgroundColor = pulseColor;
+    bar.backgroundColor = taskColor;
     bar.layer.cornerRadius = kBarHeight / 2;
     bar.layer.masksToBounds = YES;
     [barTrack addSubview:bar];

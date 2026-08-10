@@ -42,6 +42,7 @@ static CGFloat const kCornerRadius = 14;
     [self p_setupUI];
     self.taskNameLabel.text = taskName;
     self.hintLabel.text = [MirrorTimeText Xh: [MirrorTool getTotalTimeOfPeriods:[MirrorStorage getAllTaskRecords:taskName]]];
+    self.taskNameLabel.textColor = [UIColor mirrorColorNamed:[UIColor mirror_getPulseColorType:[MirrorStorage getTaskModelFromDB:taskName].color]];
     self.contentView.backgroundColor = [UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:taskName].color];
 }
 
@@ -247,7 +248,7 @@ static CGFloat const kCornerRadius = 14;
 {
     if (!_taskNameLabel) {
         _taskNameLabel = [[UILabel alloc] init];
-        _taskNameLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+//        _taskNameLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _taskNameLabel.numberOfLines = 1;
         _taskNameLabel.textAlignment = NSTextAlignmentCenter;
         _taskNameLabel.font = [UIFont mirrorTitleFont_Card];

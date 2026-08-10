@@ -49,7 +49,7 @@
         self.backgroundColor = [[UIColor mirrorColorNamed:[MirrorSettings preferredHeatmapColor]] colorWithAlphaComponent:alpha];
     }
     if (isSelected) {
-        self.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeText].CGColor;
+        self.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint].CGColor;
         self.layer.borderWidth = 2;
         self.layer.cornerRadius = 2;
     } else {

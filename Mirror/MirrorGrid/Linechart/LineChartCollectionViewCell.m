@@ -41,7 +41,6 @@ static CGFloat const kMinimumVisibleBarHeight = 2;
         
         UIView *bar = [[UIView alloc] initWithFrame:CGRectMake(barX, barY, kBarWidth, barHeight)];
         bar.backgroundColor = [UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:key].color];
-        bar.alpha = 0.55;
         bar.layer.cornerRadius = kBarWidth / 2;
         [self.contentView addSubview:bar];
     }
