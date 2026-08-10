@@ -144,7 +144,7 @@
 
 + (UIColor *)mirror_lightPink
 {
-    return [UIColor colorWithRed:224/255.0 green:205/255.0 blue:207/255.0 alpha:1]; // 莫兰迪粉 #E0CDCF
+    return [UIColor colorWithRed:226/255.0 green:207/255.0 blue:210/255.0 alpha:1]; // 莫兰迪粉 #E2CFD2
 }
 
 + (UIColor *)mirror_darkPink
@@ -154,7 +154,7 @@
 
 + (UIColor *)mirror_lightOrange
 {
-    return [UIColor colorWithRed:233/255.0 green:217/255.0 blue:209/255.0 alpha:1]; // 莫兰迪橘 #E9D9D1
+    return [UIColor colorWithRed:228/255.0 green:212/255.0 blue:204/255.0 alpha:1]; // 莫兰迪橘 #E4D4CC
 }
 
 + (UIColor *)mirror_darkOrange
@@ -164,7 +164,7 @@
 
 + (UIColor *)mirror_lightYellow
 {
-    return [UIColor colorWithRed:243/255.0 green:230/255.0 blue:211/255.0 alpha:1]; // 莫兰迪黄 #F3E6D3
+    return [UIColor colorWithRed:229/255.0 green:218/255.0 blue:200/255.0 alpha:1]; // 莫兰迪黄 #E5DAC8
 }
 
 + (UIColor *)mirror_darkYellow
@@ -174,7 +174,7 @@
 
 + (UIColor *)mirror_lightGreen
 {
-    return [UIColor colorWithRed:224/255.0 green:235/255.0 blue:223/255.0 alpha:1]; // 莫兰迪绿 #E0EBDF
+    return [UIColor colorWithRed:213/255.0 green:225/255.0 blue:211/255.0 alpha:1]; // 莫兰迪绿 #D5E1D3
 }
 
 + (UIColor *)mirror_darkGreen
@@ -184,7 +184,7 @@
 
 + (UIColor *)mirror_lightTeal
 {
-    return [UIColor colorWithRed:212/255.0 green:231/255.0 blue:234/255.0 alpha:1]; // 莫兰迪青 #D4E7EA
+    return [UIColor colorWithRed:205/255.0 green:222/255.0 blue:225/255.0 alpha:1]; // 莫兰迪青 #CDDEE1
 }
 
 + (UIColor *)mirror_darkTeal
@@ -194,7 +194,7 @@
 
 + (UIColor *)mirror_lightBlue
 {
-    return [UIColor colorWithRed:198/255.0 green:208/255.0 blue:220/255.0 alpha:1]; // 莫兰迪蓝 #C6D0DC
+    return [UIColor colorWithRed:206/255.0 green:216/255.0 blue:228/255.0 alpha:1]; // 莫兰迪蓝 #CED8E4
 }
 
 + (UIColor *)mirror_darkBlue
@@ -204,7 +204,7 @@
 
 + (UIColor *)mirror_lightPurple
 {
-    return [UIColor colorWithRed:216/255.0 green:207/255.0 blue:226/255.0 alpha:1]; // 莫兰迪紫 #D8CFE2
+    return [UIColor colorWithRed:220/255.0 green:211/255.0 blue:228/255.0 alpha:1]; // 莫兰迪紫 #DCD3E4
 }
 
 + (UIColor *)mirror_darkPurple
