@@ -28,6 +28,7 @@ static CGFloat const kInterspacing = 16;
 
 + (NSString *)identifier;
 - (void)configWithTaskname:(NSString *)taskName;
+- (BOOL)dismissActionButtonsIfNeeded;
 
 @end
 

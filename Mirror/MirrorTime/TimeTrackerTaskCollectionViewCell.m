@@ -180,6 +180,15 @@ static CGFloat const kCornerRadius = 14;
     [self.delegate timeTrackerTaskCollectionViewCellDidTapDelete:self];
 }
 
+- (BOOL)dismissActionButtonsIfNeeded
+{
+    if (CGAffineTransformIsIdentity(self.contentView.transform)) {
+        return NO;
+    }
+    [self setContentOffset:0 animated:YES];
+    return YES;
+}
+
 - (void)setContentOffset:(CGFloat)offset animated:(BOOL)animated
 {
     void (^animations)(void) = ^{
