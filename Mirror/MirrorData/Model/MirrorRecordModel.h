@@ -16,6 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSString *taskName;
 @property (nonatomic, assign) long startTime;
 @property (nonatomic, assign) long endTime;
+@property (nonatomic, copy) NSString *note;
 
 - (instancetype)initWithTitle:(NSString *)taskName startTime:(long)startTime endTime:(long)endTime;
 

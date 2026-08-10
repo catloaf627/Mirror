@@ -296,7 +296,7 @@
     }
     
     MirrorRecordModel *record = records[periodIndex];
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
     
     UIDatePicker *startPicker = [UIDatePicker new];
     startPicker.datePickerMode = UIDatePickerModeTime;
@@ -330,11 +330,23 @@
     
     UILabel *startLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"starts_at"]];
     UILabel *endLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"ends_at"]];
+    UILabel *noteLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"note"]];
+    UITextField *noteTextField = [UITextField new];
+    noteTextField.text = record.note;
+    noteTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"note"];
+    noteTextField.font = [UIFont mirrorHintFont];
+    noteTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    noteTextField.borderStyle = UITextBorderStyleRoundedRect;
+    noteTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    noteTextField.tag = periodIndex;
+    [noteTextField addTarget:self action:@selector(noteTextFieldEditingChanged:) forControlEvents:UIControlEventEditingChanged];
     UIView *contentView = alertController.view;
     [contentView addSubview:startLabel];
     [contentView addSubview:startPicker];
     [contentView addSubview:endLabel];
     [contentView addSubview:endPicker];
+    [contentView addSubview:noteLabel];
+    [contentView addSubview:noteTextField];
     
     [startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(24);
@@ -357,6 +369,18 @@
     [endPicker mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(endLabel.mas_right).offset(8);
         make.centerY.mas_equalTo(endLabel);
+        make.right.offset(-24);
+        make.height.mas_equalTo(34);
+    }];
+    [noteLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(startLabel);
+        make.top.mas_equalTo(endLabel.mas_bottom).offset(8);
+        make.width.mas_equalTo(90);
+        make.height.mas_equalTo(30);
+    }];
+    [noteTextField mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(noteLabel.mas_right).offset(8);
+        make.centerY.mas_equalTo(noteLabel);
         make.right.offset(-24);
         make.height.mas_equalTo(34);
     }];
@@ -417,6 +441,14 @@
         [MirrorStorage editPeriodIsStartTime:YES to:round([maximumStartDate timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
     }
     [MirrorStorage editPeriodIsStartTime:NO to:round([picker.date timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+}
+
+- (void)noteTextFieldEditingChanged:(UITextField *)textField
+{
+    if (textField.text.length > 200) {
+        textField.text = [textField.text substringToIndex:200];
+    }
+    [MirrorStorage editPeriodNote:textField.text ?: @"" periodIndex:textField.tag];
 }
 
 #pragma mark - Timeline

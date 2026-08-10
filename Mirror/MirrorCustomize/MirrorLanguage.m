@@ -94,6 +94,7 @@
     // Delete period
     [mirrorDict setValue:ML(@"Delete this time period? ", @"确定删除这个时间段？", @"¿Eliminar este periodo?", @"Supprimer cette période ?", @"この時間帯を削除しますか？", @"이 시간대를 삭제할까요?") forKey:@"delete_period_?"];
     [mirrorDict setValue:ML(@"Ends at", @"结束于", @"Termina a las", @"Se termine à", @"終了時刻", @"종료 시간") forKey:@"ends_at"];
+    [mirrorDict setValue:ML(@"Note", @"备注", @"Nota", @"Note", @"メモ", @"메모") forKey:@"note"];
     
     // Time VC
     [mirrorDict setValue:ML(@"Long press to reorder tasks", @"长按可以调整任务顺序", @"Mantén presionado para reordenar tareas", @"Appuyez longuement pour réordonner les tâches", @"長押しでタスクを並べ替えられます", @"길게 눌러 작업 순서를 바꿀 수 있습니다") forKey:@"timeVC_hint0"];

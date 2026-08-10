@@ -275,6 +275,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         if (currentEndTime - currentStartTime >= kMinSeconds) {
             MirrorRecordModel *segment = [[MirrorRecordModel alloc] initWithTitle:record.taskName startTime:currentStartTime endTime:currentEndTime];
             segment.originalIndex = record.originalIndex;
+            segment.note = record.note;
             [records addObject:segment];
         }
         currentStartTime = currentEndTime;
@@ -428,6 +429,18 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     NSLog(@"Period is edited");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
+// 修改某条原始记录的备注；例如给 records[2] 写入一段用户备注，最多保留 200 个字符。
++ (void)editPeriodNote:(NSString *)note periodIndex:(NSInteger)index
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (index < 0 || index >= records.count) return;
+    
+    records[index].note = note;
+    [MirrorStorage saveMirrorRecords:records];
+    NSLog(@"Period note is edited");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
 }
 
 #pragma mark - Local database
@@ -655,7 +668,8 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         [jsonRecords addObject:@{
             @"task_name": record.taskName ?: @"",
             @"start_time": @(record.startTime),
-            @"end_time": @(record.endTime)
+            @"end_time": @(record.endTime),
+            @"note": record.note ?: @""
         }];
     }
 
@@ -699,10 +713,15 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         NSString *taskName = jsonRecord[@"task_name"];
         NSNumber *startTime = jsonRecord[@"start_time"];
         NSNumber *endTime = jsonRecord[@"end_time"];
+        NSString *note = jsonRecord[@"note"];
         if (![taskName isKindOfClass:NSString.class] || ![startTime isKindOfClass:NSNumber.class] || ![endTime isKindOfClass:NSNumber.class]) {
             return NO;
         }
+        if (note != nil && ![note isKindOfClass:NSString.class]) {
+            return NO;
+        }
         MirrorRecordModel *record = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:[startTime longValue] endTime:[endTime longValue]];
+        record.note = note ?: @"";
         [parsedRecords addObject:record];
     }
 
@@ -766,6 +785,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         if ([record.taskName isEqualToString:taskName]) {
             MirrorRecordModel *recordCopy = [[MirrorRecordModel alloc] initWithTitle:record.taskName startTime:record.startTime endTime:record.endTime];
             recordCopy.originalIndex = record.originalIndex;
+            recordCopy.note = record.note;
             [taskRecords addObject:recordCopy];
         }
     }

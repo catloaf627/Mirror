@@ -59,6 +59,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)editPeriodAtIndex:(NSInteger)index startAt:(NSDate *)startDate endAt:(NSDate *)endDate;
 
++ (void)editPeriodNote:(NSString *)note periodIndex:(NSInteger)index;
+
 // Retrive
 + (NSMutableArray<MirrorTaskModel *> *)retriveMirrorTasks;
 
