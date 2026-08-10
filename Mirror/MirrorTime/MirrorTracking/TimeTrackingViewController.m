@@ -68,6 +68,9 @@ static CGFloat const kCircleLineWidth = 18;
     self.trackLayer.lineWidth = kCircleLineWidth;
     [self.layer addSublayer:self.trackLayer];
 
+    self.startCapLayer = [CAShapeLayer layer];
+    [self.layer addSublayer:self.startCapLayer];
+
     self.gradientLayer = [CAGradientLayer layer];
     if (@available(iOS 12.0, *)) {
         self.gradientLayer.type = kCAGradientLayerConic;
@@ -82,9 +85,6 @@ static CGFloat const kCircleLineWidth = 18;
     self.progressMaskLayer.lineCap = kCALineCapButt;
     self.progressMaskLayer.lineWidth = kCircleLineWidth;
     self.gradientLayer.mask = self.progressMaskLayer;
-
-    self.startCapLayer = [CAShapeLayer layer];
-    [self.layer addSublayer:self.startCapLayer];
 
     self.endCapLayer = [CAShapeLayer layer];
     [self.layer addSublayer:self.endCapLayer];
@@ -126,6 +126,17 @@ static CGFloat const kCircleLineWidth = 18;
     [self updateCircleLayers];
 }
 
+- (UIBezierPath *)semiCapPathWithCenter:(CGPoint)center angle:(CGFloat)angle radius:(CGFloat)radius forward:(BOOL)forward
+{
+    CGPoint outerPoint = CGPointMake(center.x + radius*cos(angle), center.y + radius*sin(angle));
+
+    UIBezierPath *path = [UIBezierPath bezierPath];
+    [path moveToPoint:outerPoint];
+    [path addArcWithCenter:center radius:radius startAngle:angle endAngle:angle + M_PI clockwise:forward];
+    [path closePath];
+    return path;
+}
+
 - (void)updateCircleLayers
 {
     if (CGRectIsEmpty(self.bounds) || !self.taskColor || !self.pulseColor) {
@@ -143,6 +154,8 @@ static CGFloat const kCircleLineWidth = 18;
     CGFloat drawEndAngle = endAngle;
     CGFloat capRadius = kCircleLineWidth/2;
     CGFloat gradientProgress = drawsFullRing ? 1 : MIN(1, MAX(0.01, (drawEndAngle - drawStartAngle) / (2*M_PI)));
+    CGFloat pulseStartProgress = drawsFullRing ? 1 : MAX(0.001, gradientProgress - 0.01);
+    CGFloat pulseHoldProgress = drawsFullRing ? 1 : MIN(0.999, gradientProgress + 0.01);
     CGPoint gradientEndPoint = CGPointMake(0.5 + cos(drawStartAngle)/2, 0.5 + sin(drawStartAngle)/2);
     UIBezierPath *trackPath = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:startAngle endAngle:startAngle + 2*M_PI clockwise:YES];
     UIBezierPath *progressPath = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:drawStartAngle endAngle:drawEndAngle clockwise:YES];
@@ -163,19 +176,19 @@ static CGFloat const kCircleLineWidth = 18;
     self.gradientLayer.startPoint = CGPointMake(0.5, 0.5);
     self.gradientLayer.endPoint = gradientEndPoint;
     self.gradientLayer.transform = CATransform3DIdentity;
-    self.gradientLayer.colors = @[(id)self.taskColor.CGColor, (id)self.pulseColor.CGColor, (id)self.pulseColor.CGColor];
-    self.gradientLayer.locations = @[@0, @(gradientProgress), @1];
+    self.gradientLayer.colors = @[(id)self.taskColor.CGColor, (id)self.pulseColor.CGColor, (id)self.pulseColor.CGColor, (id)self.taskColor.CGColor];
+    self.gradientLayer.locations = @[@0, @(pulseStartProgress), @(pulseHoldProgress), @1];
     self.gradientLayer.hidden = progress <= 0;
 
     self.progressMaskLayer.frame = self.bounds;
     self.progressMaskLayer.path = progressPath.CGPath;
     self.progressMaskLayer.hidden = progress <= 0;
 
-    self.startCapLayer.path = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(startCapX - capRadius, startCapY - capRadius, 2*capRadius, 2*capRadius)].CGPath;
+    self.startCapLayer.path = [self semiCapPathWithCenter:CGPointMake(startCapX, startCapY) angle:drawStartAngle radius:capRadius forward:NO].CGPath;
     self.startCapLayer.fillColor = self.taskColor.CGColor;
     self.startCapLayer.hidden = progress <= 0;
 
-    self.endCapLayer.path = [UIBezierPath bezierPathWithOvalInRect:CGRectMake(endCapX - capRadius, endCapY - capRadius, 2*capRadius, 2*capRadius)].CGPath;
+    self.endCapLayer.path = [self semiCapPathWithCenter:CGPointMake(endCapX, endCapY) angle:capAngle radius:capRadius forward:YES].CGPath;
     self.endCapLayer.fillColor = self.pulseColor.CGColor;
     self.endCapLayer.hidden = progress <= 0;
 
@@ -376,7 +389,7 @@ static CGFloat const kCircleLineWidth = 18;
 {
     NSMutableArray<MirrorRecordModel *> * records = [MirrorStorage retriveMirrorRecords];
     long startTimestamp = records[records.count -1].startTime;
-//    startTimestamp = startTimestamp - 3600*3;
+//    startTimestamp = startTimestamp - 3600*3 - 60*25;
     NSDate *startTime = [NSDate dateWithTimeIntervalSince1970:startTimestamp];
     return startTime;
 }
