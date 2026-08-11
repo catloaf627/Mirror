@@ -31,18 +31,42 @@ static CGFloat const kMinimumVisibleBarHeight = 2;
     if (maxtime <= 0) return;
     
     CGFloat drawableHeight = MAX(self.bounds.size.height - kBarWidth, 0);
-    for (id key in onedaydata.allKeys) {
-        CGFloat percentage = [onedaydata[key] longValue] / (double)maxtime;
-        if (percentage <= 0) continue;
+    CGFloat accumulatedHeight = 0;
+    NSArray<NSString *> *taskNames = [onedaydata.allKeys sortedArrayUsingSelector:@selector(localizedStandardCompare:)];
+    NSMutableArray<NSString *> *visibleTaskNames = [NSMutableArray new];
+    for (NSString *taskName in taskNames) {
+        if ([onedaydata[taskName] longValue] > 0) {
+            [visibleTaskNames addObject:taskName];
+        }
+    }
+    
+    for (NSInteger index = 0; index < visibleTaskNames.count; index++) {
+        NSString *taskName = visibleTaskNames[index];
+        CGFloat percentage = [onedaydata[taskName] longValue] / (double)maxtime;
         
         CGFloat barHeight = MAX(kMinimumVisibleBarHeight, percentage * drawableHeight);
+        barHeight = MIN(barHeight, drawableHeight - accumulatedHeight);
+        if (barHeight <= 0) break;
+        
         CGFloat barX = (self.bounds.size.width - kBarWidth) / 2;
-        CGFloat barY = kBarWidth / 2 + drawableHeight - barHeight;
+        CGFloat barY = kBarWidth / 2 + drawableHeight - accumulatedHeight - barHeight;
         
         UIView *bar = [[UIView alloc] initWithFrame:CGRectMake(barX, barY, kBarWidth, barHeight)];
-        bar.backgroundColor = [UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:key].color];
+        bar.backgroundColor = [UIColor mirrorColorNamed:[MirrorStorage getTaskModelFromDB:taskName].color];
         bar.layer.cornerRadius = kBarWidth / 2;
+        bar.layer.masksToBounds = YES;
+        
+        CACornerMask maskedCorners = 0;
+        if (index == 0) {
+            maskedCorners |= kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+        }
+        if (index == visibleTaskNames.count - 1) {
+            maskedCorners |= kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
+        }
+        bar.layer.maskedCorners = maskedCorners;
+        
         [self.contentView addSubview:bar];
+        accumulatedHeight += barHeight;
     }
 }
 

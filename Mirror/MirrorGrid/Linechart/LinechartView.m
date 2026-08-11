@@ -96,14 +96,16 @@ static CGFloat const kTimelineLineWidth = 5;
     NSMutableArray *allTasknames = [NSMutableArray new];
     for (int i=0; i<originalData.count; i++) {
         NSMutableArray<MirrorReadModel *> *oneday = originalData[i];
+        long totalTime = 0;
         for (int j=0; j<oneday.count; j++) {
             MirrorReadModel *onedayonetask = oneday[j];
             long time = [MirrorTool getTotalTimeOfPeriods:onedayonetask.records];
-            if (time > self.maxtime) self.maxtime = time; // 更新最久一次task的时间
+            totalTime += time;
             if (![allTasknames containsObject:onedayonetask.taskModel.taskName]) { // 更新所有task的名单
                 [allTasknames addObject:onedayonetask.taskModel.taskName];
             }
         }
+        if (totalTime > self.maxtime) self.maxtime = totalTime; // 堆叠柱按单日总时长缩放
     }
     
     // update data
