@@ -39,7 +39,7 @@
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 // Data source
 @property (nonatomic, strong) NSMutableArray<NSString *> *keys;
-@property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> *gridData;
+@property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray<MirrorReadModel *> *> *gridData;
 
 @property (nonatomic, assign) NSInteger selectedCellIndex;
 @property (nonatomic, assign) NSInteger selectedCellIndexesStart;
@@ -336,12 +336,12 @@
     _gridData = [MirrorStorage getGridData];
 }
 
-- (NSMutableArray<MirrorDataModel *> *)gridDataForDateKey:(NSString *)dateKey
+- (NSMutableArray<MirrorReadModel *> *)gridDataForDateKey:(NSString *)dateKey
 {
     return self.gridData[dateKey];
 }
 
-- (NSMutableArray<MirrorDataModel *> *)legendDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
+- (NSMutableArray<MirrorReadModel *> *)legendDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
 {
     if (self.keys.count <= startIndex || self.keys.count <= endIndex) {
         return [NSMutableArray new];
@@ -361,7 +361,7 @@
         return;
     }
     // data source
-    NSMutableArray<MirrorDataModel *> *data = [self gridDataForDateKey:self.keys[_selectedCellIndex]];
+    NSMutableArray<MirrorReadModel *> *data = [self gridDataForDateKey:self.keys[_selectedCellIndex]];
     // date label
     GridCollectionViewCell *cell = (GridCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:_selectedCellIndex inSection:0]];
     if (cell) { // 从did selected调用
@@ -425,9 +425,9 @@
     NSString *endDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[end]]];
     self.dateLabel.text = [[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate];
     // data source
-    NSMutableArray<NSMutableArray<MirrorDataModel *> *> *dataArr = [NSMutableArray new];
+    NSMutableArray<NSMutableArray<MirrorReadModel *> *> *dataArr = [NSMutableArray new];
     for (NSInteger i=start; i<=end; i++) {
-        NSMutableArray<MirrorDataModel *> *data = [self gridDataForDateKey:self.keys[i]];
+        NSMutableArray<MirrorReadModel *> *data = [self gridDataForDateKey:self.keys[i]];
         if (data == nil) {
             data = [NSMutableArray new];
         }
@@ -553,11 +553,11 @@
 
 #pragma mark - Collection view delegate
 
-- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorDataModel *)data
+- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorReadModel *)data
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
-    MirrorDataModel *allData = [[MirrorDataModel alloc] initWithTask:data.taskModel records:allRecords];
+    MirrorReadModel *allData = [[MirrorReadModel alloc] initWithTask:data.taskModel records:allRecords];
     RecordsTimelineViewController *recordsVC = [[RecordsTimelineViewController alloc] initWithData:allData highlightedRecords:data.records];
     [self.navigationController pushViewController:recordsVC animated:YES];
 }
@@ -747,10 +747,10 @@
     return _keys;
 }
 
-- (NSMutableDictionary<NSString *, NSMutableArray<MirrorDataModel *> *> *)gridData
+- (NSMutableDictionary<NSString *, NSMutableArray<MirrorReadModel *> *> *)gridData
 {
     if (!_gridData) {
-        _gridData = [NSMutableDictionary<NSString *, NSMutableArray<MirrorDataModel *> *> new];
+        _gridData = [NSMutableDictionary<NSString *, NSMutableArray<MirrorReadModel *> *> new];
         [self updateGridData];
     }
     return _gridData;

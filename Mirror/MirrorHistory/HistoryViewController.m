@@ -36,8 +36,8 @@
 @property (nonatomic, strong) UIButton *settingsButton;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 // Data source
-@property (nonatomic, strong) NSMutableArray<MirrorDataModel *>  *data;
-@property (nonatomic, strong) NSMutableArray<MirrorDataModel *>  *legendData;
+@property (nonatomic, strong) NSMutableArray<MirrorReadModel *>  *data;
+@property (nonatomic, strong) NSMutableArray<MirrorReadModel *>  *legendData;
 @property (nonatomic, assign) NSInteger offset;
 // UI
 @property (nonatomic, strong) UISegmentedControl *typeSwitch;
@@ -244,11 +244,11 @@
 
 #pragma mark - Actions
 
-- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorDataModel *)data
+- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorReadModel *)data
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
-    MirrorDataModel *allData = [[MirrorDataModel alloc] initWithTask:data.taskModel records:allRecords];
+    MirrorReadModel *allData = [[MirrorReadModel alloc] initWithTask:data.taskModel records:allRecords];
     RecordsTimelineViewController *recordsVC = [[RecordsTimelineViewController alloc] initWithData:allData highlightedRecords:data.records];
     [self.navigationController pushViewController:recordsVC animated:YES];
 }
@@ -378,7 +378,7 @@
 
 #pragma mark - Getters
 
-- (NSMutableArray<MirrorDataModel *> *)data
+- (NSMutableArray<MirrorReadModel *> *)data
 {
     if (!_data) {
         _data = [NSMutableArray new];
@@ -386,7 +386,7 @@
     return _data;
 }
 
-- (NSMutableArray<MirrorDataModel *> *)legendData
+- (NSMutableArray<MirrorReadModel *> *)legendData
 {
     if (!_legendData) {
         _legendData = [NSMutableArray new];

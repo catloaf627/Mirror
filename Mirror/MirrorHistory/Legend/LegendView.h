@@ -7,14 +7,14 @@
 
 #import <UIKit/UIKit.h>
 #import "MirrorMacro.h"
-#import "MirrorDataModel.h"
+#import "MirrorReadModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface LegendView : UIView
 
-- (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data;
-- (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data;
+- (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data;
+- (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data;
 - (CGFloat)legendViewHeight;
 
 @end

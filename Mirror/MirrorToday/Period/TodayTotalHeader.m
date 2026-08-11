@@ -59,7 +59,7 @@
         components.second = 0;
         long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
         long endTime = startTime + 86400;
-        NSMutableArray<MirrorDataModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
+        NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
         [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
         return;
     }
@@ -132,7 +132,7 @@
     components.second = 0;
     long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
     long endTime = startTime + 86400;
-    NSMutableArray<MirrorDataModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
+    NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
     [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
 
 }
@@ -225,7 +225,7 @@
         components.second = 0;
         long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
         long endTime = startTime + 86400;
-        NSMutableArray<MirrorDataModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
+        NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
         _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
     }
     return _pieChart;

@@ -7,7 +7,7 @@
 
 #import <UIKit/UIKit.h>
 #import "MirrorMacro.h"
-#import "MirrorDataModel.h"
+#import "MirrorReadModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol TaskProgressListDelegate <NSObject>
 
-- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorDataModel *)data;
+- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorReadModel *)data;
 
 @end
 
@@ -23,8 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, weak) id<TaskProgressListDelegate> delegate;
 
-- (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data;
-- (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data;
+- (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data;
+- (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data;
 
 @end
 

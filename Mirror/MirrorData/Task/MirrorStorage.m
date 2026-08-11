@@ -836,8 +836,8 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     return [[[targetRecords reverseObjectEnumerator] allObjects] mutableCopy]; // 倒序
 }
 
-// 取出指定时间范围内的图表数据，先按范围/自然日切 UI 片段，再按任务顺序包装成 MirrorDataModel；例如查询一周时，跨天 raw record 会贡献到多天统计里。
-+ (NSMutableArray<MirrorDataModel *> *)getAllRecordsInTaskOrderWithStart:(long)startTime end:(long)endTime shouldHideHidden:(BOOL)shouldHideHidden
+// 取出指定时间范围内的图表数据，先按范围/自然日切 UI 片段，再按任务顺序包装成 MirrorReadModel；例如查询一周时，跨天 raw record 会贡献到多天统计里。
++ (NSMutableArray<MirrorReadModel *> *)getAllRecordsInTaskOrderWithStart:(long)startTime end:(long)endTime shouldHideHidden:(BOOL)shouldHideHidden
 {
     BOOL printDetailsToDebug = NO; // debug用
     NSMutableDictionary<NSString *, NSMutableArray<MirrorRecordModel *> *> *dict = [NSMutableDictionary<NSString *, NSMutableArray<MirrorRecordModel *> *> new];
@@ -871,35 +871,35 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
             }
         }
     }
-    NSMutableArray<MirrorDataModel *> *res = [NSMutableArray new];
+    NSMutableArray<MirrorReadModel *> *res = [NSMutableArray new];
     NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
     for (int i=0 ;i<tasks.count; i++) { // 按照任务在mirror_task里的顺序
         MirrorTaskModel *task = tasks[i];
         if ([dict.allKeys containsObject:task.taskName]) { // 这个task在时间段内有数据
-            MirrorDataModel *chartModel = [[MirrorDataModel alloc] initWithTask:task records:dict[task.taskName]];
+            MirrorReadModel *chartModel = [[MirrorReadModel alloc] initWithTask:task records:dict[task.taskName]];
             [res addObject:chartModel];
         }
     }
     return res;
 }
 
-// 生成 Grid 数据源，key 是 yyyy-MM-dd，value 是当天按任务顺序排列的 MirrorDataModel
+// 生成 Grid 数据源，key 是 yyyy-MM-dd，value 是当天按任务顺序排列的 MirrorReadModel
 // 它包含所有未隐藏 records （按照0点）拆分后的数据
 /*
 {
 @"2026-01-02": @[
-    MirrorDataModel(TaskA, TaskA 在这一天的 records),
-    MirrorDataModel(TaskB, TaskB 在这一天的 records)
+    MirrorReadModel(TaskA, TaskA 在这一天的 records),
+    MirrorReadModel(TaskB, TaskB 在这一天的 records)
 ],
 @"2026-01-03": @[
-     MirrorDataModel(TaskB, TaskB 在这一天的 records),
-     MirrorDataModel(TaskC, TaskC 在这一天的 records)
+     MirrorReadModel(TaskB, TaskB 在这一天的 records),
+     MirrorReadModel(TaskC, TaskC 在这一天的 records)
 ]
 }
  */
-+ (NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> *)getGridData
++ (NSMutableDictionary<NSString*, NSMutableArray<MirrorReadModel *> *> *)getGridData
 {
-    NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> *gridData = [NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> new];
+    NSMutableDictionary<NSString*, NSMutableArray<MirrorReadModel *> *> *gridData = [NSMutableDictionary<NSString*, NSMutableArray<MirrorReadModel *> *> new];
     
     NSMutableArray<MirrorTaskModel *> *allTasks = [MirrorStorage retriveMirrorTasks];
     NSMutableArray<MirrorRecordModel *> *rawRecords = [MirrorStorage p_retriveMirrorRecordsWithoutHidden];
@@ -916,7 +916,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         MirrorRecordModel *record = allRecords[recordIndex];
         if (![[self keyOfTime:record.startTime] isEqualToString:key]) { // 下一天了
             // sort
-            NSMutableArray<MirrorDataModel *> *oneday = [NSMutableArray new];
+            NSMutableArray<MirrorReadModel *> *oneday = [NSMutableArray new];
             for (int i=0; i<allTasks.count; i++) {
                 NSMutableArray<MirrorRecordModel *> *recordsInTaskOrder = [NSMutableArray new];
                 for (int j=0; j<recordsInTimeOrder.count; j++) {
@@ -925,7 +925,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
                     }
                 }
                 if (recordsInTaskOrder.count != 0) {
-                    MirrorDataModel *oneDayOneTask = [[MirrorDataModel alloc] initWithTask:allTasks[i] records:recordsInTaskOrder];
+                    MirrorReadModel *oneDayOneTask = [[MirrorReadModel alloc] initWithTask:allTasks[i] records:recordsInTaskOrder];
                     [oneday addObject:oneDayOneTask];
                 }
             }
@@ -941,7 +941,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     }
     
     // sort
-    NSMutableArray<MirrorDataModel *> *oneday = [NSMutableArray new];
+    NSMutableArray<MirrorReadModel *> *oneday = [NSMutableArray new];
     for (int i=0; i<allTasks.count; i++) {
         NSMutableArray<MirrorRecordModel *> *recordsInTaskOrder = [NSMutableArray new];
         for (int j=0; j<recordsInTimeOrder.count; j++) {
@@ -950,7 +950,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
             }
         }
         if (recordsInTaskOrder.count != 0) {
-            MirrorDataModel *oneDayOneTask = [[MirrorDataModel alloc] initWithTask:allTasks[i] records:recordsInTaskOrder];
+            MirrorReadModel *oneDayOneTask = [[MirrorReadModel alloc] initWithTask:allTasks[i] records:recordsInTaskOrder];
             [oneday addObject:oneDayOneTask];
         }
     }

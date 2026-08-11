@@ -1,13 +1,13 @@
 //
-//  MirrorDataModel.m
+//  MirrorReadModel.m
 //  Mirror
 //
 //  Created by Yuqing Wang on 2023/5/4.
 //
 
-#import "MirrorDataModel.h"
+#import "MirrorReadModel.h"
 
-@implementation MirrorDataModel
+@implementation MirrorReadModel
 
 - (instancetype)initWithTask:(MirrorTaskModel *)taskModel records:(NSMutableArray<MirrorRecordModel *> *)records
 {

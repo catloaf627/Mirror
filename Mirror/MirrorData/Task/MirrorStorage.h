@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "MirrorDataModel.h"
+#import "MirrorReadModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -109,7 +109,7 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
                                                   {originalIndex, 🌸, 07:00, 08:00}..】
  适用场景：饼图，柱形图，legend
  */
-+ (NSMutableArray<MirrorDataModel *> *)getAllRecordsInTaskOrderWithStart:(long)startTime end:(long)endTime shouldHideHidden:(BOOL)shouldHideHidden;
++ (NSMutableArray<MirrorReadModel *> *)getAllRecordsInTaskOrderWithStart:(long)startTime end:(long)endTime shouldHideHidden:(BOOL)shouldHideHidden;
 
 /*
  取出【所有任务】的所有records，并按照天来切割、并且在一天的范围内按照优先级排序（🪀、🌸、👾），切割好后通过日期字符串作为key来存储（yyyy-MM-dd）
@@ -120,7 +120,7 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
                                                                                                             {originalIndex, 👾, 11:00, 12:00}..】
  适用场景：Grid vc
  */
-+ (NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> *)getGridData;
++ (NSMutableDictionary<NSString*, NSMutableArray<MirrorReadModel *> *> *)getGridData;
 
 @end
 

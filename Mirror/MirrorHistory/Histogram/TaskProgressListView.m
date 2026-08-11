@@ -22,13 +22,13 @@ static CGFloat const kDotSize = 8;
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
-@property (nonatomic, strong) NSMutableArray<MirrorDataModel *> *data;
+@property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *data;
 
 @end
 
 @implementation TaskProgressListView
 
-- (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data
+- (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data
 {
     self = [super init];
     if (self) {
@@ -50,7 +50,7 @@ static CGFloat const kDotSize = 8;
     return self;
 }
 
-- (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data
+- (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data
 {
     self.data = data;
     [self rebuildRows];
@@ -65,7 +65,7 @@ static CGFloat const kDotSize = 8;
     UIView *previousRow = nil;
     long maxTime = [self maxTotalTime];
     for (NSInteger index = 0; index < self.data.count; index++) {
-        MirrorDataModel *data = self.data[index];
+        MirrorReadModel *data = self.data[index];
         UIView *row = [self rowWithData:data index:index maxTime:maxTime];
         [self.contentView addSubview:row];
         [row mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -91,7 +91,7 @@ static CGFloat const kDotSize = 8;
     }];
 }
 
-- (UIView *)rowWithData:(MirrorDataModel *)data index:(NSInteger)index maxTime:(long)maxTime
+- (UIView *)rowWithData:(MirrorReadModel *)data index:(NSInteger)index maxTime:(long)maxTime
 {
     UIView *row = [UIView new];
     row.tag = index;
@@ -168,7 +168,7 @@ static CGFloat const kDotSize = 8;
 - (long)maxTotalTime
 {
     long maxTime = 0;
-    for (MirrorDataModel *data in self.data) {
+    for (MirrorReadModel *data in self.data) {
         maxTime = MAX(maxTime, [MirrorTool getTotalTimeOfPeriods:data.records]);
     }
     return maxTime;

@@ -6,7 +6,7 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "MirrorDataModel.h"
+#import "MirrorReadModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -21,8 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, weak) UIView<PiechartDelegate> *delegate;
 
-- (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data width:(CGFloat)width enableInteractive:(BOOL)enableInteractive;
-- (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data width:(CGFloat)width enableInteractive:(BOOL)enableInteractive;
+- (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data width:(CGFloat)width enableInteractive:(BOOL)enableInteractive;
+- (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data width:(CGFloat)width enableInteractive:(BOOL)enableInteractive;
 
 @end
 

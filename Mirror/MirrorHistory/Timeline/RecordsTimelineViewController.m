@@ -33,7 +33,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) UIButton *deleteFutureRecordsButton;
-@property (nonatomic, strong) MirrorDataModel *data;
+@property (nonatomic, strong) MirrorReadModel *data;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *records;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *highlightedRecords;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *sortedTimelineRecords;
@@ -60,12 +60,12 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 @implementation RecordsTimelineViewController
 
-- (instancetype)initWithData:(MirrorDataModel *)data
+- (instancetype)initWithData:(MirrorReadModel *)data
 {
     return [self initWithData:data highlightedRecords:nil];
 }
 
-- (instancetype)initWithData:(MirrorDataModel *)data highlightedRecords:(NSMutableArray<MirrorRecordModel *> *)highlightedRecords
+- (instancetype)initWithData:(MirrorReadModel *)data highlightedRecords:(NSMutableArray<MirrorRecordModel *> *)highlightedRecords
 {
     self = [super init];
     if (self) {

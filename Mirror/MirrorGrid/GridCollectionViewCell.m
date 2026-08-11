@@ -17,7 +17,7 @@
     return NSStringFromClass(self.class);
 }
 
-- (void)configWithData:(NSMutableArray<MirrorDataModel *> *)data isSelected:(BOOL)isSelected
+- (void)configWithData:(NSMutableArray<MirrorReadModel *> *)data isSelected:(BOOL)isSelected
 {
     CGFloat alpha = 0;
     _totalTime = 0;

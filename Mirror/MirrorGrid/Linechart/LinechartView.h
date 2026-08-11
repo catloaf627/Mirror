@@ -6,13 +6,13 @@
 //
 
 #import <UIKit/UIKit.h>
-#import "MirrorDataModel.h"
+#import "MirrorReadModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 @interface LinechartView : UIView
 
-- (void)refactorData:(NSMutableArray<NSMutableArray<MirrorDataModel *> *> *)originalData;
+- (void)refactorData:(NSMutableArray<NSMutableArray<MirrorReadModel *> *> *)originalData;
 
 @end
 

@@ -8,7 +8,7 @@
 #import "LinechartView.h"
 #import <Masonry/Masonry.h>
 #import "LineChartCollectionViewCell.h"
-#import "MirrorDataModel.h"
+#import "MirrorReadModel.h"
 #import "MirrorTool.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
@@ -87,7 +87,7 @@ static CGFloat const kTimelineLineWidth = 5;
 
 #pragma mark - Refactor Data
 
-- (void)refactorData:(NSMutableArray<NSMutableArray<MirrorDataModel *> *> *)originalData
+- (void)refactorData:(NSMutableArray<NSMutableArray<MirrorReadModel *> *> *)originalData
 {
     
     // update maxtime
@@ -95,9 +95,9 @@ static CGFloat const kTimelineLineWidth = 5;
     
     NSMutableArray *allTasknames = [NSMutableArray new];
     for (int i=0; i<originalData.count; i++) {
-        NSMutableArray<MirrorDataModel *> *oneday = originalData[i];
+        NSMutableArray<MirrorReadModel *> *oneday = originalData[i];
         for (int j=0; j<oneday.count; j++) {
-            MirrorDataModel *onedayonetask = oneday[j];
+            MirrorReadModel *onedayonetask = oneday[j];
             long time = [MirrorTool getTotalTimeOfPeriods:onedayonetask.records];
             if (time > self.maxtime) self.maxtime = time; // 更新最久一次task的时间
             if (![allTasknames containsObject:onedayonetask.taskModel.taskName]) { // 更新所有task的名单
@@ -110,7 +110,7 @@ static CGFloat const kTimelineLineWidth = 5;
     self.data = [[NSMutableArray alloc] initWithCapacity:originalData.count];
     
     for (int i=0; i<originalData.count; i++) {
-        NSMutableArray<MirrorDataModel *> *oneday = originalData[i];
+        NSMutableArray<MirrorReadModel *> *oneday = originalData[i];
         NSMutableDictionary<NSString *, NSNumber *> *onedayDict = [NSMutableDictionary new];
         for (int j=0; j<allTasknames.count; j++) {
             BOOL taskExisted = NO;

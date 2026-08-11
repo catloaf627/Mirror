@@ -1,5 +1,5 @@
 //
-//  MirrorDataModel.h
+//  MirrorReadModel.h
 //  Mirror
 //
 //  Created by Yuqing Wang on 2023/5/4.

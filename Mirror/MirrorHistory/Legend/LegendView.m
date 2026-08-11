@@ -16,14 +16,14 @@ static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
 @interface LegendView () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
 @property (nonatomic, strong) UICollectionView *collectionView;
-@property (nonatomic, strong) NSMutableArray<MirrorDataModel *> *data;
+@property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *data;
 
 @end
 
 
 @implementation LegendView
 
-- (instancetype)initWithData:(NSMutableArray<MirrorDataModel *> *)data
+- (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data
 {
     self = [super init];
     if (self) {
@@ -39,7 +39,7 @@ static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
     return self;
 }
 
-- (void)updateWithData:(NSMutableArray<MirrorDataModel *> *)data
+- (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data
 {
     self.data = data;
     [self.collectionView reloadData];
