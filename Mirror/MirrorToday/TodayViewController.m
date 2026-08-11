@@ -22,7 +22,6 @@
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kTimelineLeftWidth (52*kWidthRatio)
 #define kTimelineRightPadding (12*kWidthRatio)
-#define kTimelineRecordSpacing (6*kHeightRatio)
 #define kTimelineMinimumTinyRecordHeight 10
 #define kTimelineTinyRecordThresholdSeconds (10 * 60)
 #define kTimelineTextHiddenThresholdSeconds (45 * 60)
@@ -271,21 +270,6 @@
             }
         });
     }
-}
-
-- (void)deletePeriod:(UIButton *)sender
-{
-    NSInteger periodIndex = sender.tag;
-    UIAlertController* deleteButtonAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_period_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
-
-    UIAlertAction* deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction * action) {
-        [MirrorStorage deletePeriodAtIndex:periodIndex];
-    }];
-    UIAlertAction* cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
-
-    [deleteButtonAlert addAction:cancelAction];
-    [deleteButtonAlert addAction:deleteAction];
-    [self presentViewController:deleteButtonAlert animated:YES completion:nil];
 }
 
 - (void)editPeriod:(UIButton *)sender
@@ -539,7 +523,6 @@
             UILabel *hourLabel = [UILabel new];
             NSDate *date = [NSDate dateWithTimeIntervalSince1970:dayStart + hour * 3600];
             hourLabel.text = [formatter stringFromDate:date];
-            NSLog(@"%@", hourLabel.text);
             hourLabel.font = [UIFont mirrorMinFont];
             hourLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
             hourLabel.alpha = 0.5;
@@ -548,10 +531,6 @@
             hourLabel.frame = CGRectMake(0, y - 10, kTimelineLeftWidth - 8*kWidthRatio, 20);
         }
     }
-    NSLog(@"timelineHourCount in renderHourLines: %ld", (long)hourCount);
-    NSLog(@"dayStart: %@, dayEnd: %@",
-          [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp]],
-          [NSDate dateWithTimeIntervalSince1970:[self todayEndTimestamp]]);
 }
 
 - (void)renderRecords
@@ -869,11 +848,6 @@
 {
     NSInteger numOfHours = ([self todayEndTimestamp] - [self todayStartTimestamp]) / 3600;
     return numOfHours;
-}
-
-- (NSString *)timeTextForRecord:(MirrorRecordModel *)record
-{
-    return [NSString stringWithFormat:@"%@ - %@", [self shortTimeFromTimestamp:record.startTime], [self shortTimeFromTimestamp:record.endTime]];
 }
 
 - (NSString *)shortTimeFromTimestamp:(long)timestamp

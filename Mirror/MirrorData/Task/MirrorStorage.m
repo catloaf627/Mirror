@@ -216,16 +216,6 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
-// 直接保存一段原始记录：内部模拟 start + stop；例如“阅读 08:00-09:30”保存为一条用户记录，不按天切库。
-+ (void)savePeriodWithTaskname:(NSString *)taskName startAt:(NSDate *)startDate endAt:(NSDate *)endDate
-{
-    [MirrorStorage p_startTask:taskName at:startDate];
-    [MirrorStorage p_stopTask:taskName at:endDate];
-    NSLog(@"Save period start %@, end %@", [MirrorTool timeFromDate:startDate printTimeStamp:NO],  [MirrorTool timeFromDate:endDate printTimeStamp:NO]);
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil]; // 直接保存的也报stop
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
-}
-
 // 插入一条原始记录；例如 Today 页点 23:45 添加 1 小时，会保存为 23:45-00:45 一条记录，UI 数据源再按天切。
 + (void)insertPeriodWithTaskname:(NSString *)taskName startAt:(NSDate *)startDate endAt:(NSDate *)endDate
 {
@@ -403,28 +393,6 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     } else {
         records[index].endTime = timestamp;
     }
-    [MirrorStorage saveMirrorRecords:records];
-    NSLog(@"Period is edited");
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
-}
-
-// 同时修改某条原始记录的开始和结束时间，并重新排序；例如把 records[4] 改为 1/1 08:00-1/3 08:00，仍是一条 raw record。
-+ (void)editPeriodAtIndex:(NSInteger)index startAt:(NSDate *)startDate endAt:(NSDate *)endDate
-{
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    if (index < 0 || index >= records.count) return;
-    
-    NSDate *dateWithoutSeconds = [self dateWithoutSeconds:startDate];
-    NSDate *endDateWithoutSeconds = [self dateWithoutSeconds:endDate];
-    if ([endDateWithoutSeconds timeIntervalSince1970] - [dateWithoutSeconds timeIntervalSince1970] < kMinSeconds) return;
-    records[index].startTime = round([dateWithoutSeconds timeIntervalSince1970]);
-    records[index].endTime = round([endDateWithoutSeconds timeIntervalSince1970]);
-    [records sortUsingComparator:^NSComparisonResult(MirrorRecordModel *record1, MirrorRecordModel *record2) {
-        if (record1.startTime < record2.startTime) return NSOrderedAscending;
-        if (record1.startTime > record2.startTime) return NSOrderedDescending;
-        return NSOrderedSame;
-    }];
     [MirrorStorage saveMirrorRecords:records];
     NSLog(@"Period is edited");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
@@ -980,63 +948,6 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     components.second = 0;
     NSDate *dateWithoutSeconds = [gregorian dateFromComponents:components];
     return dateWithoutSeconds;
-}
-
-// 生成压力测试记录，不直接写库；例如把现有 records 往前复制 500 轮、每轮偏移 11 周，用来测试大数据量滚动/统计性能。
-+ (NSMutableArray<MirrorRecordModel *> *)pressureTestRecords // 压力测试，让当前数据翻倍
-{
-    NSInteger times = 500; // 想让数据量翻多少倍
-    NSInteger offset = 11; // 每个数据往前走多少周
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    NSMutableArray<MirrorRecordModel *> *fakeRecords = [NSMutableArray new];
-    BOOL shouldBreak = NO;
-    for (int i=0; i<times; i++) {
-        NSMutableArray<MirrorRecordModel *> *newRecords = [NSMutableArray new];;
-        for (int j=0; j<records.count; j++) {
-            CGFloat startTime =records[j].startTime - offset*7*86400*i;
-            CGFloat endTime = records[j].endTime - offset*7*86400*i;
-            if (startTime<0 || endTime<0) {
-                shouldBreak = YES;
-                break;
-            }
-            MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:records[j].taskName startTime:startTime endTime:endTime];
-            [newRecords addObject:newRecord];
-        }
-        if (shouldBreak) break;
-        [fakeRecords insertObjects:newRecords atIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, newRecords.count)]];
-        NSLog(@"循环到了第%d轮, 已经生成了%lu条数据", i, (unsigned long)fakeRecords.count);
-    }
-    return fakeRecords;
-}
-
-// 调试另一种按天聚合的数据结构并打印；例如输出 {2026-01-02: {阅读: 3600, 工作: 7200}}，目前不参与正式功能。
-+ (void)anotherDataStructureTest // 一种以某天0点时间为key的数据存储方式（字典存储），还没用在app里
-{
-    NSMutableDictionary<NSString *, NSMutableDictionary *> *data = [NSMutableDictionary new];
-
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-
-    for (int i=0; i<records.count; i++) {
-        NSString *onedayKey = [MirrorStorage keyOfTime:records[i].startTime];
-        if ([data.allKeys containsObject:onedayKey]) { //存过这天的records
-            NSMutableDictionary *onedayValue = data[onedayKey];
-            NSString *tasknameKey = records[i].taskName;
-            if ([onedayValue.allKeys containsObject:tasknameKey]) { // 存过这天这个任务的时间
-                NSInteger value = [data[onedayKey][tasknameKey] integerValue];
-                value = value + (records[i].endTime - records[i].startTime);
-                [onedayValue setValue:@(value) forKey:tasknameKey];
-                [data setValue:onedayValue forKey:onedayKey];
-            } else { // 没存过今天这个任务的时间
-                [onedayValue setValue:@(records[i].endTime - records[i].startTime) forKey:tasknameKey];
-                [data setValue:onedayValue forKey:onedayKey];
-            }
-        } else { // 没存过今天的records
-            NSMutableDictionary *onedayValue = [NSMutableDictionary new];;
-            [onedayValue setValue:@(records[i].endTime - records[i].startTime) forKey:records[i].taskName];
-            [data setValue:onedayValue forKey:onedayKey];
-        }
-    }
-    NSLog(@"%@", data);
 }
 
 @end

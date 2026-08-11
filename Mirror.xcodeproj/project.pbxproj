@@ -43,7 +43,6 @@
 		4AA353382A25D9BB00920404 /* ExportImportCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA353372A25D9BB00920404 /* ExportImportCollectionViewCell.m */; };
 		4AA3533B2A25DBDA00920404 /* ReportBugCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA3533A2A25DBDA00920404 /* ReportBugCollectionViewCell.m */; };
 		4AB1182E2B9851F7003CED03 /* LineChartCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AB1182D2B9851F7003CED03 /* LineChartCollectionViewCell.m */; };
-		4AB9C8BA29E911C8002358E2 /* HistogramCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AB9C8B929E911C8002358E2 /* HistogramCollectionViewCell.m */; };
 		4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */; };
 		4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBF2A03B05100CDCED9 /* MirrorReadModel.m */; };
 		4AC1FDC72A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDC62A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m */; };
@@ -58,7 +57,6 @@
 		4ADDC5C828E73935006F02DE /* AddTaskViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDC5C728E73935006F02DE /* AddTaskViewController.m */; };
 		4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171828DF613D008A6A18 /* TimeViewController.m */; };
 		4AE4171F28DF6155008A6A18 /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171E28DF6155008A6A18 /* SettingsViewController.m */; };
-		4AE5E8922A0253DA004228C1 /* SplitLineView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE5E8912A0253DA004228C1 /* SplitLineView.m */; };
 		4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */; };
 		4AFA3B7729E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFA3B7629E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.m */; };
 		4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFB77A128DF4A380064CBCA /* AppDelegate.m */; };
@@ -167,8 +165,6 @@
 		4AA3533A2A25DBDA00920404 /* ReportBugCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReportBugCollectionViewCell.m; sourceTree = "<group>"; };
 		4AB1182C2B9851F7003CED03 /* LineChartCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineChartCollectionViewCell.h; sourceTree = "<group>"; };
 		4AB1182D2B9851F7003CED03 /* LineChartCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineChartCollectionViewCell.m; sourceTree = "<group>"; };
-		4AB9C8B829E911C8002358E2 /* HistogramCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HistogramCollectionViewCell.h; sourceTree = "<group>"; };
-		4AB9C8B929E911C8002358E2 /* HistogramCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HistogramCollectionViewCell.m; sourceTree = "<group>"; };
 		4AC1FDBB2A0384A600CDCED9 /* MirrorRecordModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorRecordModel.h; sourceTree = "<group>"; };
 		4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorRecordModel.m; sourceTree = "<group>"; };
 		4AC1FDBE2A03B05100CDCED9 /* MirrorReadModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorReadModel.h; sourceTree = "<group>"; };
@@ -194,8 +190,6 @@
 		4AE4171828DF613D008A6A18 /* TimeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimeViewController.m; sourceTree = "<group>"; };
 		4AE4171D28DF6155008A6A18 /* SettingsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SettingsViewController.h; sourceTree = "<group>"; };
 		4AE4171E28DF6155008A6A18 /* SettingsViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SettingsViewController.m; sourceTree = "<group>"; };
-		4AE5E8902A0253DA004228C1 /* SplitLineView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SplitLineView.h; sourceTree = "<group>"; };
-		4AE5E8912A0253DA004228C1 /* SplitLineView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SplitLineView.m; sourceTree = "<group>"; };
 		4AF5A32E2B9C5F98009A2FB3 /* HintFooter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HintFooter.h; sourceTree = "<group>"; };
 		4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HintFooter.m; sourceTree = "<group>"; };
 		4AFA3B7529E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WeekStartsOnCollectionViewCell.h; sourceTree = "<group>"; };
@@ -443,8 +437,6 @@
 			children = (
 				4A0D40FD29F1269600F13EAE /* TaskProgressListView.h */,
 				4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */,
-				4AB9C8B829E911C8002358E2 /* HistogramCollectionViewCell.h */,
-				4AB9C8B929E911C8002358E2 /* HistogramCollectionViewCell.m */,
 			);
 			path = Histogram;
 			sourceTree = "<group>";
@@ -506,8 +498,6 @@
 		4AE5E88F2A0253A3004228C1 /* View */ = {
 			isa = PBXGroup;
 			children = (
-				4AE5E8902A0253DA004228C1 /* SplitLineView.h */,
-				4AE5E8912A0253DA004228C1 /* SplitLineView.m */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -754,7 +744,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				4AFA3B7729E4EF2A004D5BE4 /* WeekStartsOnCollectionViewCell.m in Sources */,
-				4AB9C8BA29E911C8002358E2 /* HistogramCollectionViewCell.m in Sources */,
 				4ADCD21A302410C600578A81 /* MirrorFakeDataSeeder.m in Sources */,
 				4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */,
 				4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */,
@@ -778,7 +767,6 @@
 				4A88212F29F671F7009E422C /* TimeTrackingViewController.m in Sources */,
 				4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */,
 				4ADDC5C828E73935006F02DE /* AddTaskViewController.m in Sources */,
-				4AE5E8922A0253DA004228C1 /* SplitLineView.m in Sources */,
 				4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */,
 				4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */,
 				4A37369429E2AEE900187280 /* PiechartView.m in Sources */,

@@ -74,17 +74,6 @@
     }
 }
 
-// Formats a timestamp with the current app locale; for example Jun 27, 2026 at 9:30 AM or 2026年6月27日 09:30.
-+ (NSString *)localizedTimeFromTimestamp:(long)timestamp
-{
-    NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateStyle = NSDateFormatterMediumStyle;
-    formatter.timeStyle = NSDateFormatterShortStyle;
-    formatter.timeZone = [NSTimeZone systemTimeZone];
-    formatter.locale = [MirrorTool formatterLocaleForCurrentLanguage];
-    return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
-}
-
 // Formats the timeline left-side month/day; for example Jun 27.
 + (NSString *)timelineMonthDayTextForTimestamp:(long)timestamp
 {
@@ -93,12 +82,6 @@
     formatter.locale = [MirrorTool formatterLocaleForCurrentLanguage];
     [formatter setLocalizedDateFormatFromTemplate:@"MMM d"];
     return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
-}
-
-// Formats a timeline fallback time range; for example Jun 27, 2026 at 9:30 AM - Jun 27, 2026 at 11:00 AM.
-+ (NSString *)timelineTimeRangeTextForRecord:(MirrorRecordModel *)record
-{
-    return [NSString stringWithFormat:@"%@ - %@", [MirrorTool localizedTimeFromTimestamp:record.startTime], [MirrorTool localizedTimeFromTimestamp:record.endTime]];
 }
 
 // Formats the timeline left-side year; for example 2026.

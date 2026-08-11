@@ -34,15 +34,6 @@ static NSInteger const kMirrorLanguageChinese = 1;
     return [MirrorSettings preferredLanguageKey] == kMirrorLanguageChinese;
 }
 
-+ (void)switchLanguage
-{
-    if ([MirrorSettings preferredLanguageKey] != kMirrorLanguageChinese) {
-        [MirrorSettings changeLanguageWithKey:kMirrorLanguageChinese];
-    } else {
-        [MirrorSettings changeLanguageWithKey:kMirrorLanguageEnglish];
-    }
-}
-
 + (BOOL)hasPreferredLanguage
 {
     return [[NSUserDefaults standardUserDefaults] objectForKey:kMirrorPreferredLanguageKey] != nil;
@@ -142,22 +133,6 @@ static NSInteger const kMirrorLanguageChinese = 1;
 + (NSInteger)preferredHeatmapColor
 {
     return [[NSUserDefaults standardUserDefaults] integerForKey:@"MirrorUserPreferredHeatmapColor"];
-}
-
-// Show original index
-
-+ (BOOL)appliedShowIndex
-{
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredShowIndex"];
-}
-+ (void)switchShowIndex
-{
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredShowIndex"]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MirrorUserPreferredShowIndex"];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MirrorUserPreferredShowIndex"];
-    }
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchShowIndexNotification object:nil];
 }
 
 + (NSString *)userMotto

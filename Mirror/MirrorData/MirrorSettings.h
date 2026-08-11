@@ -18,7 +18,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 // Language
 + (BOOL)appliedChinese;
-+ (void)switchLanguage;
 + (BOOL)hasPreferredLanguage;
 + (NSInteger)preferredLanguageKey;
 + (void)changeLanguageWithKey:(NSInteger)languageKey;
@@ -26,10 +25,6 @@ NS_ASSUME_NONNULL_BEGIN
 // Week starts on
 + (BOOL)appliedWeekStarsOnMonday;
 + (void)switchWeekStartsOn;
-
-// Show or hide original index
-+ (BOOL)appliedShowIndex;
-+ (void)switchShowIndex;
 
 // Pie chart
 + (BOOL)appliedPieChartData;
