@@ -42,9 +42,15 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, assign) NSInteger selectedPeriodIndex;
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
 @property (nonatomic, assign) NSInteger timelineBatchStartIndex;
+@property (nonatomic, assign) NSInteger savedTimelineBatchStartIndex;
+@property (nonatomic, assign) CGPoint savedTimelineContentOffset;
 @property (nonatomic, assign) BOOL isRenderingTimelineBatch;
+@property (nonatomic, assign) BOOL shouldReloadAfterEditingPeriodAlert;
+@property (nonatomic, assign) BOOL shouldRestoreTimelineScrollPosition;
+@property (nonatomic, assign) BOOL didScrollToInitialHighlightedRow;
 @property (nonatomic, strong) UIDatePicker *editingStartPicker;
 @property (nonatomic, strong) UIDatePicker *editingEndPicker;
+@property (nonatomic, strong) UITextField *editingNoteTextField;
 @property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
 
@@ -120,10 +126,20 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 - (void)reloadData
 {
+    if (self.editingDismissTapRecognizer != nil) {
+        self.shouldReloadAfterEditingPeriodAlert = YES;
+        return;
+    }
+    
     if (self.titleKey.length > 0) {
         [self reloadCustomRecords];
     } else {
         self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
+    }
+    if (self.scrollView != nil) {
+        self.savedTimelineContentOffset = self.scrollView.contentOffset;
+        self.savedTimelineBatchStartIndex = self.timelineBatchStartIndex;
+        self.shouldRestoreTimelineScrollPosition = YES;
     }
     self.scrollView = nil;
     self.contentView = nil;
@@ -218,10 +234,10 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         if (record0.startTime > record1.startTime) return NSOrderedDescending;
         return NSOrderedSame;
     }] mutableCopy];
-    self.timelineBatchStartIndex = [self initialTimelineBatchStartIndex];
+    self.timelineBatchStartIndex = self.shouldRestoreTimelineScrollPosition ? self.savedTimelineBatchStartIndex : [self initialTimelineBatchStartIndex];
     [self renderTimelineBatchAtStartIndex:self.timelineBatchStartIndex scrollPosition:TimelineBatchScrollPositionTop];
     
-    if (self.firstHighlightedRow) {
+    if (self.firstHighlightedRow && !self.shouldRestoreTimelineScrollPosition && !self.didScrollToInitialHighlightedRow) {
         dispatch_async(dispatch_get_main_queue(), ^{
             [self scrollToFirstHighlightedRow];
         });
@@ -312,6 +328,13 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         } else {
             self.scrollView.contentOffset = CGPointZero;
         }
+        if (self.shouldRestoreTimelineScrollPosition) {
+            self.scrollView.contentOffset = CGPointMake(
+                0,
+                MIN(MAX(self.savedTimelineContentOffset.y, 0), maxOffsetY)
+            );
+            self.shouldRestoreTimelineScrollPosition = NO;
+        }
         self.isRenderingTimelineBatch = NO;
     });
 }
@@ -334,6 +357,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     CGFloat targetY = MAX(rowRect.origin.y - 16 * kHeightRatio, 0);
     CGFloat maxY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
     [self.scrollView setContentOffset:CGPointMake(0, MIN(targetY, maxY)) animated:NO];
+    self.didScrollToInitialHighlightedRow = YES;
     self.isRenderingTimelineBatch = NO;
 }
 
@@ -666,8 +690,10 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     noteTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     noteTextField.borderStyle = UITextBorderStyleRoundedRect;
     noteTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    [noteTextField setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
     noteTextField.tag = periodIndex;
     [noteTextField addTarget:self action:@selector(noteTextFieldEditingChanged:) forControlEvents:UIControlEventEditingChanged];
+    self.editingNoteTextField = noteTextField;
     UIView *contentView = alertController.view;
     [contentView addSubview:startLabel];
     [contentView addSubview:startPicker];
@@ -710,6 +736,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         make.left.mas_equalTo(noteLabel.mas_right).offset(8);
         make.centerY.mas_equalTo(noteLabel);
         make.right.offset(-24);
+        make.width.mas_equalTo(130).priorityHigh();
         make.height.mas_equalTo(34);
     }];
     
@@ -737,10 +764,38 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (CGRectContainsPoint(alertView.bounds, tapPoint)) {
         return;
     }
+    [self saveEditingNoteIfNeeded];
     [self removeEditingDismissTapRecognizer];
     self.editingStartPicker = nil;
     self.editingEndPicker = nil;
-    [presentedViewController dismissViewControllerAnimated:YES completion:nil];
+    self.editingNoteTextField = nil;
+    BOOL shouldReload = self.shouldReloadAfterEditingPeriodAlert;
+    self.shouldReloadAfterEditingPeriodAlert = NO;
+    [presentedViewController dismissViewControllerAnimated:YES completion:^{
+        if (shouldReload) {
+            [self reloadData];
+        }
+    }];
+}
+
+- (void)saveEditingNoteIfNeeded
+{
+    UITextField *noteTextField = self.editingNoteTextField;
+    if (noteTextField == nil) {
+        return;
+    }
+    
+    NSInteger periodIndex = noteTextField.tag;
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return;
+    }
+    
+    NSString *newNote = noteTextField.text ?: @"";
+    NSString *oldNote = records[periodIndex].note ?: @"";
+    if (![newNote isEqualToString:oldNote]) {
+        [MirrorStorage editPeriodNote:newNote periodIndex:periodIndex];
+    }
 }
 
 - (void)removeEditingDismissTapRecognizer
@@ -776,7 +831,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (textField.text.length > 200) {
         textField.text = [textField.text substringToIndex:200];
     }
-    [MirrorStorage editPeriodNote:textField.text ?: @"" periodIndex:textField.tag];
 }
 
 - (UILabel *)pickerLabelWithText:(NSString *)text

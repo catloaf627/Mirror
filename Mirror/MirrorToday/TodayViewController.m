@@ -39,6 +39,7 @@
 @property (nonatomic, assign) BOOL shouldSuppressNextTaskPicker;
 @property (nonatomic, strong) UIDatePicker *editingStartPicker;
 @property (nonatomic, strong) UIDatePicker *editingEndPicker;
+@property (nonatomic, strong) UITextField *editingNoteTextField;
 @property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
 
@@ -338,8 +339,10 @@
     noteTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     noteTextField.borderStyle = UITextBorderStyleRoundedRect;
     noteTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    [noteTextField setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
     noteTextField.tag = periodIndex;
     [noteTextField addTarget:self action:@selector(noteTextFieldEditingChanged:) forControlEvents:UIControlEventEditingChanged];
+    self.editingNoteTextField = noteTextField;
     UIView *contentView = alertController.view;
     [contentView addSubview:startLabel];
     [contentView addSubview:startPicker];
@@ -382,6 +385,7 @@
         make.left.mas_equalTo(noteLabel.mas_right).offset(8);
         make.centerY.mas_equalTo(noteLabel);
         make.right.offset(-24);
+        make.width.mas_equalTo(130).priorityHigh();
         make.height.mas_equalTo(34);
     }];
     
@@ -409,10 +413,32 @@
     if (CGRectContainsPoint(alertView.bounds, tapPoint)) {
         return;
     }
+    [self saveEditingNoteIfNeeded];
     [self removeEditingDismissTapRecognizer];
     self.editingStartPicker = nil;
     self.editingEndPicker = nil;
+    self.editingNoteTextField = nil;
     [presentedViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)saveEditingNoteIfNeeded
+{
+    UITextField *noteTextField = self.editingNoteTextField;
+    if (noteTextField == nil) {
+        return;
+    }
+    
+    NSInteger periodIndex = noteTextField.tag;
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return;
+    }
+    
+    NSString *newNote = noteTextField.text ?: @"";
+    NSString *oldNote = records[periodIndex].note ?: @"";
+    if (![newNote isEqualToString:oldNote]) {
+        [MirrorStorage editPeriodNote:newNote periodIndex:periodIndex];
+    }
 }
 
 - (void)removeEditingDismissTapRecognizer
@@ -448,7 +474,6 @@
     if (textField.text.length > 200) {
         textField.text = [textField.text substringToIndex:200];
     }
-    [MirrorStorage editPeriodNote:textField.text ?: @"" periodIndex:textField.tag];
 }
 
 #pragma mark - Timeline
