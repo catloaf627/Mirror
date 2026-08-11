@@ -797,13 +797,11 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 {
     // TODAY timestamp
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
-    components.timeZone = [NSTimeZone systemTimeZone];
-    components.hour = 0;
-    components.minute = 0;
-    components.second = 0;
-    long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
-    long endTime = startTime + 86400;
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *startOfDay = [gregorian startOfDayForDate:[NSDate now]];
+    NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:startOfDay options:0];
+    long startTime = round([startOfDay timeIntervalSince1970]);
+    long endTime = round([startOfNextDay timeIntervalSince1970]);
     
     BOOL printDetailsToDebug = NO; // debug用
     NSMutableArray<MirrorRecordModel *> *targetRecords = [NSMutableArray<MirrorRecordModel *> new];

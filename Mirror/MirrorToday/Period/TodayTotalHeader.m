@@ -51,14 +51,9 @@
     if (self.todayViewLeft.superview) {
         self.countLabel.text = self.count ? [[MirrorLanguage mirror_stringWithKey:@"total"] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:self.count]] : @"";
         self.crownButton.hidden = self.count < 8*3600;
-        NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-        NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
-        components.timeZone = [NSTimeZone systemTimeZone];
-        components.hour = 0;
-        components.minute = 0;
-        components.second = 0;
-        long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
-        long endTime = startTime + 86400;
+        NSArray *todayStartEndTime = [self todayStartEndTime];
+        long startTime = [todayStartEndTime[0] longValue];
+        long endTime = [todayStartEndTime[1] longValue];
         NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
         [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
         return;
@@ -124,14 +119,9 @@
     } else { // 不到8小时，隐藏王冠
         self.crownButton.hidden = YES;
     }
-    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
-    components.timeZone = [NSTimeZone systemTimeZone];
-    components.hour = 0;
-    components.minute = 0;
-    components.second = 0;
-    long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
-    long endTime = startTime + 86400;
+    NSArray *todayStartEndTime = [self todayStartEndTime];
+    long startTime = [todayStartEndTime[0] longValue];
+    long endTime = [todayStartEndTime[1] longValue];
     NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
     [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
 
@@ -217,14 +207,9 @@
 - (PiechartView *)pieChart
 {
     if (!_pieChart) {
-        NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-        NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
-        components.timeZone = [NSTimeZone systemTimeZone];
-        components.hour = 0;
-        components.minute = 0;
-        components.second = 0;
-        long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
-        long endTime = startTime + 86400;
+        NSArray *todayStartEndTime = [self todayStartEndTime];
+        long startTime = [todayStartEndTime[0] longValue];
+        long endTime = [todayStartEndTime[1] longValue];
         NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
         _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
     }
@@ -264,13 +249,11 @@
 - (NSArray *)todayStartEndTime
 {
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
-    components.timeZone = [NSTimeZone systemTimeZone];
-    components.hour = 0;
-    components.minute = 0;
-    components.second = 0;
-    long startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
-    long endTime = startTime + 86400;
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *startOfDay = [gregorian startOfDayForDate:[NSDate now]];
+    NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:startOfDay options:0];
+    long startTime = round([startOfDay timeIntervalSince1970]);
+    long endTime = round([startOfNextDay timeIntervalSince1970]);
     return @[@(startTime), @(endTime)];
 }
 

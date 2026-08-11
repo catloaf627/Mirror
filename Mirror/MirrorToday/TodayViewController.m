@@ -324,7 +324,7 @@
     if (periodIndex + 1 <= records.count - 1) {
         endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex + 1].startTime];
     } else if (endDayOffset == 0) {
-        endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp] + 24 * 3600];
+        endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:[self todayEndTimestamp]];
     }
     
     self.editingPeriodIndex = periodIndex;
@@ -489,7 +489,7 @@
     }
 
     CGFloat newHourHeight = visibleHeight / 12.0;
-    CGSize contentSize = CGSizeMake(width, newHourHeight * 24.0);
+    CGSize contentSize = CGSizeMake(width, newHourHeight * [self timelineHourCount]);
     BOOL needsRender = fabs(self.hourHeight - newHourHeight) > 0.5 || !CGSizeEqualToSize(self.timelineScrollView.contentSize, contentSize);
     if (!needsRender) {
         return;
@@ -520,7 +520,14 @@
 - (void)renderHourLines
 {
     CGFloat width = CGRectGetWidth(self.timelineContentView.bounds);
-    for (NSInteger hour = 0; hour <= 24; hour++) {
+    NSInteger hourCount = [self timelineHourCount];
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateStyle = NSDateFormatterNoStyle;
+    formatter.timeStyle = NSDateFormatterShortStyle;
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    long dayStart = [self todayStartTimestamp];
+
+    for (NSInteger hour = 0; hour <= hourCount; hour++) {
         CGFloat y = hour * self.hourHeight;
         UIView *line = [UIView new];
         line.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
@@ -528,9 +535,11 @@
         [self.timelineContentView addSubview:line];
         line.frame = CGRectMake(kTimelineLeftWidth, y, width - kTimelineLeftWidth - kTimelineRightPadding, 1);
 
-        if (hour < 24) {
+        if (hour < hourCount) {
             UILabel *hourLabel = [UILabel new];
-            hourLabel.text = [NSString stringWithFormat:@"%02ld:00", (long)hour];
+            NSDate *date = [NSDate dateWithTimeIntervalSince1970:dayStart + hour * 3600];
+            hourLabel.text = [formatter stringFromDate:date];
+            NSLog(@"%@", hourLabel.text);
             hourLabel.font = [UIFont mirrorMinFont];
             hourLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
             hourLabel.alpha = 0.5;
@@ -539,12 +548,16 @@
             hourLabel.frame = CGRectMake(0, y - 10, kTimelineLeftWidth - 8*kWidthRatio, 20);
         }
     }
+    NSLog(@"timelineHourCount in renderHourLines: %ld", (long)hourCount);
+    NSLog(@"dayStart: %@, dayEnd: %@",
+          [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp]],
+          [NSDate dateWithTimeIntervalSince1970:[self todayEndTimestamp]]);
 }
 
 - (void)renderRecords
 {
     long dayStart = [self todayStartTimestamp];
-    long dayEnd = dayStart + 24 * 3600;
+    long dayEnd = [self todayEndTimestamp];
     CGFloat recordX = kTimelineLeftWidth;
     CGFloat recordWidth = CGRectGetWidth(self.timelineContentView.bounds) - recordX - kTimelineRightPadding;
 
@@ -741,7 +754,7 @@
 
 - (long)endTimestampForNewRecordStartingAt:(long)start // prevent overlap with period behind
 {
-    long end = start + 3600;
+    long end = MIN(start + 3600, [self todayEndTimestamp]);
     for (MirrorRecordModel *record in self.todayData) {
         if (record.startTime >= start) {
             end = MIN(end, record.startTime);
@@ -829,21 +842,33 @@
 
 - (long)timestampForTimelineY:(CGFloat)y
 {
-    CGFloat clampedY = MIN(MAX(y, 0), self.hourHeight * 24.0 - 1);
+    CGFloat clampedY = MIN(MAX(y, 0), self.hourHeight * [self timelineHourCount] - 1);
     NSInteger quarterHours = lround((clampedY / self.hourHeight) * 4.0);
-    quarterHours = MIN(MAX(quarterHours, 0), 24 * 4 - 1);
+    NSInteger maxQuarterHours = (([self todayEndTimestamp] - [self todayStartTimestamp]) / (15 * 60)) - 1;
+    quarterHours = MIN(MAX(quarterHours, 0), maxQuarterHours);
     return [self todayStartTimestamp] + quarterHours * 15 * 60;
 }
 
 - (long)todayStartTimestamp
 {
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
-    components.timeZone = [NSTimeZone systemTimeZone];
-    components.hour = 0;
-    components.minute = 0;
-    components.second = 0;
-    return [[gregorian dateFromComponents:components] timeIntervalSince1970];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    return round([[gregorian startOfDayForDate:[NSDate now]] timeIntervalSince1970]);
+}
+
+- (long)todayEndTimestamp
+{
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *startOfDay = [gregorian startOfDayForDate:[NSDate now]];
+    NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:startOfDay options:0];
+    return round([startOfNextDay timeIntervalSince1970]);
+}
+
+- (NSInteger)timelineHourCount
+{
+    NSInteger numOfHours = ([self todayEndTimestamp] - [self todayStartTimestamp]) / 3600;
+    return numOfHours;
 }
 
 - (NSString *)timeTextForRecord:(MirrorRecordModel *)record
