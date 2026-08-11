@@ -13,7 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSString *)identifier;
 - (void)configCellWithOnedaydata:(NSMutableDictionary<NSString *, NSNumber *> *)onedaydata
-                         maxtime:(long)maxtime;
+                         maxtime:(long)maxtime
+                        dateText:(NSString *)dateText;
 
 @end
 

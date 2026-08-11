@@ -12,7 +12,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface LinechartView : UIView
 
-- (void)refactorData:(NSMutableArray<NSMutableArray<MirrorReadModel *> *> *)originalData;
+- (void)refactorData:(NSMutableArray<NSMutableArray<MirrorReadModel *> *> *)originalData
+            dateKeys:(NSMutableArray<NSString *> *)dateKeys;
 
 @end
 

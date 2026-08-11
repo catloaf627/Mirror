@@ -17,6 +17,7 @@ static CGFloat const kMinCellWidth = 14;
 static CGFloat const kTimelineLeftWidth = 36;
 static CGFloat const kTimelineRightPadding = 4;
 static CGFloat const kTimelineLineWidth = 5;
+static CGFloat const kXAxisLabelHeight = 20;
 
 @interface LinechartView () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
@@ -25,6 +26,7 @@ static CGFloat const kTimelineLineWidth = 5;
 
 @property (nonatomic, assign) long maxtime;
 @property (nonatomic, strong) NSMutableArray<NSMutableDictionary<NSString *, NSNumber *> *> *data;
+@property (nonatomic, strong) NSMutableArray<NSString *> *dateTexts;
 
 @end
 
@@ -66,7 +68,8 @@ static CGFloat const kTimelineLineWidth = 5;
     LineChartCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[LineChartCollectionViewCell identifier] forIndexPath:indexPath];
     // onedaydata
     NSMutableDictionary<NSString *,NSNumber *> *onedaydata = self.data[indexPath.item];
-    [cell configCellWithOnedaydata:onedaydata maxtime:self.maxtime];
+    NSString *dateText = self.dateTexts.count > indexPath.item ? self.dateTexts[indexPath.item] : @"";
+    [cell configCellWithOnedaydata:onedaydata maxtime:self.maxtime dateText:dateText];
     return cell;
 }
 
@@ -88,10 +91,15 @@ static CGFloat const kTimelineLineWidth = 5;
 #pragma mark - Refactor Data
 
 - (void)refactorData:(NSMutableArray<NSMutableArray<MirrorReadModel *> *> *)originalData
+            dateKeys:(NSMutableArray<NSString *> *)dateKeys
 {
     
     // update maxtime
     self.maxtime = 0;
+    self.dateTexts = [[NSMutableArray alloc] initWithCapacity:dateKeys.count];
+    for (NSString *dateKey in dateKeys) {
+        [self.dateTexts addObject:[self dayTextFromDateKey:dateKey]];
+    }
     
     NSMutableArray *allTasknames = [NSMutableArray new];
     for (int i=0; i<originalData.count; i++) {
@@ -169,7 +177,7 @@ static CGFloat const kTimelineLineWidth = 5;
     
     long step = self.maxtime >= 3600 ? 3600 : 15 * 60;
     long maxLineTime = (self.maxtime / step) * step;
-    CGFloat drawableHeight = MAX(CGRectGetHeight(self.bounds) - kTimelineLineWidth, 0);
+    CGFloat drawableHeight = MAX(CGRectGetHeight(self.bounds) - kTimelineLineWidth - kXAxisLabelHeight, 0);
     CGFloat lineX = kTimelineLeftWidth;
     CGFloat lineWidth = CGRectGetWidth(self.bounds) - kTimelineLeftWidth - kTimelineRightPadding;
     
@@ -200,6 +208,22 @@ static CGFloat const kTimelineLineWidth = 5;
         return [NSString stringWithFormat:@"%ldh", seconds / 3600];
     }
     return [NSString stringWithFormat:@"%ldm", seconds / 60];
+}
+
+- (NSString *)dayTextFromDateKey:(NSString *)dateKey
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *date = [formatter dateFromString:dateKey];
+    if (!date) {
+        return @"";
+    }
+    
+    NSCalendar *calendar = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSInteger day = [calendar component:NSCalendarUnitDay fromDate:date];
+    return [NSString stringWithFormat:@"%ld", (long)day];
 }
 
 #pragma mark - Getter

@@ -426,12 +426,14 @@
     self.dateLabel.text = [[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate];
     // data source
     NSMutableArray<NSMutableArray<MirrorReadModel *> *> *dataArr = [NSMutableArray new];
+    NSMutableArray<NSString *> *dateKeys = [NSMutableArray new];
     for (NSInteger i=start; i<=end; i++) {
         NSMutableArray<MirrorReadModel *> *data = [self gridDataForDateKey:self.keys[i]];
         if (data == nil) {
             data = [NSMutableArray new];
         }
         [dataArr addObject:data];
+        [dateKeys addObject:self.keys[i]];
     }
     // legend
     [self.legendView updateWithData:[self legendDataFromIndex:start toIndex:end]];
@@ -439,7 +441,7 @@
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
     self.linechartView.hidden = NO;
-    [self.linechartView refactorData:dataArr];
+    [self.linechartView refactorData:dataArr dateKeys:dateKeys];
 }
 
 - (CGFloat)weekdayViewWidth

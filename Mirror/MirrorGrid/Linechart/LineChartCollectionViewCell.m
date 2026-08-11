@@ -8,10 +8,12 @@
 #import "LineChartCollectionViewCell.h"
 #import "MirrorStorage.h"
 #import "UIColor+MirrorColor.h"
+#import "UIFont+MirrorFont.h"
 #import <Masonry/Masonry.h>
 
 static CGFloat const kBarWidth = 5;
 static CGFloat const kMinimumVisibleBarHeight = 2;
+static CGFloat const kXAxisLabelHeight = 20;
 
 @implementation LineChartCollectionViewCell
 
@@ -22,15 +24,26 @@ static CGFloat const kMinimumVisibleBarHeight = 2;
 
 - (void)configCellWithOnedaydata:(NSMutableDictionary<NSString *, NSNumber *> *)onedaydata
                          maxtime:(long)maxtime
+                        dateText:(NSString *)dateText
 {
     self.backgroundColor = [UIColor clearColor];
     self.contentView.backgroundColor = [UIColor clearColor];
     
     NSArray *viewsToRemove = [self.contentView subviews];
     for (UIView *v in viewsToRemove) [v removeFromSuperview];
+    
+    UILabel *dateLabel = [UILabel new];
+    dateLabel.text = dateText;
+    dateLabel.font = [UIFont mirrorMinFont];
+    dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+    dateLabel.alpha = 0.5;
+    dateLabel.textAlignment = NSTextAlignmentCenter;
+    [self.contentView addSubview:dateLabel];
+    dateLabel.frame = CGRectMake(0, self.bounds.size.height - kXAxisLabelHeight, self.bounds.size.width, kXAxisLabelHeight);
+    
     if (maxtime <= 0) return;
     
-    CGFloat drawableHeight = MAX(self.bounds.size.height - kBarWidth, 0);
+    CGFloat drawableHeight = MAX(self.bounds.size.height - kBarWidth - kXAxisLabelHeight, 0);
     CGFloat accumulatedHeight = 0;
     NSArray<NSString *> *taskNames = [onedaydata.allKeys sortedArrayUsingSelector:@selector(localizedStandardCompare:)];
     NSMutableArray<NSString *> *visibleTaskNames = [NSMutableArray new];
