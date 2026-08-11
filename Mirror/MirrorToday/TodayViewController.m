@@ -506,8 +506,7 @@
     CGFloat width = CGRectGetWidth(self.timelineContentView.bounds);
     NSInteger hourCount = [self timelineHourCount];
     NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateStyle = NSDateFormatterNoStyle;
-    formatter.timeStyle = NSDateFormatterShortStyle;
+    formatter.dateFormat = @"H:mm";
     formatter.timeZone = [NSTimeZone systemTimeZone];
     long dayStart = [self todayStartTimestamp];
 
@@ -853,8 +852,8 @@
 - (NSString *)shortTimeFromTimestamp:(long)timestamp
 {
     NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateStyle = NSDateFormatterNoStyle;
-    formatter.timeStyle = NSDateFormatterShortStyle;
+    formatter.dateFormat = @"H:mm";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
     return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
 }
 
