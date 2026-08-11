@@ -201,6 +201,7 @@ static CGFloat const kCircleLineWidth = 18;
 
 // UI
 @property (nonatomic, strong) UILabel *taskNameLabel;
+@property (nonatomic, strong) UIButton *noteButton;
 @property (nonatomic, strong) MirrorTrackingCircleView *circleView;
 @property (nonatomic, strong) UILabel *timeIntervalLabel;
 @property (nonatomic, strong) UIButton *stopButton;
@@ -247,6 +248,7 @@ static CGFloat const kCircleLineWidth = 18;
 {
     // 将vc.view里的所有subviews全部置为nil
     self.taskNameLabel = nil;
+    self.noteButton = nil;
     self.circleView = nil;
     self.timeIntervalLabel = nil;
     self.stopButton = nil;
@@ -297,7 +299,14 @@ static CGFloat const kCircleLineWidth = 18;
     [self.taskNameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
         make.bottom.equalTo(self.circleView.mas_top).offset(-36);
-        make.width.equalTo(@(kScreenWidth - 2*kPadding));
+        make.width.lessThanOrEqualTo(@(kScreenWidth - 2*kPadding - 44));
+    }];
+
+    [self.view addSubview:self.noteButton];
+    [self.noteButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(self.taskNameLabel.mas_right).offset(8);
+        make.centerY.equalTo(self.taskNameLabel);
+        make.width.height.mas_equalTo(28);
     }];
     
     [self.view addSubview:self.stopButton];
@@ -342,6 +351,10 @@ static CGFloat const kCircleLineWidth = 18;
         [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"give_up"] forState:UIControlStateNormal];
     }
 
+    self.noteButton.hidden = !canStop;
+    [self.taskNameLabel mas_updateConstraints:^(MASConstraintMaker *make) {
+        make.centerX.offset(canStop ? -18 : 0);
+    }];
     [self.circleView setNeedsDisplay];
 }
 
@@ -372,6 +385,38 @@ static CGFloat const kCircleLineWidth = 18;
     } else {
         [MirrorStorage deletePeriodAtIndex:[MirrorStorage retriveMirrorRecords].count-1];
     }
+}
+
+- (void)noteButtonClicked
+{
+    if (![self canStopAndKeepRecord]) {
+        return;
+    }
+
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    NSInteger periodIndex = records.count - 1;
+    if (periodIndex < 0 || records[periodIndex].endTime != 0) {
+        return;
+    }
+
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"note"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.text = records[periodIndex].note;
+        textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"note"];
+        textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    }];
+
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
+    UIAlertAction *saveAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"save"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *note = alert.textFields.firstObject.text ?: @"";
+        if (note.length > 200) {
+            note = [note substringToIndex:200];
+        }
+        [MirrorStorage editPeriodNote:note periodIndex:periodIndex];
+    }];
+    [alert addAction:cancelAction];
+    [alert addAction:saveAction];
+    [self presentViewController:alert animated:YES completion:nil];
 }
 
 - (BOOL)canStopAndKeepRecord
@@ -423,8 +468,27 @@ static CGFloat const kCircleLineWidth = 18;
         _taskNameLabel.font = [UIFont fontWithName:kHintFont size:kTaskNameSize];
         _taskNameLabel.text = self.taskName;
         _taskNameLabel.textAlignment = NSTextAlignmentCenter;
+        _taskNameLabel.adjustsFontSizeToFitWidth = YES;
+        _taskNameLabel.minimumScaleFactor = 0.5;
     }
     return _taskNameLabel;
+}
+
+- (UIButton *)noteButton
+{
+    if (!_noteButton) {
+        _noteButton = [UIButton new];
+        _noteButton.hidden = YES;
+        _noteButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _noteButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"note"];
+        if (@available(iOS 13.0, *)) {
+            UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:21 weight:UIImageSymbolWeightRegular];
+            UIImage *image = [[UIImage systemImageNamed:@"pencil.and.list.clipboard"] imageWithConfiguration:configuration];
+            [_noteButton setImage:image forState:UIControlStateNormal];
+        }
+        [_noteButton addTarget:self action:@selector(noteButtonClicked) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _noteButton;
 }
 
 - (MirrorTrackingCircleView *)circleView
