@@ -412,8 +412,12 @@
 
 - (void)updateLinechart // linechart
 {
-    if (_selectedCellIndexesStart==-1 || _selectedCellIndexesEnd==-1) { // 空数据保护
+    if (_selectedCellIndexesStart==-1 || _selectedCellIndexesEnd==-1 || self.keys.count == 0) { // 空数据保护
         return;
+    }
+    if (_selectedCellIndexesStart >= self.keys.count || _selectedCellIndexesEnd >= self.keys.count) { // 当grid（因为数据删减、调整星期第一天）缩小导致两个index取不到时，调整到最近的index
+        while (_selectedCellIndexesStart >= self.keys.count) _selectedCellIndexesStart--;
+        while (_selectedCellIndexesEnd >= self.keys.count) _selectedCellIndexesEnd--;
     }
     NSInteger start = _selectedCellIndexesStart < _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
     NSInteger end = _selectedCellIndexesStart > _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
