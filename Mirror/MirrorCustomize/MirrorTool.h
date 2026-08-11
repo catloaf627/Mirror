@@ -15,6 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)timeFromDate:(NSDate *)date printTimeStamp:(BOOL)printTimeStamp;
 + (NSString *)timeFromTimestamp:(long)timestamp printTimeStamp:(BOOL)printTimeStamp;
 + (NSString *)localizedTimeFromTimestamp:(long)timestamp;
++ (NSString *)timelineMonthDayTextForTimestamp:(long)timestamp;
++ (NSString *)timelineTimeRangeTextForRecord:(MirrorRecordModel *)record;
++ (NSString *)timelineYearTextForTimestamp:(long)timestamp;
 + (long)getDayGapFromTheFirstDayThisWeek; // 本日0点与本周0点的天数差距（取决于本周的开始是算周一，还是算周日）
 + (long)getTotalTimeOfPeriods:(NSMutableArray<MirrorRecordModel *> *)periods;
 

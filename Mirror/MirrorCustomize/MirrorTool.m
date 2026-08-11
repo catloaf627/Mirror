@@ -11,6 +11,7 @@
 
 @implementation MirrorTool
 
+// Formats a date for debug-style display; for example 2026.6.27,Sat,9:30:0 or 2026.6.27,Sat,9:30:0，(1782552600).
 + (NSString *)timeFromDate:(NSDate *)date printTimeStamp:(BOOL)printTimeStamp
 {
     // setup
@@ -41,6 +42,7 @@
     }
 }
 
+// Formats a Unix timestamp for debug-style display; for example 2026.6.27,Sat,9:30:0 or 2026.6.27,Sat,9:30:0，(1782552600).
 + (NSString *)timeFromTimestamp:(long)timestamp printTimeStamp:(BOOL)printTimeStamp
 {
     NSDate *date = [NSDate dateWithTimeIntervalSince1970:timestamp];
@@ -72,6 +74,7 @@
     }
 }
 
+// Formats a timestamp with the current app locale; for example Jun 27, 2026 at 9:30 AM or 2026年6月27日 09:30.
 + (NSString *)localizedTimeFromTimestamp:(long)timestamp
 {
     NSDateFormatter *formatter = [NSDateFormatter new];
@@ -82,6 +85,33 @@
     return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
 }
 
+// Formats the timeline left-side month/day; for example Jun 27.
++ (NSString *)timelineMonthDayTextForTimestamp:(long)timestamp
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    formatter.locale = [MirrorTool formatterLocaleForCurrentLanguage];
+    [formatter setLocalizedDateFormatFromTemplate:@"MMM d"];
+    return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
+}
+
+// Formats a timeline fallback time range; for example Jun 27, 2026 at 9:30 AM - Jun 27, 2026 at 11:00 AM.
++ (NSString *)timelineTimeRangeTextForRecord:(MirrorRecordModel *)record
+{
+    return [NSString stringWithFormat:@"%@ - %@", [MirrorTool localizedTimeFromTimestamp:record.startTime], [MirrorTool localizedTimeFromTimestamp:record.endTime]];
+}
+
+// Formats the timeline left-side year; for example 2026.
++ (NSString *)timelineYearTextForTimestamp:(long)timestamp
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    formatter.locale = [MirrorTool formatterLocaleForCurrentLanguage];
+    [formatter setLocalizedDateFormatFromTemplate:@"yyyy"];
+    return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
+}
+
+// Returns the locale used by app date formatters; for example en, zh-Hans, es, fr, ja, or ko.
 + (NSLocale *)formatterLocaleForCurrentLanguage
 {
     NSString *localeIdentifier = [MirrorLanguage mirror_stringWithKey:@"locale_Identifier"];
@@ -91,6 +121,7 @@
     return [NSLocale localeWithLocaleIdentifier:localeIdentifier];
 }
 
+// Returns today's offset from the configured week start; for example Wednesday returns 2 when weeks start Monday.
 + (long)getDayGapFromTheFirstDayThisWeek
 {
     BOOL weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
@@ -117,6 +148,7 @@
     }
 }
 
+// Sums completed period durations in seconds; for example 09:30-10:30 plus 11:00-11:30 returns 5400.
 + (long)getTotalTimeOfPeriods:(NSMutableArray<MirrorRecordModel *> *)periods
 {
     long seconds = 0;

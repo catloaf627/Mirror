@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (UIFont *)mirrorTodayFont;
 + (UIFont *)mirrorTitleFont;
 + (UIFont *)mirrorSubtitleFont;
++ (UIFont *)mirrorHighlightFont;
 + (UIFont *)mirrorLabelFont;
 + (UIFont *)mirrorHintFont;
 + (UIFont *)mirrorMinFont;

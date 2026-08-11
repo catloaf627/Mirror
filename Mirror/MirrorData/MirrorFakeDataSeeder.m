@@ -206,7 +206,33 @@
     MirrorRecordModel *record = [[MirrorRecordModel alloc] initWithTitle:name
                                                                 startTime:startTime
                                                                   endTime:endTime];
+    record.note = [self randomNoteForTaskName:name startTime:startTime durationMinutes:durationMinutes];
     [records addObject:record];
+}
+
++ (NSString *)randomNoteForTaskName:(NSString *)taskName startTime:(long)startTime durationMinutes:(NSInteger)durationMinutes
+{
+    NSInteger seed = (startTime / 60) + durationMinutes;
+    for (NSUInteger index = 0; index < taskName.length; index++) {
+        seed += [taskName characterAtIndex:index];
+    }
+    
+    if (seed % 3 != 0) {
+        return @"";
+    }
+    
+    NSString *englishName = [self englishTaskNameForLocalizedTaskName:taskName];
+    return [MirrorLanguage localizedSampleRecordNoteForEnglishTaskName:englishName index:seed];
+}
+
++ (NSString *)englishTaskNameForLocalizedTaskName:(NSString *)taskName
+{
+    for (NSString *englishName in [self fakeTaskEnglishNames]) {
+        if ([[MirrorLanguage localizedSampleTaskNamesForEnglishName:englishName] containsObject:taskName]) {
+            return englishName;
+        }
+    }
+    return @"Code";
 }
 
 + (BOOL)startTime:(long)startTime endTime:(long)endTime overlapsRecord:(MirrorRecordModel *)record

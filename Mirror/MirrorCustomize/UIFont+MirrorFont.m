@@ -39,6 +39,11 @@
     return [UIFont mirror_fontWithSize:18*kWidthRatio bold:NO];
 }
 
++ (UIFont *)mirrorHighlightFont
+{
+    return [UIFont mirror_fontWithSize:16*kWidthRatio bold:YES];
+}
+
 + (UIFont *)mirrorLabelFont
 {
     return [UIFont mirror_fontWithSize:15*kWidthRatio bold:NO];

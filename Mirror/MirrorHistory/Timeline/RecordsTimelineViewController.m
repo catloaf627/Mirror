@@ -15,12 +15,12 @@
 #import "MirrorMacro.h"
 
 static CGFloat const kHorizontalPadding = 20;
-static CGFloat const kTimelineX = 28;
 static CGFloat const kDotSize = 10;
 static CGFloat const kRowMinHeight = 72;
-static CGFloat const kTextLeftPadding = 18;
 static NSInteger const kTimelineBatchSize = 50;
 static CGFloat const kTimelineLoadThreshold = 48;
+
+#define kTimelineX (kScreenWidth/4)
 
 typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     TimelineBatchScrollPositionTop,
@@ -420,36 +420,61 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         make.width.height.mas_equalTo(kDotSize);
     }];
     
-    UILabel *dateLabel = [UILabel new];
-    dateLabel.font = [UIFont mirrorHintFont];
-    dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-    dateLabel.text = [MirrorTimeText YYYYmmddWeekdayWithStart:record.startTime];
-    [row addSubview:dateLabel];
-    [dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(dot.mas_right).offset(kTextLeftPadding);
-        make.right.mas_equalTo(row).offset(-kHorizontalPadding);
-        make.top.mas_equalTo(row).offset(10 * kHeightRatio);
+    UILabel *leftDateLabel = [UILabel new];
+    leftDateLabel.font = [UIFont mirrorHighlightFont];
+    leftDateLabel.textColor = pulseColor;
+    leftDateLabel.textAlignment = NSTextAlignmentRight;
+    leftDateLabel.adjustsFontSizeToFitWidth = YES;
+    leftDateLabel.minimumScaleFactor = 0.7;
+    leftDateLabel.text = [MirrorTool timelineMonthDayTextForTimestamp:record.startTime];
+    [row addSubview:leftDateLabel];
+    [leftDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(row).offset(4 * kWidthRatio);
+        make.right.mas_equalTo(dot.mas_left).offset(-8 * kWidthRatio);
+        make.centerY.mas_equalTo(dot.mas_centerY).offset(-6 * kHeightRatio);
     }];
     
-    UILabel *timeLabel = [UILabel new];
-    timeLabel.font = [UIFont mirrorLabelFont];
-    timeLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    timeLabel.adjustsFontSizeToFitWidth = YES;
-    timeLabel.text = [NSString stringWithFormat:@"%@ - %@", [MirrorTool localizedTimeFromTimestamp:record.startTime], [MirrorTool localizedTimeFromTimestamp:record.endTime]];
-    [row addSubview:timeLabel];
-    [timeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.mas_equalTo(dateLabel);
-        make.top.mas_equalTo(dateLabel.mas_bottom).offset(4 * kHeightRatio);
+    UILabel *leftYearLabel = [UILabel new];
+    leftYearLabel.font = [UIFont mirrorHintFont];
+    leftYearLabel.textColor = pulseColor;
+    leftYearLabel.alpha = 0.7;
+    leftYearLabel.textAlignment = NSTextAlignmentRight;
+    leftYearLabel.adjustsFontSizeToFitWidth = YES;
+    leftYearLabel.minimumScaleFactor = 0.7;
+    leftYearLabel.text = [MirrorTool timelineYearTextForTimestamp:record.startTime];
+    [row addSubview:leftYearLabel];
+    [leftYearLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.mas_equalTo(leftDateLabel);
+        make.top.mas_equalTo(leftDateLabel.mas_bottom).offset(4 * kHeightRatio);
+        make.bottom.mas_lessThanOrEqualTo(row).offset(-10 * kHeightRatio);
     }];
     
     UILabel *durationLabel = [UILabel new];
-    durationLabel.font = [UIFont mirrorHintFont];
+    durationLabel.font = [UIFont mirrorLabelFont];
     durationLabel.textColor = pulseColor;
+    durationLabel.adjustsFontSizeToFitWidth = YES;
+    durationLabel.minimumScaleFactor = 0.7;
     durationLabel.text = [MirrorTimeText XdXhXmXsShortWithstart:record.startTime end:record.endTime];
+    [durationLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    [durationLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     [row addSubview:durationLabel];
     [durationLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.mas_equalTo(dateLabel);
-        make.top.mas_equalTo(timeLabel.mas_bottom).offset(4 * kHeightRatio);
+        make.left.mas_equalTo(dot.mas_right).offset(8 * kWidthRatio);
+        make.centerY.mas_equalTo(dot.mas_centerY);
+    }];
+    
+    UILabel *noteLabel = [UILabel new];
+    noteLabel.font = [UIFont mirrorHintFont];
+    noteLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    noteLabel.adjustsFontSizeToFitWidth = YES;
+    noteLabel.minimumScaleFactor = 0.7;
+    noteLabel.text = record.note;
+    [noteLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
+    [row addSubview:noteLabel];
+    [noteLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(durationLabel.mas_right).offset(10);
+        make.right.mas_equalTo(row).offset(-kHorizontalPadding);
+        make.centerY.mas_equalTo(durationLabel.mas_centerY);
         make.bottom.mas_lessThanOrEqualTo(row).offset(-10 * kHeightRatio);
     }];
     

@@ -231,4 +231,148 @@
     return taskNames[englishName] ?: ML(englishName, englishName, englishName, englishName, englishName, englishName);
 }
 
++ (NSString *)localizedSampleRecordNoteForEnglishTaskName:(NSString *)englishName index:(NSInteger)index
+{
+    NSDictionary<NSString *, NSArray<NSArray<NSString *> *> *> *notesByTask = @{
+        @"Gym": @[
+            ML(@"leg day", @"练腿日", @"día de piernas", @"jambes", @"脚の日", @"하체 운동"),
+            ML(@"bench press sets", @"卧推组", @"series de press banca", @"séries de développé couché", @"ベンチプレス", @"벤치프레스 세트"),
+            ML(@"stretching and core", @"拉伸和核心", @"estiramientos y core", @"étirements et gainage", @"ストレッチと体幹", @"스트레칭과 코어"),
+            ML(@"too crowded, short session", @"人太多，缩短训练", @"muy lleno, sesión corta", @"trop de monde, séance courte", @"混んでいて短め", @"사람이 많아서 짧게"),
+            ML(@"deadlift form check", @"硬拉动作检查", @"revisé técnica de peso muerto", @"technique du soulevé de terre", @"デッドリフトフォーム確認", @"데드리프트 자세 확인"),
+            ML(@"easy treadmill run", @"轻松跑步机", @"cinta suave", @"tapis tranquille", @"軽めのランニングマシン", @"가벼운 러닝머신"),
+            ML(@"shoulder rehab work", @"肩部康复训练", @"rehab de hombro", @"rééducation épaule", @"肩のリハビリ", @"어깨 재활 운동"),
+            ML(@"pull-ups felt strong", @"引体向上状态好", @"dominadas fuertes", @"tractions solides", @"懸垂が好調", @"풀업 컨디션 좋음"),
+            ML(@"skipped cardio", @"跳过有氧", @"salté cardio", @"cardio sauté", @"有酸素は省略", @"유산소 생략"),
+            ML(@"new squat weight", @"深蹲加重量", @"nuevo peso en sentadilla", @"nouvelle charge squat", @"スクワット重量更新", @"스쿼트 중량 올림"),
+            ML(@"foam rolling after", @"结束后泡沫轴", @"foam roller después", @"rouleau après", @"終わってフォームローラー", @"마무리 폼롤러"),
+            ML(@"quick hotel gym", @"酒店健身房快练", @"gimnasio del hotel rápido", @"salle hôtel rapide", @"ホテルジムで短時間", @"호텔 헬스장 짧게"),
+            ML(@"arms and abs", @"手臂和腹部", @"brazos y abdominales", @"bras et abdos", @"腕と腹筋", @"팔과 복근"),
+            ML(@"trainer session", @"私教课", @"sesión con entrenador", @"séance coach", @"トレーナーセッション", @"트레이너 수업"),
+            ML(@"mobility only", @"只做灵活性", @"solo movilidad", @"mobilité seulement", @"可動域だけ", @"가동성 운동만"),
+            ML(@"ran into Sam", @"遇到 Sam", @"me encontré con Sam", @"croisé Sam", @"Sam に会った", @"Sam 만남"),
+            ML(@"bad sleep, lighter weights", @"没睡好，减重量", @"mal sueño, menos peso", @"mal dormi, plus léger", @"寝不足で軽め", @"잠 부족해서 가볍게"),
+            ML(@"hit all planned sets", @"完成所有计划组", @"hice todas las series", @"toutes les séries faites", @"予定セット完了", @"계획 세트 완료"),
+            ML(@"forgot water bottle", @"忘带水杯", @"olvidé la botella", @"gourde oubliée", @"水筒を忘れた", @"물병 깜빡함")
+        ],
+        @"Tennis": @[
+            ML(@"serve practice", @"发球练习", @"práctica de saque", @"service", @"サーブ練習", @"서브 연습"),
+            ML(@"backhand drills", @"反手训练", @"ejercicios de revés", @"revers", @"バックハンド練習", @"백핸드 훈련"),
+            ML(@"friendly match with Alex", @"和 Alex 友谊赛", @"partido amistoso con Alex", @"match amical avec Alex", @"Alex と練習試合", @"Alex와 친선 경기"),
+            ML(@"windy court, lots of mistakes", @"场地风大，失误很多", @"cancha con viento, muchos errores", @"court venteux, beaucoup d'erreurs", @"風が強くミス多め", @"바람이 세서 실수 많음"),
+            ML(@"forehand cross-court", @"正手斜线", @"derecha cruzada", @"coup droit croisé", @"フォアのクロス", @"포핸드 크로스"),
+            ML(@"tiebreak practice", @"抢七练习", @"práctica de tie-break", @"tie-break", @"タイブレーク練習", @"타이브레이크 연습"),
+            ML(@"worked on footwork", @"练步伐", @"trabajé el juego de pies", @"jeu de jambes", @"フットワーク練習", @"풋워크 연습"),
+            ML(@"volleys at the net", @"网前截击", @"voleas en la red", @"volées au filet", @"ネットボレー", @"네트 발리"),
+            ML(@"new grip felt odd", @"新握拍不太习惯", @"nuevo grip raro", @"nouveau grip étrange", @"新しいグリップ違和感", @"새 그립 어색함"),
+            ML(@"lost first set", @"输掉第一盘", @"perdí el primer set", @"premier set perdu", @"第1セット落とした", @"첫 세트 패배"),
+            ML(@"serve finally clicked", @"发球终于顺了", @"el saque por fin salió", @"service enfin trouvé", @"サーブがやっと合った", @"서브 감 잡음"),
+            ML(@"rally consistency", @"多拍稳定性", @"consistencia en peloteos", @"régularité en échange", @"ラリー安定", @"랠리 안정감"),
+            ML(@"court lights were harsh", @"场灯太刺眼", @"luces muy fuertes", @"lumières trop fortes", @"照明がまぶしい", @"조명이 눈부심"),
+            ML(@"short balls practice", @"短球练习", @"bolas cortas", @"balles courtes", @"短い球の練習", @"짧은 공 연습"),
+            ML(@"doubles rotation", @"双打轮转", @"rotación de dobles", @"rotation double", @"ダブルスローテーション", @"복식 로테이션"),
+            ML(@"slice backhand", @"反手削球", @"revés cortado", @"revers slicé", @"バックハンドスライス", @"백핸드 슬라이스"),
+            ML(@"too hot after noon", @"中午后太热", @"demasiado calor después del mediodía", @"trop chaud après midi", @"昼過ぎは暑すぎ", @"오후엔 너무 더움"),
+            ML(@"coach changed my toss", @"教练改了抛球", @"el coach cambió mi lanzamiento", @"coach a changé mon lancer", @"トスを直された", @"코치가 토스 수정"),
+            ML(@"solid closing game", @"收尾局打得稳", @"buen juego final", @"dernier jeu solide", @"最後のゲーム安定", @"마지막 게임 안정적")
+        ],
+        @"Code": @[
+            ML(@"dynamic programming practice", @"动态规划练习", @"práctica de programación dinámica", @"programmation dynamique", @"動的計画法の練習", @"동적 계획법 연습"),
+            ML(@"Project X login flow", @"Project X 登录流程", @"flujo de inicio de Project X", @"connexion de Project X", @"Project X のログイン", @"Project X 로그인 흐름"),
+            ML(@"fixed calendar bug", @"修了日历问题", @"arreglé bug del calendario", @"bug calendrier corrigé", @"カレンダーの不具合修正", @"캘린더 버그 수정"),
+            ML(@"easy UI cleanup", @"简单 UI 清理", @"limpieza sencilla de UI", @"nettoyage UI simple", @"簡単な UI 整理", @"간단한 UI 정리"),
+            ML(@"refactored storage layer", @"重构存储层", @"refactoricé almacenamiento", @"refactor stockage", @"保存層をリファクタ", @"저장 계층 리팩터링"),
+            ML(@"debugged sync issue", @"调试同步问题", @"depuré problema de sincronización", @"débogage synchro", @"同期問題をデバッグ", @"동기화 문제 디버그"),
+            ML(@"wrote unit tests", @"写单元测试", @"escribí pruebas unitarias", @"tests unitaires", @"単体テスト作成", @"유닛 테스트 작성"),
+            ML(@"API error handling", @"API 错误处理", @"manejo de errores API", @"gestion erreurs API", @"API エラー処理", @"API 오류 처리"),
+            ML(@"reviewed pull request", @"看代码评审", @"revisé pull request", @"revue de PR", @"PR レビュー", @"PR 리뷰"),
+            ML(@"fixed layout on iPad", @"修 iPad 布局", @"arreglé layout en iPad", @"layout iPad corrigé", @"iPad レイアウト修正", @"iPad 레이아웃 수정"),
+            ML(@"database migration", @"数据库迁移", @"migración de base de datos", @"migration base de données", @"DB マイグレーション", @"DB 마이그레이션"),
+            ML(@"slow build investigation", @"排查构建慢", @"investigué build lento", @"build lent analysé", @"遅いビルド調査", @"느린 빌드 조사"),
+            ML(@"renamed confusing methods", @"重命名混乱方法", @"renombré métodos confusos", @"méthodes renommées", @"紛らわしいメソッド改名", @"헷갈리는 메서드 이름 변경"),
+            ML(@"prototype for new widget", @"新组件原型", @"prototipo de widget", @"prototype widget", @"新ウィジェット試作", @"새 위젯 프로토타입"),
+            ML(@"fixed timezone edge case", @"修时区边界问题", @"arreglé caso de zona horaria", @"cas fuseau horaire corrigé", @"タイムゾーン境界修正", @"시간대 엣지 케이스 수정"),
+            ML(@"read framework docs", @"读框架文档", @"leí documentación", @"lecture docs framework", @"フレームワーク文書確認", @"프레임워크 문서 읽음"),
+            ML(@"deleted dead code", @"删除废代码", @"eliminé código muerto", @"code mort supprimé", @"不要コード削除", @"죽은 코드 삭제"),
+            ML(@"performance profiling", @"性能分析", @"perfilado de rendimiento", @"profilage performance", @"パフォーマンス計測", @"성능 프로파일링"),
+            ML(@"pairing session", @"结对编程", @"sesión en pareja", @"pair programming", @"ペア作業", @"페어 프로그래밍"),
+            ML(@"fixed flaky test", @"修不稳定测试", @"arreglé prueba inestable", @"test instable corrigé", @"不安定テスト修正", @"불안정 테스트 수정")
+        ],
+        @"Swim": @[
+            ML(@"butterfly stroke", @"蝶泳", @"mariposa", @"papillon", @"バタフライ", @"접영"),
+            ML(@"crawl laps", @"自由泳往返", @"vueltas de crol", @"longueurs en crawl", @"クロール周回", @"자유형 랩"),
+            ML(@"kickboard drills", @"浮板打腿", @"ejercicios con tabla", @"battements avec planche", @"ビート板練習", @"킥판 훈련"),
+            ML(@"too tired to continue", @"太累了，没继续", @"demasiado cansado para seguir", @"trop fatigué pour continuer", @"疲れて続けられず", @"너무 피곤해서 중단"),
+            ML(@"breathing every three strokes", @"三划一换气", @"respirar cada tres brazadas", @"respiration tous les trois", @"3ストロークごと呼吸", @"세 번마다 호흡"),
+            ML(@"slow warm-up laps", @"慢速热身", @"vueltas lentas de calentamiento", @"échauffement lent", @"ゆっくりウォームアップ", @"천천히 워밍업"),
+            ML(@"worked on flip turns", @"练翻滚转身", @"practiqué virajes", @"virages travaillés", @"クイックターン練習", @"플립턴 연습"),
+            ML(@"pool was packed", @"泳池人很多", @"piscina llena", @"piscine bondée", @"プールが混んでいた", @"수영장 붐빔"),
+            ML(@"freestyle intervals", @"自由泳间歇", @"intervalos de libre", @"intervalles nage libre", @"自由形インターバル", @"자유형 인터벌"),
+            ML(@"backstroke cooldown", @"仰泳放松", @"espalda para enfriar", @"dos pour retour au calme", @"背泳ぎクールダウン", @"배영 쿨다운"),
+            ML(@"goggles kept leaking", @"泳镜一直漏水", @"gafas con fugas", @"lunettes qui fuient", @"ゴーグル水漏れ", @"수경 물 샘"),
+            ML(@"lane sharing", @"和别人共用泳道", @"compartí carril", @"ligne partagée", @"レーン共有", @"레인 공유"),
+            ML(@"sprint sets", @"冲刺组", @"series de sprint", @"séries sprint", @"スプリントセット", @"스프린트 세트"),
+            ML(@"practiced dolphin kick", @"练海豚腿", @"patada de delfín", @"ondulation", @"ドルフィンキック", @"돌핀킥 연습"),
+            ML(@"easy recovery swim", @"轻松恢复游", @"nado suave de recuperación", @"récupération douce", @"軽いリカバリー泳", @"가벼운 회복 수영"),
+            ML(@"coach watched my catch", @"教练看划水", @"coach revisó mi agarre", @"coach a vu l'appui", @"キャッチを見てもらった", @"코치가 캐치 봐줌"),
+            ML(@"chlorine was strong", @"氯味很重", @"mucho cloro", @"chlore fort", @"塩素が強い", @"염소 냄새 강함"),
+            ML(@"long continuous swim", @"长距离连续游", @"nado continuo largo", @"longue nage continue", @"長めに連続泳", @"긴 연속 수영"),
+            ML(@"felt fast today", @"今天游得快", @"me sentí rápido hoy", @"rapide aujourd'hui", @"今日は速かった", @"오늘 속도 좋음"),
+            ML(@"arms burned out", @"手臂没力了", @"brazos agotados", @"bras brûlés", @"腕が限界", @"팔이 지침")
+        ],
+        @"Read": @[
+            ML(@"finished chapter 4", @"读完第 4 章", @"terminé el capítulo 4", @"chapitre 4 terminé", @"4章を読み終えた", @"4장 완료"),
+            ML(@"notes on the ending", @"记录结尾想法", @"notas sobre el final", @"notes sur la fin", @"結末のメモ", @"결말 메모"),
+            ML(@"coffee shop reading", @"咖啡店阅读", @"lectura en cafetería", @"lecture au café", @"カフェで読書", @"카페에서 독서"),
+            ML(@"skimmed the hard part", @"略读困难部分", @"leí por encima la parte difícil", @"passage difficile survolé", @"難しい部分は流し読み", @"어려운 부분은 훑어봄"),
+            ML(@"reread favorite section", @"重读喜欢的段落", @"releí parte favorita", @"passage préféré relu", @"好きな箇所を再読", @"좋아하는 부분 재독"),
+            ML(@"library reading", @"图书馆阅读", @"lectura en biblioteca", @"lecture bibliothèque", @"図書館で読書", @"도서관 독서"),
+            ML(@"book club prep", @"读书会准备", @"preparación club de lectura", @"prépa club lecture", @"読書会準備", @"독서 모임 준비"),
+            ML(@"highlighted quotes", @"标注句子", @"subrayé citas", @"citations surlignées", @"引用をハイライト", @"문장 표시"),
+            ML(@"started a new novel", @"开始新小说", @"empecé novela nueva", @"nouveau roman commencé", @"新しい小説開始", @"새 소설 시작"),
+            ML(@"read on the train", @"通勤路上读", @"leí en el tren", @"lecture dans le train", @"電車で読書", @"기차에서 독서"),
+            ML(@"confusing middle chapters", @"中间章节有点乱", @"capítulos centrales confusos", @"chapitres du milieu confus", @"中盤が少し難解", @"중간 챕터 혼란"),
+            ML(@"finished the essay", @"读完文章", @"terminé el ensayo", @"essai terminé", @"エッセイ読了", @"에세이 완료"),
+            ML(@"made margin notes", @"写边注", @"notas al margen", @"notes en marge", @"余白メモ", @"여백 메모"),
+            ML(@"paused to look up history", @"停下来查背景", @"busqué contexto histórico", @"contexte historique cherché", @"歴史背景を調べた", @"역사 배경 검색"),
+            ML(@"a few pages before bed", @"睡前读几页", @"unas páginas antes de dormir", @"quelques pages avant dormir", @"寝る前に数ページ", @"자기 전 몇 페이지"),
+            ML(@"dense but worth it", @"很密但值得", @"denso pero vale la pena", @"dense mais utile", @"濃いけど価値あり", @"빽빽하지만 좋음"),
+            ML(@"checked the footnotes", @"看脚注", @"revisé notas al pie", @"notes de bas de page", @"脚注確認", @"각주 확인"),
+            ML(@"lost track of time", @"读到忘记时间", @"perdí la noción del tiempo", @"perdu la notion du temps", @"時間を忘れた", @"시간 가는 줄 모름"),
+            ML(@"slow nonfiction pages", @"慢读非虚构", @"no ficción lenta", @"non-fiction lente", @"ノンフィクションをゆっくり", @"논픽션 천천히"),
+            ML(@"finished before dinner", @"晚饭前读完", @"terminé antes de cenar", @"fini avant dîner", @"夕食前に読了", @"저녁 전 완료")
+        ],
+        @"Study": @[
+            ML(@"reviewed flashcards", @"复习记忆卡", @"repasé tarjetas", @"cartes mémoire révisées", @"暗記カード復習", @"플래시카드 복습"),
+            ML(@"mock exam corrections", @"模拟题订正", @"corrección de simulacro", @"correction d'examen blanc", @"模試の直し", @"모의고사 오답 정리"),
+            ML(@"chapter summary", @"章节总结", @"resumen del capítulo", @"résumé du chapitre", @"章の要約", @"챕터 요약"),
+            ML(@"hard to concentrate tonight", @"今晚难集中", @"difícil concentrarme esta noche", @"difficile de se concentrer ce soir", @"今夜は集中しづらい", @"오늘 밤 집중 어려움"),
+            ML(@"grammar exercises", @"语法练习", @"ejercicios de gramática", @"exercices grammaire", @"文法練習", @"문법 연습"),
+            ML(@"memorized formulas", @"背公式", @"memorizar fórmulas", @"formules mémorisées", @"公式暗記", @"공식 암기"),
+            ML(@"watched lecture replay", @"看课程回放", @"vi repetición de clase", @"replay du cours", @"講義録画を見た", @"강의 다시 보기"),
+            ML(@"practice problems set B", @"练习题 B 组", @"problemas grupo B", @"exercices série B", @"練習問題B", @"연습문제 B세트"),
+            ML(@"made a cheat sheet", @"整理速查表", @"hice hoja resumen", @"fiche mémo créée", @"チートシート作成", @"요약표 작성"),
+            ML(@"reviewed wrong answers", @"复盘错题", @"revisé errores", @"erreurs revues", @"間違い直し", @"오답 복습"),
+            ML(@"language listening drill", @"听力练习", @"práctica de escucha", @"exercice d'écoute", @"リスニング練習", @"듣기 연습"),
+            ML(@"office hours notes", @"答疑笔记", @"notas de tutoría", @"notes permanence", @"オフィスアワーメモ", @"질문 시간 메모"),
+            ML(@"prepared presentation", @"准备展示", @"preparé presentación", @"présentation préparée", @"発表準備", @"발표 준비"),
+            ML(@"anki backlog", @"清 Anki 积压", @"atraso de Anki", @"retard Anki", @"Anki の滞留消化", @"Anki 밀린 것 처리"),
+            ML(@"quiet library desk", @"图书馆安静座位", @"mesa tranquila en biblioteca", @"table calme bibliothèque", @"静かな図書館席", @"조용한 도서관 자리"),
+            ML(@"worked through examples", @"推例题", @"resolví ejemplos", @"exemples travaillés", @"例題を解いた", @"예제 풀이"),
+            ML(@"review before quiz", @"小测前复习", @"repaso antes del quiz", @"révision avant quiz", @"小テスト前復習", @"퀴즈 전 복습"),
+            ML(@"teacher's comments", @"看老师反馈", @"comentarios del profesor", @"commentaires prof", @"先生のコメント確認", @"선생님 피드백 확인"),
+            ML(@"mind map cleanup", @"整理思维导图", @"ordené mapa mental", @"carte mentale rangée", @"マインドマップ整理", @"마인드맵 정리"),
+            ML(@"tired but finished", @"很累但完成了", @"cansado pero terminado", @"fatigué mais terminé", @"疲れたけど完了", @"피곤했지만 완료")
+        ]
+    };
+    NSArray<NSArray<NSString *> *> *notes = notesByTask[englishName] ?: notesByTask[@"Code"];
+    if (notes.count == 0) {
+        return @"";
+    }
+    NSInteger safeIndex = labs(index) % notes.count;
+    return [MirrorLanguage localizedValue:notes[safeIndex]
+                              languageKey:[MirrorSettings preferredLanguageKey]
+                                fallback:notes[safeIndex].firstObject];
+}
+
 @end

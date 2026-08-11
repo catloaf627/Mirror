@@ -567,10 +567,10 @@
 
     if (showsText) {
         UILabel *titleLabel = [UILabel new];
-        titleLabel.text = [NSString stringWithFormat:@"%@  %@", record.taskName, [self timeTextForRecord:record]];
         titleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
         titleLabel.font = [UIFont mirrorHintFont_Card];
         titleLabel.adjustsFontSizeToFitWidth = YES;
+        titleLabel.attributedText = [self attributedTimelineTextForRecord:record font:titleLabel.font];
         [foregroundView addSubview:titleLabel];
 
         CGFloat labelPadding = 5*kWidthRatio;
@@ -584,6 +584,19 @@
     }
 
     return recordView;
+}
+
+- (NSAttributedString *)attributedTimelineTextForRecord:(MirrorRecordModel *)record font:(UIFont *)font
+{
+    NSString *taskName = record.taskName ?: @"";
+    NSString *note = record.note ?: @"";
+    NSString *text = note.length > 0 ? [NSString stringWithFormat:@"%@  %@", taskName, note] : taskName;
+    NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:text attributes:@{
+        NSFontAttributeName: font,
+        NSForegroundColorAttributeName: [UIColor mirrorColorNamed:MirrorColorTypeTextHint]
+    }];
+    [attributedText addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:font.pointSize] range:NSMakeRange(0, taskName.length)];
+    return attributedText;
 }
 
 #pragma mark - Add Records
