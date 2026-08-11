@@ -798,12 +798,17 @@
 
 #pragma mark - Helpers
 
-// 获取 grid 展示范围的最小日期：无记录时返回本周第一天，有记录时返回第一条记录所在周的第一天
+// 获取 grid 展示范围的最小日期：取第一条记录开始时间和今天中更早的日期，再返回它所在周的第一天
 - (NSDate *)getMinDateForGrid
 {
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
     BOOL hasRecord = allRecords.count > 0 && allRecords[0].endTime != 0;
-    NSDate *realFirstDate = hasRecord ? [NSDate dateWithTimeIntervalSince1970:allRecords[0].startTime] : [NSDate now];
+    NSDate *today = [NSDate now];
+    NSDate *realFirstDate = today;
+    if (hasRecord) {
+        NSDate *firstRecordDate = [NSDate dateWithTimeIntervalSince1970:allRecords[0].startTime];
+        realFirstDate = [firstRecordDate compare:today] == NSOrderedAscending ? firstRecordDate : today;
+    }
     
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
