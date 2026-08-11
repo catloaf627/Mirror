@@ -28,7 +28,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     TimelineBatchScrollPositionNearBottom,
 };
 
-@interface RecordsTimelineViewController () <UIEditMenuInteractionDelegate, UIScrollViewDelegate>
+@interface RecordsTimelineViewController () <UIEditMenuInteractionDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate>
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
@@ -785,18 +785,23 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     }
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissEditingPeriodAlert:)];
     tapRecognizer.cancelsTouchesInView = NO;
+    tapRecognizer.delegate = self;
     self.editingDismissTapRecognizer = tapRecognizer;
     [self.view.window addGestureRecognizer:tapRecognizer];
 }
 
 - (void)dismissEditingPeriodAlert:(UITapGestureRecognizer *)tapRecognizer
 {
-    UIViewController *presentedViewController = self.presentedViewController;
-    UIView *alertView = presentedViewController.view;
-    CGPoint tapPoint = [tapRecognizer locationInView:alertView];
-    if (CGRectContainsPoint(alertView.bounds, tapPoint)) {
+    if (tapRecognizer.state != UIGestureRecognizerStateEnded) {
         return;
     }
+    
+    UIViewController *presentedViewController = self.presentedViewController;
+    if (presentedViewController == nil) {
+        [self removeEditingDismissTapRecognizer];
+        return;
+    }
+    
     [self saveEditingNoteIfNeeded];
     [self removeEditingDismissTapRecognizer];
     self.editingStartPicker = nil;
@@ -809,6 +814,51 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
             [self reloadData];
         }
     }];
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{
+    if (gestureRecognizer != self.editingDismissTapRecognizer) {
+        return YES;
+    }
+    return [self shouldDismissEditingPeriodAlertForTouchedView:touch.view];
+}
+
+- (BOOL)shouldDismissEditingPeriodAlertForTouchedView:(UIView *)touchedView
+{
+    UIView *alertView = self.presentedViewController.view;
+    if (alertView == nil || touchedView == nil) {
+        return NO;
+    }
+    if (touchedView == alertView || [touchedView isDescendantOfView:alertView]) {
+        return NO;
+    }
+    if ([self isInteractivePickerViewInHierarchy:touchedView]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (BOOL)isInteractivePickerViewInHierarchy:(UIView *)view
+{
+    UIView *currentView = view;
+    while (currentView != nil) {
+        if ([currentView isKindOfClass:[UIControl class]] ||
+            [currentView isKindOfClass:[UICollectionView class]] ||
+            [currentView isKindOfClass:[UITableView class]]) {
+            return YES;
+        }
+        
+        NSString *className = NSStringFromClass([currentView class]);
+        if ([className containsString:@"DatePicker"] ||
+            [className containsString:@"Calendar"] ||
+            [className containsString:@"TimePicker"] ||
+            [className containsString:@"Popover"]) {
+            return YES;
+        }
+        currentView = currentView.superview;
+    }
+    return NO;
 }
 
 - (void)saveEditingNoteIfNeeded
