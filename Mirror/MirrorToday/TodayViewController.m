@@ -732,8 +732,8 @@
 
 - (long)endTimestampForNewRecordStartingAt:(long)start // prevent overlap with period behind
 {
-    long end = MIN(start + 3600, [self todayEndTimestamp]);
-    for (MirrorRecordModel *record in self.todayData) {
+    long end = start + 3600;
+    for (MirrorRecordModel *record in [MirrorStorage retriveMirrorRecords]) {
         if (record.startTime >= start) {
             end = MIN(end, record.startTime);
             break;
