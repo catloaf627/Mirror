@@ -62,29 +62,30 @@
 
 - (void)updateTimeTabItemWithTabController:(UITabBarController *)tabbarController
 {
-    [self updateTabbar:tabbarController.tabBar index:0 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"start"] imageName:@"alarm" selectedImageName:@"alarm.fill"];
+    [self updateTabbarController:tabbarController index:0 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"start"] imageName:@"alarm" selectedImageName:@"alarm.fill"];
 }
 
 - (void)updateTodayTabItemWithTabController:(UITabBarController *)tabbarController
 {
-    [self updateTabbar:tabbarController.tabBar index:1 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"today"] imageName:@"doc.plaintext" selectedImageName:@"doc.plaintext.fill"];
+    [self updateTabbarController:tabbarController index:1 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"today"] imageName:@"doc.plaintext" selectedImageName:@"doc.plaintext.fill"];
 }
 
 - (void)updateGridTabItemWithTabController:(UITabBarController *)tabbarController
 {
-    [self updateTabbar:tabbarController.tabBar index:2 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"record"] imageName:@"square.grid.2x2" selectedImageName:@"square.grid.2x2.fill"];
+    [self updateTabbarController:tabbarController index:2 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"record"] imageName:@"square.grid.2x2" selectedImageName:@"square.grid.2x2.fill"];
 }
 
 - (void)updateHistoryTabItemWithTabController:(UITabBarController *)tabbarController
 {
     BOOL usesPiechart = [MirrorSettings appliedPieChartData];
-    [self updateTabbar:tabbarController.tabBar index:3 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"data"] imageName:usesPiechart? @"chart.pie":@"list.bullet" selectedImageName:usesPiechart?@"chart.pie.fill":@"list.bullet"];
+    [self updateTabbarController:tabbarController index:3 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"data"] imageName:usesPiechart? @"chart.pie":@"list.bullet" selectedImageName:usesPiechart?@"chart.pie.fill":@"list.bullet"];
 }
 
-- (void)updateTabbar:(UITabBar *)tabbar index:(NSInteger)index tabbarItemWithTitle:(NSString *)title imageName:(NSString *)imageName selectedImageName:(NSString *)selectedImageName
+- (void)updateTabbarController:(UITabBarController *)tabbarController index:(NSInteger)index tabbarItemWithTitle:(NSString *)title imageName:(NSString *)imageName selectedImageName:(NSString *)selectedImageName
 {
-    // 取出baritem
-    UITabBarItem *item = [tabbar.items objectAtIndex:index];
+    if (index < 0 || index >= tabbarController.viewControllers.count) {
+        return;
+    }
     // 默认图片
     UIImage *image = [[UIImage systemImageNamed:imageName] imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconText]];
     UIImage *imageWithRightColor = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]; //这一行的作用是让image使用image本身的颜色，而不是系统颜色
@@ -92,13 +93,14 @@
     UIImage *selectedImage = [[UIImage systemImageNamed:selectedImageName] imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight]];
     UIImage *selectedImageWithRightColor = [selectedImage imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];//这一行的作用是让image使用image本身的颜色，而不是系统颜色
     // 设置图片
-    item = [item initWithTitle:title image:imageWithRightColor selectedImage:selectedImageWithRightColor];
+    UITabBarItem *item = [[UITabBarItem alloc] initWithTitle:title image:imageWithRightColor selectedImage:selectedImageWithRightColor];
+    item.titlePositionAdjustment = UIOffsetZero;
+    item.imageInsets = UIEdgeInsetsZero;
     // 默认文字
     [item setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconText]} forState:UIControlStateNormal];
     // 选中文字
     [item setTitleTextAttributes:@{NSForegroundColorAttributeName:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight]} forState:UIControlStateSelected];
-
-    [item imageInsets];
+    tabbarController.viewControllers[index].tabBarItem = item;
 }
 
 @end
