@@ -298,9 +298,11 @@
     
     MirrorRecordModel *record = records[periodIndex];
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
+    NSInteger startDayOffset = [self dayOffsetFromTodayForTimestamp:record.startTime];
+    NSInteger endDayOffset = [self dayOffsetFromTodayForTimestamp:record.endTime];
     
     UIDatePicker *startPicker = [UIDatePicker new];
-    startPicker.datePickerMode = UIDatePickerModeTime;
+    startPicker.datePickerMode = startDayOffset == 0 ? UIDatePickerModeTime : UIDatePickerModeDateAndTime;
     startPicker.timeZone = [NSTimeZone systemTimeZone];
     startPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
     startPicker.date = [NSDate dateWithTimeIntervalSince1970:record.startTime];
@@ -308,12 +310,12 @@
     [startPicker addTarget:self action:@selector(startPickerValueChanged:) forControlEvents:UIControlEventValueChanged];
     if (periodIndex - 1 >= 0) {
         startPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex - 1].endTime];
-    } else {
+    } else if (startDayOffset == 0) {
         startPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp]];
     }
     
     UIDatePicker *endPicker = [UIDatePicker new];
-    endPicker.datePickerMode = UIDatePickerModeTime;
+    endPicker.datePickerMode = endDayOffset == 0 ? UIDatePickerModeTime : UIDatePickerModeDateAndTime;
     endPicker.timeZone = [NSTimeZone systemTimeZone];
     endPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
     endPicker.date = [NSDate dateWithTimeIntervalSince1970:record.endTime];
@@ -321,7 +323,7 @@
     [endPicker addTarget:self action:@selector(endPickerValueChanged:) forControlEvents:UIControlEventValueChanged];
     if (periodIndex + 1 <= records.count - 1) {
         endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex + 1].startTime];
-    } else {
+    } else if (endDayOffset == 0) {
         endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp] + 24 * 3600];
     }
     
@@ -870,6 +872,17 @@
     label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     label.adjustsFontSizeToFitWidth = YES;
     return label;
+}
+
+- (NSInteger)dayOffsetFromTodayForTimestamp:(long)timestamp
+{
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *todayStartDate = [NSDate dateWithTimeIntervalSince1970:[self todayStartTimestamp]];
+    NSDate *timestampDate = [NSDate dateWithTimeIntervalSince1970:timestamp];
+    NSDate *timestampStartDate = [gregorian startOfDayForDate:timestampDate];
+    NSDateComponents *components = [gregorian components:NSCalendarUnitDay fromDate:todayStartDate toDate:timestampStartDate options:0];
+    return components.day;
 }
 
 #pragma mark - UIGestureRecognizerDelegate
