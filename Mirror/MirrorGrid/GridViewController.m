@@ -40,7 +40,6 @@
 // Data source
 @property (nonatomic, strong) NSMutableArray<NSString *> *keys;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> *gridData;
-@property (nonatomic, assign) NSInteger startTimestamp;
 
 @property (nonatomic, assign) NSInteger selectedCellIndex;
 @property (nonatomic, assign) NSInteger selectedCellIndexesStart;
@@ -270,19 +269,19 @@
      */
     NSString *leftText = self.leftHint.text;
     NSIndexPath *leftSide0 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.contentOffset.x + kCellWidth/2, kCellWidth/2 + 0*(kCellWidth+kCellSpacing))]; // 左上角的cell indexpath
-    if (leftSide0) leftText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[leftSide0.item] integerValue]]];
+    if (leftSide0) leftText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[leftSide0.item]]];
     NSIndexPath *leftSide1 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.contentOffset.x + kCellWidth/2, kCellWidth/2 + 1*(kCellWidth+kCellSpacing))];
-    if (leftSide1) leftText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[leftSide1.item] integerValue]]];
+    if (leftSide1) leftText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[leftSide1.item]]];
     NSIndexPath *leftSide2 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.contentOffset.x + kCellWidth/2, kCellWidth/2 + 2*(kCellWidth+kCellSpacing))];
-    if (leftSide2) leftText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[leftSide2.item] integerValue]]];
+    if (leftSide2) leftText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[leftSide2.item]]];
     NSIndexPath *leftSide3 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.contentOffset.x + kCellWidth/2, kCellWidth/2 + 3*(kCellWidth+kCellSpacing))];
-    if (leftSide3) leftText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[leftSide3.item] integerValue]]];
+    if (leftSide3) leftText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[leftSide3.item]]];
     NSIndexPath *leftSide4 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.contentOffset.x + kCellWidth/2, kCellWidth/2 + 4*(kCellWidth+kCellSpacing))];
-    if (leftSide4) leftText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[leftSide4.item] integerValue]]];
+    if (leftSide4) leftText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[leftSide4.item]]];
     NSIndexPath *leftSide5 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.contentOffset.x + kCellWidth/2, kCellWidth/2 + 5*(kCellWidth+kCellSpacing))];
-    if (leftSide5) leftText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[leftSide5.item] integerValue]]];
+    if (leftSide5) leftText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[leftSide5.item]]];
     NSIndexPath *leftSide6 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.contentOffset.x + kCellWidth/2, kCellWidth/2 + 6*(kCellWidth+kCellSpacing))]; // 左下角的cell indexpath
-    if (leftSide6) leftText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[leftSide6.item] integerValue]]];
+    if (leftSide6) leftText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[leftSide6.item]]];
     if (![leftText isEqualToString:self.leftHint.text]) {
         self.leftHint.text = leftText;
     }
@@ -302,19 +301,19 @@
      */
     NSString *rightText = self.rightHint.text;
     NSIndexPath *rightSide0 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.frame.size.width + self.collectionView.contentOffset.x - kCellWidth/2, kCellWidth/2 + 0*(kCellWidth+kCellSpacing))]; // 右上角的cell indexpath
-    if (rightSide0) rightText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[rightSide0.item] integerValue]]];
+    if (rightSide0) rightText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[rightSide0.item]]];
     NSIndexPath *rightSide1 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.frame.size.width + self.collectionView.contentOffset.x - kCellWidth/2, kCellWidth/2 + 1*(kCellWidth+kCellSpacing))];
-    if (rightSide1) rightText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[rightSide1.item] integerValue]]];
+    if (rightSide1) rightText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[rightSide1.item]]];
     NSIndexPath *rightSide2 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.frame.size.width + self.collectionView.contentOffset.x - kCellWidth/2, kCellWidth/2 + 2*(kCellWidth+kCellSpacing))];
-    if (rightSide2) rightText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[rightSide2.item] integerValue]]];
+    if (rightSide2) rightText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[rightSide2.item]]];
     NSIndexPath *rightSide3 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.frame.size.width + self.collectionView.contentOffset.x - kCellWidth/2, kCellWidth/2 + 3*(kCellWidth+kCellSpacing))];
-    if (rightSide3) rightText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[rightSide3.item] integerValue]]];
+    if (rightSide3) rightText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[rightSide3.item]]];
     NSIndexPath *rightSide4 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.frame.size.width + self.collectionView.contentOffset.x - kCellWidth/2, kCellWidth/2 + 4*(kCellWidth+kCellSpacing))];
-    if (rightSide4) rightText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[rightSide4.item] integerValue]]];
+    if (rightSide4) rightText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[rightSide4.item]]];
     NSIndexPath *rightSide5 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.frame.size.width + self.collectionView.contentOffset.x - kCellWidth/2, kCellWidth/2 + 5*(kCellWidth+kCellSpacing))];
-    if (rightSide5) rightText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[rightSide5.item] integerValue]]];
+    if (rightSide5) rightText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[rightSide5.item]]];
     NSIndexPath *rightSide6 = [self.collectionView indexPathForItemAtPoint:CGPointMake(self.collectionView.frame.size.width + self.collectionView.contentOffset.x - kCellWidth/2, kCellWidth/2 + 6*(kCellWidth+kCellSpacing))]; // 右下角的cell indexpath
-    if (rightSide6) rightText = [MirrorTimeText YYYYmm:[NSDate dateWithTimeIntervalSince1970:[self.keys[rightSide6.item] integerValue]]];
+    if (rightSide6) rightText = [MirrorTimeText YYYYmm:[self dateFromKey:self.keys[rightSide6.item]]];
     if (![rightText isEqualToString:self.rightHint.text]) {
         self.rightHint.text = rightText;
     }
@@ -322,84 +321,13 @@
 
 - (void)updateKeys
 {
-    _keys = [NSMutableArray<NSString *> new];
-    NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
-    NSInteger minTimestamp = NSIntegerMax;
-    NSInteger maxTimestamp = NSIntegerMin;
-    for (int i=0; i<allRecords.count; i++) {
-        MirrorRecordModel *record = allRecords[i];
-            NSInteger timestamp = record.startTime;
-            if (record.endTime != 0 && timestamp < minTimestamp) {
-                minTimestamp = timestamp;
-            }
-            if (record.endTime != 0 && timestamp > maxTimestamp) {
-                maxTimestamp = timestamp;
-            }
-    }
-    // 2023.5.1 3:00 到 2023.5.3 19:00 算三天
-    if (maxTimestamp != NSIntegerMin && minTimestamp != NSIntegerMax) { // 有 有效数据
-        if (maxTimestamp < [[NSDate now] timeIntervalSince1970]) {
-            maxTimestamp = [[NSDate now] timeIntervalSince1970]; // 如果现存最晚任务也在今天之前，设置最大时间为今天。
-        }
-        NSDate *minDate = [NSDate dateWithTimeIntervalSince1970:minTimestamp];
-        NSDate *maxDate = [NSDate dateWithTimeIntervalSince1970:maxTimestamp];
-        NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-        gregorian.timeZone = [NSTimeZone systemTimeZone];
-        NSDateComponents *minComponents = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:minDate];
-        minComponents.timeZone = [NSTimeZone systemTimeZone];
-        NSDateComponents *maxComponents = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:maxDate];
-        maxComponents.timeZone = [NSTimeZone systemTimeZone];
-        
-        minComponents.hour = 0;
-        minComponents.minute = 0;
-        minComponents.second = 0;
-        maxComponents.hour = 0;
-        maxComponents.minute = 0;
-        maxComponents.second = 0;
-        
-        minDate = [gregorian dateFromComponents:minComponents];// 2023.5.1 00:00
-        maxDate = [gregorian dateFromComponents:maxComponents]; // 2023.5.3 00:00
-        NSInteger dateNum = [gregorian components:NSCalendarUnitDay fromDate:minDate toDate:maxDate options:0].day + 1;
-        
-        
-        NSInteger numOfInvalidCell = 0;
-        if ([MirrorSettings appliedWeekStarsOnMonday]) {
-            if (minComponents.weekday > 1) {
-                numOfInvalidCell = minComponents.weekday - 2;
-            } else {
-                numOfInvalidCell = 6;
-            }
-        } else {
-            numOfInvalidCell = minComponents.weekday - 1;
-        }
-        NSDate *startDate = [gregorian dateByAddingUnit:NSCalendarUnitDay value:-numOfInvalidCell toDate:minDate options:0];
-        _startTimestamp = [startDate timeIntervalSince1970]; // 第一个cell(可能是invalid的)
-        // 今天的0点
-        NSDateComponents *components = [gregorian components:(NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitWeekday | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:[NSDate now]];
-        components.timeZone = [NSTimeZone systemTimeZone];
-        components.hour = 0;
-        components.minute = 0;
-        components.second = 0;
-        long timestamp = [[gregorian dateFromComponents:components] timeIntervalSince1970]; // 今天的timestamp
-        _selectedCellIndex = 0;
-        
-        // 添加前面的补位的日期
-        for (int i=0; i<numOfInvalidCell; i++) {
-            NSDate *invalidDate = [gregorian dateByAddingUnit:NSCalendarUnitDay value:-(numOfInvalidCell-i) toDate:minDate options:0];
-            NSInteger invalidDateTimestamp = [invalidDate timeIntervalSince1970];
-            [_keys addObject:[@(invalidDateTimestamp) stringValue]];
-        }
-        // 添加第一个record和最后一个record之间的日期
-        for (int i=0; i<dateNum; i++) {
-            NSDate *validDate = [gregorian dateByAddingUnit:NSCalendarUnitDay value:i toDate:minDate options:0];
-            NSInteger validDateTimestamp = [validDate timeIntervalSince1970];
-            [_keys addObject:[@(validDateTimestamp) stringValue]];
-        }
-        NSString *todayKey = [@(timestamp) stringValue];
-        NSInteger todayIndex = [_keys indexOfObject:todayKey];
-        if (todayIndex != NSNotFound) {
-            _selectedCellIndex = todayIndex;
-        }
+    NSDate *minDate = [self getMinDateForGrid];
+    NSDate *maxDate = [self getMaxDateForGrid];
+    _keys = [self getDateKeysFromMinDate:minDate maxDate:maxDate];
+    _selectedCellIndex = 0;
+    NSInteger todayIndex = [_keys indexOfObject:[self keyFromDate:[NSDate now]]];
+    if (todayIndex != NSNotFound) {
+        _selectedCellIndex = todayIndex; // make sure selectedCellIndex is valid
     }
 }
 
@@ -408,13 +336,9 @@
     _gridData = [MirrorStorage getGridData];
 }
 
-- (NSMutableArray<MirrorDataModel *> *)gridDataForTimestampKey:(NSString *)timestampKey
+- (NSMutableArray<MirrorDataModel *> *)gridDataForDateKey:(NSString *)dateKey
 {
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:[timestampKey integerValue]];
-    NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateFormat = @"yyyy-MM-dd";
-    formatter.timeZone = [NSTimeZone systemTimeZone];
-    return self.gridData[[formatter stringFromDate:date]];
+    return self.gridData[dateKey];
 }
 
 - (NSMutableArray<MirrorDataModel *> *)legendDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
@@ -423,8 +347,8 @@
         return [NSMutableArray new];
     }
     
-    long startTime = [self.keys[startIndex] integerValue];
-    NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:[self.keys[endIndex] integerValue]];
+    long startTime = [[self dateFromKey:self.keys[startIndex]] timeIntervalSince1970];
+    NSDate *endDate = [self dateFromKey:self.keys[endIndex]];
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
     long endTime = [[gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:endDate options:0] timeIntervalSince1970];
@@ -437,17 +361,17 @@
         return;
     }
     // data source
-    NSMutableArray<MirrorDataModel *> *data = [self gridDataForTimestampKey:self.keys[_selectedCellIndex]];
+    NSMutableArray<MirrorDataModel *> *data = [self gridDataForDateKey:self.keys[_selectedCellIndex]];
     // date label
     GridCollectionViewCell *cell = (GridCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:_selectedCellIndex inSection:0]];
     if (cell) { // 从did selected调用
-        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[NSDate dateWithTimeIntervalSince1970:[self.keys[_selectedCellIndex] integerValue]]] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:cell.totalTime]];
+        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[_selectedCellIndex]]] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:cell.totalTime]];
     } else { // 从setup ui调用
         long totalTime = 0;
         for (int i=0; i<data.count; i++) {
             totalTime = totalTime + [MirrorTool getTotalTimeOfPeriods:data[i].records];
         }
-        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[NSDate dateWithTimeIntervalSince1970:[self.keys[_selectedCellIndex] integerValue]]] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
+        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[_selectedCellIndex]]] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
     }
 
     // legend
@@ -493,13 +417,13 @@
     }
     NSInteger start = _selectedCellIndexesStart < _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
     NSInteger end = _selectedCellIndexesStart > _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
-    NSString *startDate = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:[[[[NSNumberFormatter alloc] init] numberFromString:self.keys[start]] doubleValue]]];
-    NSString *endDate = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:[[[[NSNumberFormatter alloc] init] numberFromString:self.keys[end]] doubleValue]]];
+    NSString *startDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[start]]];
+    NSString *endDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[end]]];
     self.dateLabel.text = [[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate];
     // data source
     NSMutableArray<NSMutableArray<MirrorDataModel *> *> *dataArr = [NSMutableArray new];
     for (NSInteger i=start; i<=end; i++) {
-        NSMutableArray<MirrorDataModel *> *data = [self gridDataForTimestampKey:self.keys[i]];
+        NSMutableArray<MirrorDataModel *> *data = [self gridDataForDateKey:self.keys[i]];
         if (data == nil) {
             data = [NSMutableArray new];
         }
@@ -669,11 +593,11 @@
 {
     GridCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[GridCollectionViewCell identifier] forIndexPath:indexPath];
     if (_selectedCellIndexesStart == -1 || _selectedCellIndexesEnd == -1) { // single select
-        [cell configWithData:[self gridDataForTimestampKey:self.keys[indexPath.item]] isSelected:indexPath.item==_selectedCellIndex];
+        [cell configWithData:[self gridDataForDateKey:self.keys[indexPath.item]] isSelected:indexPath.item==_selectedCellIndex];
     } else { // multi select
         NSInteger start = _selectedCellIndexesStart < _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
         NSInteger end = _selectedCellIndexesStart > _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
-        [cell configWithData:[self gridDataForTimestampKey:self.keys[indexPath.item]] isSelected:(indexPath.item<=end && indexPath.item>=start)];
+        [cell configWithData:[self gridDataForDateKey:self.keys[indexPath.item]] isSelected:(indexPath.item<=end && indexPath.item>=start)];
     }
     
     return cell;
@@ -682,18 +606,6 @@
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     return CGSizeMake(kCellWidth, kCellWidth);
-}
-
-#pragma mark - UIScrollViewDelegate
-
-- (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView
-{
-//    NSLog(@"gizmo scrollViewWillBeginDragging");
-}
-
-- (void)scrollViewDidEndDragging:(UIScrollView *)scrollView willDecelerate:(BOOL)decelerate
-{
-//    NSLog(@"gizmo scrollViewDidEndDragging");
 }
 
 #pragma mark - Actions
@@ -880,7 +792,85 @@
 }
 
 
-#pragma mark - Privates
+#pragma mark - Helpers
+
+// 获取 grid 展示范围的最小日期：无记录时返回本周第一天，有记录时返回第一条记录所在周的第一天
+- (NSDate *)getMinDateForGrid
+{
+    NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
+    BOOL hasRecord = allRecords.count > 0 && allRecords[0].endTime != 0;
+    NSDate *realFirstDate = hasRecord ? [NSDate dateWithTimeIntervalSince1970:allRecords[0].startTime] : [NSDate now];
+    
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDateComponents *components = [gregorian components:NSCalendarUnitWeekday fromDate:realFirstDate];
+    
+    NSInteger numOfInvalidCell = 0;
+    if ([MirrorSettings appliedWeekStarsOnMonday]) {
+        if (components.weekday > 1) {
+            numOfInvalidCell = components.weekday - 2;
+        } else {
+            numOfInvalidCell = 6;
+        }
+    } else {
+        numOfInvalidCell = components.weekday - 1;
+    }
+    
+    return [gregorian dateByAddingUnit:NSCalendarUnitDay value:-numOfInvalidCell toDate:realFirstDate options:0];
+}
+
+// 获取 grid 展示范围的最大日期：取最后一条记录实际覆盖到的日期和今天中更晚的日期
+- (NSDate *)getMaxDateForGrid
+{
+    NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
+    BOOL hasRecord = allRecords.count > 0 && allRecords[0].endTime != 0;
+    if (!hasRecord) {
+        return [NSDate now];
+    }
+    
+    MirrorRecordModel *lastRecord = allRecords[allRecords.count - 1];
+    NSDate *lastRecordEndDate = [NSDate dateWithTimeIntervalSince1970:lastRecord.endTime];
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDateComponents *endComponents = [gregorian components:(NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:lastRecordEndDate];
+    BOOL isEndAtZeroClock = endComponents.hour == 0 && endComponents.minute == 0 && endComponents.second == 0;
+    NSDate *lastRecordDate = isEndAtZeroClock ? [gregorian dateByAddingUnit:NSCalendarUnitDay value:-1 toDate:lastRecordEndDate options:0] : lastRecordEndDate; // 最后一条record结束与11月8日0点的话，那么最后一天其实是11月7日。
+    NSDate *today = [NSDate now];
+    return [lastRecordDate compare:today] == NSOrderedDescending ? lastRecordDate : today;
+}
+
+// 根据最小日期和最大日期生成 grid 使用的日期字符串数组，格式如 2026-08-12，包含起止日期
+- (NSMutableArray<NSString *> *)getDateKeysFromMinDate:(NSDate *)minDate maxDate:(NSDate *)maxDate
+{
+    NSMutableArray<NSString *> *dateKeys = [NSMutableArray<NSString *> new];
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *currentDate = [gregorian startOfDayForDate:minDate]; // 00:00:00
+    NSDate *endDate = [gregorian startOfDayForDate:maxDate]; // 00:00:00
+    while ([currentDate compare:endDate] != NSOrderedDescending) {
+        NSString *dateKey = [self keyFromDate:currentDate];
+//        NSLog(@"grid date: %@", dateKey);
+        [dateKeys addObject:dateKey];
+        currentDate = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:currentDate options:0];
+    }
+    return dateKeys;
+}
+
+- (NSString *)keyFromDate:(NSDate *)date
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    return [formatter stringFromDate:date];
+}
+
+- (NSDate *)dateFromKey:(NSString *)dateKey
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    return [formatter dateFromString:dateKey];
+}
 
 - (NSArray *)leftWidthLeftHeight
 {

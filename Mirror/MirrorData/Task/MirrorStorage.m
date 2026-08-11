@@ -883,7 +883,20 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     return res;
 }
 
-// 生成 Grid 数据源，key 是 yyyy-MM-dd，value 是当天按任务顺序排列的 MirrorDataModel；例如 key “2026-01-02” 下只放 1/2 当天的 UI 片段。
+// 生成 Grid 数据源，key 是 yyyy-MM-dd，value 是当天按任务顺序排列的 MirrorDataModel
+// 它包含所有未隐藏 records （按照0点）拆分后的数据
+/*
+{
+@"2026-01-02": @[
+    MirrorDataModel(TaskA, TaskA 在这一天的 records),
+    MirrorDataModel(TaskB, TaskB 在这一天的 records)
+],
+@"2026-01-03": @[
+     MirrorDataModel(TaskB, TaskB 在这一天的 records),
+     MirrorDataModel(TaskC, TaskC 在这一天的 records)
+]
+}
+ */
 + (NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> *)getGridData
 {
     NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> *gridData = [NSMutableDictionary<NSString*, NSMutableArray<MirrorDataModel *> *> new];
