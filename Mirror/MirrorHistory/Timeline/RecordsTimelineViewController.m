@@ -48,6 +48,8 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, assign) BOOL shouldReloadAfterEditingPeriodAlert;
 @property (nonatomic, assign) BOOL shouldRestoreTimelineScrollPosition;
 @property (nonatomic, assign) BOOL didScrollToInitialHighlightedRow;
+@property (nonatomic, assign) BOOL isRecordEditMenuVisible;
+@property (nonatomic, assign) BOOL shouldSuppressNextRecordEditMenu;
 @property (nonatomic, strong) UIDatePicker *editingStartPicker;
 @property (nonatomic, strong) UIDatePicker *editingEndPicker;
 @property (nonatomic, strong) UITextField *editingNoteTextField;
@@ -447,6 +449,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     UILabel *leftDateLabel = [UILabel new];
     leftDateLabel.font = [UIFont mirrorHighlightFont];
     leftDateLabel.textColor = pulseColor;
+    leftDateLabel.alpha = 0.7;
     leftDateLabel.textAlignment = NSTextAlignmentRight;
     leftDateLabel.adjustsFontSizeToFitWidth = YES;
     leftDateLabel.minimumScaleFactor = 0.7;
@@ -531,6 +534,14 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 - (void)showEditMenu:(UITapGestureRecognizer *)recognizer
 {
+    if ([self dismissVisibleRecordEditMenuIfNeeded]) {
+        return;
+    }
+    if (self.shouldSuppressNextRecordEditMenu) {
+        self.shouldSuppressNextRecordEditMenu = NO;
+        return;
+    }
+    
     UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
     [feedback impactOccurred];
     
@@ -615,14 +626,36 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 - (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willPresentMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
 {
+    self.isRecordEditMenuVisible = YES;
     self.visibleRecordEditMenuInteraction = interaction;
 }
 
 - (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willDismissMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
 {
     if (interaction == self.visibleRecordEditMenuInteraction) {
+        self.isRecordEditMenuVisible = NO;
         self.visibleRecordEditMenuInteraction = nil;
+        self.shouldSuppressNextRecordEditMenu = YES;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (!self.isRecordEditMenuVisible) {
+                self.shouldSuppressNextRecordEditMenu = NO;
+            }
+        });
     }
+}
+
+- (BOOL)dismissVisibleRecordEditMenuIfNeeded
+{
+    if (!self.isRecordEditMenuVisible) {
+        return NO;
+    }
+    if (@available(iOS 16.0, *)) {
+        [self.visibleRecordEditMenuInteraction dismissMenu];
+    }
+    self.isRecordEditMenuVisible = NO;
+    self.visibleRecordEditMenuInteraction = nil;
+    self.shouldSuppressNextRecordEditMenu = NO;
+    return YES;
 }
 
 - (void)deletePeriod:(UIButton *)sender
