@@ -13,7 +13,6 @@
 		4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FB29EFE6BD00F13EAE /* HistoryViewController.m */; };
 		4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */; };
 		4A0D410229F13C5300F13EAE /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D410129F13C5300F13EAE /* LegendView.m */; };
-		4A1F8C38302A43FA00045430 /* TaskColorCirclePickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */; };
 		4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C3A302A452000045430 /* TaskPickerViewController.m */; };
 		4A1F8C5B302C16A200045430 /* PeriodEditAlertController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C5A302C16A200045430 /* PeriodEditAlertController.m */; };
 		4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */; };
@@ -55,8 +54,6 @@
 		4ADCD24E3026B95F00578A81 /* MirrorLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4ADCD23F3026B95E00578A81 /* MirrorLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */; };
 		4ADDC5B728E476A8006F02DE /* LanguageCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDC5B628E476A8006F02DE /* LanguageCollectionViewCell.m */; };
-		4ADDC5BD28E6DF8B006F02DE /* ColorCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDC5BC28E6DF8B006F02DE /* ColorCollectionViewCell.m */; };
-		4ADDC5C828E73935006F02DE /* AddTaskViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDC5C728E73935006F02DE /* AddTaskViewController.m */; };
 		4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171828DF613D008A6A18 /* TimeViewController.m */; };
 		4AE4171F28DF6155008A6A18 /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171E28DF6155008A6A18 /* SettingsViewController.m */; };
 		4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */; };
@@ -106,8 +103,6 @@
 		4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskProgressListView.m; sourceTree = "<group>"; };
 		4A0D410029F13C5300F13EAE /* LegendView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegendView.h; sourceTree = "<group>"; };
 		4A0D410129F13C5300F13EAE /* LegendView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LegendView.m; sourceTree = "<group>"; };
-		4A1F8C36302A43DF00045430 /* TaskColorCirclePickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskColorCirclePickerViewController.h; sourceTree = "<group>"; };
-		4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskColorCirclePickerViewController.m; sourceTree = "<group>"; };
 		4A1F8C39302A450200045430 /* TaskPickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskPickerViewController.h; sourceTree = "<group>"; };
 		4A1F8C3A302A452000045430 /* TaskPickerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskPickerViewController.m; sourceTree = "<group>"; };
 		4A1F8C58302C009500045430 /* ProjectSettings.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProjectSettings.md; sourceTree = "<group>"; };
@@ -189,10 +184,6 @@
 		4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorLiveActivityManager.swift; sourceTree = "<group>"; };
 		4ADDC5B528E476A8006F02DE /* LanguageCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LanguageCollectionViewCell.h; sourceTree = "<group>"; };
 		4ADDC5B628E476A8006F02DE /* LanguageCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LanguageCollectionViewCell.m; sourceTree = "<group>"; };
-		4ADDC5BB28E6DF8B006F02DE /* ColorCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ColorCollectionViewCell.h; sourceTree = "<group>"; };
-		4ADDC5BC28E6DF8B006F02DE /* ColorCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ColorCollectionViewCell.m; sourceTree = "<group>"; };
-		4ADDC5C628E73935006F02DE /* AddTaskViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AddTaskViewController.h; sourceTree = "<group>"; };
-		4ADDC5C728E73935006F02DE /* AddTaskViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AddTaskViewController.m; sourceTree = "<group>"; };
 		4AE4171728DF613D008A6A18 /* TimeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeViewController.h; sourceTree = "<group>"; };
 		4AE4171828DF613D008A6A18 /* TimeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimeViewController.m; sourceTree = "<group>"; };
 		4AE4171D28DF6155008A6A18 /* SettingsViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SettingsViewController.h; sourceTree = "<group>"; };
@@ -317,8 +308,6 @@
 		4A32A3FF29F8C88F00DCCF57 /* EditTasks */ = {
 			isa = PBXGroup;
 			children = (
-				4A1F8C36302A43DF00045430 /* TaskColorCirclePickerViewController.h */,
-				4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */,
 				4A1F8C39302A450200045430 /* TaskPickerViewController.h */,
 				4A1F8C3A302A452000045430 /* TaskPickerViewController.m */,
 			);
@@ -504,10 +493,6 @@
 			children = (
 				4A379B5528E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.h */,
 				4A379B5628E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m */,
-				4ADDC5C628E73935006F02DE /* AddTaskViewController.h */,
-				4ADDC5C728E73935006F02DE /* AddTaskViewController.m */,
-				4ADDC5BB28E6DF8B006F02DE /* ColorCollectionViewCell.h */,
-				4ADDC5BC28E6DF8B006F02DE /* ColorCollectionViewCell.m */,
 			);
 			path = MirrorTaskAdd;
 			sourceTree = "<group>";
@@ -770,7 +755,6 @@
 				4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */,
 				4AA353322A25CF9B00920404 /* PiechartRecordCollectionViewCell.m in Sources */,
 				4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */,
-				4ADDC5BD28E6DF8B006F02DE /* ColorCollectionViewCell.m in Sources */,
 				4A7CCD2629DBC7CF00879D9C /* TodayViewController.m in Sources */,
 				4A1F8C5B302C16A200045430 /* PeriodEditAlertController.m in Sources */,
 				4A88212929F6035E009E422C /* CellAnimation.m in Sources */,
@@ -787,7 +771,6 @@
 				4A37369729E2BD3C00187280 /* SliceLayer.m in Sources */,
 				4A88212F29F671F7009E422C /* TimeTrackingViewController.m in Sources */,
 				4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */,
-				4ADDC5C828E73935006F02DE /* AddTaskViewController.m in Sources */,
 				4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */,
 				4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */,
 				4A37369429E2AEE900187280 /* PiechartView.m in Sources */,
@@ -808,7 +791,6 @@
 				4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */,
 				4A9FDB2B302D2C4D007707FC /* CalendarViewController.m in Sources */,
 				015564E428E1A78E008AB06C /* TimeTrackerTaskCollectionViewCell.m in Sources */,
-				4A1F8C38302A43FA00045430 /* TaskColorCirclePickerViewController.m in Sources */,
 				4A3DC92C29FCE3D200679C11 /* MirrorNaviManager.m in Sources */,
 				4A099FAE29DD57AE002683A1 /* MirrorTool.m in Sources */,
 				4AA3532F2A25CF8300920404 /* PiechartDataCollectionViewCell.m in Sources */,

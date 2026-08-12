@@ -13,7 +13,6 @@
 #import "MirrorMacro.h"
 #import "MirrorTabsManager.h"
 #import "MirrorNaviManager.h"
-#import "AddTaskViewController.h"
 #import "TimeTrackingViewController.h"
 #import "MirrorStorage.h"
 #import "MirrorTool.h"
@@ -24,7 +23,6 @@
 #import "CellAnimation.h"
 #import "MirrorLanguage.h"
 #import "HintFooter.h"
-#import "TaskColorCirclePickerViewController.h"
 #import "TaskPickerViewController.h"
 
 #import "Mirror-Swift.h"
@@ -225,12 +223,15 @@
         return;
     }
     MirrorTaskModel *task = self.data[indexPath.item];
-    UIAlertController *editAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit_task_title"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    NSMutableArray<UIButton *> *colorButtons = [NSMutableArray new];
+    UIAlertController *editAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit_task"] message:nil preferredStyle:UIAlertControllerStyleAlert];
     [editAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
         textField.text = task.taskName;
-        textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"edit_task_title"];
+        textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"edit_task"];
         textField.textAlignment = NSTextAlignmentCenter;
     }];
+    [editAlert setValue:[self colorSelectionContentViewControllerWithSelectedColor:task.color colorButtons:colorButtons] forKey:@"contentViewController"];
+
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
     UIAlertAction *saveAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"save"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSString *newTaskName = editAlert.textFields.firstObject.text;
@@ -245,30 +246,17 @@
             [self showTaskEditErrorWithTitleKey:@"task_cannot_be_duplicated"];
             return;
         }
+        MirrorColorType selectedColor = [self selectedColorFromColorButtons:colorButtons fallback:task.color];
         if (!textIsTheSame) {
             [MirrorStorage editTask:task.taskName name:newTaskName];
+        }
+        if (selectedColor != task.color) {
+            [MirrorStorage editTask:newTaskName color:selectedColor];
         }
     }];
     [editAlert addAction:cancelAction];
     [editAlert addAction:saveAction];
     [self presentViewController:editAlert animated:YES completion:nil];
-}
-
-- (void)presentColorTaskSheetAtIndexPath:(NSIndexPath *)indexPath
-{
-    if (![self canMoveTaskAtIndexPath:indexPath]) {
-        return;
-    }
-    MirrorTaskModel *task = self.data[indexPath.item];
-    UICollectionViewCell *cell = [self.collectionView cellForItemAtIndexPath:indexPath];
-    if (!cell) {
-        return;
-    }
-    CGRect anchorFrame = [self.collectionView convertRect:cell.frame toView:self.view];
-    TaskColorCirclePickerViewController *colorPicker = [[TaskColorCirclePickerViewController alloc] initWithColors:[self taskColorOptions] selectedColor:task.color taskName:task.taskName anchorFrame:anchorFrame completion:^(MirrorColorType color) {
-        [MirrorStorage editTask:task.taskName color:color];
-    }];
-    [self presentViewController:colorPicker animated:YES completion:nil];
 }
 
 - (void)presentMergeTaskPickerAtIndexPath:(NSIndexPath *)indexPath
@@ -310,6 +298,102 @@
     return @[@(MirrorColorTypeCellPink), @(MirrorColorTypeCellOrange), @(MirrorColorTypeCellYellow), @(MirrorColorTypeCellGreen), @(MirrorColorTypeCellTeal), @(MirrorColorTypeCellBlue), @(MirrorColorTypeCellPurple), @(MirrorColorTypeCellGray)];
 }
 
+- (void)presentAddTaskAlert
+{
+    MirrorColorType defaultColor = [self randomTaskColor];
+    NSMutableArray<UIButton *> *colorButtons = [NSMutableArray new];
+    UIAlertController *addAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"create_a_new_task"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [addAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"enter_task_title"];
+        textField.textAlignment = NSTextAlignmentCenter;
+    }];
+
+    [addAlert setValue:[self colorSelectionContentViewControllerWithSelectedColor:defaultColor colorButtons:colorButtons] forKey:@"contentViewController"];
+
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
+    UIAlertAction *createAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"create"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *taskName = addAlert.textFields.firstObject.text;
+        BOOL textIsEmpty = !taskName || [taskName isEqualToString:@""];
+        TaskNameExistsType existType = [MirrorStorage taskNameExists:taskName];
+        if (textIsEmpty) {
+            [self showTaskEditErrorWithTitleKey:@"name_field_cannot_be_empty"];
+            return;
+        }
+        if (existType != TaskNameExistsTypeValid) {
+            [self showTaskEditErrorWithTitleKey:@"task_cannot_be_duplicated"];
+            return;
+        }
+        MirrorColorType selectedColor = [self selectedColorFromColorButtons:colorButtons fallback:defaultColor];
+        long createdTime = (long)[[NSDate now] timeIntervalSince1970];
+        MirrorTaskModel *task = [[MirrorTaskModel alloc] initWithTitle:taskName createdTime:createdTime colorType:selectedColor isHidden:NO isAddTask:NO];
+        [MirrorStorage createTask:task];
+    }];
+    [addAlert addAction:cancelAction];
+    [addAlert addAction:createAction];
+    [self presentViewController:addAlert animated:YES completion:nil];
+}
+
+- (UIViewController *)colorSelectionContentViewControllerWithSelectedColor:(MirrorColorType)selectedColor colorButtons:(NSMutableArray<UIButton *> *)colorButtons
+{
+    UIViewController *contentViewController = [UIViewController new];
+    contentViewController.preferredContentSize = CGSizeMake(248, 44);
+    UIStackView *colorStackView = [UIStackView new];
+    colorStackView.axis = UILayoutConstraintAxisHorizontal;
+    colorStackView.alignment = UIStackViewAlignmentCenter;
+    colorStackView.distribution = UIStackViewDistributionEqualSpacing;
+    colorStackView.spacing = 8;
+    [contentViewController.view addSubview:colorStackView];
+    [colorStackView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.equalTo(contentViewController.view);
+        make.centerY.equalTo(contentViewController.view);
+    }];
+
+    for (NSNumber *colorNumber in [self taskColorOptions]) {
+        MirrorColorType color = colorNumber.integerValue;
+        UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+        button.tag = color;
+        button.backgroundColor = [UIColor mirrorColorNamed:color];
+        button.layer.cornerRadius = 12;
+        button.layer.borderColor = [UIColor mirrorColorPulsed:color].CGColor;
+        button.layer.borderWidth = color == selectedColor ? 3 : 0;
+        [button addTarget:self action:@selector(selectTaskColorButton:) forControlEvents:UIControlEventTouchUpInside];
+        [colorStackView addArrangedSubview:button];
+        [button mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.width.height.mas_equalTo(24);
+        }];
+        [colorButtons addObject:button];
+    }
+    return contentViewController;
+}
+
+- (void)selectTaskColorButton:(UIButton *)sender
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    for (UIView *subview in sender.superview.subviews) {
+        if (![subview isKindOfClass:[UIButton class]]) {
+            continue;
+        }
+        UIButton *button = (UIButton *)subview;
+        button.layer.borderWidth = button == sender ? 3 : 0;
+    }
+}
+
+- (MirrorColorType)selectedColorFromColorButtons:(NSArray<UIButton *> *)colorButtons fallback:(MirrorColorType)fallback
+{
+    for (UIButton *button in colorButtons) {
+        if (button.layer.borderWidth > 0) {
+            return button.tag;
+        }
+    }
+    return fallback;
+}
+
+- (MirrorColorType)randomTaskColor
+{
+    NSArray<NSNumber *> *colors = [self taskColorOptions];
+    return colors[arc4random() % colors.count].integerValue;
+}
+
 - (void)presentDeleteTaskAlertAtIndexPath:(NSIndexPath *)indexPath
 {
     if (![self canMoveTaskAtIndexPath:indexPath]) {
@@ -333,8 +417,7 @@
     MirrorTaskModel *selectedModel = self.data[selectedIndexPath.item];
     // 点击了[+]
     if (selectedModel.isAddTaskModel) {
-        AddTaskViewController *addVC = [AddTaskViewController new];
-        [self.navigationController presentViewController:addVC animated:YES completion:nil];
+        [self presentAddTaskAlert];
         return;
     }
     // 点击了task model
@@ -538,12 +621,6 @@
 {
     NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
     [self presentEditTaskSheetAtIndexPath:indexPath];
-}
-
-- (void)timeTrackerTaskCollectionViewCellDidTapColor:(TimeTrackerTaskCollectionViewCell *)cell
-{
-    NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
-    [self presentColorTaskSheetAtIndexPath:indexPath];
 }
 
 - (void)timeTrackerTaskCollectionViewCellDidTapDelete:(TimeTrackerTaskCollectionViewCell *)cell

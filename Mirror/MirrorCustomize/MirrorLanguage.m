@@ -70,7 +70,7 @@
     
     // Profile add cell
     [mirrorDict setValue:ML(@"Enter task title", @"输入任务名称", @"Ingresa el título de la tarea", @"Saisir le titre de la tâche", @"タスク名を入力", @"작업 제목 입력") forKey:@"enter_task_title"];
-    [mirrorDict setValue:ML(@"Edit task title", @"编辑任务名称", @"Edita el título de la tarea", @"Modifier le titre de la tâche", @"タスク名を編集", @"작업 제목 편집") forKey:@"edit_task_title"];
+    [mirrorDict setValue:ML(@"Edit task", @"编辑任务", @"Editar tarea", @"Modifier la tâche", @"タスクを編集", @"작업 편집") forKey:@"edit_task"];
     [mirrorDict setValue:ML(@"Create a new task", @"创建新任务", @"Crear una nueva tarea", @"Créer une nouvelle tâche", @"新しいタスクを作成", @"새 작업 만들기") forKey:@"create_a_new_task"];
     [mirrorDict setValue:ML(@"Edit this task", @"编辑此任务", @"Editar esta tarea", @"Modifier cette tâche", @"このタスクを編集", @"이 작업 편집") forKey:@"edit_this_task"];
     [mirrorDict setValue:ML(@"Create", @"创建", @"Crear", @"Créer", @"作成", @"생성") forKey:@"create"];
@@ -111,7 +111,6 @@
     [mirrorDict setValue:ML(@"Merge tasks?", @"合并任务？", @"¿Fusionar tareas?", @"Fusionner les tâches ?", @"タスクを結合しますか？", @"작업을 병합할까요?") forKey:@"merge_tasks_?"];
     [mirrorDict setValue:ML(@"This will merge the selected task into another task. This cannot be undone.", @"这会将所选任务合并到另一个任务，且无法撤销。", @"Esto fusionará la tarea seleccionada con otra tarea. No se puede deshacer.", @"Cela fusionnera la tâche sélectionnée avec une autre tâche. Cette action est irréversible.", @"選択したタスクを別のタスクに結合します。元に戻せません。", @"선택한 작업을 다른 작업에 병합하며 되돌릴 수 없습니다.") forKey:@"merge_task_warning"];
     [mirrorDict setValue:ML(@"Created at ", @"创建于 ", @"Creada el ", @"Créée le ", @"作成日 ", @"생성일 ") forKey:@"created_at"];
-    [mirrorDict setValue:ML(@"Edit tasks", @"编辑任务", @"Editar tareas", @"Modifier les tâches", @"タスクを編集", @"작업 편집") forKey:@"edit_tasks"];
     
     // History type switch
     [mirrorDict setValue:ML(@"Day", @"日", @"Día", @"Jour", @"日", @"일") forKey:@"segment_day"];
