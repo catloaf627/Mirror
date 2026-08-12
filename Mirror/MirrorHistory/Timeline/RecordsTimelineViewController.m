@@ -13,7 +13,6 @@
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
-#import "TimelineRangeAxisView.h"
 #import "PeriodEditAlertController.h"
 
 static CGFloat const kHorizontalPadding = 20;
@@ -759,21 +758,14 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     MirrorRecordModel *record = records[periodIndex];
     BOOL hasPreviousRecord = periodIndex - 1 >= 0;
     BOOL hasNextRecord = periodIndex + 1 <= records.count - 1;
-    long minimumAxisTimestamp = hasPreviousRecord ? records[periodIndex - 1].endTime : record.startTime;
-    long maximumAxisTimestamp = hasNextRecord ? records[periodIndex + 1].startTime : record.endTime;
+    NSNumber *minimumTimestamp = hasPreviousRecord ? @(records[periodIndex - 1].endTime) : nil;
+    NSNumber *maximumTimestamp = hasNextRecord ? @(records[periodIndex + 1].startTime) : nil;
     self.editingPeriodIndex = periodIndex;
-    MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:record.taskName];
     __weak typeof(self) weakSelf = self;
-    PeriodEditAlertController *alert = [[PeriodEditAlertController alloc] initWithTitle:record.taskName
-                                                                              axisColor:[UIColor mirrorColorNamed:taskModel.color]
-                                                                       minimumTimestamp:minimumAxisTimestamp
-                                                                       maximumTimestamp:maximumAxisTimestamp
-                                                                         startTimestamp:record.startTime
-                                                                           endTimestamp:record.endTime
-                                                                           canDragStart:hasPreviousRecord
-                                                                             canDragEnd:hasNextRecord
-                                                                                   note:record.note
-                                                                           valueChanged:^(BOOL isStartTime, long timestamp) {
+    PeriodEditAlertController *alert = [[PeriodEditAlertController alloc] initWithRecord:record
+                                                                         minimumTimestamp:minimumTimestamp
+                                                                         maximumTimestamp:maximumTimestamp
+                                                                             valueChanged:^(BOOL isStartTime, long timestamp) {
         [weakSelf rangeAxisValueChangedIsStartTime:isStartTime timestamp:timestamp];
     } dismissed:^(NSString *note) {
         [weakSelf saveEditingNote:note periodIndex:periodIndex];
@@ -804,45 +796,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 - (void)rangeAxisValueChangedIsStartTime:(BOOL)isStartTime timestamp:(long)timestamp
 {
-    if (isStartTime) {
-        [self updateEditingStartTimestamp:timestamp];
-    } else {
-        [self updateEditingEndTimestamp:timestamp];
-    }
-}
-
-- (void)updateEditingStartTimestamp:(long)timestamp
-{
-    TimelineRangeAxisView *rangeAxisView = self.editingPeriodAlert.rangeAxisView;
-    if (rangeAxisView == nil) {
-        return;
-    }
-    long minimumAxisTimestamp = rangeAxisView.canDragStart ? rangeAxisView.minimumTimestamp : timestamp;
-    long maximumAxisTimestamp = rangeAxisView.canDragEnd ? rangeAxisView.maximumTimestamp : rangeAxisView.endTimestamp;
-    [rangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
-                                maximumTimestamp:maximumAxisTimestamp
-                                   startTimestamp:rangeAxisView.startTimestamp
-                                     endTimestamp:rangeAxisView.endTimestamp
-                                     canDragStart:rangeAxisView.canDragStart
-                                       canDragEnd:rangeAxisView.canDragEnd];
-    [MirrorStorage editPeriodIsStartTime:YES to:timestamp periodIndex:self.editingPeriodIndex];
-}
-
-- (void)updateEditingEndTimestamp:(long)timestamp
-{
-    TimelineRangeAxisView *rangeAxisView = self.editingPeriodAlert.rangeAxisView;
-    if (rangeAxisView == nil) {
-        return;
-    }
-    long minimumAxisTimestamp = rangeAxisView.canDragStart ? rangeAxisView.minimumTimestamp : rangeAxisView.startTimestamp;
-    long maximumAxisTimestamp = rangeAxisView.canDragEnd ? rangeAxisView.maximumTimestamp : timestamp;
-    [rangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
-                                maximumTimestamp:maximumAxisTimestamp
-                                   startTimestamp:rangeAxisView.startTimestamp
-                                     endTimestamp:rangeAxisView.endTimestamp
-                                     canDragStart:rangeAxisView.canDragStart
-                                       canDragEnd:rangeAxisView.canDragEnd];
-    [MirrorStorage editPeriodIsStartTime:NO to:timestamp periodIndex:self.editingPeriodIndex];
+    [MirrorStorage editPeriodIsStartTime:isStartTime to:timestamp periodIndex:self.editingPeriodIndex];
 }
 
 #pragma mark - Getters

@@ -8,53 +8,48 @@
 #import "MirrorLanguage.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
+#import "MirrorMacro.h"
+#import "MirrorStorage.h"
 
 @interface PeriodEditAlertController () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, weak) UIViewController *presentingViewController;
 @property (nonatomic, strong) UIAlertController *alertController;
-@property (nonatomic, strong) TimelineRangeAxisView *rangeAxisView;
+@property (nonatomic, strong) UIDatePicker *startDatePicker;
+@property (nonatomic, strong) UIDatePicker *endDatePicker;
 @property (nonatomic, strong) UITextField *noteTextField;
 @property (nonatomic, strong) UITapGestureRecognizer *dismissTapRecognizer;
-@property (nonatomic, copy) PeriodEditAlertRangeValueChanged valueChanged;
+@property (nonatomic, copy) PeriodEditAlertTimeValueChanged valueChanged;
 @property (nonatomic, copy) PeriodEditAlertDismissed dismissed;
 @property (nonatomic, copy) NSString *title;
-@property (nonatomic, strong) UIColor *axisColor;
-@property (nonatomic, assign) long minimumTimestamp;
-@property (nonatomic, assign) long maximumTimestamp;
+@property (nonatomic, strong) UIColor *accentColor;
+@property (nonatomic, strong, nullable) NSNumber *minimumTimestamp;
+@property (nonatomic, strong, nullable) NSNumber *maximumTimestamp;
 @property (nonatomic, assign) long startTimestamp;
 @property (nonatomic, assign) long endTimestamp;
-@property (nonatomic, assign) BOOL canDragStart;
-@property (nonatomic, assign) BOOL canDragEnd;
 @property (nonatomic, copy) NSString *note;
 
 @end
 
 @implementation PeriodEditAlertController
 
-- (instancetype)initWithTitle:(NSString *)title
-                    axisColor:(UIColor *)axisColor
-              minimumTimestamp:(long)minimumTimestamp
-              maximumTimestamp:(long)maximumTimestamp
-                startTimestamp:(long)startTimestamp
-                  endTimestamp:(long)endTimestamp
-                  canDragStart:(BOOL)canDragStart
-                    canDragEnd:(BOOL)canDragEnd
-                          note:(nullable NSString *)note
-                  valueChanged:(PeriodEditAlertRangeValueChanged)valueChanged
-                     dismissed:(PeriodEditAlertDismissed)dismissed
+- (instancetype)initWithRecord:(MirrorRecordModel *)record
+               minimumTimestamp:(NSNumber * _Nullable)minimumTimestamp
+               maximumTimestamp:(NSNumber * _Nullable)maximumTimestamp
+                   valueChanged:(PeriodEditAlertTimeValueChanged)valueChanged
+                      dismissed:(PeriodEditAlertDismissed)dismissed
 {
     self = [super init];
     if (self) {
-        _title = [title copy];
-        _axisColor = axisColor;
+        MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:record.taskName];
+        MirrorColorType colorType = taskModel ? taskModel.color : MirrorColorTypeCellGray;
+        _title = [record.taskName copy];
+        _accentColor = [UIColor mirrorColorPulsed:colorType];
         _minimumTimestamp = minimumTimestamp;
         _maximumTimestamp = maximumTimestamp;
-        _startTimestamp = startTimestamp;
-        _endTimestamp = endTimestamp;
-        _canDragStart = canDragStart;
-        _canDragEnd = canDragEnd;
-        _note = [note copy] ?: @"";
+        _startTimestamp = record.startTime;
+        _endTimestamp = record.endTime;
+        _note = [record.note copy] ?: @"";
         _valueChanged = [valueChanged copy];
         _dismissed = [dismissed copy];
     }
@@ -69,9 +64,8 @@
 - (void)presentFromViewController:(UIViewController *)viewController
 {
     self.presentingViewController = viewController;
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:self.title
-                                                                             message:@"\n\n\n\n\n\n\n\n"
-                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:@"\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
     self.alertController = alertController;
     [self configureContentInAlertController:alertController];
     
@@ -83,28 +77,28 @@
 
 - (void)configureContentInAlertController:(UIAlertController *)alertController
 {
-    TimelineRangeAxisView *rangeAxisView = [TimelineRangeAxisView new];
-    rangeAxisView.axisColor = self.axisColor;
-    [rangeAxisView configureWithMinimumTimestamp:self.minimumTimestamp
-                                maximumTimestamp:self.maximumTimestamp
-                                   startTimestamp:self.startTimestamp
-                                     endTimestamp:self.endTimestamp
-                                     canDragStart:self.canDragStart
-                                       canDragEnd:self.canDragEnd];
-    __weak typeof(self) weakSelf = self;
-    rangeAxisView.valueChanged = ^(BOOL isStartTime, long timestamp) {
-        if (weakSelf.valueChanged) {
-            weakSelf.valueChanged(isStartTime, timestamp);
-        }
-    };
-    self.rangeAxisView = rangeAxisView;
-    
+    UILabel *titleLabel = [self titleLabelWithText:self.title];
+    UILabel *startLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"starts_at"]];
+    UIDatePicker *startDatePicker = [self timePickerWithTimestamp:self.startTimestamp];
+    startDatePicker.minimumDate = self.minimumTimestamp ? [NSDate dateWithTimeIntervalSince1970:self.minimumTimestamp.longValue] : nil;
+    startDatePicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:self.endTimestamp - kMinSeconds];
+    [startDatePicker addTarget:self action:@selector(startDatePickerValueChanged:) forControlEvents:UIControlEventValueChanged];
+    self.startDatePicker = startDatePicker;
+
+    UILabel *endLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"ends_at"]];
+    UIDatePicker *endDatePicker = [self timePickerWithTimestamp:self.endTimestamp];
+    endDatePicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:self.startTimestamp + kMinSeconds];
+    endDatePicker.maximumDate = self.maximumTimestamp ? [NSDate dateWithTimeIntervalSince1970:self.maximumTimestamp.longValue] : nil;
+    [endDatePicker addTarget:self action:@selector(endDatePickerValueChanged:) forControlEvents:UIControlEventValueChanged];
+    self.endDatePicker = endDatePicker;
+
     UILabel *noteLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"note"]];
     UITextField *noteTextField = [UITextField new];
     noteTextField.text = self.note;
     noteTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"note"];
     noteTextField.font = [UIFont mirrorHintFont];
-    noteTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    noteTextField.textColor = self.accentColor;
+    noteTextField.tintColor = self.accentColor;
     noteTextField.borderStyle = UITextBorderStyleRoundedRect;
     noteTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
     [noteTextField setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
@@ -112,29 +106,76 @@
     self.noteTextField = noteTextField;
     
     UIView *contentView = alertController.view;
-    [contentView addSubview:rangeAxisView];
+    [contentView addSubview:titleLabel];
+    [contentView addSubview:startLabel];
+    [contentView addSubview:startDatePicker];
+    [contentView addSubview:endLabel];
+    [contentView addSubview:endDatePicker];
     [contentView addSubview:noteLabel];
     [contentView addSubview:noteTextField];
     
-    [rangeAxisView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.offset(24);
-        make.right.offset(-24);
-        make.top.offset(54);
-        make.height.mas_equalTo(72);
+    CGFloat leftInset = 24;
+    CGFloat rightInset = -24;
+    CGFloat labelWidth = 88;
+    CGFloat rowHeight = 34;
+    [titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.offset(20);
+        make.left.offset(leftInset);
+        make.right.offset(rightInset);
+        make.height.mas_equalTo(26);
+    }];
+    [startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.offset(leftInset);
+        make.top.mas_equalTo(titleLabel.mas_bottom).offset(8);
+        make.width.mas_equalTo(labelWidth);
+        make.height.mas_equalTo(rowHeight);
+    }];
+    [startDatePicker mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(startLabel.mas_right).offset(8);
+        make.centerY.mas_equalTo(startLabel);
+        make.right.offset(rightInset);
+        make.height.mas_equalTo(rowHeight);
+    }];
+    [endLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.width.height.mas_equalTo(startLabel);
+        make.top.mas_equalTo(startLabel.mas_bottom).offset(8);
+    }];
+    [endDatePicker mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.height.mas_equalTo(startDatePicker);
+        make.centerY.mas_equalTo(endLabel);
     }];
     [noteLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.offset(24);
-        make.top.mas_equalTo(rangeAxisView.mas_bottom).offset(8);
-        make.width.mas_equalTo(90);
-        make.height.mas_equalTo(30);
+        make.left.width.height.mas_equalTo(startLabel);
+        make.top.mas_equalTo(endLabel.mas_bottom).offset(8);
     }];
     [noteTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(noteLabel.mas_right).offset(8);
+        make.left.right.height.mas_equalTo(startDatePicker);
         make.centerY.mas_equalTo(noteLabel);
-        make.right.offset(-24);
-        make.width.mas_equalTo(130).priorityHigh();
-        make.height.mas_equalTo(34);
     }];
+}
+
+- (UIDatePicker *)timePickerWithTimestamp:(long)timestamp
+{
+    UIDatePicker *datePicker = [UIDatePicker new];
+    datePicker.datePickerMode = UIDatePickerModeDateAndTime;
+    datePicker.minuteInterval = 5;
+    datePicker.date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+    datePicker.tintColor = self.accentColor;
+    if (@available(iOS 13.4, *)) {
+        datePicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
+    }
+    return datePicker;
+}
+
+- (UILabel *)titleLabelWithText:(NSString *)text
+{
+    UILabel *label = [UILabel new];
+    label.text = text;
+    label.font = [UIFont mirrorTitleFont];
+    label.textColor = self.accentColor;
+    label.textAlignment = NSTextAlignmentCenter;
+    label.adjustsFontSizeToFitWidth = YES;
+    return label;
 }
 
 - (UILabel *)pickerLabelWithText:(NSString *)text
@@ -142,9 +183,37 @@
     UILabel *label = [UILabel new];
     label.text = text;
     label.font = [UIFont mirrorHintFont];
-    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+    label.textColor = self.accentColor;
     label.adjustsFontSizeToFitWidth = YES;
     return label;
+}
+
+- (void)startDatePickerValueChanged:(UIDatePicker *)datePicker
+{
+    long timestamp = round([datePicker.date timeIntervalSince1970]);
+    if (self.minimumTimestamp) {
+        timestamp = MAX(timestamp, self.minimumTimestamp.longValue);
+    }
+    timestamp = MIN(timestamp, self.endTimestamp - kMinSeconds);
+    self.startTimestamp = timestamp;
+    self.endDatePicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:self.startTimestamp + kMinSeconds];
+    if (self.valueChanged) {
+        self.valueChanged(YES, timestamp);
+    }
+}
+
+- (void)endDatePickerValueChanged:(UIDatePicker *)datePicker
+{
+    long timestamp = round([datePicker.date timeIntervalSince1970]);
+    timestamp = MAX(timestamp, self.startTimestamp + kMinSeconds);
+    if (self.maximumTimestamp) {
+        timestamp = MIN(timestamp, self.maximumTimestamp.longValue);
+    }
+    self.endTimestamp = timestamp;
+    self.startDatePicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:self.endTimestamp - kMinSeconds];
+    if (self.valueChanged) {
+        self.valueChanged(NO, timestamp);
+    }
 }
 
 - (void)addDismissTapRecognizer
@@ -178,7 +247,8 @@
     NSString *note = self.noteTextField.text ?: @"";
     PeriodEditAlertDismissed dismissed = self.dismissed;
     [self removeDismissTapRecognizer];
-    self.rangeAxisView = nil;
+    self.startDatePicker = nil;
+    self.endDatePicker = nil;
     self.noteTextField = nil;
     self.alertController = nil;
     [alertController dismissViewControllerAnimated:YES completion:^{

@@ -93,7 +93,7 @@
     
     // Delete period
     [mirrorDict setValue:ML(@"Delete this time period? ", @"确定删除这个时间段？", @"¿Eliminar este periodo?", @"Supprimer cette période ?", @"この時間帯を削除しますか？", @"이 시간대를 삭제할까요?") forKey:@"delete_period_?"];
-    [mirrorDict setValue:ML(@"Ends at", @"结束于", @"Termina a las", @"Se termine à", @"終了時刻", @"종료 시간") forKey:@"ends_at"];
+    [mirrorDict setValue:ML(@"Ends at", @"结束于", @"Termina a las", @"Termine à", @"終了時刻", @"종료 시각") forKey:@"ends_at"];
     [mirrorDict setValue:ML(@"Note", @"备注", @"Nota", @"Note", @"メモ", @"메모") forKey:@"note"];
     
     // Time VC
@@ -150,7 +150,7 @@
     [mirrorDict setValue:ML(@"Total: ", @"总时长：", @"Total: ", @"Total : ", @"合計: ", @"합계: ") forKey:@"total"];
     
     // Time editing
-    [mirrorDict setValue:ML(@"Starts at", @"开始时间", @"Empieza a las", @"Commence à", @"開始時刻", @"시작 시간") forKey:@"starts_at"];
+    [mirrorDict setValue:ML(@"Starts at", @"开始于", @"Comienza a las", @"Commence à", @"開始時刻", @"시작 시각") forKey:@"starts_at"];
     [mirrorDict setValue:ML(@"OR", @"或", @"O", @"OU", @"または", @"또는") forKey:@"or"];
     [mirrorDict setValue:ML(@"A current or future time period is already occupied, so Start Now is unavailable", @"当前或未来时间段已被其他记录占用，无法立即开始计时", @"Ya hay un periodo actual o futuro ocupado, así que no se puede empezar ahora", @"Une période actuelle ou future est déjà occupée, le démarrage immédiat est indisponible", @"現在または未来の時間帯がすでに使用中のため、今すぐ開始できません", @"현재 또는 미래 시간대가 이미 사용 중이라 지금 시작할 수 없습니다") forKey:@"now_is_occupied"];
     [mirrorDict setValue:ML(@"Check occupied records", @"查看占用记录", @"Revisar registros ocupados", @"Voir les enregistrements occupés", @"使用中の記録を確認", @"점유된 기록 확인") forKey:@"check_occupied_records"];
