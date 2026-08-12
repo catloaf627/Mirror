@@ -18,7 +18,6 @@
 #import "LegendView.h"
 #import "TaskProgressListView.h"
 #import "PiechartView.h"
-#import "LinechartView.h"
 #import "RecordsTimelineViewController.h"
 #import "MirrorTimeText.h"
 #import "MirrorTool.h"
@@ -56,9 +55,6 @@
 @property (nonatomic, strong) LegendView *legendView;
 @property (nonatomic, strong) TaskProgressListView *taskProgressListView;
 @property (nonatomic, strong) PiechartView *piechartView;
-///several days (multiple selection)
-@property (nonatomic, strong) LinechartView *linechartView;
-
 @end
 
 @implementation GridViewController
@@ -127,7 +123,6 @@
     self.legendView = nil;
     self.taskProgressListView = nil;
     self.piechartView = nil;
-    self.linechartView = nil;
     // 将vc.view里的所有subviews从父view上移除
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
@@ -150,9 +145,12 @@
     [self updateWeekdayView];
     [self updateKeys];
     [self updateGridData];
-    [self updateCharts];
+    if (_selectedCellIndexesStart != -1 && _selectedCellIndexesEnd != -1) {
+        [self updateChartsFromIndex:_selectedCellIndexesStart toIndex:_selectedCellIndexesEnd];
+    } else {
+        [self updateCharts];
+    }
     [self.collectionView reloadData];
-    [self updateLinechart];
 }
 
 
@@ -224,14 +222,6 @@
         }
     }];
     self.piechartView.hidden = ![MirrorSettings appliedPieChartRecord];
-    [self.view addSubview:self.linechartView];
-    [self.linechartView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
-        make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
-        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
-    }];
-    self.linechartView.hidden = YES;
     _selectedCellIndexesStart = -1;
     _selectedCellIndexesEnd = -1;
     UIScreenEdgePanGestureRecognizer *edgeRecognizer = [UIScreenEdgePanGestureRecognizer new];
@@ -342,7 +332,7 @@
     return self.gridData[dateKey];
 }
 
-- (NSMutableArray<MirrorReadModel *> *)legendDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
+- (NSMutableArray<MirrorReadModel *> *)chartDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex shouldHideHidden:(BOOL)shouldHideHidden
 {
     if (self.keys.count <= startIndex || self.keys.count <= endIndex) {
         return [NSMutableArray new];
@@ -353,38 +343,61 @@
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
     long endTime = [[gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:endDate options:0] timeIntervalSince1970];
-    return [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
+    return [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:shouldHideHidden];
 }
 
-- (void)updateCharts // legend & histogram & piechart
+- (NSMutableArray<MirrorReadModel *> *)legendDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
+{
+    return [self chartDataFromIndex:startIndex toIndex:endIndex shouldHideHidden:NO];
+}
+
+- (void)updateCharts // legend & progress list & piechart
 {
     if (self.keys.count <= _selectedCellIndex) { // 空数据保护
         return;
     }
-    // data source
-    NSMutableArray<MirrorReadModel *> *data = [self gridDataForDateKey:self.keys[_selectedCellIndex]];
-    // date label
-    GridCollectionViewCell *cell = (GridCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForRow:_selectedCellIndex inSection:0]];
-    if (cell) { // 从did selected调用
-        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[_selectedCellIndex]]] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:cell.totalTime]];
-    } else { // 从setup ui调用
-        long totalTime = 0;
-        for (int i=0; i<data.count; i++) {
-            totalTime = totalTime + [MirrorTool getTotalTimeOfPeriods:data[i].records];
-        }
-        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[_selectedCellIndex]]] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
+    [self updateChartsFromIndex:_selectedCellIndex toIndex:_selectedCellIndex];
+}
+
+- (void)updateChartsFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
+{
+    if (self.keys.count == 0 || startIndex < 0 || endIndex < 0) { // 空数据保护
+        return;
+    }
+    if (startIndex >= self.keys.count) startIndex = self.keys.count - 1;
+    if (endIndex >= self.keys.count) endIndex = self.keys.count - 1;
+    if (_selectedCellIndexesStart != -1 && _selectedCellIndexesEnd != -1) {
+        _selectedCellIndexesStart = startIndex;
+        _selectedCellIndexesEnd = endIndex;
+    }
+    
+    NSInteger start = startIndex < endIndex ? startIndex : endIndex;
+    NSInteger end = startIndex > endIndex ? startIndex : endIndex;
+    NSMutableArray<MirrorReadModel *> *legendData = [self legendDataFromIndex:start toIndex:end];
+    NSMutableArray<MirrorReadModel *> *data = [self chartDataFromIndex:start toIndex:end shouldHideHidden:YES];
+    long totalTime = 0;
+    for (MirrorReadModel *readModel in data) {
+        totalTime += [MirrorTool getTotalTimeOfPeriods:readModel.records];
+    }
+    
+    if (start == end) {
+        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[start]]] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
+    } else {
+        NSString *startDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[start]]];
+        NSString *endDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[end]]];
+        self.dateLabel.text = [[[[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
     }
 
     // legend
-    [self.legendView updateWithData:[self legendDataFromIndex:_selectedCellIndex toIndex:_selectedCellIndex]];
+    [self.legendView updateWithData:legendData];
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
-    // histogram
+    // progress list
     [self.taskProgressListView updateWithData:data];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
-    [self.piechartView updateWithData:data width:width enableInteractive:YES];
     // piechart
+    [self.piechartView updateWithData:data width:width enableInteractive:YES];
     if (self.piechartView.superview) { //security
         [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
             if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度
@@ -406,43 +419,9 @@
 - (void)updateMultiSelectEnd:(NSInteger)newend
 {
     _selectedCellIndexesEnd = newend;
-    [self updateLinechart];
+    [self updateChartsFromIndex:_selectedCellIndexesStart toIndex:_selectedCellIndexesEnd];
     [self.collectionView reloadData];
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-}
-
-- (void)updateLinechart // linechart
-{
-    if (_selectedCellIndexesStart==-1 || _selectedCellIndexesEnd==-1 || self.keys.count == 0) { // 空数据保护
-        return;
-    }
-    if (_selectedCellIndexesStart >= self.keys.count || _selectedCellIndexesEnd >= self.keys.count) { // 当grid（因为数据删减、调整星期第一天）缩小导致两个index取不到时，调整到最近的index
-        while (_selectedCellIndexesStart >= self.keys.count) _selectedCellIndexesStart--;
-        while (_selectedCellIndexesEnd >= self.keys.count) _selectedCellIndexesEnd--;
-    }
-    NSInteger start = _selectedCellIndexesStart < _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
-    NSInteger end = _selectedCellIndexesStart > _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
-    NSString *startDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[start]]];
-    NSString *endDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[end]]];
-    self.dateLabel.text = [[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate];
-    // data source
-    NSMutableArray<NSMutableArray<MirrorReadModel *> *> *dataArr = [NSMutableArray new];
-    NSMutableArray<NSString *> *dateKeys = [NSMutableArray new];
-    for (NSInteger i=start; i<=end; i++) {
-        NSMutableArray<MirrorReadModel *> *data = [self gridDataForDateKey:self.keys[i]];
-        if (data == nil) {
-            data = [NSMutableArray new];
-        }
-        [dataArr addObject:data];
-        [dateKeys addObject:self.keys[i]];
-    }
-    // legend
-    [self.legendView updateWithData:[self legendDataFromIndex:start toIndex:end]];
-    [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo([self.legendView legendViewHeight]);
-    }];
-    self.linechartView.hidden = NO;
-    [self.linechartView refactorData:dataArr dateKeys:dateKeys];
 }
 
 - (CGFloat)weekdayViewWidth
@@ -579,7 +558,6 @@
 {
     _selectedCellIndexesStart = -1;
     _selectedCellIndexesEnd = -1;
-    self.linechartView.hidden = YES;
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     _selectedCellIndex = indexPath.item; // 选择
     [self updateCharts];
@@ -659,14 +637,6 @@
         _piechartView = [[PiechartView alloc] initWithData:[NSMutableArray new] width:0 enableInteractive:NO];
     }
     return _piechartView;
-}
-
-- (LinechartView *)linechartView
-{
-    if (!_linechartView) {
-        _linechartView = [LinechartView new];
-    }
-    return _linechartView;
 }
 
 - (UILabel *)leftHint
