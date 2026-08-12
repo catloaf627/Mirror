@@ -16,6 +16,7 @@
 		4A10185E2B90876E00AA9677 /* LinechartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A10185D2B90876E00AA9677 /* LinechartView.m */; };
 		4A1F8C38302A43FA00045430 /* TaskColorCirclePickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */; };
 		4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C3A302A452000045430 /* TaskPickerViewController.m */; };
+		4A1F8C56302BFF2A00045430 /* TimelineRangeAxisView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C55302BFF2A00045430 /* TimelineRangeAxisView.m */; };
 		4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */; };
 		4A37369429E2AEE900187280 /* PiechartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369329E2AEE900187280 /* PiechartView.m */; };
 		4A37369729E2BD3C00187280 /* SliceLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369629E2BD3C00187280 /* SliceLayer.m */; };
@@ -109,6 +110,9 @@
 		4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskColorCirclePickerViewController.m; sourceTree = "<group>"; };
 		4A1F8C39302A450200045430 /* TaskPickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskPickerViewController.h; sourceTree = "<group>"; };
 		4A1F8C3A302A452000045430 /* TaskPickerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskPickerViewController.m; sourceTree = "<group>"; };
+		4A1F8C54302BFF0400045430 /* TimelineRangeAxisView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineRangeAxisView.h; sourceTree = "<group>"; };
+		4A1F8C55302BFF2A00045430 /* TimelineRangeAxisView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineRangeAxisView.m; sourceTree = "<group>"; };
+		4A1F8C58302C009500045430 /* ProjectSettings.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProjectSettings.md; sourceTree = "<group>"; };
 		4A32A3FC29F7782200DCCF57 /* MirrorTimeText.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorTimeText.h; sourceTree = "<group>"; };
 		4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTimeText.m; sourceTree = "<group>"; };
 		4A37369229E2AEE900187280 /* PiechartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PiechartView.h; sourceTree = "<group>"; };
@@ -305,6 +309,14 @@
 				4AB1182D2B9851F7003CED03 /* LineChartCollectionViewCell.m */,
 			);
 			path = Linechart;
+			sourceTree = "<group>";
+		};
+		4A1F8C57302C008A00045430 /* Docs */ = {
+			isa = PBXGroup;
+			children = (
+				4A1F8C58302C009500045430 /* ProjectSettings.md */,
+			);
+			path = Docs;
 			sourceTree = "<group>";
 		};
 		4A32A3FF29F8C88F00DCCF57 /* EditTasks */ = {
@@ -529,6 +541,7 @@
 				4AFB779E28DF4A380064CBCA /* Products */,
 				28A8007B0861D9C4CF702272 /* Pods */,
 				F9B0C7CCC00DFAFF4ADCBE2F /* Frameworks */,
+				4A1F8C57302C008A00045430 /* Docs */,
 			);
 			sourceTree = "<group>";
 		};
@@ -565,6 +578,8 @@
 			children = (
 				4AFBD19F3029558E006A6350 /* RecordsTimelineViewController.h */,
 				4AFBD1A03029558E006A6350 /* RecordsTimelineViewController.m */,
+				4A1F8C54302BFF0400045430 /* TimelineRangeAxisView.h */,
+				4A1F8C55302BFF2A00045430 /* TimelineRangeAxisView.m */,
 			);
 			path = Timeline;
 			sourceTree = "<group>";
@@ -771,6 +786,7 @@
 				4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */,
 				4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */,
 				4AFB77A528DF4A380064CBCA /* SceneDelegate.m in Sources */,
+				4A1F8C56302BFF2A00045430 /* TimelineRangeAxisView.m in Sources */,
 				4A379B4128E0381A00785CAE /* UIColor+MirrorColor.m in Sources */,
 				4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */,
 				4A379B4428E03D0B00785CAE /* MirrorTabsManager.m in Sources */,

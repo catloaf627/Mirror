@@ -13,6 +13,7 @@
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
+#import "TimelineRangeAxisView.h"
 
 static CGFloat const kHorizontalPadding = 20;
 static CGFloat const kDotSize = 10;
@@ -51,8 +52,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, assign) BOOL didScrollToInitialHighlightedRow;
 @property (nonatomic, assign) BOOL isRecordEditMenuVisible;
 @property (nonatomic, assign) BOOL shouldSuppressNextRecordEditMenu;
-@property (nonatomic, strong) UIDatePicker *editingStartPicker;
-@property (nonatomic, strong) UIDatePicker *editingEndPicker;
+@property (nonatomic, strong) TimelineRangeAxisView *editingRangeAxisView;
 @property (nonatomic, strong) UITextField *editingNoteTextField;
 @property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
 @property (nonatomic, weak) UIView *firstTimelineRow;
@@ -758,36 +758,29 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     }
     
     MirrorRecordModel *record = records[periodIndex];
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
+    BOOL hasPreviousRecord = periodIndex - 1 >= 0;
+    BOOL hasNextRecord = periodIndex + 1 <= records.count - 1;
+    long minimumAxisTimestamp = hasPreviousRecord ? records[periodIndex - 1].endTime : record.startTime;
+    long maximumAxisTimestamp = hasNextRecord ? records[periodIndex + 1].startTime : record.endTime;
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
     
-    UIDatePicker *startPicker = [UIDatePicker new];
-    startPicker.datePickerMode = UIDatePickerModeDateAndTime;
-    startPicker.timeZone = [NSTimeZone systemTimeZone];
-    startPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
-    startPicker.date = [NSDate dateWithTimeIntervalSince1970:record.startTime];
-    startPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:record.endTime - kMinSeconds];
-    [startPicker addTarget:self action:@selector(startPickerValueChanged:) forControlEvents:UIControlEventValueChanged];
-    if (periodIndex - 1 >= 0) {
-        startPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex - 1].endTime];
-    }
-    
-    UIDatePicker *endPicker = [UIDatePicker new];
-    endPicker.datePickerMode = UIDatePickerModeDateAndTime;
-    endPicker.timeZone = [NSTimeZone systemTimeZone];
-    endPicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
-    endPicker.date = [NSDate dateWithTimeIntervalSince1970:record.endTime];
-    endPicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:record.startTime + kMinSeconds];
-    [endPicker addTarget:self action:@selector(endPickerValueChanged:) forControlEvents:UIControlEventValueChanged];
-    if (periodIndex + 1 <= records.count - 1) {
-        endPicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:records[periodIndex + 1].startTime];
-    }
+    TimelineRangeAxisView *rangeAxisView = [TimelineRangeAxisView new];
+    MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:record.taskName];
+    rangeAxisView.axisColor = [UIColor mirrorColorNamed:taskModel.color];
+    [rangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
+                                maximumTimestamp:maximumAxisTimestamp
+                                   startTimestamp:record.startTime
+                                     endTimestamp:record.endTime
+                                     canDragStart:hasPreviousRecord
+                                       canDragEnd:hasNextRecord];
+    __weak typeof(self) weakSelf = self;
+    rangeAxisView.valueChanged = ^(BOOL isStartTime, long timestamp) {
+        [weakSelf rangeAxisValueChangedIsStartTime:isStartTime timestamp:timestamp];
+    };
     
     self.editingPeriodIndex = periodIndex;
-    self.editingStartPicker = startPicker;
-    self.editingEndPicker = endPicker;
+    self.editingRangeAxisView = rangeAxisView;
     
-    UILabel *startLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"starts_at"]];
-    UILabel *endLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"ends_at"]];
     UILabel *noteLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"note"]];
     UITextField *noteTextField = [UITextField new];
     noteTextField.text = record.note;
@@ -801,40 +794,19 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     [noteTextField addTarget:self action:@selector(noteTextFieldEditingChanged:) forControlEvents:UIControlEventEditingChanged];
     self.editingNoteTextField = noteTextField;
     UIView *contentView = alertController.view;
-    [contentView addSubview:startLabel];
-    [contentView addSubview:startPicker];
-    [contentView addSubview:endLabel];
-    [contentView addSubview:endPicker];
+    [contentView addSubview:rangeAxisView];
     [contentView addSubview:noteLabel];
     [contentView addSubview:noteTextField];
     
-    [startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    [rangeAxisView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(24);
-        make.top.offset(58);
-        make.width.mas_equalTo(90);
-        make.height.mas_equalTo(30);
-    }];
-    [startPicker mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(startLabel.mas_right).offset(8);
-        make.centerY.mas_equalTo(startLabel);
         make.right.offset(-24);
-        make.height.mas_equalTo(34);
-    }];
-    [endLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(startLabel);
-        make.top.mas_equalTo(startLabel.mas_bottom).offset(8);
-        make.width.mas_equalTo(90);
-        make.height.mas_equalTo(30);
-    }];
-    [endPicker mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(endLabel.mas_right).offset(8);
-        make.centerY.mas_equalTo(endLabel);
-        make.right.offset(-24);
-        make.height.mas_equalTo(34);
+        make.top.offset(54);
+        make.height.mas_equalTo(72);
     }];
     [noteLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(startLabel);
-        make.top.mas_equalTo(endLabel.mas_bottom).offset(8);
+        make.left.offset(24);
+        make.top.mas_equalTo(rangeAxisView.mas_bottom).offset(8);
         make.width.mas_equalTo(90);
         make.height.mas_equalTo(30);
     }];
@@ -877,8 +849,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     
     [self saveEditingNoteIfNeeded];
     [self removeEditingDismissTapRecognizer];
-    self.editingStartPicker = nil;
-    self.editingEndPicker = nil;
+    self.editingRangeAxisView = nil;
     self.editingNoteTextField = nil;
     BOOL shouldReload = self.shouldReloadAfterEditingPeriodAlert;
     self.shouldReloadAfterEditingPeriodAlert = NO;
@@ -960,26 +931,41 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     self.editingDismissTapRecognizer = nil;
 }
 
-- (void)startPickerValueChanged:(UIDatePicker *)picker
+- (void)rangeAxisValueChangedIsStartTime:(BOOL)isStartTime timestamp:(long)timestamp
 {
-    NSDate *minimumEndDate = [picker.date dateByAddingTimeInterval:kMinSeconds];
-    self.editingEndPicker.minimumDate = minimumEndDate;
-    if ([self.editingEndPicker.date compare:minimumEndDate] == NSOrderedAscending) {
-        self.editingEndPicker.date = minimumEndDate;
-        [MirrorStorage editPeriodIsStartTime:NO to:round([minimumEndDate timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+    if (isStartTime) {
+        [self updateEditingStartTimestamp:timestamp];
+    } else {
+        [self updateEditingEndTimestamp:timestamp];
     }
-    [MirrorStorage editPeriodIsStartTime:YES to:round([picker.date timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
 }
 
-- (void)endPickerValueChanged:(UIDatePicker *)picker
+- (void)updateEditingStartTimestamp:(long)timestamp
 {
-    NSDate *maximumStartDate = [picker.date dateByAddingTimeInterval:-kMinSeconds];
-    self.editingStartPicker.maximumDate = maximumStartDate;
-    if ([self.editingStartPicker.date compare:maximumStartDate] == NSOrderedDescending) {
-        self.editingStartPicker.date = maximumStartDate;
-        [MirrorStorage editPeriodIsStartTime:YES to:round([maximumStartDate timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
-    }
-    [MirrorStorage editPeriodIsStartTime:NO to:round([picker.date timeIntervalSince1970]) periodIndex:self.editingPeriodIndex];
+    self.editingRangeAxisView.startTimestamp = timestamp;
+    long minimumAxisTimestamp = self.editingRangeAxisView.canDragStart ? self.editingRangeAxisView.minimumTimestamp : timestamp;
+    long maximumAxisTimestamp = self.editingRangeAxisView.canDragEnd ? self.editingRangeAxisView.maximumTimestamp : self.editingRangeAxisView.endTimestamp;
+    [self.editingRangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
+                                            maximumTimestamp:maximumAxisTimestamp
+                                               startTimestamp:self.editingRangeAxisView.startTimestamp
+                                                 endTimestamp:self.editingRangeAxisView.endTimestamp
+                                                 canDragStart:self.editingRangeAxisView.canDragStart
+                                                   canDragEnd:self.editingRangeAxisView.canDragEnd];
+    [MirrorStorage editPeriodIsStartTime:YES to:timestamp periodIndex:self.editingPeriodIndex];
+}
+
+- (void)updateEditingEndTimestamp:(long)timestamp
+{
+    self.editingRangeAxisView.endTimestamp = timestamp;
+    long minimumAxisTimestamp = self.editingRangeAxisView.canDragStart ? self.editingRangeAxisView.minimumTimestamp : self.editingRangeAxisView.startTimestamp;
+    long maximumAxisTimestamp = self.editingRangeAxisView.canDragEnd ? self.editingRangeAxisView.maximumTimestamp : timestamp;
+    [self.editingRangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
+                                            maximumTimestamp:maximumAxisTimestamp
+                                               startTimestamp:self.editingRangeAxisView.startTimestamp
+                                                 endTimestamp:self.editingRangeAxisView.endTimestamp
+                                                 canDragStart:self.editingRangeAxisView.canDragStart
+                                                   canDragEnd:self.editingRangeAxisView.canDragEnd];
+    [MirrorStorage editPeriodIsStartTime:NO to:timestamp periodIndex:self.editingPeriodIndex];
 }
 
 - (void)noteTextFieldEditingChanged:(UITextField *)textField
