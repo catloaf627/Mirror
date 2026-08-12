@@ -22,23 +22,19 @@
 #import "MirrorTimeText.h"
 #import "MirrorTool.h"
 #import "MirrorTabsManager.h"
-#import "SettingsViewController.h"
-#import "LeftAnimation.h"
 #import "UIFont+MirrorFont.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kCellWidth (25*kWidthRatio)
 #define kCellSpacing (2.5*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
-@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIViewControllerTransitioningDelegate, TaskProgressListDelegate>
+@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TaskProgressListDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
-@property (nonatomic, strong) UIButton *settingsButton;
 @property (nonatomic, strong) UIButton *heatmapButton;
 @property (nonatomic, strong) UIButton *weekStartsOnButton;
 @property (nonatomic, strong) UIView *gridOptionsView;
-@property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 // Data source
 @property (nonatomic, strong) NSMutableArray<NSString *> *keys;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray<MirrorReadModel *> *> *gridData;
@@ -104,7 +100,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.gridOptionsView];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.gridOptionsView];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -135,7 +131,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.gridOptionsView];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.gridOptionsView];
     }
     [self p_setupUI];
 }
@@ -230,24 +226,10 @@
     self.piechartView.hidden = ![MirrorSettings appliedPieChartRecord];
     _selectedCellIndexesStart = -1;
     _selectedCellIndexesEnd = -1;
-    UIScreenEdgePanGestureRecognizer *edgeRecognizer = [UIScreenEdgePanGestureRecognizer new];
-    edgeRecognizer.edges = UIRectEdgeLeft;
-    [edgeRecognizer addTarget:self action:@selector(edgeGestureRecognizerAction:)];
-    [self.view addGestureRecognizer:edgeRecognizer];
-    
     [self updateCharts];
 }
 
 #pragma mark - Actions
-
-- (void)goToSettings
-{
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    SettingsViewController * settingsVC = [[SettingsViewController alloc] init];
-    settingsVC.transitioningDelegate = self;
-    settingsVC.modalPresentationStyle = UIModalPresentationCustom;
-    [self presentViewController:settingsVC animated:YES completion:nil];
-}
 
 - (void)switchHeatmap
 {
@@ -735,17 +717,6 @@
     return _collectionView;
 }
 
-- (UIButton *)settingsButton
-{
-    if (!_settingsButton) {
-        _settingsButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"line.horizontal.3"]  imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_settingsButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        [_settingsButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _settingsButton;
-}
-
 - (UIButton *)heatmapButton
 {
     if (!_heatmapButton) {
@@ -802,46 +773,6 @@
     }
     return _gridData;
 }
-
-#pragma mark - Animation
-
-// 从左边缘滑动唤起settings
-- (void)edgeGestureRecognizerAction:(UIScreenEdgePanGestureRecognizer *)pan
-{
-    //产生百分比
-    CGFloat sheetWidth = self.view.frame.size.width * kLeftSheetRatio;
-    CGFloat process = [pan translationInView:self.view].x / sheetWidth;
-    
-    process = MIN(1.0,(MAX(0.0, process)));
-    if (pan.state == UIGestureRecognizerStateBegan) {
-        self.interactiveTransition = [UIPercentDrivenInteractiveTransition new];
-        // 触发present转场动画
-        [self goToSettings];
-    }else if (pan.state == UIGestureRecognizerStateChanged){
-        [self.interactiveTransition updateInteractiveTransition:process];
-    }else if (pan.state == UIGestureRecognizerStateEnded
-              || pan.state == UIGestureRecognizerStateCancelled){
-        if (process > 0.3) {
-            [ self.interactiveTransition finishInteractiveTransition];
-        }else{
-            [ self.interactiveTransition cancelInteractiveTransition];
-        }
-        self.interactiveTransition = nil;
-    }
-}
-
-- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
-{
-    LeftAnimation *animation = [LeftAnimation new];
-    animation.isPresent = YES;
-    return animation;
-}
-
-- (id<UIViewControllerInteractiveTransitioning>)interactionControllerForPresentation:(id<UIViewControllerAnimatedTransitioning>)animator
-{
-    return self.interactiveTransition;
-}
-
 
 #pragma mark - Helpers
 

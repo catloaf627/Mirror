@@ -17,9 +17,7 @@
 #import "MirrorStorage.h"
 #import "MirrorTool.h"
 #import "MirrorSettings.h"
-#import "SettingsViewController.h"
 #import "RecordsTimelineViewController.h"
-#import "LeftAnimation.h"
 #import "CellAnimation.h"
 #import "MirrorLanguage.h"
 #import "HintFooter.h"
@@ -30,12 +28,12 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
-@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate>
+@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIAdaptivePresentationControllerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
+@property (nonatomic, assign) BOOL isLanguagePickerPresented;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
-@property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorTaskModel *> *data;
 // Mark
@@ -88,6 +86,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    [self updateLanguageButtonTint];
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
 }
 
@@ -131,21 +130,43 @@
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height);
     }];
-    UIScreenEdgePanGestureRecognizer *edgeRecognizer = [UIScreenEdgePanGestureRecognizer new];
-    edgeRecognizer.edges = UIRectEdgeLeft;
-    [edgeRecognizer addTarget:self action:@selector(edgeGestureRecognizerAction:)];
-    [self.view addGestureRecognizer:edgeRecognizer];
 }
 
 #pragma mark - Actions
 
-- (void)goToSettings
+- (void)showLanguagePicker
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    SettingsViewController * settingsVC = [[SettingsViewController alloc] init];
-    settingsVC.transitioningDelegate = self;
-    settingsVC.modalPresentationStyle = UIModalPresentationCustom;
-    [self presentViewController:settingsVC animated:YES completion:nil];
+    NSArray<NSString *> *languageNames = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어"];
+    NSInteger preferredLanguageKey = [MirrorSettings preferredLanguageKey];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"language"]
+                                                                             message:nil
+                                                                      preferredStyle:UIAlertControllerStyleActionSheet];
+    [languageNames enumerateObjectsUsingBlock:^(NSString *languageName, NSUInteger index, BOOL *stop) {
+        NSString *title = index == preferredLanguageKey ? [languageName stringByAppendingString:@" ✓"] : languageName;
+        [alertController addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            self.isLanguagePickerPresented = NO;
+            [self updateLanguageButtonTint];
+            [MirrorSettings changeLanguageWithKey:index];
+        }]];
+    }];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        self.isLanguagePickerPresented = NO;
+        [self updateLanguageButtonTint];
+    }]];
+    alertController.presentationController.delegate = self;
+    self.isLanguagePickerPresented = YES;
+    [self updateLanguageButtonTint];
+    alertController.popoverPresentationController.sourceView = self.settingsButton;
+    alertController.popoverPresentationController.sourceRect = self.settingsButton.bounds;
+    alertController.popoverPresentationController.permittedArrowDirections = UIPopoverArrowDirectionUp;
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController
+{
+    self.isLanguagePickerPresented = NO;
+    [self updateLanguageButtonTint];
 }
 
 - (void)longPressTask:(UILongPressGestureRecognizer *)longPress
@@ -660,11 +681,18 @@
 {
     if (!_settingsButton) {
         _settingsButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"line.horizontal.3"]  imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+        UIImage *iconImage = [[UIImage systemImageNamed:@"a.square"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
         [_settingsButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        [_settingsButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
+        [_settingsButton addTarget:self action:@selector(showLanguagePicker) forControlEvents:UIControlEventTouchUpInside];
+        [self updateLanguageButtonTint];
     }
     return _settingsButton;
+}
+
+- (void)updateLanguageButtonTint
+{
+    MirrorColorType colorType = self.isLanguagePickerPresented ? MirrorColorTypeTabbarIconTextHightlight : MirrorColorTypeTabbarIconText;
+    self.settingsButton.tintColor = [UIColor mirrorColorNamed:colorType];
 }
 
 - (NSMutableArray<MirrorTaskModel *> *)data
@@ -679,48 +707,11 @@
 
 - (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
 {
-    if ([presented isKindOfClass:SettingsViewController.class]) { // Settings
-        LeftAnimation *animation = [LeftAnimation new];
-        animation.isPresent = YES;
-        return animation;
-    } else { // Time editing / Time tracking
-        CellAnimation *animation = [CellAnimation new];
-        animation.isPresent = YES;
-        animation.cellColor = self.selectedTaskColor;
-        animation.cellFrame = CGRectMake(self.collectionView.frame.origin.x + self.selectedCellFrame.origin.x, self.collectionView.frame.origin.y -  self.collectionView.contentOffset.y + self.selectedCellFrame.origin.y, self.selectedCellFrame.size.width, self.selectedCellFrame.size.height);
-        return animation;
-    }
+    CellAnimation *animation = [CellAnimation new];
+    animation.isPresent = YES;
+    animation.cellColor = self.selectedTaskColor;
+    animation.cellFrame = CGRectMake(self.collectionView.frame.origin.x + self.selectedCellFrame.origin.x, self.collectionView.frame.origin.y -  self.collectionView.contentOffset.y + self.selectedCellFrame.origin.y, self.selectedCellFrame.size.width, self.selectedCellFrame.size.height);
+    return animation;
 }
-
-- (id<UIViewControllerInteractiveTransitioning>)interactionControllerForPresentation:(id<UIViewControllerAnimatedTransitioning>)animator
-{
-    return self.interactiveTransition;
-}
-
-// 从左边缘滑动唤起settings
-- (void)edgeGestureRecognizerAction:(UIScreenEdgePanGestureRecognizer *)pan
-{
-    //产生百分比
-    CGFloat sheetWidth = self.view.frame.size.width * kLeftSheetRatio;
-    CGFloat process = [pan translationInView:self.view].x / sheetWidth;
-    
-    process = MIN(1.0,(MAX(0.0, process)));
-    if (pan.state == UIGestureRecognizerStateBegan) {
-        self.interactiveTransition = [UIPercentDrivenInteractiveTransition new];
-        // 触发present转场动画
-        [self goToSettings];
-    }else if (pan.state == UIGestureRecognizerStateChanged){
-        [self.interactiveTransition updateInteractiveTransition:process];
-    }else if (pan.state == UIGestureRecognizerStateEnded
-              || pan.state == UIGestureRecognizerStateCancelled){
-        if (process > 0.3) {
-            [ self.interactiveTransition finishInteractiveTransition];
-        }else{
-            [ self.interactiveTransition cancelInteractiveTransition];
-        }
-        self.interactiveTransition = nil;
-    }
-}
-
 
 @end

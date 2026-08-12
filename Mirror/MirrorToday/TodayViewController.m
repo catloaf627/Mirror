@@ -11,22 +11,18 @@
 #import "UIColor+MirrorColor.h"
 #import <Masonry/Masonry.h>
 #import "MirrorMacro.h"
-#import "LeftAnimation.h"
-#import "SettingsViewController.h"
 #import "TodayTotalHeader.h"
 #import "OneDayTimelineViewController.h"
 #import "CalendarViewController.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 
-@interface TodayViewController () <UIViewControllerTransitioningDelegate>
+@interface TodayViewController ()
 
 @property (nonatomic, assign) BOOL isLoaded;
 
 // Navibar
-@property (nonatomic, strong) UIButton *settingsButton;
 @property (nonatomic, strong) UIButton *timelineButton;
-@property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 
 // UI
 @property (nonatomic, strong) OneDayTimelineViewController *timelineViewController;
@@ -75,7 +71,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.timelineButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.timelineButton];
 }
 
 - (void)restartVC
@@ -92,7 +88,7 @@
 
     // 更新navibar
     if (self.tabBarController.selectedIndex == 1) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.timelineButton];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.timelineButton];
     }
     [self p_setupUI];
 }
@@ -130,22 +126,9 @@
     }];
     [timelineViewController didMoveToParentViewController:self];
 
-    UIScreenEdgePanGestureRecognizer *edgeRecognizer = [UIScreenEdgePanGestureRecognizer new];
-    edgeRecognizer.edges = UIRectEdgeLeft;
-    [edgeRecognizer addTarget:self action:@selector(edgeGestureRecognizerAction:)];
-    [self.view addGestureRecognizer:edgeRecognizer];
 }
 
 #pragma mark - Actions
-
-- (void)goToSettings
-{
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    SettingsViewController * settingsVC = [[SettingsViewController alloc] init];
-    settingsVC.transitioningDelegate = self;
-    settingsVC.modalPresentationStyle = UIModalPresentationCustom;
-    [self presentViewController:settingsVC animated:YES completion:nil];
-}
 
 - (void)goToCalendar
 {
@@ -154,17 +137,6 @@
 }
 
 #pragma mark - Getters
-
-- (UIButton *)settingsButton
-{
-    if (!_settingsButton) {
-        _settingsButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"line.horizontal.3"]  imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_settingsButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        [_settingsButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _settingsButton;
-}
 
 - (UIButton *)timelineButton
 {
@@ -175,45 +147,6 @@
         [_timelineButton addTarget:self action:@selector(goToCalendar) forControlEvents:UIControlEventTouchUpInside];
     }
     return _timelineButton;
-}
-
-#pragma mark - Animations
-
-// 从左边缘滑动唤起settings
-- (void)edgeGestureRecognizerAction:(UIScreenEdgePanGestureRecognizer *)pan
-{
-    //产生百分比
-    CGFloat sheetWidth = self.view.frame.size.width * kLeftSheetRatio;
-    CGFloat process = [pan translationInView:self.view].x / sheetWidth;
-    
-    process = MIN(1.0,(MAX(0.0, process)));
-    if (pan.state == UIGestureRecognizerStateBegan) {
-        self.interactiveTransition = [UIPercentDrivenInteractiveTransition new];
-        // 触发present转场动画
-        [self goToSettings];
-    }else if (pan.state == UIGestureRecognizerStateChanged){
-        [self.interactiveTransition updateInteractiveTransition:process];
-    }else if (pan.state == UIGestureRecognizerStateEnded
-              || pan.state == UIGestureRecognizerStateCancelled){
-        if (process > 0.3) {
-            [ self.interactiveTransition finishInteractiveTransition];
-        }else{
-            [ self.interactiveTransition cancelInteractiveTransition];
-        }
-        self.interactiveTransition = nil;
-    }
-}
-
-- (id<UIViewControllerAnimatedTransitioning>)animationControllerForPresentedController:(UIViewController *)presented presentingController:(UIViewController *)presenting sourceController:(UIViewController *)source
-{
-    LeftAnimation *animation = [LeftAnimation new];
-    animation.isPresent = YES;
-    return animation;
-}
-
-- (id<UIViewControllerInteractiveTransitioning>)interactionControllerForPresentation:(id<UIViewControllerAnimatedTransitioning>)animator
-{
-    return self.interactiveTransition;
 }
 
 @end
