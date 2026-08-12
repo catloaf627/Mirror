@@ -44,6 +44,7 @@
 @property (nonatomic, assign) NSInteger selectedCellIndex;
 @property (nonatomic, assign) NSInteger selectedCellIndexesStart;
 @property (nonatomic, assign) NSInteger selectedCellIndexesEnd;
+@property (nonatomic, assign) BOOL hasInitializedSelectedCellIndex;
 // UI
 ///grid
 @property (nonatomic, strong) UILabel *leftHint;
@@ -324,10 +325,10 @@
     NSDate *minDate = [self getMinDateForGrid];
     NSDate *maxDate = [self getMaxDateForGrid];
     _keys = [self getDateKeysFromMinDate:minDate maxDate:maxDate];
-    _selectedCellIndex = 0;
     NSInteger todayIndex = [_keys indexOfObject:[self keyFromDate:[NSDate now]]];
-    if (todayIndex != NSNotFound) {
-        _selectedCellIndex = todayIndex; // make sure selectedCellIndex is valid
+    if (!self.hasInitializedSelectedCellIndex && todayIndex != NSNotFound) {
+        _selectedCellIndex = todayIndex;
+        self.hasInitializedSelectedCellIndex = YES;
     }
 }
 
