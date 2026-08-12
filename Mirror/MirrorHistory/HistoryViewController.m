@@ -295,9 +295,9 @@
 
 - (void)updateChartTypeButton
 {
-    NSString *imageName = [MirrorSettings appliedPieChartData] ? @"chart.pie.fill" : @"chart.pie";
-    UIImage *iconImage = [[UIImage systemImageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    UIImage *iconImage = [[UIImage systemImageNamed:@"chart.pie"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.chartTypeButton setImage:iconImage forState:UIControlStateNormal];
+    self.chartTypeButton.tintColor = [MirrorSettings appliedPieChartData] ? [UIColor mirrorColorNamed:MirrorColorTypeText] : [UIColor mirrorColorNamed:MirrorColorTypeShadow];
 }
 
 #pragma mark - update data

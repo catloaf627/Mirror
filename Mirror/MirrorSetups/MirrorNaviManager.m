@@ -18,7 +18,7 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
 @property (nonatomic, strong) UINavigationController *controller;
 
 @property (nonatomic, strong) UIButton *leftButton;
-@property (nonatomic, strong) UIButton *rightButton;
+@property (nonatomic, strong) UIView *rightButton;
 @property (nonatomic, strong) UILabel *titleLabel;
 
 @end
@@ -45,7 +45,7 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
     return _controller;
 }
 
-- (void)updateNaviItemWithTitle:(NSString *)title leftButton:(nullable UIButton *)leftButton rightButton:(nullable UIButton *)rightButton
+- (void)updateNaviItemWithTitle:(NSString *)title leftButton:(nullable UIButton *)leftButton rightButton:(nullable UIView *)rightButton
 {
     // 抹干净画布 重新开始
     [self.titleLabel removeFromSuperview];
@@ -81,7 +81,8 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
         [self.rightButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.right.offset(-kCollectionViewPadding);
             make.centerY.offset(0);
-            make.width.height.mas_equalTo(_controller.navigationBar.frame.size.height);
+            make.height.mas_equalTo(_controller.navigationBar.frame.size.height);
+            make.width.mas_equalTo(MAX(_controller.navigationBar.frame.size.height, self.rightButton.frame.size.width));
         }];
     }
 }
@@ -106,11 +107,10 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
     return _leftButton;
 }
 
-- (UIButton *)rightButton
+- (UIView *)rightButton
 {
     if (!_rightButton) {
-        _rightButton = [UIButton new];
-        _rightButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _rightButton = [UIView new];
     }
     return _rightButton;
 }

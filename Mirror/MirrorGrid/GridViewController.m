@@ -35,7 +35,9 @@
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
+@property (nonatomic, strong) UIButton *heatmapButton;
 @property (nonatomic, strong) UIButton *weekStartsOnButton;
+@property (nonatomic, strong) UIView *gridOptionsView;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 // Data source
 @property (nonatomic, strong) NSMutableArray<NSString *> *keys;
@@ -102,7 +104,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.weekStartsOnButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.gridOptionsView];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -133,7 +135,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.weekStartsOnButton];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.gridOptionsView];
     }
     [self p_setupUI];
 }
@@ -141,6 +143,7 @@
 - (void)reloadData
 {
     if (!_isLoaded) return;
+    [self updateHeatmapButton];
     [self updateWeekStartsOnButton];
     if ([MirrorSettings appliedPieChartRecord]) {
         self.piechartView.hidden = NO;
@@ -246,10 +249,23 @@
     [self presentViewController:settingsVC animated:YES completion:nil];
 }
 
+- (void)switchHeatmap
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [MirrorSettings switchHeatmap];
+}
+
 - (void)switchWeekStartsOn
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     [MirrorSettings switchWeekStartsOn];
+}
+
+- (void)updateHeatmapButton
+{
+    UIImage *iconImage = [[UIImage systemImageNamed:@"app.translucent"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.heatmapButton setImage:iconImage forState:UIControlStateNormal];
+    self.heatmapButton.tintColor = [UIColor mirrorColorNamed:[MirrorSettings appliedHeatmap] ? MirrorColorTypeShadow : MirrorColorTypeText];
 }
 
 - (void)updateWeekStartsOnButton
@@ -730,6 +746,16 @@
     return _settingsButton;
 }
 
+- (UIButton *)heatmapButton
+{
+    if (!_heatmapButton) {
+        _heatmapButton = [UIButton new];
+        [_heatmapButton addTarget:self action:@selector(switchHeatmap) forControlEvents:UIControlEventTouchUpInside];
+        [self updateHeatmapButton];
+    }
+    return _heatmapButton;
+}
+
 - (UIButton *)weekStartsOnButton
 {
     if (!_weekStartsOnButton) {
@@ -738,6 +764,25 @@
         [self updateWeekStartsOnButton];
     }
     return _weekStartsOnButton;
+}
+
+- (UIView *)gridOptionsView
+{
+    if (!_gridOptionsView) {
+        CGFloat itemSize = self.navigationController.navigationBar.frame.size.height;
+        _gridOptionsView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, itemSize * 2, itemSize)];
+        [_gridOptionsView addSubview:self.heatmapButton];
+        [self.heatmapButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.left.top.bottom.mas_equalTo(_gridOptionsView);
+            make.width.mas_equalTo(itemSize);
+        }];
+        [_gridOptionsView addSubview:self.weekStartsOnButton];
+        [self.weekStartsOnButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.right.top.bottom.mas_equalTo(_gridOptionsView);
+            make.width.mas_equalTo(itemSize);
+        }];
+    }
+    return _gridOptionsView;
 }
 
 - (NSMutableArray<NSString *> *)keys
