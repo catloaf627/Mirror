@@ -34,6 +34,7 @@
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
+@property (nonatomic, strong) UIButton *chartTypeButton;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorReadModel *>  *data;
@@ -92,10 +93,10 @@
     _isLoaded = YES;
 }
 
-- (void)viewDidAppear:(BOOL)animated
+- (void)viewWillAppear:(BOOL)animated
 {
-    [super viewDidAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+    [super viewWillAppear:animated];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.chartTypeButton];
 }
 
 - (void)restartVC
@@ -117,7 +118,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 3) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.chartTypeButton];
     }
     [self p_setupUI];
 }
@@ -125,8 +126,9 @@
 - (void)reloadData
 {
     if (!_isLoaded) return;
-    // 如果是chart type变了顺便更新一下tab的图标
+    // 如果是chart type变了顺便更新一下tab和导航栏图标
     [[MirrorTabsManager sharedInstance] updateHistoryTabItemWithTabController:self.tabBarController];
+    [self updateChartTypeButton];
     // data source
     [self updateData];
     
@@ -283,6 +285,19 @@
     settingsVC.transitioningDelegate = self;
     settingsVC.modalPresentationStyle = UIModalPresentationCustom;
     [self presentViewController:settingsVC animated:YES completion:nil];
+}
+
+- (void)switchChartType
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [MirrorSettings switchChartTypeData];
+}
+
+- (void)updateChartTypeButton
+{
+    NSString *imageName = [MirrorSettings appliedPieChartData] ? @"chart.pie.fill" : @"chart.pie";
+    UIImage *iconImage = [[UIImage systemImageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.chartTypeButton setImage:iconImage forState:UIControlStateNormal];
 }
 
 #pragma mark - update data
@@ -491,6 +506,16 @@
         [_settingsButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
     }
     return _settingsButton;
+}
+
+- (UIButton *)chartTypeButton
+{
+    if (!_chartTypeButton) {
+        _chartTypeButton = [UIButton new];
+        [_chartTypeButton addTarget:self action:@selector(switchChartType) forControlEvents:UIControlEventTouchUpInside];
+        [self updateChartTypeButton];
+    }
+    return _chartTypeButton;
 }
 
 - (UILabel *)emptyHintLabel

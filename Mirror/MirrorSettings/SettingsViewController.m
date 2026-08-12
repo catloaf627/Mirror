@@ -13,7 +13,6 @@
 #import "LanguageCollectionViewCell.h"
 #import "WeekStartsOnCollectionViewCell.h"
 #import "DownloadFromCloudCollectionViewCell.h"
-#import "PiechartDataCollectionViewCell.h"
 #import "PiechartRecordCollectionViewCell.h"
 #import "HeatmapCollectionViewCell.h"
 #import "ExportImportCollectionViewCell.h"
@@ -38,7 +37,6 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
     MirrorSettingTypeWeekStartsOn,
     MirrorSettingTypeHeatmap,
     MirrorSettingTypePiechartRecord,
-    MirrorSettingTypePiechartData,
     MirrorSettingTypeExportImport,
     MirrorSettingTypeReportBug,
 };
@@ -346,10 +344,6 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         PiechartRecordCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[PiechartRecordCollectionViewCell identifier] forIndexPath:indexPath];
         [cell configCell];
         return cell;
-    } else if (indexPath.item == MirrorSettingTypePiechartData) {
-        PiechartDataCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[PiechartDataCollectionViewCell identifier] forIndexPath:indexPath];
-        [cell configCell];
-        return cell;
     } else if (indexPath.item == MirrorSettingTypeExportImport) {
         ExportImportCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[ExportImportCollectionViewCell identifier] forIndexPath:indexPath];
         [cell configCell];
@@ -409,7 +403,6 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
         [_collectionView registerClass:[LanguageCollectionViewCell class] forCellWithReuseIdentifier:[LanguageCollectionViewCell identifier]];
         [_collectionView registerClass:[WeekStartsOnCollectionViewCell class] forCellWithReuseIdentifier:[WeekStartsOnCollectionViewCell identifier]];
         [_collectionView registerClass:[DownloadFromCloudCollectionViewCell class] forCellWithReuseIdentifier:[DownloadFromCloudCollectionViewCell identifier]];
-        [_collectionView registerClass:[PiechartDataCollectionViewCell class] forCellWithReuseIdentifier:[PiechartDataCollectionViewCell identifier]];
         [_collectionView registerClass:[PiechartRecordCollectionViewCell class] forCellWithReuseIdentifier:[PiechartRecordCollectionViewCell identifier]];
         [_collectionView registerClass:[HeatmapCollectionViewCell class] forCellWithReuseIdentifier:[HeatmapCollectionViewCell identifier]];
         [_collectionView registerClass:[ExportImportCollectionViewCell class] forCellWithReuseIdentifier:[ExportImportCollectionViewCell identifier]];
@@ -477,7 +470,7 @@ typedef NS_ENUM(NSInteger, MirrorSettingType) {
 - (NSArray *)dataSource
 {
     if (!_dataSource) {
-        _dataSource = @[@(MirrorSettingTypeLanguage), @(MirrorSettingTypeDownloadFromCloud), @(MirrorSettingTypeWeekStartsOn), @(MirrorSettingTypeHeatmap), @(MirrorSettingTypePiechartRecord), @(MirrorSettingTypePiechartData), @(MirrorSettingTypeExportImport), @(MirrorSettingTypeReportBug)];
+        _dataSource = @[@(MirrorSettingTypeLanguage), @(MirrorSettingTypeDownloadFromCloud), @(MirrorSettingTypeWeekStartsOn), @(MirrorSettingTypeHeatmap), @(MirrorSettingTypePiechartRecord), @(MirrorSettingTypeExportImport), @(MirrorSettingTypeReportBug)];
     }
     return _dataSource;
 }
