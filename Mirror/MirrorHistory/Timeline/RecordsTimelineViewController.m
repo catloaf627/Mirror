@@ -568,6 +568,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     noteLabel.adjustsFontSizeToFitWidth = YES;
     noteLabel.minimumScaleFactor = 0.7;
     noteLabel.text = record.note;
+//     noteLabel.text = [NSString stringWithFormat:@"%@ #%ld", record.note ?: @"", (long)record.originalIndex]; //gizmo
     [noteLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
     [row addSubview:noteLabel];
     [noteLabel mas_makeConstraints:^(MASConstraintMaker *make) {
