@@ -31,7 +31,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign, readonly) BOOL isInlineEditing;
 
 - (void)configureWithRecord:(MirrorRecordModel *)record
-                      color:(UIColor *)color
                   showsText:(BOOL)showsText;
 
 - (void)beginInlineEditingWithMinimumTimestamp:(long)minimumTimestamp

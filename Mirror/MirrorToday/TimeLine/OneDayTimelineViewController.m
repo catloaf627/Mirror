@@ -433,11 +433,9 @@
 
 - (TimelineRecordView *)recordViewWithRecord:(MirrorRecordModel *)record frame:(CGRect)frame showsText:(BOOL)showsText
 {
-    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
-    UIColor *recordColor = task ? [UIColor mirrorColorNamed:task.color] : [UIColor mirrorColorNamed:MirrorColorTypeCellGray];
     TimelineRecordView *recordView = [[TimelineRecordView alloc] initWithFrame:frame];
     recordView.delegate = self;
-    [recordView configureWithRecord:record color:recordColor showsText:showsText];
+    [recordView configureWithRecord:record showsText:showsText];
     return recordView;
 }
 

@@ -5,11 +5,13 @@
 
 #import "TimelineRecordView.h"
 #import "MirrorRecordModel.h"
+#import "MirrorStorage.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 #import "MirrorMacro.h"
 
-#define kTimelineRecordResizeHandleHeight (14*kWidthRatio)
+#define kTimelineRecordResizeHandleHeight (24*kWidthRatio)
+#define kTimelineRecordResizeHandleSideWidth (120*kWidthRatio)
 #define kTimelineRecordHandleSize (10*kWidthRatio)
 #define kTimelineRecordEditAnimationKey @"TimelineRecordEditAnimation"
 
@@ -39,6 +41,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIView *startHandleView;
 @property (nonatomic, strong) UIView *endHandleView;
+@property (nonatomic, strong) UIColor *recordPulseColor;
 @property (nonatomic, strong) UIEditMenuInteraction *editMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
@@ -102,14 +105,17 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 }
 
 - (void)configureWithRecord:(MirrorRecordModel *)record
-                      color:(UIColor *)color
                   showsText:(BOOL)showsText
 {
+    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
+    MirrorColorType colorType = task ? task.color : MirrorColorTypeCellGray;
+    UIColor *recordColor = [UIColor mirrorColorNamed:colorType];
+    self.recordPulseColor = [UIColor mirrorColorPulsed:colorType];
     self.periodIndex = record.originalIndex;
     self.tag = record.originalIndex;
     self.foregroundView.tag = record.originalIndex;
-    self.backgroundColor = color;
-    self.foregroundView.backgroundColor = color;
+    self.foregroundView.backgroundColor = [recordColor colorWithAlphaComponent:0.7];
+    [self updateSelectionColors];
     self.originalStartTimestamp = record.startTime;
     self.originalEndTimestamp = record.endTime;
 
@@ -154,9 +160,12 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 - (void)layoutHandles
 {
     CGFloat handleSize = kTimelineRecordHandleSize;
-    CGFloat inset = 14*kWidthRatio;
-    self.startHandleView.frame = CGRectMake(inset - handleSize / 2.0, -handleSize / 2.0, handleSize, handleSize);
-    self.endHandleView.frame = CGRectMake(CGRectGetWidth(self.bounds) - inset - handleSize / 2.0,
+    CGFloat horizontalInset = 30*kWidthRatio;
+    self.startHandleView.frame = CGRectMake(horizontalInset - handleSize / 2.0,
+                                            -handleSize / 2.0,
+                                            handleSize,
+                                            handleSize);
+    self.endHandleView.frame = CGRectMake(CGRectGetWidth(self.bounds) - horizontalInset - handleSize / 2.0,
                                           CGRectGetHeight(self.bounds) - handleSize / 2.0,
                                           handleSize,
                                           handleSize);
@@ -213,11 +222,15 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
 - (TimelineRecordDragMode)dragModeForLocation:(CGPoint)location
 {
+    CGFloat width = CGRectGetWidth(self.foregroundView.bounds);
     CGFloat height = CGRectGetHeight(self.foregroundView.bounds);
-    if (location.y <= kTimelineRecordResizeHandleHeight) {
+    CGFloat sideWidth = MIN(kTimelineRecordResizeHandleSideWidth, width * 0.55);
+    BOOL hitsStartHandleArea = location.y <= kTimelineRecordResizeHandleHeight && location.x <= sideWidth;
+    BOOL hitsEndHandleArea = location.y >= height - kTimelineRecordResizeHandleHeight && location.x >= width - sideWidth;
+    if (hitsStartHandleArea) {
         return TimelineRecordDragModeStart;
     }
-    if (location.y >= height - kTimelineRecordResizeHandleHeight) {
+    if (hitsEndHandleArea) {
         return TimelineRecordDragModeEnd;
     }
     return TimelineRecordDragModeMove;
@@ -291,10 +304,14 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         newBottom = [self timelineYForTimestamp:timestamp];
         frame.size.height = newBottom - CGRectGetMinY(frame);
     } else if (self.dragMode == TimelineRecordDragModeMove) {
+        long duration = self.originalEndTimestamp - self.originalStartTimestamp;
         CGFloat minimumTop = [self timelineYForTimestamp:self.minimumTimestamp];
         CGFloat maximumBottom = [self timelineYForTimestamp:self.maximumTimestamp];
         CGFloat maximumTop = maximumBottom - self.originalHeight;
-        frame.origin.y = MIN(MAX(self.originalTop + translationY, minimumTop), maximumTop);
+        CGFloat newTop = MIN(MAX(self.originalTop + translationY, minimumTop), maximumTop);
+        long newStartTimestamp = [self boundaryTimestampForTimelineY:newTop];
+        newStartTimestamp = MIN(MAX(newStartTimestamp, self.minimumTimestamp), self.maximumTimestamp - duration);
+        frame.origin.y = [self timelineYForTimestamp:newStartTimestamp];
         frame.size.height = self.originalHeight;
     }
     self.frame = frame;
@@ -342,7 +359,8 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 {
     self.isSelected = YES;
     self.layer.borderWidth = 2;
-    self.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint].CGColor;
+    self.layer.borderColor = self.recordPulseColor.CGColor;
+    [self updateSelectionColors];
     [self setHandlesHidden:!showsHandles];
     if (animated) {
         [self applyEditingAnimation];
@@ -355,6 +373,16 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 {
     self.startHandleView.hidden = hidden;
     self.endHandleView.hidden = hidden;
+}
+
+- (void)updateSelectionColors
+{
+    UIColor *pulseColor = self.recordPulseColor ?: [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+    self.startHandleView.backgroundColor = pulseColor;
+    self.endHandleView.backgroundColor = pulseColor;
+    if (self.isSelected) {
+        self.layer.borderColor = pulseColor.CGColor;
+    }
 }
 
 - (void)applyEditingAnimation
@@ -426,6 +454,13 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         return self.isInlineEditing;
     }
     return YES;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
+    BOOL isPanAndLongPress = ([gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class] && [otherGestureRecognizer isKindOfClass:UILongPressGestureRecognizer.class]) ||
+                             ([gestureRecognizer isKindOfClass:UILongPressGestureRecognizer.class] && [otherGestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]);
+    return isPanAndLongPress;
 }
 
 @end
