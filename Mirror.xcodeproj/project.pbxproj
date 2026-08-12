@@ -362,13 +362,9 @@
 			children = (
 				4A7CCD2429DBC7CF00879D9C /* TodayViewController.h */,
 				4A7CCD2529DBC7CF00879D9C /* TodayViewController.m */,
-				4A88211029F26094009E422C /* Period */,
-				4A9FDB1F302D0C5F007707FC /* TimelineRecordView.h */,
-				4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */,
-				4A9FDB22302D1206007707FC /* TimelineView.h */,
-				4A9FDB23302D1234007707FC /* TimelineView.m */,
-				4A9FDB25302D15A7007707FC /* OneDayTimelineViewController.h */,
-				4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */,
+				4A88211729F2A2B8009E422C /* TodayTotalHeader.h */,
+				4A88211829F2A2B8009E422C /* TodayTotalHeader.m */,
+				4A88211029F26094009E422C /* TimeLine */,
 			);
 			path = MirrorToday;
 			sourceTree = "<group>";
@@ -458,13 +454,17 @@
 			path = LegendJump;
 			sourceTree = "<group>";
 		};
-		4A88211029F26094009E422C /* Period */ = {
+		4A88211029F26094009E422C /* TimeLine */ = {
 			isa = PBXGroup;
 			children = (
-				4A88211729F2A2B8009E422C /* TodayTotalHeader.h */,
-				4A88211829F2A2B8009E422C /* TodayTotalHeader.m */,
+				4A9FDB1F302D0C5F007707FC /* TimelineRecordView.h */,
+				4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */,
+				4A9FDB22302D1206007707FC /* TimelineView.h */,
+				4A9FDB23302D1234007707FC /* TimelineView.m */,
+				4A9FDB25302D15A7007707FC /* OneDayTimelineViewController.h */,
+				4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */,
 			);
-			path = Period;
+			path = TimeLine;
 			sourceTree = "<group>";
 		};
 		4ABE8D6D2A05C54900569A1C /* MirrorGrid */ = {
