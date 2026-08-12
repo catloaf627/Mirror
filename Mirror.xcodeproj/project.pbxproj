@@ -13,7 +13,6 @@
 		4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FB29EFE6BD00F13EAE /* HistoryViewController.m */; };
 		4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */; };
 		4A0D410229F13C5300F13EAE /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D410129F13C5300F13EAE /* LegendView.m */; };
-		4A10185E2B90876E00AA9677 /* LinechartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A10185D2B90876E00AA9677 /* LinechartView.m */; };
 		4A1F8C38302A43FA00045430 /* TaskColorCirclePickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */; };
 		4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C3A302A452000045430 /* TaskPickerViewController.m */; };
 		4A1F8C56302BFF2A00045430 /* TimelineRangeAxisView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C55302BFF2A00045430 /* TimelineRangeAxisView.m */; };
@@ -43,7 +42,6 @@
 		4AA353352A25D59400920404 /* HeatmapCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA353342A25D59400920404 /* HeatmapCollectionViewCell.m */; };
 		4AA353382A25D9BB00920404 /* ExportImportCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA353372A25D9BB00920404 /* ExportImportCollectionViewCell.m */; };
 		4AA3533B2A25DBDA00920404 /* ReportBugCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA3533A2A25DBDA00920404 /* ReportBugCollectionViewCell.m */; };
-		4AB1182E2B9851F7003CED03 /* LineChartCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AB1182D2B9851F7003CED03 /* LineChartCollectionViewCell.m */; };
 		4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */; };
 		4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBF2A03B05100CDCED9 /* MirrorReadModel.m */; };
 		4AC1FDC72A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDC62A0418F000CDCED9 /* DownloadFromCloudCollectionViewCell.m */; };
@@ -105,8 +103,6 @@
 		4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskProgressListView.m; sourceTree = "<group>"; };
 		4A0D410029F13C5300F13EAE /* LegendView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegendView.h; sourceTree = "<group>"; };
 		4A0D410129F13C5300F13EAE /* LegendView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LegendView.m; sourceTree = "<group>"; };
-		4A10185C2B90876E00AA9677 /* LinechartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LinechartView.h; sourceTree = "<group>"; };
-		4A10185D2B90876E00AA9677 /* LinechartView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LinechartView.m; sourceTree = "<group>"; };
 		4A1F8C36302A43DF00045430 /* TaskColorCirclePickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskColorCirclePickerViewController.h; sourceTree = "<group>"; };
 		4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskColorCirclePickerViewController.m; sourceTree = "<group>"; };
 		4A1F8C39302A450200045430 /* TaskPickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskPickerViewController.h; sourceTree = "<group>"; };
@@ -167,8 +163,6 @@
 		4AA353372A25D9BB00920404 /* ExportImportCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ExportImportCollectionViewCell.m; sourceTree = "<group>"; };
 		4AA353392A25DBDA00920404 /* ReportBugCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ReportBugCollectionViewCell.h; sourceTree = "<group>"; };
 		4AA3533A2A25DBDA00920404 /* ReportBugCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ReportBugCollectionViewCell.m; sourceTree = "<group>"; };
-		4AB1182C2B9851F7003CED03 /* LineChartCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LineChartCollectionViewCell.h; sourceTree = "<group>"; };
-		4AB1182D2B9851F7003CED03 /* LineChartCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LineChartCollectionViewCell.m; sourceTree = "<group>"; };
 		4AC1FDBB2A0384A600CDCED9 /* MirrorRecordModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorRecordModel.h; sourceTree = "<group>"; };
 		4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorRecordModel.m; sourceTree = "<group>"; };
 		4AC1FDBE2A03B05100CDCED9 /* MirrorReadModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorReadModel.h; sourceTree = "<group>"; };
@@ -301,17 +295,6 @@
 				4AFBD19E30295561006A6350 /* Timeline */,
 			);
 			path = MirrorHistory;
-			sourceTree = "<group>";
-		};
-		4A1018542B9085CB00AA9677 /* Linechart */ = {
-			isa = PBXGroup;
-			children = (
-				4A10185C2B90876E00AA9677 /* LinechartView.h */,
-				4A10185D2B90876E00AA9677 /* LinechartView.m */,
-				4AB1182C2B9851F7003CED03 /* LineChartCollectionViewCell.h */,
-				4AB1182D2B9851F7003CED03 /* LineChartCollectionViewCell.m */,
-			);
-			path = Linechart;
 			sourceTree = "<group>";
 		};
 		4A1F8C57302C008A00045430 /* Docs */ = {
@@ -476,7 +459,6 @@
 				4A3DC92F2A0106F600679C11 /* GridViewController.m */,
 				4A3DC9312A0109DA00679C11 /* GridCollectionViewCell.h */,
 				4A3DC9322A0109DA00679C11 /* GridCollectionViewCell.m */,
-				4A1018542B9085CB00AA9677 /* Linechart */,
 			);
 			path = MirrorGrid;
 			sourceTree = "<group>";
@@ -770,7 +752,6 @@
 				4A1F8C5B302C16A200045430 /* PeriodEditAlertController.m in Sources */,
 				4A88212929F6035E009E422C /* CellAnimation.m in Sources */,
 				4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */,
-				4AB1182E2B9851F7003CED03 /* LineChartCollectionViewCell.m in Sources */,
 				4A410A2829EA51750007003B /* LegendCollectionViewCell.m in Sources */,
 				4A379B5728E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m in Sources */,
 				4A406C1A29071939001E83A1 /* MirrorStorage.m in Sources */,
@@ -796,7 +777,6 @@
 				4A379B4128E0381A00785CAE /* UIColor+MirrorColor.m in Sources */,
 				4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */,
 				4A379B4428E03D0B00785CAE /* MirrorTabsManager.m in Sources */,
-				4A10185E2B90876E00AA9677 /* LinechartView.m in Sources */,
 				4A3DC9302A0106F700679C11 /* GridViewController.m in Sources */,
 				4AFBD1A13029558E006A6350 /* RecordsTimelineViewController.m in Sources */,
 				4A3DC9332A0109DA00679C11 /* GridCollectionViewCell.m in Sources */,
