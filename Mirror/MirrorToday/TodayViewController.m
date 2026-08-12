@@ -15,6 +15,7 @@
 #import "SettingsViewController.h"
 #import "TodayTotalHeader.h"
 #import "OneDayTimelineViewController.h"
+#import "CalendarViewController.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 
@@ -24,6 +25,7 @@
 
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
+@property (nonatomic, strong) UIButton *timelineButton;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 
 // UI
@@ -73,7 +75,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.timelineButton];
 }
 
 - (void)restartVC
@@ -90,7 +92,7 @@
 
     // 更新navibar
     if (self.tabBarController.selectedIndex == 1) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.timelineButton];
     }
     [self p_setupUI];
 }
@@ -145,6 +147,12 @@
     [self presentViewController:settingsVC animated:YES completion:nil];
 }
 
+- (void)goToCalendar
+{
+    CalendarViewController *calendarVC = [[CalendarViewController alloc] init];
+    [self.navigationController pushViewController:calendarVC animated:YES];
+}
+
 #pragma mark - Getters
 
 - (UIButton *)settingsButton
@@ -156,6 +164,17 @@
         [_settingsButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
     }
     return _settingsButton;
+}
+
+- (UIButton *)timelineButton
+{
+    if (!_timelineButton) {
+        _timelineButton = [UIButton new];
+        UIImage *iconImage = [[UIImage systemImageNamed:@"calendar.day.timeline.left"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+        [_timelineButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+        [_timelineButton addTarget:self action:@selector(goToCalendar) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _timelineButton;
 }
 
 #pragma mark - Animations
