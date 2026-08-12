@@ -42,6 +42,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, assign) NSInteger selectedPeriodIndex;
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
 @property (nonatomic, assign) NSInteger timelineBatchStartIndex;
+@property (nonatomic, assign) NSInteger timelineBatchEndIndex;
 @property (nonatomic, assign) NSInteger savedTimelineBatchStartIndex;
 @property (nonatomic, assign) CGPoint savedTimelineContentOffset;
 @property (nonatomic, assign) BOOL isRenderingTimelineBatch;
@@ -54,6 +55,8 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, strong) UIDatePicker *editingEndPicker;
 @property (nonatomic, strong) UITextField *editingNoteTextField;
 @property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
+@property (nonatomic, weak) UIView *firstTimelineRow;
+@property (nonatomic, weak) UIView *lastTimelineRow;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
@@ -121,7 +124,10 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     self.deleteFutureRecordsButton = nil;
     self.sortedTimelineRecords = nil;
     self.timelineBatchStartIndex = 0;
+    self.timelineBatchEndIndex = 0;
     self.firstHighlightedRow = nil;
+    self.firstTimelineRow = nil;
+    self.lastTimelineRow = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self p_setupUI];
 }
@@ -148,7 +154,10 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     self.deleteFutureRecordsButton = nil;
     self.sortedTimelineRecords = nil;
     self.timelineBatchStartIndex = 0;
+    self.timelineBatchEndIndex = 0;
     self.firstHighlightedRow = nil;
+    self.firstTimelineRow = nil;
+    self.lastTimelineRow = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self p_setupUI];
 }
@@ -271,16 +280,48 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     self.isRenderingTimelineBatch = YES;
     [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     self.firstHighlightedRow = nil;
+    self.firstTimelineRow = nil;
+    self.lastTimelineRow = nil;
     
-    NSInteger oldStartIndex = self.timelineBatchStartIndex;
     NSInteger totalCount = self.sortedTimelineRecords.count;
     NSInteger maxStartIndex = MAX(totalCount - kTimelineBatchSize, 0);
     NSInteger safeStartIndex = MIN(MAX(startIndex, 0), maxStartIndex);
     NSInteger endIndex = MIN(safeStartIndex + kTimelineBatchSize, totalCount);
     self.timelineBatchStartIndex = safeStartIndex;
+    self.timelineBatchEndIndex = endIndex;
     
-    UIView *previousRow = nil;
-    for (NSInteger index = safeStartIndex; index < endIndex; index++) {
+    [self addTimelineRowsFromIndex:safeStartIndex toIndex:endIndex afterRow:nil beforeRow:nil];
+    [self updateTimelineContentBottomConstraint];
+    
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.view layoutIfNeeded];
+        CGFloat maxOffsetY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
+        if (scrollPosition == TimelineBatchScrollPositionTop) {
+            self.scrollView.contentOffset = CGPointZero;
+        }
+        if (self.shouldRestoreTimelineScrollPosition) {
+            self.scrollView.contentOffset = CGPointMake(
+                0,
+                MIN(MAX(self.savedTimelineContentOffset.y, 0), maxOffsetY)
+            );
+            self.shouldRestoreTimelineScrollPosition = NO;
+        }
+        self.isRenderingTimelineBatch = NO;
+    });
+}
+
+- (void)addTimelineRowsFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex afterRow:(UIView *)afterRow beforeRow:(UIView *)beforeRow
+{
+    if (startIndex >= endIndex) {
+        return;
+    }
+    
+    NSInteger totalCount = self.sortedTimelineRecords.count;
+    UIView *previousRow = afterRow;
+    UIView *firstAddedRow = nil;
+    UIView *lastAddedRow = nil;
+    
+    for (NSInteger index = startIndex; index < endIndex; index++) {
         MirrorRecordModel *record = self.sortedTimelineRecords[index];
         BOOL isHighlighted = [self shouldHighlightRecord:record];
         UIView *row = [self timelineRowWithRecord:record isFirst:index == 0 isLast:index == totalCount - 1 isHighlighted:isHighlighted];
@@ -297,46 +338,81 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
                 make.top.mas_equalTo(self.contentView).offset(12 * kHeightRatio);
             }
         }];
+        if (firstAddedRow == nil) {
+            firstAddedRow = row;
+        }
+        lastAddedRow = row;
         previousRow = row;
     }
     
+    if (beforeRow != nil && lastAddedRow != nil) {
+        [beforeRow mas_remakeConstraints:^(MASConstraintMaker *make) {
+            make.left.right.mas_equalTo(self.contentView);
+            make.height.mas_greaterThanOrEqualTo(kRowMinHeight * kHeightRatio);
+            make.top.mas_equalTo(lastAddedRow.mas_bottom);
+        }];
+    }
+    
+    if (self.firstTimelineRow == nil || beforeRow == self.firstTimelineRow) {
+        self.firstTimelineRow = firstAddedRow;
+    }
+    if (self.lastTimelineRow == nil || afterRow == self.lastTimelineRow) {
+        self.lastTimelineRow = lastAddedRow;
+    }
+}
+
+- (void)updateTimelineContentBottomConstraint
+{
+    UIView *lastRow = self.lastTimelineRow;
     [self.contentView mas_remakeConstraints:^(MASConstraintMaker *make) {
         make.edges.mas_equalTo(self.scrollView);
         make.width.mas_equalTo(self.scrollView);
-        if (previousRow) {
-            make.bottom.mas_equalTo(previousRow.mas_bottom).offset(20 * kHeightRatio);
+        if (lastRow) {
+            make.bottom.mas_equalTo(lastRow.mas_bottom).offset(20 * kHeightRatio);
         } else {
             make.bottom.mas_equalTo(self.contentView.mas_top);
         }
     }];
+}
+
+- (void)appendNextTimelineBatchIfNeeded
+{
+    if (self.timelineBatchEndIndex >= self.sortedTimelineRecords.count) {
+        return;
+    }
+    
+    self.isRenderingTimelineBatch = YES;
+    NSInteger nextEndIndex = MIN(self.timelineBatchEndIndex + kTimelineBatchSize, self.sortedTimelineRecords.count);
+    [self addTimelineRowsFromIndex:self.timelineBatchEndIndex toIndex:nextEndIndex afterRow:self.lastTimelineRow beforeRow:nil];
+    self.timelineBatchEndIndex = nextEndIndex;
+    [self updateTimelineContentBottomConstraint];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self.view layoutIfNeeded];
+        self.isRenderingTimelineBatch = NO;
+    });
+}
+
+- (void)prependPreviousTimelineBatchIfNeeded
+{
+    if (self.timelineBatchStartIndex <= 0) {
+        return;
+    }
+    
+    self.isRenderingTimelineBatch = YES;
+    [self.view layoutIfNeeded];
+    CGFloat oldContentHeight = self.scrollView.contentSize.height;
+    CGFloat oldOffsetY = self.scrollView.contentOffset.y;
+    
+    NSInteger previousStartIndex = MAX(self.timelineBatchStartIndex - kTimelineBatchSize, 0);
+    [self addTimelineRowsFromIndex:previousStartIndex toIndex:self.timelineBatchStartIndex afterRow:nil beforeRow:self.firstTimelineRow];
+    self.timelineBatchStartIndex = previousStartIndex;
+    [self updateTimelineContentBottomConstraint];
     
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.view layoutIfNeeded];
+        CGFloat heightDelta = self.scrollView.contentSize.height - oldContentHeight;
         CGFloat maxOffsetY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
-        if (scrollPosition == TimelineBatchScrollPositionNearTop) {
-            self.scrollView.contentOffset = CGPointMake(0, MIN(kTimelineLoadThreshold + 1, maxOffsetY));
-        } else if (scrollPosition == TimelineBatchScrollPositionNearBottom) {
-            CGFloat targetOffsetY = MAX(maxOffsetY - kTimelineLoadThreshold - 1, 0);
-            NSInteger previousRecordIndex = oldStartIndex - 1;
-            if (previousRecordIndex >= 0 && previousRecordIndex < self.sortedTimelineRecords.count) {
-                MirrorRecordModel *previousRecord = self.sortedTimelineRecords[previousRecordIndex];
-                UIView *previousRow = [self visibleTimelineRowWithOriginalIndex:previousRecord.originalIndex];
-                if (previousRow) {
-                    CGRect rowRect = [previousRow.superview convertRect:previousRow.frame toView:self.scrollView];
-                    targetOffsetY = MIN(MAX(rowRect.origin.y, 0), maxOffsetY);
-                }
-            }
-            self.scrollView.contentOffset = CGPointMake(0, targetOffsetY);
-        } else {
-            self.scrollView.contentOffset = CGPointZero;
-        }
-        if (self.shouldRestoreTimelineScrollPosition) {
-            self.scrollView.contentOffset = CGPointMake(
-                0,
-                MIN(MAX(self.savedTimelineContentOffset.y, 0), maxOffsetY)
-            );
-            self.shouldRestoreTimelineScrollPosition = NO;
-        }
+        self.scrollView.contentOffset = CGPointMake(0, MIN(MAX(oldOffsetY + heightDelta, 0), maxOffsetY));
         self.isRenderingTimelineBatch = NO;
     });
 }
@@ -385,14 +461,10 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     }
     
     if (scrollView.contentOffset.y >= maxOffsetY - kTimelineLoadThreshold) {
-        NSInteger nextStartIndex = self.timelineBatchStartIndex + kTimelineBatchSize;
-        if (nextStartIndex < self.sortedTimelineRecords.count) {
-            [self renderTimelineBatchAtStartIndex:nextStartIndex scrollPosition:TimelineBatchScrollPositionNearTop];
-        }
+        [self appendNextTimelineBatchIfNeeded];
     } else if (scrollView.contentOffset.y <= kTimelineLoadThreshold) {
-        NSInteger previousStartIndex = self.timelineBatchStartIndex - kTimelineBatchSize + 1;
         if (self.timelineBatchStartIndex > 0) {
-            [self renderTimelineBatchAtStartIndex:previousStartIndex scrollPosition:TimelineBatchScrollPositionNearBottom];
+            [self prependPreviousTimelineBatchIfNeeded];
         }
     }
 }
