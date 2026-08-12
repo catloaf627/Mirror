@@ -35,6 +35,7 @@
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
+@property (nonatomic, strong) UIButton *weekStartsOnButton;
 @property (nonatomic, strong) UIPercentDrivenInteractiveTransition *interactiveTransition;
 // Data source
 @property (nonatomic, strong) NSMutableArray<NSString *> *keys;
@@ -101,7 +102,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.weekStartsOnButton];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -132,7 +133,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.weekStartsOnButton];
     }
     [self p_setupUI];
 }
@@ -140,6 +141,7 @@
 - (void)reloadData
 {
     if (!_isLoaded) return;
+    [self updateWeekStartsOnButton];
     if ([MirrorSettings appliedPieChartRecord]) {
         self.piechartView.hidden = NO;
         self.taskProgressListView.hidden = YES;
@@ -242,6 +244,19 @@
     settingsVC.transitioningDelegate = self;
     settingsVC.modalPresentationStyle = UIModalPresentationCustom;
     [self presentViewController:settingsVC animated:YES completion:nil];
+}
+
+- (void)switchWeekStartsOn
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [MirrorSettings switchWeekStartsOn];
+}
+
+- (void)updateWeekStartsOnButton
+{
+    NSString *imageName = [MirrorSettings appliedWeekStarsOnMonday] ? @"1.lane" : @"7.lane";
+    UIImage *iconImage = [[UIImage systemImageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.weekStartsOnButton setImage:iconImage forState:UIControlStateNormal];
 }
 
 #pragma mark - update data
@@ -713,6 +728,16 @@
         [_settingsButton addTarget:self action:@selector(goToSettings) forControlEvents:UIControlEventTouchUpInside];
     }
     return _settingsButton;
+}
+
+- (UIButton *)weekStartsOnButton
+{
+    if (!_weekStartsOnButton) {
+        _weekStartsOnButton = [UIButton new];
+        [_weekStartsOnButton addTarget:self action:@selector(switchWeekStartsOn) forControlEvents:UIControlEventTouchUpInside];
+        [self updateWeekStartsOnButton];
+    }
+    return _weekStartsOnButton;
 }
 
 - (NSMutableArray<NSString *> *)keys
