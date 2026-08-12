@@ -297,7 +297,7 @@
 {
     UIImage *iconImage = [[UIImage systemImageNamed:@"chart.pie"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.chartTypeButton setImage:iconImage forState:UIControlStateNormal];
-    self.chartTypeButton.tintColor = [MirrorSettings appliedPieChartData] ? [UIColor mirrorColorNamed:MirrorColorTypeText] : [UIColor mirrorColorNamed:MirrorColorTypeShadow];
+    self.chartTypeButton.tintColor = [MirrorSettings appliedPieChartData] ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconText];
 }
 
 #pragma mark - update data

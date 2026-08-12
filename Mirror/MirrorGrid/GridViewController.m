@@ -265,7 +265,7 @@
 {
     UIImage *iconImage = [[UIImage systemImageNamed:@"app.translucent"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.heatmapButton setImage:iconImage forState:UIControlStateNormal];
-    self.heatmapButton.tintColor = [UIColor mirrorColorNamed:[MirrorSettings appliedHeatmap] ? MirrorColorTypeShadow : MirrorColorTypeText];
+    self.heatmapButton.tintColor = [UIColor mirrorColorNamed:[MirrorSettings appliedHeatmap] ? MirrorColorTypeTabbarIconTextHightlight : MirrorColorTypeTabbarIconText];
 }
 
 - (void)updateWeekStartsOnButton
