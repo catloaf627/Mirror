@@ -37,6 +37,9 @@
 		4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88211829F2A2B8009E422C /* TodayTotalHeader.m */; };
 		4A88212929F6035E009E422C /* CellAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88212829F6035E009E422C /* CellAnimation.m */; };
 		4A88212F29F671F7009E422C /* TimeTrackingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88212E29F671F7009E422C /* TimeTrackingViewController.m */; };
+		4A9FDB21302D0CA0007707FC /* TimelineRecordView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */; };
+		4A9FDB24302D1234007707FC /* TimelineView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB23302D1234007707FC /* TimelineView.m */; };
+		4A9FDB27302D1600007707FC /* OneDayTimelineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */; };
 		4AA3532F2A25CF8300920404 /* PiechartDataCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA3532E2A25CF8300920404 /* PiechartDataCollectionViewCell.m */; };
 		4AA353322A25CF9B00920404 /* PiechartRecordCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA353312A25CF9B00920404 /* PiechartRecordCollectionViewCell.m */; };
 		4AA353352A25D59400920404 /* HeatmapCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA353342A25D59400920404 /* HeatmapCollectionViewCell.m */; };
@@ -153,6 +156,12 @@
 		4A88212D29F671F7009E422C /* TimeTrackingViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeTrackingViewController.h; sourceTree = "<group>"; };
 		4A88212E29F671F7009E422C /* TimeTrackingViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimeTrackingViewController.m; sourceTree = "<group>"; };
 		4A938F3C2E5E785000375B8B /* Mirror-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Mirror-Bridging-Header.h"; sourceTree = "<group>"; };
+		4A9FDB1F302D0C5F007707FC /* TimelineRecordView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineRecordView.h; sourceTree = "<group>"; };
+		4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineRecordView.m; sourceTree = "<group>"; };
+		4A9FDB22302D1206007707FC /* TimelineView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineView.h; sourceTree = "<group>"; };
+		4A9FDB23302D1234007707FC /* TimelineView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineView.m; sourceTree = "<group>"; };
+		4A9FDB25302D15A7007707FC /* OneDayTimelineViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OneDayTimelineViewController.h; sourceTree = "<group>"; };
+		4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OneDayTimelineViewController.m; sourceTree = "<group>"; };
 		4AA3532D2A25CF8300920404 /* PiechartDataCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PiechartDataCollectionViewCell.h; sourceTree = "<group>"; };
 		4AA3532E2A25CF8300920404 /* PiechartDataCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PiechartDataCollectionViewCell.m; sourceTree = "<group>"; };
 		4AA353302A25CF9B00920404 /* PiechartRecordCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PiechartRecordCollectionViewCell.h; sourceTree = "<group>"; };
@@ -354,6 +363,12 @@
 				4A7CCD2429DBC7CF00879D9C /* TodayViewController.h */,
 				4A7CCD2529DBC7CF00879D9C /* TodayViewController.m */,
 				4A88211029F26094009E422C /* Period */,
+				4A9FDB1F302D0C5F007707FC /* TimelineRecordView.h */,
+				4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */,
+				4A9FDB22302D1206007707FC /* TimelineView.h */,
+				4A9FDB23302D1234007707FC /* TimelineView.m */,
+				4A9FDB25302D15A7007707FC /* OneDayTimelineViewController.h */,
+				4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */,
 			);
 			path = MirrorToday;
 			sourceTree = "<group>";
@@ -755,6 +770,7 @@
 				4A410A2829EA51750007003B /* LegendCollectionViewCell.m in Sources */,
 				4A379B5728E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m in Sources */,
 				4A406C1A29071939001E83A1 /* MirrorStorage.m in Sources */,
+				4A9FDB21302D0CA0007707FC /* TimelineRecordView.m in Sources */,
 				4ADDC5B728E476A8006F02DE /* LanguageCollectionViewCell.m in Sources */,
 				4AFB77B328DF4A3B0064CBCA /* main.m in Sources */,
 				4AA353352A25D59400920404 /* HeatmapCollectionViewCell.m in Sources */,
@@ -768,6 +784,8 @@
 				4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */,
 				4A37369429E2AEE900187280 /* PiechartView.m in Sources */,
 				4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */,
+				4A9FDB27302D1600007707FC /* OneDayTimelineViewController.m in Sources */,
+				4A9FDB24302D1234007707FC /* TimelineView.m in Sources */,
 				4A406C112906FC00001E83A1 /* ToggleCollectionViewCell.m in Sources */,
 				4AE4171F28DF6155008A6A18 /* SettingsViewController.m in Sources */,
 				4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */,

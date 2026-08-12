@@ -1,0 +1,497 @@
+//
+//  OneDayTimelineViewController.m
+//  Mirror
+//
+
+#import "OneDayTimelineViewController.h"
+#import "TimelineRecordView.h"
+#import "TimelineView.h"
+#import "MirrorStorage.h"
+#import "MirrorLanguage.h"
+#import "MirrorMacro.h"
+#import "UIColor+MirrorColor.h"
+#import "UIFont+MirrorFont.h"
+#import "PeriodEditAlertController.h"
+#import <Masonry/Masonry.h>
+
+#define kLeftRightSpacing (20*kWidthRatio)
+#define kTimelineLeftWidth (52*kWidthRatio)
+#define kTimelineRightPadding (12*kWidthRatio)
+#define kTimelineMinimumTinyRecordHeight 10
+#define kTimelineTinyRecordThresholdSeconds (10 * 60)
+#define kTimelineTextHiddenThresholdSeconds (45 * 60)
+
+@interface OneDayTimelineViewController () <TimelineRecordViewDelegate, TimelineViewDelegate>
+
+@property (nonatomic, strong) NSDate *date;
+@property (nonatomic, strong, nullable) UIView *customHeaderView;
+@property (nonatomic, assign) CGFloat headerHeight;
+@property (nonatomic, assign) UIEdgeInsets headerInsets;
+@property (nonatomic, copy, nullable) OneDayTimelineHeaderConfiguration headerConfiguration;
+@property (nonatomic, assign) BOOL didScrollToDefaultHours;
+@property (nonatomic, assign) CGFloat hourHeight;
+@property (nonatomic, assign) NSInteger editingPeriodIndex;
+@property (nonatomic, strong) PeriodEditAlertController *editingPeriodAlert;
+@property (nonatomic, weak) TimelineRecordView *activeRecordView;
+@property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *oneDayData;
+@property (nonatomic, strong) UIScrollView *timelineScrollView;
+@property (nonatomic, strong) TimelineView *timelineContentView;
+
+@end
+
+@implementation OneDayTimelineViewController
+
+- (instancetype)initWithDate:(NSDate *)date
+                  headerView:(UIView * _Nullable)headerView
+                headerHeight:(CGFloat)headerHeight
+                headerInsets:(UIEdgeInsets)headerInsets
+         headerConfiguration:(OneDayTimelineHeaderConfiguration _Nullable)headerConfiguration
+{
+    self = [super init];
+    if (self) {
+        _date = date ?: [NSDate now];
+        _customHeaderView = headerView;
+        _headerHeight = headerHeight;
+        _headerInsets = headerInsets;
+        _headerConfiguration = [headerConfiguration copy];
+        _editingPeriodIndex = NSNotFound;
+    }
+    return self;
+}
+
+- (void)viewDidLoad
+{
+    [super viewDidLoad];
+    [self setupUI];
+    [self reloadData];
+}
+
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    [self updateTimelineSizeIfNeeded];
+}
+
+- (void)setupUI
+{
+    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+
+    UIView *timelineTopAnchor = self.view;
+    if (self.customHeaderView) {
+        self.customHeaderView.backgroundColor = self.view.backgroundColor;
+        [self.view addSubview:self.customHeaderView];
+        [self.customHeaderView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.top.mas_equalTo(self.view).offset(self.headerInsets.top);
+            make.left.offset(self.headerInsets.left);
+            make.right.offset(-self.headerInsets.right);
+            make.height.mas_equalTo(self.headerHeight);
+        }];
+        timelineTopAnchor = self.customHeaderView;
+    }
+
+    [self.view addSubview:self.timelineScrollView];
+    [self.timelineScrollView mas_makeConstraints:^(MASConstraintMaker *make) {
+        if (self.customHeaderView) {
+            make.top.mas_equalTo(timelineTopAnchor.mas_bottom).offset(self.headerInsets.bottom);
+        } else {
+            make.top.mas_equalTo(timelineTopAnchor);
+        }
+        make.left.right.bottom.offset(0);
+    }];
+
+    [self.timelineScrollView addSubview:self.timelineContentView];
+    self.timelineContentView.delegate = self;
+    self.timelineContentView.presentingViewController = self;
+}
+
+- (void)updateDate:(NSDate *)date
+{
+    self.date = date ?: [NSDate now];
+    self.didScrollToDefaultHours = NO;
+    if (self.hourHeight > 0) {
+        [self.timelineContentView configureWithHourHeight:self.hourHeight
+                                        dayStartTimestamp:[self dayStartTimestamp]
+                                          dayEndTimestamp:[self dayEndTimestamp]];
+    }
+    [self reloadData];
+}
+
+- (void)reloadData
+{
+    self.oneDayData = [MirrorStorage getOneDayDataForDate:self.date];
+    if (self.headerConfiguration && self.customHeaderView) {
+        self.headerConfiguration(self.customHeaderView, self.oneDayData);
+    }
+    [self renderTimeline];
+}
+
+#pragma mark - TimelineViewDelegate
+
+- (BOOL)timelineViewShouldBeginAddingRecord:(TimelineView *)timelineView
+{
+    if (self.activeRecordView) {
+        [self.activeRecordView endInlineEditing];
+        [self.activeRecordView endSelection];
+        self.activeRecordView = nil;
+        return NO;
+    }
+    return YES;
+}
+
+- (void)timelineViewDidAddRecord:(TimelineView *)timelineView
+{
+    [self reloadData];
+}
+
+#pragma mark - Record Menu
+
+- (UIMenu *)recordMenuForPeriodIndex:(NSInteger)periodIndex API_AVAILABLE(ios(16.0))
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return nil;
+    }
+
+    __weak typeof(self) weakSelf = self;
+    UIAction *editAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        [weakSelf editPeriodAtIndex:periodIndex];
+    }];
+    UIAction *deleteAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        [MirrorStorage deletePeriodAtIndex:periodIndex];
+        [weakSelf reloadData];
+    }];
+    deleteAction.attributes = UIMenuElementAttributesDestructive;
+    return [UIMenu menuWithTitle:@"" children:@[editAction, deleteAction]];
+}
+
+- (UIMenu *)menuForTimelineRecordView:(TimelineRecordView *)recordView API_AVAILABLE(ios(16.0))
+{
+    return [self recordMenuForPeriodIndex:recordView.periodIndex];
+}
+
+- (void)timelineRecordViewDidRequestMenuDismissal:(TimelineRecordView *)recordView
+{
+    if (self.activeRecordView != recordView) {
+        [self.activeRecordView endInlineEditing];
+        [self.activeRecordView endSelection];
+    }
+    self.activeRecordView = recordView;
+}
+
+- (void)editPeriodAtIndex:(NSInteger)periodIndex
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return;
+    }
+
+    MirrorRecordModel *record = records[periodIndex];
+    BOOL hasPreviousRecord = periodIndex - 1 >= 0;
+    BOOL hasNextRecord = periodIndex + 1 <= records.count - 1;
+    long minimumAxisTimestamp = hasPreviousRecord ? MAX(records[periodIndex - 1].endTime, [self dayStartTimestamp]) : [self dayStartTimestamp];
+    long maximumAxisTimestamp = hasNextRecord ? MIN(records[periodIndex + 1].startTime, [self dayEndTimestamp]) : [self dayEndTimestamp];
+    self.editingPeriodIndex = periodIndex;
+    MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:record.taskName];
+    __weak typeof(self) weakSelf = self;
+    PeriodEditAlertController *alert = [[PeriodEditAlertController alloc] initWithTitle:record.taskName
+                                                                              axisColor:[UIColor mirrorColorNamed:taskModel.color]
+                                                                       minimumTimestamp:minimumAxisTimestamp
+                                                                       maximumTimestamp:maximumAxisTimestamp
+                                                                         startTimestamp:MAX(record.startTime, [self dayStartTimestamp])
+                                                                           endTimestamp:MIN(record.endTime, [self dayEndTimestamp])
+                                                                           canDragStart:YES
+                                                                             canDragEnd:YES
+                                                                                   note:record.note
+                                                                           valueChanged:^(BOOL isStartTime, long timestamp) {
+        [weakSelf rangeAxisValueChangedIsStartTime:isStartTime timestamp:timestamp];
+    } dismissed:^(NSString *note) {
+        [weakSelf saveEditingNote:note periodIndex:periodIndex];
+        weakSelf.editingPeriodAlert = nil;
+    }];
+    self.editingPeriodAlert = alert;
+    [alert presentFromViewController:self];
+}
+
+- (void)saveEditingNote:(NSString *)note periodIndex:(NSInteger)periodIndex
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return;
+    }
+
+    NSString *newNote = note ?: @"";
+    NSString *oldNote = records[periodIndex].note ?: @"";
+    if (![newNote isEqualToString:oldNote]) {
+        [MirrorStorage editPeriodNote:newNote periodIndex:periodIndex];
+    }
+}
+
+- (void)rangeAxisValueChangedIsStartTime:(BOOL)isStartTime timestamp:(long)timestamp
+{
+    if (isStartTime) {
+        [self updateEditingStartTimestamp:timestamp];
+    } else {
+        [self updateEditingEndTimestamp:timestamp];
+    }
+}
+
+- (void)updateEditingStartTimestamp:(long)timestamp
+{
+    TimelineRangeAxisView *rangeAxisView = self.editingPeriodAlert.rangeAxisView;
+    if (rangeAxisView == nil) {
+        return;
+    }
+    long minimumAxisTimestamp = rangeAxisView.canDragStart ? rangeAxisView.minimumTimestamp : timestamp;
+    long maximumAxisTimestamp = rangeAxisView.canDragEnd ? rangeAxisView.maximumTimestamp : rangeAxisView.endTimestamp;
+    [rangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
+                                maximumTimestamp:maximumAxisTimestamp
+                                  startTimestamp:rangeAxisView.startTimestamp
+                                    endTimestamp:rangeAxisView.endTimestamp
+                                    canDragStart:rangeAxisView.canDragStart
+                                      canDragEnd:rangeAxisView.canDragEnd];
+    [MirrorStorage editPeriodIsStartTime:YES to:timestamp periodIndex:self.editingPeriodIndex];
+}
+
+- (void)updateEditingEndTimestamp:(long)timestamp
+{
+    TimelineRangeAxisView *rangeAxisView = self.editingPeriodAlert.rangeAxisView;
+    if (rangeAxisView == nil) {
+        return;
+    }
+    long minimumAxisTimestamp = rangeAxisView.canDragStart ? rangeAxisView.minimumTimestamp : rangeAxisView.startTimestamp;
+    long maximumAxisTimestamp = rangeAxisView.canDragEnd ? rangeAxisView.maximumTimestamp : timestamp;
+    [rangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
+                                maximumTimestamp:maximumAxisTimestamp
+                                  startTimestamp:rangeAxisView.startTimestamp
+                                    endTimestamp:rangeAxisView.endTimestamp
+                                    canDragStart:rangeAxisView.canDragStart
+                                      canDragEnd:rangeAxisView.canDragEnd];
+    [MirrorStorage editPeriodIsStartTime:NO to:timestamp periodIndex:self.editingPeriodIndex];
+}
+
+#pragma mark - TimelineRecordViewDelegate
+
+- (void)timelineRecordViewDidRequestInlineEditing:(TimelineRecordView *)recordView
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    NSInteger periodIndex = recordView.periodIndex;
+    if (periodIndex < 0 || periodIndex >= records.count) {
+        return;
+    }
+
+    if (self.activeRecordView != recordView) {
+        [self.activeRecordView endInlineEditing];
+    }
+    MirrorRecordModel *record = records[periodIndex];
+    long minimumTimestamp = periodIndex > 0 ? MAX(records[periodIndex - 1].endTime, [self dayStartTimestamp]) : [self dayStartTimestamp];
+    long maximumTimestamp = periodIndex + 1 < records.count ? MIN(records[periodIndex + 1].startTime, [self dayEndTimestamp]) : [self dayEndTimestamp];
+    if (maximumTimestamp <= minimumTimestamp || record.endTime <= [self dayStartTimestamp] || record.startTime >= [self dayEndTimestamp]) {
+        return;
+    }
+
+    self.activeRecordView = recordView;
+    [self.timelineContentView bringSubviewToFront:recordView];
+    [recordView beginInlineEditingWithMinimumTimestamp:minimumTimestamp
+                                      maximumTimestamp:maximumTimestamp
+                                            hourHeight:self.hourHeight
+                                     dayStartTimestamp:[self dayStartTimestamp]
+                                       dayEndTimestamp:[self dayEndTimestamp]];
+}
+
+- (void)timelineRecordView:(TimelineRecordView *)recordView didChangeScrollEnabled:(BOOL)enabled
+{
+    self.timelineScrollView.scrollEnabled = enabled;
+}
+
+- (void)timelineRecordView:(TimelineRecordView *)recordView didCommitStartTimestamp:(long)timestamp
+{
+    [MirrorStorage editPeriodIsStartTime:YES to:timestamp periodIndex:recordView.periodIndex];
+    if (self.activeRecordView == recordView) {
+        self.activeRecordView = nil;
+    }
+    [self reloadData];
+}
+
+- (void)timelineRecordView:(TimelineRecordView *)recordView didCommitEndTimestamp:(long)timestamp
+{
+    [MirrorStorage editPeriodIsStartTime:NO to:timestamp periodIndex:recordView.periodIndex];
+    if (self.activeRecordView == recordView) {
+        self.activeRecordView = nil;
+    }
+    [self reloadData];
+}
+
+- (void)timelineRecordView:(TimelineRecordView *)recordView didCommitStartTimestamp:(long)startTimestamp endTimestamp:(long)endTimestamp
+{
+    [MirrorStorage editPeriodStartTime:startTimestamp endTime:endTimestamp periodIndex:recordView.periodIndex];
+    if (self.activeRecordView == recordView) {
+        self.activeRecordView = nil;
+    }
+    [self reloadData];
+}
+
+#pragma mark - Timeline
+
+- (void)updateTimelineSizeIfNeeded
+{
+    CGFloat visibleHeight = CGRectGetHeight(self.timelineScrollView.bounds);
+    CGFloat width = CGRectGetWidth(self.timelineScrollView.bounds);
+    if (visibleHeight <= 0 || width <= 0) {
+        return;
+    }
+
+    CGFloat newHourHeight = visibleHeight / 12.0;
+    CGSize contentSize = CGSizeMake(width, newHourHeight * [self timelineHourCount]);
+    BOOL needsRender = fabs(self.hourHeight - newHourHeight) > 0.5 || !CGSizeEqualToSize(self.timelineScrollView.contentSize, contentSize);
+    if (!needsRender) {
+        return;
+    }
+
+    self.hourHeight = newHourHeight;
+    self.timelineScrollView.contentSize = contentSize;
+    self.timelineContentView.frame = CGRectMake(0, 0, contentSize.width, contentSize.height);
+    [self.timelineContentView configureWithHourHeight:self.hourHeight
+                                    dayStartTimestamp:[self dayStartTimestamp]
+                                      dayEndTimestamp:[self dayEndTimestamp]];
+    [self renderTimeline];
+
+    if (!self.didScrollToDefaultHours) {
+        [self.timelineScrollView setContentOffset:CGPointMake(0, self.hourHeight * 7.0) animated:NO];
+        self.didScrollToDefaultHours = YES;
+    }
+}
+
+- (void)renderTimeline
+{
+    if (self.hourHeight <= 0 || CGRectGetWidth(self.timelineContentView.bounds) <= 0) {
+        return;
+    }
+
+    [self.activeRecordView endInlineEditing];
+    self.activeRecordView = nil;
+    [self.timelineContentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    [self renderHourLines];
+    [self renderRecords];
+}
+
+- (void)renderHourLines
+{
+    CGFloat width = CGRectGetWidth(self.timelineContentView.bounds);
+    NSInteger hourCount = [self timelineHourCount];
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"H:mm";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    long dayStart = [self dayStartTimestamp];
+
+    for (NSInteger hour = 0; hour <= hourCount; hour++) {
+        CGFloat y = hour * self.hourHeight;
+        UIView *line = [UIView new];
+        line.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
+        line.alpha = 0.2;
+        [self.timelineContentView addSubview:line];
+        line.frame = CGRectMake(kTimelineLeftWidth, y, width - kTimelineLeftWidth - kTimelineRightPadding, 1);
+
+        if (hour < hourCount) {
+            UILabel *hourLabel = [UILabel new];
+            NSDate *date = [NSDate dateWithTimeIntervalSince1970:dayStart + hour * 3600];
+            hourLabel.text = [formatter stringFromDate:date];
+            hourLabel.font = [UIFont mirrorMinFont];
+            hourLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+            hourLabel.alpha = 0.5;
+            hourLabel.textAlignment = NSTextAlignmentRight;
+            [self.timelineContentView addSubview:hourLabel];
+            hourLabel.frame = CGRectMake(0, y - 10, kTimelineLeftWidth - 8*kWidthRatio, 20);
+        }
+    }
+}
+
+- (void)renderRecords
+{
+    long dayStart = [self dayStartTimestamp];
+    long dayEnd = [self dayEndTimestamp];
+    CGFloat recordX = kTimelineLeftWidth;
+    CGFloat recordWidth = CGRectGetWidth(self.timelineContentView.bounds) - recordX - kTimelineRightPadding;
+
+    for (MirrorRecordModel *record in self.oneDayData) {
+        long start = MAX(record.startTime, dayStart);
+        long end = MIN(record.endTime, dayEnd);
+        if (end <= start) {
+            continue;
+        }
+
+        long duration = end - start;
+        CGFloat top = ((CGFloat)(start - dayStart) / 3600.0) * self.hourHeight;
+        CGFloat height = ((CGFloat)duration / 3600.0) * self.hourHeight;
+        if (duration < kTimelineTinyRecordThresholdSeconds) {
+            height = MAX(height, kTimelineMinimumTinyRecordHeight);
+        }
+        BOOL showsText = duration >= kTimelineTextHiddenThresholdSeconds;
+        TimelineRecordView *recordView = [self recordViewWithRecord:record frame:CGRectMake(recordX, top, recordWidth, height) showsText:showsText];
+        [self.timelineContentView addSubview:recordView];
+    }
+}
+
+- (TimelineRecordView *)recordViewWithRecord:(MirrorRecordModel *)record frame:(CGRect)frame showsText:(BOOL)showsText
+{
+    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
+    UIColor *recordColor = task ? [UIColor mirrorColorNamed:task.color] : [UIColor mirrorColorNamed:MirrorColorTypeCellGray];
+    TimelineRecordView *recordView = [[TimelineRecordView alloc] initWithFrame:frame];
+    recordView.delegate = self;
+    [recordView configureWithRecord:record color:recordColor showsText:showsText];
+    return recordView;
+}
+
+#pragma mark - Getters
+
+- (UIScrollView *)timelineScrollView
+{
+    if (!_timelineScrollView) {
+        _timelineScrollView = [UIScrollView new];
+        _timelineScrollView.backgroundColor = self.view.backgroundColor;
+        _timelineScrollView.showsVerticalScrollIndicator = NO;
+        _timelineScrollView.alwaysBounceVertical = YES;
+    }
+    return _timelineScrollView;
+}
+
+- (TimelineView *)timelineContentView
+{
+    if (!_timelineContentView) {
+        _timelineContentView = [TimelineView new];
+        _timelineContentView.backgroundColor = self.view.backgroundColor;
+    }
+    return _timelineContentView;
+}
+
+- (NSMutableArray<MirrorRecordModel *> *)oneDayData
+{
+    if (!_oneDayData) {
+        _oneDayData = [MirrorStorage getOneDayDataForDate:self.date];
+    }
+    return _oneDayData;
+}
+
+#pragma mark - Privates
+
+- (long)dayStartTimestamp
+{
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    return round([[gregorian startOfDayForDate:self.date] timeIntervalSince1970]);
+}
+
+- (long)dayEndTimestamp
+{
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *startOfDay = [gregorian startOfDayForDate:self.date];
+    NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:startOfDay options:0];
+    return round([startOfNextDay timeIntervalSince1970]);
+}
+
+- (NSInteger)timelineHourCount
+{
+    return ([self dayEndTimestamp] - [self dayStartTimestamp]) / 3600;
+}
+
+@end

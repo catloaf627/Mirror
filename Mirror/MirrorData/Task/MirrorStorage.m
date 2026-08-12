@@ -388,11 +388,26 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 + (void)editPeriodIsStartTime:(BOOL)isStartTime to:(long)timestamp periodIndex:(NSInteger)index
 {
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (index < 0 || index >= records.count) return;
     if (isStartTime) {
         records[index].startTime = timestamp;
     } else {
         records[index].endTime = timestamp;
     }
+    [MirrorStorage saveMirrorRecords:records];
+    NSLog(@"Period is edited");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
+    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
+// 同步修改某条原始记录的起止时间；例如拖动整块 period 时保持 duration 不变，一次写入 start/end。
++ (void)editPeriodStartTime:(long)startTimestamp endTime:(long)endTimestamp periodIndex:(NSInteger)index
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (index < 0 || index >= records.count) return;
+    if (endTimestamp - startTimestamp < kMinSeconds) return;
+    records[index].startTime = startTimestamp;
+    records[index].endTime = endTimestamp;
     [MirrorStorage saveMirrorRecords:records];
     NSLog(@"Period is edited");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
@@ -763,10 +778,16 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 // 取出 Today 页时间轴数据，会把和今天有交集的 raw records 切成今天范围内的 UI 片段；例如 1/1 23:00-1/2 01:00 在 1/2 返回 00:00-01:00。
 + (NSMutableArray<MirrorRecordModel *> *)getTodayData
 {
-    // TODAY timestamp
+    return [MirrorStorage getOneDayDataForDate:[NSDate now]];
+}
+
+// 取出指定自然日时间轴数据，会把和这一天有交集的 raw records 切成这一天范围内的 UI 片段。
++ (NSMutableArray<MirrorRecordModel *> *)getOneDayDataForDate:(NSDate *)date
+{
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
-    NSDate *startOfDay = [gregorian startOfDayForDate:[NSDate now]];
+    NSDate *targetDate = date ?: [NSDate now];
+    NSDate *startOfDay = [gregorian startOfDayForDate:targetDate];
     NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:startOfDay options:0];
     long startTime = round([startOfDay timeIntervalSince1970]);
     long endTime = round([startOfNextDay timeIntervalSince1970]);
@@ -787,13 +808,13 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         // r.end < starttime
         else if (record.endTime < startTime) {
             if (printDetailsToDebug) NSLog(@"✖️完整地发生在start time之前，不管");
-            break; // 正常情况下倒序找到today以后，发现record.endTime已经早于今日零点，这时候break就可以了，可以少循环一轮
+            break; // 正常情况下倒序找到目标日期以后，发现record.endTime已经早于当天零点，这时候break就可以了，可以少循环一轮
         }
         // endtime <= r.start
         else if (endTime <= record.startTime) {
             if (printDetailsToDebug) NSLog(@"✖️完整地发生在end time之后，不管");
         }
-        // 和今天有交集，按今天范围切出UI展示片段
+        // 和目标日期有交集，按当天范围切出UI展示片段
         else if (record.startTime < endTime && startTime < record.endTime) {
             if (printDetailsToDebug) NSLog(@"✔️和选取时间段有交集");
             [targetRecords addObjectsFromArray:[self daySegmentsForRecord:record clippedToStart:startTime end:endTime]];

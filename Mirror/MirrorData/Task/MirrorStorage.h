@@ -55,6 +55,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)editPeriodIsStartTime:(BOOL)isStartTime to:(long)timestamp periodIndex:(NSInteger)index;
 
++ (void)editPeriodStartTime:(long)startTimestamp endTime:(long)endTimestamp periodIndex:(NSInteger)index;
+
 + (void)editPeriodNote:(NSString *)note periodIndex:(NSInteger)index;
 
 // Retrive
@@ -98,6 +100,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
  适用场景：目前只有today的record展示用到这个方法
  */
 + (NSMutableArray<MirrorRecordModel *> *)getTodayData;
+
++ (NSMutableArray<MirrorRecordModel *> *)getOneDayDataForDate:(NSDate *)date;
 
 /*
  取出【所有任务】从【某时间】到【某时间】的所有records，并按照优先级排序 （如顺序为🪀、🌸）
