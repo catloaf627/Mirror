@@ -195,11 +195,13 @@
 
 @end
 
-@interface CalendarViewController ()
+@interface CalendarViewController () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) NSDate *selectedDate;
 @property (nonatomic, strong) UIButton *dateButton;
 @property (nonatomic, strong) OneDayTimelineViewController *timelineViewController;
+@property (nonatomic, strong) NSMutableDictionary<NSValue *, NSNumber *> *disabledNavigationGestureStates;
+@property (nonatomic, assign) BOOL didHandleLeftEdgeSwipe;
 
 @end
 
@@ -215,7 +217,26 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    [self disableInteractivePopGesture];
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"Calendar" leftButton:nil rightButton:nil];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [self disableInteractivePopGesture];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [self disableInteractivePopGesture];
+}
+
+- (void)viewDidDisappear:(BOOL)animated
+{
+    [super viewDidDisappear:animated];
+    [self restoreInteractivePopGesture];
 }
 
 - (void)p_setupUI
@@ -235,6 +256,7 @@
         make.left.right.bottom.offset(0);
     }];
     [timelineViewController didMoveToParentViewController:self];
+    [self addDateSwipeGestures];
 }
 
 #pragma mark - Actions
@@ -243,9 +265,7 @@
 {
     __weak typeof(self) weakSelf = self;
     CalendarPickerViewController *pickerVC = [[CalendarPickerViewController alloc] initWithSelectedDate:self.selectedDate selectionHandler:^(NSDate *date) {
-        weakSelf.selectedDate = date;
-        [weakSelf updateDateButtonTitle];
-        [weakSelf.timelineViewController updateDate:date];
+        [weakSelf updateSelectedDate:date];
     }];
     pickerVC.modalPresentationStyle = UIModalPresentationPopover;
     pickerVC.preferredContentSize = CGSizeMake(360, 340);
@@ -254,6 +274,115 @@
     popover.sourceRect = self.dateButton.bounds;
     popover.permittedArrowDirections = UIPopoverArrowDirectionUp;
     [self presentViewController:pickerVC animated:YES completion:nil];
+}
+
+- (void)handleDateSwipe:(UISwipeGestureRecognizer *)gestureRecognizer
+{
+    NSInteger dayOffset = 0;
+    if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionLeft) {
+        dayOffset = 1;
+    } else if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionRight) {
+        dayOffset = -1;
+    }
+    [self moveSelectedDateByDayOffset:dayOffset];
+}
+
+- (void)handleLeftEdgeDateSwipe:(UIScreenEdgePanGestureRecognizer *)gestureRecognizer
+{
+    if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
+        self.didHandleLeftEdgeSwipe = NO;
+    }
+    if (gestureRecognizer.state == UIGestureRecognizerStateEnded && !self.didHandleLeftEdgeSwipe) {
+        CGPoint translation = [gestureRecognizer translationInView:self.view];
+        CGPoint velocity = [gestureRecognizer velocityInView:self.view];
+        if (translation.x > 30*kWidthRatio || velocity.x > 300*kWidthRatio) {
+            self.didHandleLeftEdgeSwipe = YES;
+            [self moveSelectedDateByDayOffset:-1];
+        }
+    }
+}
+
+- (void)moveSelectedDateByDayOffset:(NSInteger)dayOffset
+{
+    if (dayOffset == 0) {
+        return;
+    }
+
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *date = [calendar dateByAddingUnit:NSCalendarUnitDay value:dayOffset toDate:self.selectedDate options:0];
+    [self updateSelectedDate:date];
+}
+
+- (void)addDateSwipeGestures
+{
+    UISwipeGestureRecognizer *leftSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleDateSwipe:)];
+    leftSwipe.direction = UISwipeGestureRecognizerDirectionLeft;
+    [self.view addGestureRecognizer:leftSwipe];
+
+    UISwipeGestureRecognizer *rightSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleDateSwipe:)];
+    rightSwipe.direction = UISwipeGestureRecognizerDirectionRight;
+    [self.view addGestureRecognizer:rightSwipe];
+
+    UIScreenEdgePanGestureRecognizer *leftEdgeSwipe = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(handleLeftEdgeDateSwipe:)];
+    leftEdgeSwipe.edges = UIRectEdgeLeft;
+    leftEdgeSwipe.delegate = self;
+    [self.view addGestureRecognizer:leftEdgeSwipe];
+}
+
+- (void)updateSelectedDate:(NSDate *)date
+{
+    if (!date) {
+        return;
+    }
+    self.selectedDate = date;
+    [self updateDateButtonTitle];
+    [self.timelineViewController updateDate:date];
+}
+
+- (void)disableInteractivePopGesture
+{
+    if (!self.disabledNavigationGestureStates) {
+        self.disabledNavigationGestureStates = [NSMutableDictionary dictionary];
+    }
+
+    NSMutableArray<UIGestureRecognizer *> *navigationGestures = [NSMutableArray arrayWithArray:self.navigationController.view.gestureRecognizers ?: @[]];
+    UIGestureRecognizer *popGesture = self.navigationController.interactivePopGestureRecognizer;
+    if (popGesture && ![navigationGestures containsObject:popGesture]) {
+        [navigationGestures addObject:popGesture];
+    }
+
+    for (UIGestureRecognizer *gestureRecognizer in navigationGestures) {
+        BOOL isNavigationPan = [gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class] || [gestureRecognizer isKindOfClass:UIScreenEdgePanGestureRecognizer.class];
+        if (!isNavigationPan) {
+            continue;
+        }
+
+        NSValue *key = [NSValue valueWithNonretainedObject:gestureRecognizer];
+        if (!self.disabledNavigationGestureStates[key]) {
+            self.disabledNavigationGestureStates[key] = @(gestureRecognizer.enabled);
+        }
+        gestureRecognizer.enabled = NO;
+    }
+}
+
+- (void)restoreInteractivePopGesture
+{
+    [self.disabledNavigationGestureStates enumerateKeysAndObjectsUsingBlock:^(NSValue *key, NSNumber *enabled, BOOL *stop) {
+        UIGestureRecognizer *gestureRecognizer = key.nonretainedObjectValue;
+        gestureRecognizer.enabled = enabled.boolValue;
+    }];
+    self.disabledNavigationGestureStates = nil;
+}
+
+#pragma mark - UIGestureRecognizerDelegate
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    if (gestureRecognizer.view == self.navigationController.view) {
+        return NO;
+    }
+    return YES;
 }
 
 #pragma mark - Getters
