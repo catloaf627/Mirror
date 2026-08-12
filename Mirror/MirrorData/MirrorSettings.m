@@ -156,9 +156,15 @@ static NSInteger const kMirrorLanguageChinese = 1;
     if (spanType==nil) {
         [[NSUserDefaults standardUserDefaults] setInteger:SpanTypeYear forKey:@"MirrorUserPreferredSpanType"];
         return SpanTypeYear; // 如果用户没有点过，默认展示year
-    } else {
-        return [spanType integerValue];
     }
+    
+    NSInteger value = [spanType integerValue];
+    if (value == SpanTypeWeek || value == SpanTypeMonth || value == SpanTypeYear) {
+        return value;
+    }
+    
+    [[NSUserDefaults standardUserDefaults] setInteger:SpanTypeYear forKey:@"MirrorUserPreferredSpanType"];
+    return SpanTypeYear;
 }
 
 + (void)changeSpanType:(SpanType)spanType

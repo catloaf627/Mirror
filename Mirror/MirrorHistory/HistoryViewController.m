@@ -271,7 +271,7 @@
 - (void)spanTypeChanged
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    [MirrorSettings changeSpanType:self.typeSwitch.selectedSegmentIndex];
+    [MirrorSettings changeSpanType:[self spanTypeFromSelectedSegmentIndex:self.typeSwitch.selectedSegmentIndex]];
     self.offset = 0;
     [self reloadData];
 }
@@ -296,18 +296,14 @@
     components.hour = 0;
     components.minute = 0;
     components.second = 0;
-    if (self.typeSwitch.selectedSegmentIndex == SpanTypeDay) {
-        startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
-        if (self.offset != 0) {
-            startTime = startTime + 86400*self.offset;
-        }
-    } else if (self.typeSwitch.selectedSegmentIndex == SpanTypeWeek) {
+    SpanType spanType = [self currentSpanType];
+    if (spanType == SpanTypeWeek) {
         long todayZero = [[gregorian dateFromComponents:components] timeIntervalSince1970];
         startTime = todayZero - [MirrorTool getDayGapFromTheFirstDayThisWeek] * 86400;
         if (self.offset != 0) {
             startTime = startTime + 7*86400*self.offset;
         }
-    } else if (self.typeSwitch.selectedSegmentIndex == SpanTypeMonth) {
+    } else if (spanType == SpanTypeMonth) {
         components.day = 1;
         if (self.offset > 0) {
             for (int i=0;i<self.offset;i++) {
@@ -330,7 +326,7 @@
             }
         }
         startTime = [[gregorian dateFromComponents:components] timeIntervalSince1970];
-    } else if (self.typeSwitch.selectedSegmentIndex == SpanTypeYear) {
+    } else if (spanType == SpanTypeYear) {
         components.month = 1;
         components.day = 1;
         if (self.offset != 0) {
@@ -340,16 +336,14 @@
     }
     
     long endTime = 0;
-    if (self.typeSwitch.selectedSegmentIndex == SpanTypeDay) {
-        endTime = startTime + 86400;
-    } else if (self.typeSwitch.selectedSegmentIndex == SpanTypeWeek) {
+    if (spanType == SpanTypeWeek) {
         NSInteger numberOfDaysInWeek= 7;
         endTime = startTime + numberOfDaysInWeek*86400;
-    } else if (self.typeSwitch.selectedSegmentIndex == SpanTypeMonth) {
+    } else if (spanType == SpanTypeMonth) {
         NSRange rng = [[NSCalendar currentCalendar] rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:[NSDate dateWithTimeIntervalSince1970:startTime]];
         NSInteger numberOfDaysInMonth = rng.length;
         endTime = startTime + numberOfDaysInMonth*86400;
-    } else if (self.typeSwitch.selectedSegmentIndex == SpanTypeYear) {
+    } else if (spanType == SpanTypeYear) {
         NSRange rng = [[NSCalendar currentCalendar] rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitYear forDate:[NSDate dateWithTimeIntervalSince1970:startTime]];
         NSInteger numberOfDaysIYear = rng.length;
         endTime = startTime + numberOfDaysIYear*86400;
@@ -378,6 +372,25 @@
 
 #pragma mark - Getters
 
+- (SpanType)currentSpanType
+{
+    return [self spanTypeFromSelectedSegmentIndex:self.typeSwitch.selectedSegmentIndex];
+}
+
+- (SpanType)spanTypeFromSelectedSegmentIndex:(NSInteger)selectedSegmentIndex
+{
+    if (selectedSegmentIndex == 0) return SpanTypeWeek;
+    if (selectedSegmentIndex == 1) return SpanTypeMonth;
+    return SpanTypeYear;
+}
+
+- (NSInteger)selectedSegmentIndexFromSpanType:(SpanType)spanType
+{
+    if (spanType == SpanTypeWeek) return 0;
+    if (spanType == SpanTypeMonth) return 1;
+    return 2;
+}
+
 - (NSMutableArray<MirrorReadModel *> *)data
 {
     if (!_data) {
@@ -397,8 +410,8 @@
 - (UISegmentedControl *)typeSwitch
 {
     if (!_typeSwitch) {
-        _typeSwitch = [[UISegmentedControl alloc] initWithItems:@[[MirrorLanguage mirror_stringWithKey:@"segment_day"], [MirrorLanguage mirror_stringWithKey:@"segment_week"], [MirrorLanguage mirror_stringWithKey:@"segment_month"], [MirrorLanguage mirror_stringWithKey:@"segment_year"]]];
-        _typeSwitch.selectedSegmentIndex = [MirrorSettings spanType];
+        _typeSwitch = [[UISegmentedControl alloc] initWithItems:@[[MirrorLanguage mirror_stringWithKey:@"segment_week"], [MirrorLanguage mirror_stringWithKey:@"segment_month"], [MirrorLanguage mirror_stringWithKey:@"segment_year"]]];
+        _typeSwitch.selectedSegmentIndex = [self selectedSegmentIndexFromSpanType:[MirrorSettings spanType]];
         [_typeSwitch addTarget:self action:@selector(spanTypeChanged) forControlEvents:UIControlEventValueChanged];
     }
     return _typeSwitch;
