@@ -50,36 +50,6 @@
             endingLineNumber = "735"
             landmarkName = "-endTimestampForNewRecordStartingAt:"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "DDC7288B-6233-45B3-877B-CB3B56AA37C6 - eea1ef736e3e0f93"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[TodayViewController endTimestampForNewRecordStartingAt:]"
-                  moduleName = "Mirror.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/yuqingwang/Mirror/Mirror/MirrorToday/TodayViewController.m"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "735"
-                  endingLineNumber = "735">
-               </Location>
-               <Location
-                  uuid = "DDC7288B-6233-45B3-877B-CB3B56AA37C6 - eea1ef736e3e0f93"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "-[TodayViewController endTimestampForNewRecordStartingAt:]"
-                  moduleName = "Mirror.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Users/yuqingwang/Mirror/Mirror/MirrorToday/TodayViewController.m"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "735"
-                  endingLineNumber = "735">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

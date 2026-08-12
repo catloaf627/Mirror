@@ -212,17 +212,19 @@
 
 + (NSString *)randomNoteForTaskName:(NSString *)taskName startTime:(long)startTime durationMinutes:(NSInteger)durationMinutes
 {
-    NSInteger seed = (startTime / 60) + durationMinutes;
-    for (NSUInteger index = 0; index < taskName.length; index++) {
-        seed += [taskName characterAtIndex:index];
+    NSString *englishName = [self englishTaskNameForLocalizedTaskName:taskName];
+    NSUInteger seed = 2166136261u;
+    seed = (seed ^ (NSUInteger)(startTime / 60)) * 16777619u;
+    seed = (seed ^ (NSUInteger)durationMinutes) * 16777619u;
+    for (NSUInteger index = 0; index < englishName.length; index++) {
+        seed = (seed ^ [englishName characterAtIndex:index]) * 16777619u;
     }
     
     if (seed % 3 != 0) {
         return @"";
     }
     
-    NSString *englishName = [self englishTaskNameForLocalizedTaskName:taskName];
-    return [MirrorLanguage localizedSampleRecordNoteForEnglishTaskName:englishName index:seed];
+    return [MirrorLanguage localizedSampleRecordNoteForEnglishTaskName:englishName index:(NSInteger)seed];
 }
 
 + (NSString *)englishTaskNameForLocalizedTaskName:(NSString *)taskName
