@@ -17,6 +17,7 @@
 		4A1F8C38302A43FA00045430 /* TaskColorCirclePickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C37302A43FA00045430 /* TaskColorCirclePickerViewController.m */; };
 		4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C3A302A452000045430 /* TaskPickerViewController.m */; };
 		4A1F8C56302BFF2A00045430 /* TimelineRangeAxisView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C55302BFF2A00045430 /* TimelineRangeAxisView.m */; };
+		4A1F8C5B302C16A200045430 /* PeriodEditAlertController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C5A302C16A200045430 /* PeriodEditAlertController.m */; };
 		4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */; };
 		4A37369429E2AEE900187280 /* PiechartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369329E2AEE900187280 /* PiechartView.m */; };
 		4A37369729E2BD3C00187280 /* SliceLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369629E2BD3C00187280 /* SliceLayer.m */; };
@@ -113,6 +114,8 @@
 		4A1F8C54302BFF0400045430 /* TimelineRangeAxisView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineRangeAxisView.h; sourceTree = "<group>"; };
 		4A1F8C55302BFF2A00045430 /* TimelineRangeAxisView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineRangeAxisView.m; sourceTree = "<group>"; };
 		4A1F8C58302C009500045430 /* ProjectSettings.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProjectSettings.md; sourceTree = "<group>"; };
+		4A1F8C59302C167700045430 /* PeriodEditAlertController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PeriodEditAlertController.h; sourceTree = "<group>"; };
+		4A1F8C5A302C16A200045430 /* PeriodEditAlertController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PeriodEditAlertController.m; sourceTree = "<group>"; };
 		4A32A3FC29F7782200DCCF57 /* MirrorTimeText.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorTimeText.h; sourceTree = "<group>"; };
 		4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTimeText.m; sourceTree = "<group>"; };
 		4A37369229E2AEE900187280 /* PiechartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PiechartView.h; sourceTree = "<group>"; };
@@ -580,6 +583,8 @@
 				4AFBD1A03029558E006A6350 /* RecordsTimelineViewController.m */,
 				4A1F8C54302BFF0400045430 /* TimelineRangeAxisView.h */,
 				4A1F8C55302BFF2A00045430 /* TimelineRangeAxisView.m */,
+				4A1F8C59302C167700045430 /* PeriodEditAlertController.h */,
+				4A1F8C5A302C16A200045430 /* PeriodEditAlertController.m */,
 			);
 			path = Timeline;
 			sourceTree = "<group>";
@@ -762,6 +767,7 @@
 				4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */,
 				4ADDC5BD28E6DF8B006F02DE /* ColorCollectionViewCell.m in Sources */,
 				4A7CCD2629DBC7CF00879D9C /* TodayViewController.m in Sources */,
+				4A1F8C5B302C16A200045430 /* PeriodEditAlertController.m in Sources */,
 				4A88212929F6035E009E422C /* CellAnimation.m in Sources */,
 				4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */,
 				4AB1182E2B9851F7003CED03 /* LineChartCollectionViewCell.m in Sources */,

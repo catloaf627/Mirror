@@ -14,6 +14,7 @@
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
 #import "TimelineRangeAxisView.h"
+#import "PeriodEditAlertController.h"
 
 static CGFloat const kHorizontalPadding = 20;
 static CGFloat const kDotSize = 10;
@@ -29,7 +30,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     TimelineBatchScrollPositionNearBottom,
 };
 
-@interface RecordsTimelineViewController () <UIEditMenuInteractionDelegate, UIGestureRecognizerDelegate, UIScrollViewDelegate>
+@interface RecordsTimelineViewController () <UIEditMenuInteractionDelegate, UIScrollViewDelegate>
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
@@ -52,9 +53,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, assign) BOOL didScrollToInitialHighlightedRow;
 @property (nonatomic, assign) BOOL isRecordEditMenuVisible;
 @property (nonatomic, assign) BOOL shouldSuppressNextRecordEditMenu;
-@property (nonatomic, strong) TimelineRangeAxisView *editingRangeAxisView;
-@property (nonatomic, strong) UITextField *editingNoteTextField;
-@property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
+@property (nonatomic, strong) PeriodEditAlertController *editingPeriodAlert;
 @property (nonatomic, weak) UIView *firstTimelineRow;
 @property (nonatomic, weak) UIView *lastTimelineRow;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
@@ -134,7 +133,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 - (void)reloadData
 {
-    if (self.editingDismissTapRecognizer != nil) {
+    if (self.editingPeriodAlert.isPresented) {
         self.shouldReloadAfterEditingPeriodAlert = YES;
         return;
     }
@@ -762,173 +761,45 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     BOOL hasNextRecord = periodIndex + 1 <= records.count - 1;
     long minimumAxisTimestamp = hasPreviousRecord ? records[periodIndex - 1].endTime : record.startTime;
     long maximumAxisTimestamp = hasNextRecord ? records[periodIndex + 1].startTime : record.endTime;
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:record.taskName message:@"\n\n\n\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
-    
-    TimelineRangeAxisView *rangeAxisView = [TimelineRangeAxisView new];
-    MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:record.taskName];
-    rangeAxisView.axisColor = [UIColor mirrorColorNamed:taskModel.color];
-    [rangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
-                                maximumTimestamp:maximumAxisTimestamp
-                                   startTimestamp:record.startTime
-                                     endTimestamp:record.endTime
-                                     canDragStart:hasPreviousRecord
-                                       canDragEnd:hasNextRecord];
-    __weak typeof(self) weakSelf = self;
-    rangeAxisView.valueChanged = ^(BOOL isStartTime, long timestamp) {
-        [weakSelf rangeAxisValueChangedIsStartTime:isStartTime timestamp:timestamp];
-    };
-    
     self.editingPeriodIndex = periodIndex;
-    self.editingRangeAxisView = rangeAxisView;
-    
-    UILabel *noteLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"note"]];
-    UITextField *noteTextField = [UITextField new];
-    noteTextField.text = record.note;
-    noteTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"note"];
-    noteTextField.font = [UIFont mirrorHintFont];
-    noteTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    noteTextField.borderStyle = UITextBorderStyleRoundedRect;
-    noteTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
-    [noteTextField setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
-    noteTextField.tag = periodIndex;
-    [noteTextField addTarget:self action:@selector(noteTextFieldEditingChanged:) forControlEvents:UIControlEventEditingChanged];
-    self.editingNoteTextField = noteTextField;
-    UIView *contentView = alertController.view;
-    [contentView addSubview:rangeAxisView];
-    [contentView addSubview:noteLabel];
-    [contentView addSubview:noteTextField];
-    
-    [rangeAxisView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.offset(24);
-        make.right.offset(-24);
-        make.top.offset(54);
-        make.height.mas_equalTo(72);
-    }];
-    [noteLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.offset(24);
-        make.top.mas_equalTo(rangeAxisView.mas_bottom).offset(8);
-        make.width.mas_equalTo(90);
-        make.height.mas_equalTo(30);
-    }];
-    [noteTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(noteLabel.mas_right).offset(8);
-        make.centerY.mas_equalTo(noteLabel);
-        make.right.offset(-24);
-        make.width.mas_equalTo(130).priorityHigh();
-        make.height.mas_equalTo(34);
-    }];
-    
-    [self presentViewController:alertController animated:YES completion:^{
-        [self addEditingDismissTapRecognizer];
-    }];
-}
-
-- (void)addEditingDismissTapRecognizer
-{
-    if (self.editingDismissTapRecognizer != nil) {
-        return;
-    }
-    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissEditingPeriodAlert:)];
-    tapRecognizer.cancelsTouchesInView = NO;
-    tapRecognizer.delegate = self;
-    self.editingDismissTapRecognizer = tapRecognizer;
-    [self.view.window addGestureRecognizer:tapRecognizer];
-}
-
-- (void)dismissEditingPeriodAlert:(UITapGestureRecognizer *)tapRecognizer
-{
-    if (tapRecognizer.state != UIGestureRecognizerStateEnded) {
-        return;
-    }
-    
-    UIViewController *presentedViewController = self.presentedViewController;
-    if (presentedViewController == nil) {
-        [self removeEditingDismissTapRecognizer];
-        return;
-    }
-    
-    [self saveEditingNoteIfNeeded];
-    [self removeEditingDismissTapRecognizer];
-    self.editingRangeAxisView = nil;
-    self.editingNoteTextField = nil;
-    BOOL shouldReload = self.shouldReloadAfterEditingPeriodAlert;
-    self.shouldReloadAfterEditingPeriodAlert = NO;
-    [presentedViewController dismissViewControllerAnimated:YES completion:^{
+    MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:record.taskName];
+    __weak typeof(self) weakSelf = self;
+    PeriodEditAlertController *alert = [[PeriodEditAlertController alloc] initWithTitle:record.taskName
+                                                                              axisColor:[UIColor mirrorColorNamed:taskModel.color]
+                                                                       minimumTimestamp:minimumAxisTimestamp
+                                                                       maximumTimestamp:maximumAxisTimestamp
+                                                                         startTimestamp:record.startTime
+                                                                           endTimestamp:record.endTime
+                                                                           canDragStart:hasPreviousRecord
+                                                                             canDragEnd:hasNextRecord
+                                                                                   note:record.note
+                                                                           valueChanged:^(BOOL isStartTime, long timestamp) {
+        [weakSelf rangeAxisValueChangedIsStartTime:isStartTime timestamp:timestamp];
+    } dismissed:^(NSString *note) {
+        [weakSelf saveEditingNote:note periodIndex:periodIndex];
+        BOOL shouldReload = weakSelf.shouldReloadAfterEditingPeriodAlert;
+        weakSelf.shouldReloadAfterEditingPeriodAlert = NO;
+        weakSelf.editingPeriodAlert = nil;
         if (shouldReload) {
-            [self reloadData];
+            [weakSelf reloadData];
         }
     }];
+    self.editingPeriodAlert = alert;
+    [alert presentFromViewController:self];
 }
 
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+- (void)saveEditingNote:(NSString *)note periodIndex:(NSInteger)periodIndex
 {
-    if (gestureRecognizer != self.editingDismissTapRecognizer) {
-        return YES;
-    }
-    return [self shouldDismissEditingPeriodAlertForTouchedView:touch.view];
-}
-
-- (BOOL)shouldDismissEditingPeriodAlertForTouchedView:(UIView *)touchedView
-{
-    UIView *alertView = self.presentedViewController.view;
-    if (alertView == nil || touchedView == nil) {
-        return NO;
-    }
-    if (touchedView == alertView || [touchedView isDescendantOfView:alertView]) {
-        return NO;
-    }
-    if ([self isInteractivePickerViewInHierarchy:touchedView]) {
-        return NO;
-    }
-    return YES;
-}
-
-- (BOOL)isInteractivePickerViewInHierarchy:(UIView *)view
-{
-    UIView *currentView = view;
-    while (currentView != nil) {
-        if ([currentView isKindOfClass:[UIControl class]] ||
-            [currentView isKindOfClass:[UICollectionView class]] ||
-            [currentView isKindOfClass:[UITableView class]]) {
-            return YES;
-        }
-        
-        NSString *className = NSStringFromClass([currentView class]);
-        if ([className containsString:@"DatePicker"] ||
-            [className containsString:@"Calendar"] ||
-            [className containsString:@"TimePicker"] ||
-            [className containsString:@"Popover"]) {
-            return YES;
-        }
-        currentView = currentView.superview;
-    }
-    return NO;
-}
-
-- (void)saveEditingNoteIfNeeded
-{
-    UITextField *noteTextField = self.editingNoteTextField;
-    if (noteTextField == nil) {
-        return;
-    }
-    
-    NSInteger periodIndex = noteTextField.tag;
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
     if (periodIndex < 0 || periodIndex >= records.count) {
         return;
     }
     
-    NSString *newNote = noteTextField.text ?: @"";
+    NSString *newNote = note ?: @"";
     NSString *oldNote = records[periodIndex].note ?: @"";
     if (![newNote isEqualToString:oldNote]) {
         [MirrorStorage editPeriodNote:newNote periodIndex:periodIndex];
     }
-}
-
-- (void)removeEditingDismissTapRecognizer
-{
-    [self.view.window removeGestureRecognizer:self.editingDismissTapRecognizer];
-    self.editingDismissTapRecognizer = nil;
 }
 
 - (void)rangeAxisValueChangedIsStartTime:(BOOL)isStartTime timestamp:(long)timestamp
@@ -942,47 +813,36 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 - (void)updateEditingStartTimestamp:(long)timestamp
 {
-    self.editingRangeAxisView.startTimestamp = timestamp;
-    long minimumAxisTimestamp = self.editingRangeAxisView.canDragStart ? self.editingRangeAxisView.minimumTimestamp : timestamp;
-    long maximumAxisTimestamp = self.editingRangeAxisView.canDragEnd ? self.editingRangeAxisView.maximumTimestamp : self.editingRangeAxisView.endTimestamp;
-    [self.editingRangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
-                                            maximumTimestamp:maximumAxisTimestamp
-                                               startTimestamp:self.editingRangeAxisView.startTimestamp
-                                                 endTimestamp:self.editingRangeAxisView.endTimestamp
-                                                 canDragStart:self.editingRangeAxisView.canDragStart
-                                                   canDragEnd:self.editingRangeAxisView.canDragEnd];
+    TimelineRangeAxisView *rangeAxisView = self.editingPeriodAlert.rangeAxisView;
+    if (rangeAxisView == nil) {
+        return;
+    }
+    long minimumAxisTimestamp = rangeAxisView.canDragStart ? rangeAxisView.minimumTimestamp : timestamp;
+    long maximumAxisTimestamp = rangeAxisView.canDragEnd ? rangeAxisView.maximumTimestamp : rangeAxisView.endTimestamp;
+    [rangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
+                                maximumTimestamp:maximumAxisTimestamp
+                                   startTimestamp:rangeAxisView.startTimestamp
+                                     endTimestamp:rangeAxisView.endTimestamp
+                                     canDragStart:rangeAxisView.canDragStart
+                                       canDragEnd:rangeAxisView.canDragEnd];
     [MirrorStorage editPeriodIsStartTime:YES to:timestamp periodIndex:self.editingPeriodIndex];
 }
 
 - (void)updateEditingEndTimestamp:(long)timestamp
 {
-    self.editingRangeAxisView.endTimestamp = timestamp;
-    long minimumAxisTimestamp = self.editingRangeAxisView.canDragStart ? self.editingRangeAxisView.minimumTimestamp : self.editingRangeAxisView.startTimestamp;
-    long maximumAxisTimestamp = self.editingRangeAxisView.canDragEnd ? self.editingRangeAxisView.maximumTimestamp : timestamp;
-    [self.editingRangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
-                                            maximumTimestamp:maximumAxisTimestamp
-                                               startTimestamp:self.editingRangeAxisView.startTimestamp
-                                                 endTimestamp:self.editingRangeAxisView.endTimestamp
-                                                 canDragStart:self.editingRangeAxisView.canDragStart
-                                                   canDragEnd:self.editingRangeAxisView.canDragEnd];
-    [MirrorStorage editPeriodIsStartTime:NO to:timestamp periodIndex:self.editingPeriodIndex];
-}
-
-- (void)noteTextFieldEditingChanged:(UITextField *)textField
-{
-    if (textField.text.length > 200) {
-        textField.text = [textField.text substringToIndex:200];
+    TimelineRangeAxisView *rangeAxisView = self.editingPeriodAlert.rangeAxisView;
+    if (rangeAxisView == nil) {
+        return;
     }
-}
-
-- (UILabel *)pickerLabelWithText:(NSString *)text
-{
-    UILabel *label = [UILabel new];
-    label.text = text;
-    label.font = [UIFont mirrorHintFont];
-    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-    label.adjustsFontSizeToFitWidth = YES;
-    return label;
+    long minimumAxisTimestamp = rangeAxisView.canDragStart ? rangeAxisView.minimumTimestamp : rangeAxisView.startTimestamp;
+    long maximumAxisTimestamp = rangeAxisView.canDragEnd ? rangeAxisView.maximumTimestamp : timestamp;
+    [rangeAxisView configureWithMinimumTimestamp:minimumAxisTimestamp
+                                maximumTimestamp:maximumAxisTimestamp
+                                   startTimestamp:rangeAxisView.startTimestamp
+                                     endTimestamp:rangeAxisView.endTimestamp
+                                     canDragStart:rangeAxisView.canDragStart
+                                       canDragEnd:rangeAxisView.canDragEnd];
+    [MirrorStorage editPeriodIsStartTime:NO to:timestamp periodIndex:self.editingPeriodIndex];
 }
 
 #pragma mark - Getters
