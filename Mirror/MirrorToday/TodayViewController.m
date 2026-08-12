@@ -170,7 +170,7 @@
 {
     if (!_timelineButton) {
         _timelineButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"calendar.day.timeline.left"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+        UIImage *iconImage = [[UIImage systemImageNamed:@"calendar"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
         [_timelineButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
         [_timelineButton addTarget:self action:@selector(goToCalendar) forControlEvents:UIControlEventTouchUpInside];
     }
