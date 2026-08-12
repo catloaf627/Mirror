@@ -145,11 +145,7 @@
     [self updateWeekdayView];
     [self updateKeys];
     [self updateGridData];
-    if (_selectedCellIndexesStart != -1 && _selectedCellIndexesEnd != -1) {
-        [self updateChartsFromIndex:_selectedCellIndexesStart toIndex:_selectedCellIndexesEnd];
-    } else {
-        [self updateCharts];
-    }
+    [self updateCharts];
     [self.collectionView reloadData];
 }
 
@@ -351,12 +347,15 @@
     return [self chartDataFromIndex:startIndex toIndex:endIndex shouldHideHidden:NO];
 }
 
-- (void)updateCharts // legend & progress list & piechart
+- (void)updateCharts
 {
-    if (self.keys.count <= _selectedCellIndex) { // 空数据保护
+    if (_selectedCellIndexesStart != -1 && _selectedCellIndexesEnd != -1) {
+        [self updateChartsFromIndex:_selectedCellIndexesStart toIndex:_selectedCellIndexesEnd];
         return;
+    } else {
+        if (self.keys.count <= _selectedCellIndex) return; // 空数据保护
+        [self updateChartsFromIndex:_selectedCellIndex toIndex:_selectedCellIndex];
     }
-    [self updateChartsFromIndex:_selectedCellIndex toIndex:_selectedCellIndex];
 }
 
 - (void)updateChartsFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
@@ -419,7 +418,7 @@
 - (void)updateMultiSelectEnd:(NSInteger)newend
 {
     _selectedCellIndexesEnd = newend;
-    [self updateChartsFromIndex:_selectedCellIndexesStart toIndex:_selectedCellIndexesEnd];
+    [self updateCharts];
     [self.collectionView reloadData];
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
 }
