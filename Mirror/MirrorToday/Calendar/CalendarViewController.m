@@ -204,8 +204,7 @@
 @property (nonatomic, strong) UIButton *todayButton;
 @property (nonatomic, strong) UIView *todayButtonContainer;
 @property (nonatomic, strong) OneDayTimelineViewController *timelineViewController;
-@property (nonatomic, strong) NSMutableDictionary<NSValue *, NSNumber *> *disabledNavigationGestureStates;
-@property (nonatomic, assign) BOOL didHandleLeftEdgeSwipe;
+@property (nonatomic, assign) BOOL didHandleDatePan;
 
 @end
 
@@ -221,26 +220,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [self disableInteractivePopGesture];
     [self updateNavigationItem];
-}
-
-- (void)viewDidAppear:(BOOL)animated
-{
-    [super viewDidAppear:animated];
-    [self disableInteractivePopGesture];
-}
-
-- (void)viewWillDisappear:(BOOL)animated
-{
-    [super viewWillDisappear:animated];
-    [self disableInteractivePopGesture];
-}
-
-- (void)viewDidDisappear:(BOOL)animated
-{
-    [super viewDidDisappear:animated];
-    [self restoreInteractivePopGesture];
 }
 
 - (void)p_setupUI
@@ -280,30 +260,25 @@
     [self presentViewController:pickerVC animated:YES completion:nil];
 }
 
-- (void)handleDateSwipe:(UISwipeGestureRecognizer *)gestureRecognizer
-{
-    NSInteger dayOffset = 0;
-    if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionLeft) {
-        dayOffset = 1;
-    } else if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionRight) {
-        dayOffset = -1;
-    }
-    [self moveSelectedDateByDayOffset:dayOffset];
-}
-
-- (void)handleLeftEdgeDateSwipe:(UIScreenEdgePanGestureRecognizer *)gestureRecognizer
+- (void)handleDatePan:(UIPanGestureRecognizer *)gestureRecognizer
 {
     if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
-        self.didHandleLeftEdgeSwipe = NO;
+        self.didHandleDatePan = NO;
+        return;
     }
-    if (gestureRecognizer.state == UIGestureRecognizerStateEnded && !self.didHandleLeftEdgeSwipe) {
-        CGPoint translation = [gestureRecognizer translationInView:self.view];
-        CGPoint velocity = [gestureRecognizer velocityInView:self.view];
-        if (translation.x > 30*kWidthRatio || velocity.x > 300*kWidthRatio) {
-            self.didHandleLeftEdgeSwipe = YES;
-            [self moveSelectedDateByDayOffset:-1];
-        }
+    if (gestureRecognizer.state != UIGestureRecognizerStateChanged || self.didHandleDatePan) {
+        return;
     }
+
+    CGPoint translation = [gestureRecognizer translationInView:self.view];
+    CGPoint velocity = [gestureRecognizer velocityInView:self.view];
+    if (fabs(translation.x) < 40*kWidthRatio && fabs(velocity.x) < 300*kWidthRatio) {
+        return;
+    }
+
+    self.didHandleDatePan = YES;
+    NSInteger dayOffset = translation.x < 0 ? 1 : -1;
+    [self moveSelectedDateByDayOffset:dayOffset];
 }
 
 - (void)moveSelectedDateByDayOffset:(NSInteger)dayOffset
@@ -327,18 +302,27 @@
 
 - (void)addDateSwipeGestures
 {
-    UISwipeGestureRecognizer *leftSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleDateSwipe:)];
-    leftSwipe.direction = UISwipeGestureRecognizerDirectionLeft;
-    [self.view addGestureRecognizer:leftSwipe];
+    UIPanGestureRecognizer *datePan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleDatePan:)];
+    datePan.delegate = self;
+    [self.timelineViewController.view addGestureRecognizer:datePan];
+}
 
-    UISwipeGestureRecognizer *rightSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleDateSwipe:)];
-    rightSwipe.direction = UISwipeGestureRecognizerDirectionRight;
-    [self.view addGestureRecognizer:rightSwipe];
+#pragma mark - UIGestureRecognizerDelegate
 
-    UIScreenEdgePanGestureRecognizer *leftEdgeSwipe = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(handleLeftEdgeDateSwipe:)];
-    leftEdgeSwipe.edges = UIRectEdgeLeft;
-    leftEdgeSwipe.delegate = self;
-    [self.view addGestureRecognizer:leftEdgeSwipe];
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    if (![gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]) {
+        return YES;
+    }
+
+    CGPoint location = [gestureRecognizer locationInView:self.view];
+    if (location.x <= 24*kWidthRatio) {
+        return NO;
+    }
+
+    UIPanGestureRecognizer *pan = (UIPanGestureRecognizer *)gestureRecognizer;
+    CGPoint velocity = [pan velocityInView:self.view];
+    return fabs(velocity.x) > fabs(velocity.y);
 }
 
 - (void)updateSelectedDate:(NSDate *)date
@@ -349,51 +333,6 @@
     self.selectedDate = date;
     [self updateDateHeaderState];
     [self.timelineViewController updateDate:date];
-}
-
-- (void)disableInteractivePopGesture
-{
-    if (!self.disabledNavigationGestureStates) {
-        self.disabledNavigationGestureStates = [NSMutableDictionary dictionary];
-    }
-
-    NSMutableArray<UIGestureRecognizer *> *navigationGestures = [NSMutableArray arrayWithArray:self.navigationController.view.gestureRecognizers ?: @[]];
-    UIGestureRecognizer *popGesture = self.navigationController.interactivePopGestureRecognizer;
-    if (popGesture && ![navigationGestures containsObject:popGesture]) {
-        [navigationGestures addObject:popGesture];
-    }
-
-    for (UIGestureRecognizer *gestureRecognizer in navigationGestures) {
-        BOOL isNavigationPan = [gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class] || [gestureRecognizer isKindOfClass:UIScreenEdgePanGestureRecognizer.class];
-        if (!isNavigationPan) {
-            continue;
-        }
-
-        NSValue *key = [NSValue valueWithNonretainedObject:gestureRecognizer];
-        if (!self.disabledNavigationGestureStates[key]) {
-            self.disabledNavigationGestureStates[key] = @(gestureRecognizer.enabled);
-        }
-        gestureRecognizer.enabled = NO;
-    }
-}
-
-- (void)restoreInteractivePopGesture
-{
-    [self.disabledNavigationGestureStates enumerateKeysAndObjectsUsingBlock:^(NSValue *key, NSNumber *enabled, BOOL *stop) {
-        UIGestureRecognizer *gestureRecognizer = key.nonretainedObjectValue;
-        gestureRecognizer.enabled = enabled.boolValue;
-    }];
-    self.disabledNavigationGestureStates = nil;
-}
-
-#pragma mark - UIGestureRecognizerDelegate
-
-- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
-{
-    if (gestureRecognizer.view == self.navigationController.view) {
-        return NO;
-    }
-    return YES;
 }
 
 #pragma mark - Getters
