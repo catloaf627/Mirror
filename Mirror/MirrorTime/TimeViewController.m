@@ -231,7 +231,7 @@
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     NSArray<NSString *> *languageNames = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어"];
     NSInteger preferredLanguageKey = [MirrorSettings preferredLanguageKey];
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"language"]
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
                                                                              message:nil
                                                                       preferredStyle:UIAlertControllerStyleActionSheet];
     [languageNames enumerateObjectsUsingBlock:^(NSString *languageName, NSUInteger index, BOOL *stop) {
