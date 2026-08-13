@@ -190,7 +190,7 @@ static CGFloat const kDotSize = 8;
     if (!_scrollView) {
         _scrollView = [UIScrollView new];
         _scrollView.backgroundColor = [UIColor clearColor];
-        _scrollView.alwaysBounceVertical = YES;
+        _scrollView.alwaysBounceVertical = NO;
         _scrollView.showsVerticalScrollIndicator = NO;
     }
     return _scrollView;

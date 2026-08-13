@@ -206,30 +206,32 @@
     }];
     [self.interactionView addSubview:self.leftArrow];
     [self.leftArrow mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo(18*kHeightRatio);
-        make.width.mas_equalTo(18*kHeightRatio);
+        make.height.mas_equalTo(30);
+        make.width.mas_equalTo(kLeftRightSpacing);
         make.centerY.mas_equalTo(self.interactionView);
-        make.centerX.mas_equalTo(self.interactionView.mas_left).offset(self.view.frame.size.width/10.0);
+        make.left.mas_equalTo(self.interactionView).offset(kLeftRightSpacing);
     }];
     [self.interactionView addSubview:self.rightArrow];
     [self.rightArrow mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo(18*kHeightRatio);
-        make.width.mas_equalTo(18*kHeightRatio);
+        make.height.mas_equalTo(30);
+        make.width.mas_equalTo(kLeftRightSpacing);
         make.centerY.mas_equalTo(self.interactionView);
-        make.centerX.mas_equalTo(self.interactionView.mas_left).offset(9*self.view.frame.size.width/10.0);
+        make.right.mas_equalTo(self.interactionView).offset(-kLeftRightSpacing);
     }];
     [self.interactionView addSubview:self.dateLabel];
     [self.dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.centerY.offset(0);
+        make.centerX.offset(0);
+        make.bottom.mas_equalTo(_interactionView.mas_centerY).offset(-4);
         make.left.mas_equalTo(_leftArrow.mas_right);
         make.right.mas_equalTo(_rightArrow.mas_left);
     }];
-    [self.view addSubview:self.rangeBarTrackView];
+    [self.interactionView addSubview:self.rangeBarTrackView];
     [self.rangeBarTrackView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
-        make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.interactionView.mas_bottom);
+        make.centerX.offset(0);
+        make.top.mas_equalTo(_interactionView.mas_centerY).offset(4);
         make.height.mas_equalTo(8*kHeightRatio);
+        make.left.mas_equalTo(_leftArrow.mas_right);
+        make.right.mas_equalTo(_rightArrow.mas_left);
     }];
     [self.rangeBarTrackView addSubview:self.rangeBarSelectionView];
     [self.rangeBarSelectionView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -457,7 +459,7 @@
         return;
     }
 
-    CGFloat trackWidth = self.view.frame.size.width - 2*kLeftRightSpacing;
+    CGFloat trackWidth = self.view.frame.size.width - 4*kLeftRightSpacing;
     CGFloat startRatio = (self.selectedStartTime - fullStartTime) / (CGFloat)fullDuration;
     CGFloat endRatio = (self.selectedEndTime - fullStartTime) / (CGFloat)fullDuration;
     startRatio = MIN(1, MAX(0, startRatio));
