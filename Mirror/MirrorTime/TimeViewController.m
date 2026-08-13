@@ -37,6 +37,7 @@
 @property (nonatomic, strong) NSDate *lastNavigationDebugTapDate;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
+@property (nonatomic, strong) UIButton *editButton;
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorTaskModel *> *data;
 // Mark
@@ -45,6 +46,7 @@
 @property (nonatomic, strong) NSIndexPath *movingIndexPath;
 @property (nonatomic, assign) CGPoint longPressStartPoint;
 @property (nonatomic, assign) BOOL didMoveLongPressedTask;
+@property (nonatomic, assign) BOOL isEditingTasks;
 // UI
 @property (nonatomic, strong) UICollectionView *collectionView;
 
@@ -90,7 +92,7 @@
 {
     [super viewWillAppear:animated];
     [self refreshNavigationButtonColors];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.editButton];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -116,7 +118,7 @@
     [[MirrorTabsManager sharedInstance] updateTimeTabItemWithTabController:self.tabBarController];
     if (self.tabBarController.selectedIndex == 0) {
         [self refreshNavigationButtonColors];
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.editButton];
         [self addNavigationDebugGesture];
     }
     // reset ui
@@ -148,6 +150,27 @@
 {
     UIColor *color = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.settingsButton.tintColor = color;
+    self.editButton.tintColor = self.isEditingTasks ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : color;
+}
+
+#pragma mark - Actions
+
+- (void)tapEditButton
+{
+    self.isEditingTasks = !self.isEditingTasks;
+    self.editButton.selected = self.isEditingTasks;
+    self.editButton.tintColor = self.isEditingTasks ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : [UIColor mirrorColorNamed:MirrorColorTypeText];
+    [self updateVisibleTaskCellsForEditingModeAnimated:YES];
+}
+
+- (void)updateVisibleTaskCellsForEditingModeAnimated:(BOOL)animated
+{
+    for (TimeTrackerTaskCollectionViewCell *cell in self.collectionView.visibleCells) {
+        if (![cell isKindOfClass:TimeTrackerTaskCollectionViewCell.class]) {
+            continue;
+        }
+        [cell setEditingModeEnabled:self.isEditingTasks animated:animated];
+    }
 }
 
 #pragma mark - UIDocumentPickerDelegate
@@ -201,9 +224,9 @@
     }
 
     CGRect navigationBarFrame = [navigationBar.superview convertRect:navigationBar.frame toView:window];
-    UIView *hitView = [[UIView alloc] initWithFrame:CGRectMake(CGRectGetMinX(navigationBarFrame) + 70,
+    UIView *hitView = [[UIView alloc] initWithFrame:CGRectMake(CGRectGetMidX(navigationBarFrame) - 80,
                                                                CGRectGetMinY(navigationBarFrame),
-                                                               MAX(0, CGRectGetWidth(navigationBarFrame) - 70),
+                                                               160,
                                                                CGRectGetHeight(navigationBarFrame))];
     hitView.backgroundColor = UIColor.clearColor;
     hitView.userInteractionEnabled = YES;
@@ -409,6 +432,8 @@
             return;
         }
         MirrorColorType selectedColor = [self selectedColorFromColorButtons:colorButtons fallback:task.color];
+        TimeTrackerTaskCollectionViewCell *editedCell = (TimeTrackerTaskCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+        [editedCell setActionButtonsVisible:NO animated:YES];
         if (!textIsTheSame) {
             [MirrorStorage editTask:task.taskName name:newTaskName];
         }
@@ -584,6 +609,13 @@
     }
     // 点击了task model
     TimeTrackerTaskCollectionViewCell *selectedCell = (TimeTrackerTaskCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:selectedIndexPath];
+    if (self.isEditingTasks) {
+        if ([selectedCell dismissActionButtonsIfNeeded]) {
+            return;
+        }
+        [selectedCell setActionButtonsVisible:YES animated:YES];
+        return;
+    }
     if ([selectedCell dismissActionButtonsIfNeeded]) {
         return;
     }
@@ -709,6 +741,7 @@
         TimeTrackerTaskCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[TimeTrackerTaskCollectionViewCell identifier] forIndexPath:indexPath];
         cell.delegate = self;
         [cell configWithTaskname:taskModel.taskName];
+        [cell setEditingModeEnabled:self.isEditingTasks];
         return cell;
     }
 }
@@ -838,6 +871,17 @@
     return _settingsButton;
 }
 
+- (UIButton *)editButton
+{
+    if (!_editButton) {
+        _editButton = [UIButton new];
+        UIImage *iconImage = [[UIImage systemImageNamed:@"pencil.circle"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+        [_editButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+        _editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
+        [_editButton addTarget:self action:@selector(tapEditButton) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _editButton;
+}
 
 - (NSMutableArray<MirrorTaskModel *> *)data
 {

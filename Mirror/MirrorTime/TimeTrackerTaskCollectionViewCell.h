@@ -28,6 +28,9 @@ static CGFloat const kInterspacing = 16;
 
 + (NSString *)identifier;
 - (void)configWithTaskname:(NSString *)taskName;
+- (void)setEditingModeEnabled:(BOOL)editingModeEnabled;
+- (void)setEditingModeEnabled:(BOOL)editingModeEnabled animated:(BOOL)animated;
+- (void)setActionButtonsVisible:(BOOL)visible animated:(BOOL)animated;
 - (BOOL)dismissActionButtonsIfNeeded;
 
 @end
