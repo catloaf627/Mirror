@@ -300,22 +300,22 @@ static CGFloat const kCircleLineWidth = 18;
     [self.taskNameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
         make.bottom.equalTo(self.circleView.mas_top).offset(-36);
-        make.width.lessThanOrEqualTo(@(kScreenWidth - 2*kPadding - 44));
-    }];
-
-    [self.view addSubview:self.noteButton];
-    [self.noteButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.equalTo(self.taskNameLabel.mas_right).offset(8);
-        make.centerY.equalTo(self.taskNameLabel);
-        make.width.height.mas_equalTo(28);
+        make.width.lessThanOrEqualTo(@(kScreenWidth - 2*kPadding));
     }];
     
     [self.view addSubview:self.stopButton];
     [self.stopButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.offset(0);
+        make.centerX.offset(-29);
         make.top.equalTo(self.circleView.mas_bottom).offset(36);
         make.height.mas_equalTo(50);
-        make.width.mas_equalTo(3*(kScreenWidth - 2*20)/4);
+        make.width.mas_equalTo(2*(kScreenWidth - 2*20)/3);
+    }];
+
+    [self.view addSubview:self.noteButton];
+    [self.noteButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.equalTo(self.stopButton.mas_right).offset(8);
+        make.centerY.equalTo(self.stopButton);
+        make.width.height.mas_equalTo(50);
     }];
     
     [self updateLabels];
@@ -356,10 +356,6 @@ static CGFloat const kCircleLineWidth = 18;
         [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"give_up"] forState:UIControlStateNormal];
     }
 
-    self.noteButton.hidden = !canStop;
-    [self.taskNameLabel mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.centerX.offset(canStop ? -18 : 0);
-    }];
     [self.circleView setNeedsDisplay];
 }
 
@@ -424,10 +420,6 @@ static CGFloat const kCircleLineWidth = 18;
 
 - (void)noteButtonClicked
 {
-    if (![self canStopAndKeepRecord]) {
-        return;
-    }
-
     if ([MirrorStorage isGoingOnTask].length == 0) {
         return;
     }
@@ -507,8 +499,12 @@ static CGFloat const kCircleLineWidth = 18;
 {
     if (!_noteButton) {
         _noteButton = [UIButton new];
-        _noteButton.hidden = YES;
-        _noteButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _noteButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _noteButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _noteButton.layer.cornerRadius = 12;
+        _noteButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
+        _noteButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
+        _noteButton.imageView.contentMode = UIViewContentModeCenter;
         _noteButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"note"];
         if (@available(iOS 13.0, *)) {
             UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:21 weight:UIImageSymbolWeightRegular];

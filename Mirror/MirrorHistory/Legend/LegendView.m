@@ -9,14 +9,16 @@
 #import <Masonry/Masonry.h>
 #import "MirrorStorage.h"
 #import "LegendCollectionViewCell.h"
+#import "PiechartView.h"
 
 static CGFloat const kCellHeight = 30; // 一个legend的高度
 static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
 
-@interface LegendView () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
+@interface LegendView () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, PiechartDelegate>
 
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *data;
+@property (nonatomic, copy) NSString *highlightedTaskName;
 
 @end
 
@@ -42,6 +44,7 @@ static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
 - (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data
 {
     self.data = data;
+    self.highlightedTaskName = nil;
     [self.collectionView reloadData];
 }
 
@@ -65,8 +68,46 @@ static NSInteger const kNumOfCellPerRow = 3; // 一行固定放三个cell
 - (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
 {
     LegendCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:[LegendCollectionViewCell identifier] forIndexPath:indexPath];
-    [cell configCellWithTaskname:self.data[indexPath.item].taskModel.taskName];
+    NSString *taskName = self.data[indexPath.item].taskModel.taskName;
+    [cell configCellWithTaskname:taskName highlighted:[taskName isEqualToString:self.highlightedTaskName]];
     return cell;
+}
+
+#pragma mark - PiechartDelegate
+
+- (void)highlightTaskname:(NSString *)taskname
+{
+    NSString *previousTaskName = self.highlightedTaskName;
+    self.highlightedTaskName = taskname;
+    [self updateVisibleCellForTaskName:previousTaskName animated:YES];
+    [self updateVisibleCellForTaskName:taskname animated:YES];
+}
+
+- (void)cancelHighlightTaskname:(NSString *)taskname
+{
+    if ([self.highlightedTaskName isEqualToString:taskname]) {
+        self.highlightedTaskName = nil;
+        [self updateVisibleCellForTaskName:taskname animated:YES];
+    }
+}
+
+- (void)updateVisibleCellForTaskName:(NSString *)taskName animated:(BOOL)animated
+{
+    if (taskName.length == 0) {
+        return;
+    }
+    for (NSIndexPath *indexPath in self.collectionView.indexPathsForVisibleItems) {
+        if (indexPath.item >= self.data.count) {
+            continue;
+        }
+        NSString *cellTaskName = self.data[indexPath.item].taskModel.taskName;
+        if (![cellTaskName isEqualToString:taskName]) {
+            continue;
+        }
+        LegendCollectionViewCell *cell = (LegendCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+        [cell setLegendHighlighted:[cellTaskName isEqualToString:self.highlightedTaskName] taskName:cellTaskName animated:animated];
+        return;
+    }
 }
 
 #pragma mark - UICollectionViewDelegateFlowLayout

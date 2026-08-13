@@ -165,6 +165,7 @@
     
     // piechart
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
+    self.piechartView.delegate = self.legendView;
     [self.piechartView updateWithData:self.data width:width enableInteractive:YES];
     if (self.piechartView.superview) { //security
         [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
@@ -669,6 +670,7 @@
 {
     if (!_piechartView) {
         _piechartView = [[PiechartView alloc] initWithData:self.data width:MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]) enableInteractive:YES];
+        _piechartView.delegate = self.legendView;
     }
     return _piechartView;
 }

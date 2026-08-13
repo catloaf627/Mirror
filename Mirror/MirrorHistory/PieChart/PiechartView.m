@@ -35,6 +35,8 @@
         self.sliceLayerArray = @[].mutableCopy;
         self.data = data;
         self.enableInteractive = enableInteractive;
+        UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handlePieTap:)];
+        [self addGestureRecognizer:tapRecognizer];
         [self drawPiechartWithWidth:(CGFloat)width];
     }
     return self;
@@ -97,10 +99,10 @@
 
 }
 
-- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+- (void)handlePieTap:(UITapGestureRecognizer *)recognizer
 {
     if (!self.enableInteractive) return;
-    CGPoint touchPoint = [[touches anyObject] locationInView:self];
+    CGPoint touchPoint = [recognizer locationInView:self];
     for (int i=0; i<self.sliceLayerArray.count; i++) {
         SliceLayer *slice = self.sliceLayerArray[i];
         if (CGPathContainsPoint(slice.path, 0, touchPoint, YES) && !slice.selected) {

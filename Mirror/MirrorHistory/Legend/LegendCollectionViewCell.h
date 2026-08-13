@@ -13,6 +13,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 + (NSString *)identifier;
 - (void)configCellWithTaskname:(NSString *)taskName;
+- (void)configCellWithTaskname:(NSString *)taskName highlighted:(BOOL)highlighted;
+- (void)setLegendHighlighted:(BOOL)highlighted taskName:(NSString *)taskName animated:(BOOL)animated;
 
 @end
 

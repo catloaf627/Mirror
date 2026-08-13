@@ -12,6 +12,7 @@
 #import "UIFont+MirrorFont.h"
 #import "UIColor+MirrorColor.h"
 static CGFloat const kPadding = 10;
+static NSTimeInterval const kLegendHighlightAnimationDuration = 0.3;
 
 @interface LegendCollectionViewCell ()
 
@@ -30,8 +31,19 @@ static CGFloat const kPadding = 10;
 
 - (void)configCellWithTaskname:(NSString *)taskName
 {
+    [self configCellWithTaskname:taskName highlighted:NO];
+}
+
+- (void)configCellWithTaskname:(NSString *)taskName highlighted:(BOOL)highlighted
+{
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
     self.backgroundColor = [UIColor clearColor];
+    self.layer.cornerRadius = 6;
+    self.layer.masksToBounds = YES;
+    self.contentView.backgroundColor = [UIColor clearColor];
+    [self setLegendHighlighted:highlighted taskName:taskName animated:NO];
+    self.contentView.layer.cornerRadius = 6;
+    self.contentView.layer.masksToBounds = YES;
     [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     
     [self.contentView addSubview:self.coloredView];
@@ -66,7 +78,26 @@ static CGFloat const kPadding = 10;
 - (void)prepareForReuse
 {
     [super prepareForReuse];
+    self.backgroundColor = [UIColor clearColor];
+    self.contentView.backgroundColor = [UIColor clearColor];
     [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+}
+
+- (void)setLegendHighlighted:(BOOL)highlighted taskName:(NSString *)taskName animated:(BOOL)animated
+{
+    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
+    UIColor *highlightColor = highlighted && task ? [[UIColor mirrorColorNamed:task.color] colorWithAlphaComponent:1.0] : [UIColor clearColor];
+    if (!animated) {
+        self.backgroundColor = highlightColor;
+        return;
+    }
+
+    [UIView animateWithDuration:kLegendHighlightAnimationDuration
+                          delay:0
+                        options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+        self.backgroundColor = highlightColor;
+    } completion:nil];
 }
 
 - (UIView *)coloredView
