@@ -36,6 +36,8 @@
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *oneDayData;
 @property (nonatomic, strong) UIScrollView *timelineScrollView;
 @property (nonatomic, strong) TimelineView *timelineContentView;
+@property (nonatomic, strong) UIView *nowLineView;
+@property (nonatomic, strong) NSTimer *nowLineTimer;
 
 @end
 
@@ -70,6 +72,23 @@
 {
     [super viewDidLayoutSubviews];
     [self updateTimelineSizeIfNeeded];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [self startNowLineTimer];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [self stopNowLineTimer];
+}
+
+- (void)dealloc
+{
+    [self stopNowLineTimer];
 }
 
 - (void)setupUI
@@ -339,8 +358,65 @@
     [self.activeRecordView endInlineEditing];
     self.activeRecordView = nil;
     [self.timelineContentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+    self.nowLineView = nil;
     [self renderHourLines];
     [self renderRecords];
+    [self updateNowLine];
+}
+
+- (void)startNowLineTimer
+{
+    [self stopNowLineTimer];
+    self.nowLineTimer = [NSTimer timerWithTimeInterval:60.0
+                                                target:self
+                                              selector:@selector(updateNowLine)
+                                              userInfo:nil
+                                               repeats:YES];
+    [[NSRunLoop mainRunLoop] addTimer:self.nowLineTimer forMode:NSRunLoopCommonModes];
+    [self updateNowLine];
+}
+
+- (void)stopNowLineTimer
+{
+    [self.nowLineTimer invalidate];
+    self.nowLineTimer = nil;
+}
+
+- (void)updateNowLine
+{
+    if (self.hourHeight <= 0 || CGRectGetWidth(self.timelineContentView.bounds) <= 0) {
+        [self.nowLineView removeFromSuperview];
+        self.nowLineView = nil;
+        return;
+    }
+
+    long now = lround([[NSDate now] timeIntervalSince1970]);
+    long dayStart = [self dayStartTimestamp];
+    long dayEnd = [self dayEndTimestamp];
+    if (now < dayStart || now > dayEnd) {
+        [self.nowLineView removeFromSuperview];
+        self.nowLineView = nil;
+        return;
+    }
+
+    if (!self.nowLineView) {
+        self.nowLineView = [UIView new];
+        if (@available(iOS 13.0, *)) {
+            self.nowLineView.backgroundColor = UIColor.systemRedColor;
+        } else {
+            self.nowLineView.backgroundColor = UIColor.redColor;
+        }
+        self.nowLineView.userInteractionEnabled = NO;
+        [self.timelineContentView addSubview:self.nowLineView];
+    }
+
+    CGFloat width = CGRectGetWidth(self.timelineContentView.bounds);
+    CGFloat lineX = kTimelineLeftWidth;
+    CGFloat lineWidth = width - lineX - kTimelineRightPadding;
+    CGFloat lineY = ((CGFloat)(now - dayStart) / 3600.0) * self.hourHeight;
+    CGFloat lineHeight = 1.0;
+    self.nowLineView.frame = CGRectMake(lineX, lineY - lineHeight / 2.0, lineWidth, lineHeight);
+    [self.timelineContentView bringSubviewToFront:self.nowLineView];
 }
 
 - (void)renderHourLines
