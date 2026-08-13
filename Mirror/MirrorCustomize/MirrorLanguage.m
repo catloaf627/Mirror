@@ -156,6 +156,7 @@
     [mirrorDict setValue:ML(@"Starts at", @"开始于", @"Comienza a las", @"Commence à", @"開始時刻", @"시작 시각") forKey:@"starts_at"];
     [mirrorDict setValue:ML(@"OR", @"或", @"O", @"OU", @"または", @"또는") forKey:@"or"];
     [mirrorDict setValue:ML(@"Start now", @"开始计时", @"Empezar ahora", @"Commencer maintenant", @"今すぐ開始", @"지금 시작") forKey:@"start_now"];
+    [mirrorDict setValue:ML(@"The current time is already covered by an existing record, so counting cannot start.", @"当前时间已被已有记录占用，无法开始计时。", @"La hora actual ya está cubierta por un registro existente, así que no se puede empezar a contar.", @"L’heure actuelle est déjà couverte par un enregistrement existant, le chronométrage ne peut pas démarrer.", @"現在時刻は既存の記録に含まれているため、計時を開始できません。", @"현재 시간이 기존 기록에 포함되어 있어 타이머를 시작할 수 없습니다.") forKey:@"current_time_occupied_cannot_start_counting"];
     [mirrorDict setValue:ML(@" hours", @" 小时", @" horas", @" heures", @" 時間", @"시간") forKey:@"picker_hours"];
     [mirrorDict setValue:ML(@" mins", @" 分钟", @" min", @" min", @" 分", @"분") forKey:@"picker_mins"];
     [mirrorDict setValue:ML(@" hour", @" 小时", @" hora", @" heure", @" 時間", @"시간") forKey:@"picker_hour"];
