@@ -15,9 +15,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)mirror_stringWithKey:(NSString *)key languageKey:(NSInteger)languageKey;
 + (NSString *)mirror_stringWithKey:(NSString *)key
                   with1Placeholder:(NSString *)placeholder; // 1参数
-+ (NSString *)localizedSampleTaskNameWithEnglishName:(NSString *)englishName;
-+ (NSArray<NSString *> *)localizedSampleTaskNamesForEnglishName:(NSString *)englishName;
-+ (NSString *)localizedSampleRecordNoteForEnglishTaskName:(NSString *)englishName index:(NSInteger)index;
 
 @end
 
