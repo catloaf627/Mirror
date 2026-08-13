@@ -526,8 +526,39 @@
     }
 
     NSDate *startDate = [NSDate now];
+    if ([self isNowOccupiedByRecord]) {
+        [self showCurrentTimeOccupiedAlert];
+        return;
+    }
     [MirrorStorage startTask:selectedModel.taskName at:startDate];
     [self presentTrackingViewControllerWithTaskName:selectedModel.taskName accurateStartDate:startDate animated:YES];
+}
+
+- (BOOL)isNowOccupiedByRecord
+{
+    long now = [[NSDate now] timeIntervalSince1970];
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    for (MirrorRecordModel *record in records) {
+        if (record.endTime <= record.startTime) {
+            continue;
+        }
+        if (record.startTime > now) {
+            break;
+        }
+        if (record.startTime <= now && now < record.endTime) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)showCurrentTimeOccupiedAlert
+{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                             message:[MirrorLanguage mirror_stringWithKey:@"current_time_occupied_cannot_start_counting"]
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alertController animated:YES completion:nil];
 }
 
 - (void)presentGoingOnTaskIfNeeded

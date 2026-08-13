@@ -423,6 +423,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     NSString *taskName = record.taskName ?: @"";
     NSString *note = record.note ?: @"";
     NSString *text = note.length > 0 ? [NSString stringWithFormat:@"%@  %@", taskName, note] : taskName;
+    text = note.length > 0 ? [NSString stringWithFormat:@"%@  %@ #%ld", taskName, note, (long)record.originalIndex] : [NSString stringWithFormat:@"%@ #%ld", taskName, (long)record.originalIndex]; //gizmo
     NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:text attributes:@{
         NSFontAttributeName: font,
         NSForegroundColorAttributeName: [UIColor mirrorColorNamed:MirrorColorTypeTextHint]
