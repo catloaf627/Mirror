@@ -44,8 +44,26 @@
         _selectedDate = selectedDate ?: [NSDate now];
         _selectionHandler = [selectionHandler copy];
         _gridData = [MirrorStorage getGridData];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSignificantTimeChangeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchThemeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorImportDataNotificaiton object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskStopNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskStartNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskEditNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskMergeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskCreateNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskHiddenNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (void)viewDidLoad
@@ -56,6 +74,39 @@
     [self.calendarView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.offset(0);
     }];
+}
+
+- (void)reloadData
+{
+    NSArray<NSDateComponents *> *previousDateComponents = [self gridDateComponents];
+    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    self.calendarView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    self.calendarView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.calendarView.calendar.timeZone = [NSTimeZone systemTimeZone];
+    self.gridData = [MirrorStorage getGridData];
+    NSMutableArray<NSDateComponents *> *dateComponents = [previousDateComponents mutableCopy];
+    [dateComponents addObjectsFromArray:[self gridDateComponents]];
+    if (@available(iOS 16.0, *)) {
+        [self.calendarView reloadDecorationsForDateComponents:dateComponents animated:NO];
+    }
+}
+
+- (NSArray<NSDateComponents *> *)gridDateComponents
+{
+    NSMutableArray<NSDateComponents *> *components = [NSMutableArray new];
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    for (NSString *key in self.gridData.allKeys) {
+        NSDate *date = [formatter dateFromString:key];
+        if (!date) {
+            continue;
+        }
+        [components addObject:[calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay fromDate:date]];
+    }
+    return components;
 }
 
 - (UICalendarView *)calendarView API_AVAILABLE(ios(16.0))
@@ -205,22 +256,85 @@
 @property (nonatomic, strong) UIView *todayButtonContainer;
 @property (nonatomic, strong) OneDayTimelineViewController *timelineViewController;
 @property (nonatomic, assign) BOOL didHandleDatePan;
+@property (nonatomic, assign) BOOL isLoaded;
 
 @end
 
 @implementation CalendarViewController
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSignificantTimeChangeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchLanguageNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorImportDataNotificaiton object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskStopNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskStartNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskEditNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskMergeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskCreateNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskHiddenNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     self.selectedDate = [NSDate now];
     [self p_setupUI];
+    self.isLoaded = YES;
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
     [self updateNavigationItem];
+}
+
+- (void)restartVC
+{
+    if (!self.isLoaded) {
+        return;
+    }
+
+    [self.timelineViewController willMoveToParentViewController:nil];
+    [self.timelineViewController.view removeFromSuperview];
+    [self.timelineViewController removeFromParentViewController];
+    self.timelineViewController = nil;
+    self.dateHeaderView = nil;
+    self.dateButton = nil;
+    self.todayButton = nil;
+    self.todayButtonContainer = nil;
+    [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+
+    if (self.tabBarController.selectedIndex == 1) {
+        [self updateNavigationItem];
+    }
+    [self p_setupUI];
+}
+
+- (void)reloadData
+{
+    if (!self.isLoaded) {
+        return;
+    }
+
+    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    [self updateDateHeaderState];
+    [self updateDateHeaderColors];
+    [self.timelineViewController updateDate:self.selectedDate ?: [NSDate now]];
 }
 
 - (void)p_setupUI
@@ -355,8 +469,6 @@
     if (!_dateButton) {
         _dateButton = [UIButton new];
         _dateButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
-        _dateButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        [_dateButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
         _dateButton.titleLabel.font = [UIFont mirrorTitleFont];
         UIImage *iconImage = [[UIImage systemImageNamed:@"calendar"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         [_dateButton setImage:iconImage forState:UIControlStateNormal];
@@ -372,10 +484,8 @@
     if (!_todayButton) {
         _todayButton = [UIButton buttonWithType:UIButtonTypeSystem];
         _todayButton.titleLabel.font = [UIFont mirrorButtonFont];
-        _todayButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _todayButton.layer.cornerRadius = 8*kWidthRatio;
         _todayButton.clipsToBounds = YES;
-        [_todayButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeBackground] forState:UIControlStateNormal];
         [_todayButton setTitle:[MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
         [_todayButton addTarget:self action:@selector(goToToday) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -406,7 +516,18 @@
 - (void)updateDateHeaderState
 {
     [_dateButton setTitle:[MirrorTimeText YYYYmmddWeekday:self.selectedDate ?: [NSDate now]] forState:UIControlStateNormal];
+    [self updateDateHeaderColors];
     [self updateNavigationItem];
+}
+
+- (void)updateDateHeaderColors
+{
+    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    self.dateHeaderView.backgroundColor = self.view.backgroundColor;
+    self.dateButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    [self.dateButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
+    self.todayButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    [self.todayButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeBackground] forState:UIControlStateNormal];
 }
 
 - (void)updateNavigationItem
