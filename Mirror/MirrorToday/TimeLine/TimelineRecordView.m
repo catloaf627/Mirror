@@ -84,10 +84,11 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     tapRecognizer.delegate = self;
     [self.foregroundView addGestureRecognizer:tapRecognizer];
 
-    UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressRecordView:)];
-    longPressRecognizer.delegate = self;
-    longPressRecognizer.minimumPressDuration = 0.35;
-    [self.foregroundView addGestureRecognizer:longPressRecognizer];
+    UITapGestureRecognizer *doubleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTapRecordView:)];
+    doubleTapRecognizer.delegate = self;
+    doubleTapRecognizer.numberOfTapsRequired = 2;
+    [self.foregroundView addGestureRecognizer:doubleTapRecognizer];
+    [tapRecognizer requireGestureRecognizerToFail:doubleTapRecognizer];
 
     UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panRecord:)];
     panRecognizer.delegate = self;
@@ -184,9 +185,9 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     [self.delegate timelineRecordViewDidRequestInlineEditing:self];
 }
 
-- (void)longPressRecordView:(UILongPressGestureRecognizer *)recognizer
+- (void)doubleTapRecordView:(UITapGestureRecognizer *)recognizer
 {
-    if (recognizer.state != UIGestureRecognizerStateBegan) {
+    if (recognizer.state != UIGestureRecognizerStateRecognized) {
         return;
     }
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
@@ -461,9 +462,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
 {
-    BOOL isPanAndLongPress = ([gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class] && [otherGestureRecognizer isKindOfClass:UILongPressGestureRecognizer.class]) ||
-                             ([gestureRecognizer isKindOfClass:UILongPressGestureRecognizer.class] && [otherGestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]);
-    return isPanAndLongPress;
+    return NO;
 }
 
 @end
