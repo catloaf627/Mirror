@@ -456,7 +456,10 @@
         return;
     }
 
-    CGFloat trackWidth = self.view.frame.size.width - 4*kLeftRightSpacing;
+    CGFloat trackWidth = self.rangeBarTrackView.bounds.size.width;
+    if (trackWidth <= 0) {
+        trackWidth = self.view.frame.size.width - 4*kLeftRightSpacing;
+    }
     CGFloat startRatio = (self.selectedStartTime - fullStartTime) / (CGFloat)fullDuration;
     CGFloat endRatio = (self.selectedEndTime - fullStartTime) / (CGFloat)fullDuration;
     startRatio = MIN(1, MAX(0, startRatio));
@@ -465,10 +468,14 @@
     CGFloat left = trackWidth * startRatio;
     CGFloat width = trackWidth * MAX(0, endRatio - startRatio);
     BOOL shouldHideRangeBar = width <= 0;
+    CGFloat selectionWidth = MAX(8*kHeightRatio, width); // 最短的状态是一个球形
+    if (left + selectionWidth > trackWidth) {
+        left = MAX(0, trackWidth - selectionWidth);
+    }
     BOOL shouldAnimate = !self.rangeBarTrackView.hidden && !shouldHideRangeBar && self.rangeBarTrackView.window;
     self.rangeBarTrackView.hidden = shouldHideRangeBar;
     [self.rangeBarSelectionLeftConstraint setOffset:left];
-    [self.rangeBarSelectionWidthConstraint setOffset:MAX(2*kWidthRatio, width)];
+    [self.rangeBarSelectionWidthConstraint setOffset:selectionWidth];
 
     if (shouldAnimate) {
         [UIView animateWithDuration:0.25 delay:0 options:UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState animations:^{
