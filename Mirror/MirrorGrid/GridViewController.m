@@ -683,7 +683,7 @@
     if (!_dateLabel) {
         _dateLabel = [UILabel new];
         _dateLabel.textAlignment = NSTextAlignmentCenter;
-        _dateLabel.font = [UIFont mirrorLabelFont];
+        _dateLabel.font = [UIFont mirrorHintFont];
         _dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     }
     return _dateLabel;

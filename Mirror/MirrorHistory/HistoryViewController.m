@@ -429,7 +429,7 @@
         _dateLabel = [UILabel new];
         _dateLabel.textAlignment = NSTextAlignmentCenter;
         _dateLabel.text = @"";
-        _dateLabel.font = [UIFont mirrorLabelFont];
+        _dateLabel.font = [UIFont mirrorHintFont];
         _dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText]; // 和nickname的文字颜色保持一致
     }
     return _dateLabel;
