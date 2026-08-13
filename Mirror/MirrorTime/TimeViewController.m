@@ -87,6 +87,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    [self refreshNavigationButtonColors];
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.cloudButton];
 }
 
@@ -105,6 +106,7 @@
     // update navibar
     [[MirrorTabsManager sharedInstance] updateTimeTabItemWithTabController:self.tabBarController];
     if (self.tabBarController.selectedIndex == 0) {
+        [self refreshNavigationButtonColors];
         [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.cloudButton];
     }
     // reset ui
@@ -130,6 +132,13 @@
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height);
     }];
+}
+
+- (void)refreshNavigationButtonColors
+{
+    UIColor *color = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.settingsButton.tintColor = color;
+    self.cloudButton.tintColor = color;
 }
 
 #pragma mark - UIDocumentPickerDelegate
