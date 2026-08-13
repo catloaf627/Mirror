@@ -15,11 +15,20 @@
 static NSInteger const kMaxTaskCnt = 8;
 static NSString * const kMirrorJSONFileName = @"mirror.json";
 static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwang.dev.Mirror";
+static NSString * const kMirrorGoingOnTaskNameKey = @"MirrorGoingOnTaskNameKey";
+static NSString * const kMirrorGoingOnTaskStartTimestampKey = @"MirrorGoingOnTaskStartTimestampKey";
+static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 
 @interface MirrorStorage ()
 
 // 将一条原始用户记录按“自然日”和查询范围切成 UI 片段；例如 2026-01-01 08:00 到 2026-01-03 08:00 会切出 1/1、1/2、1/3 三段，但不写回数据库。
 + (NSArray<MirrorRecordModel *> *)daySegmentsForRecord:(MirrorRecordModel *)record clippedToStart:(long)rangeStart end:(long)rangeEnd;
++ (void)p_migrateLegacyGoingOnRecordIfNeeded;
++ (void)p_saveGoingOnTask:(NSString *)taskName at:(NSDate *)accurateDate;
++ (void)p_clearGoingOnTask;
++ (NSString *)p_goingOnTaskName;
++ (NSDate * _Nullable)p_goingOnTaskStartDate;
++ (NSString *)p_goingOnTaskNote;
 
 @end
 
@@ -27,28 +36,45 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 
 #pragma mark - Time VC需要的信息
 
-// 返回当前正在计时的任务名；例如最后一条 record 是“阅读 09:00-endTime 0”，返回“阅读”，否则返回空字符串。
+// 返回当前正在计时的任务名；正在计时状态保存在本地 key 中，不再写入未结束的 raw record。
 + (NSString *)isGoingOnTask
 {
-    NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
-    if (allRecords.count > 0 && allRecords[allRecords.count-1].endTime == 0) {
-        return allRecords[allRecords.count-1].taskName;
-    }
-    return @"";
+    [MirrorStorage p_migrateLegacyGoingOnRecordIfNeeded];
+    return [MirrorStorage p_goingOnTaskName];
 }
 
-// App 启动或回到前台时恢复 Live Activity；例如数据库最后一条是未结束的“跑步”，就用它的开始时间继续展示实时活动。
++ (NSDate * _Nullable)goingOnTaskStartDate
+{
+    [MirrorStorage p_migrateLegacyGoingOnRecordIfNeeded];
+    return [MirrorStorage p_goingOnTaskStartDate];
+}
+
++ (NSString *)goingOnTaskNote
+{
+    [MirrorStorage p_migrateLegacyGoingOnRecordIfNeeded];
+    return [MirrorStorage p_goingOnTaskNote];
+}
+
++ (void)saveGoingOnTaskNote:(NSString *)note
+{
+    NSString *goingOnTask = [MirrorStorage isGoingOnTask];
+    if (goingOnTask.length == 0) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:note ?: @"" forKey:kMirrorGoingOnTaskNoteKey];
+}
+
+// App 启动或回到前台时恢复 Live Activity；例如本地 key 中保存了“跑步”的开始时间，就继续展示实时活动。
 + (void)resumeGoingOnLiveActivityIfNeeded
 {
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    MirrorRecordModel *record = records.lastObject;
-    if (record == nil || record.endTime != 0) {
+    NSString *taskName = [MirrorStorage isGoingOnTask];
+    NSDate *startDate = [MirrorStorage goingOnTaskStartDate];
+    if (taskName.length == 0 || startDate == nil) {
         return;
     }
 
-    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
-    NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:record.startTime];
-    [MirrorStorage p_startLiveActivityWithTaskName:record.taskName startDate:startDate colorType:task.color];
+    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
+    [MirrorStorage p_startLiveActivityWithTaskName:taskName startDate:startDate colorType:task.color];
 }
 
 // 取出任务列表，并在末尾追加一个“新增任务”的占位模型；例如真实任务有 A/B，返回 A/B/+。
@@ -104,6 +130,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     }
     [MirrorStorage saveMirrorRecords:validRecords];
     if (deletesGoingOnTask) {
+        [MirrorStorage p_clearGoingOnTask];
         [MirrorStorage p_endLiveActivity];
     }
     // 通知
@@ -243,7 +270,7 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 // 按查询范围和自然日切 UI 片段；例如原始记录 1/1 08:00-1/3 08:00，查询 1/2 00:00-1/3 00:00 时只返回 1/2 全天片段。
 + (NSArray<MirrorRecordModel *> *)daySegmentsForRecord:(MirrorRecordModel *)record clippedToStart:(long)rangeStart end:(long)rangeEnd
 {
-    if (record.endTime == 0) {
+    if (record.endTime <= record.startTime) {
         return @[];
     }
     long startTime = MAX(record.startTime, rangeStart);
@@ -274,10 +301,10 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     return records;
 }
 
-// 开始计时的公开入口；例如点击“阅读”开始，会新增 endTime=0 的原始记录、启动 Live Activity、发通知。
+// 开始计时的公开入口；例如点击“阅读”开始，会把任务名和开始时间写入本地 key、启动 Live Activity、发通知。
 + (void)startTask:(NSString *)taskName at:(NSDate *)accurateDate
 {
-    [MirrorStorage p_startTask:taskName at:accurateDate];
+    [MirrorStorage p_saveGoingOnTask:taskName at:accurateDate];
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
     NSDate *date = [self dateWithoutSeconds:accurateDate];
     [MirrorStorage p_startLiveActivityWithTaskName:taskName startDate:date colorType:task.color];
@@ -286,17 +313,17 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
-// 只写入“正在计时”的原始记录，不发通知也不启动 Live Activity；例如内部创建“阅读 09:00-endTime 0”。
-+ (void)p_startTask:(NSString *)taskName at:(NSDate *)accurateDate
+// 只保存“正在计时”的本地状态，不发通知也不启动 Live Activity。
++ (void)p_saveGoingOnTask:(NSString *)taskName at:(NSDate *)accurateDate
 {
     NSDate *date = [self dateWithoutSeconds:accurateDate];
-    NSMutableArray <MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:taskName startTime:round([date timeIntervalSince1970]) endTime:0];
-    [records addObject:newRecord];
-    [MirrorStorage saveMirrorRecords:records];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setObject:taskName ?: @"" forKey:kMirrorGoingOnTaskNameKey];
+    [defaults setDouble:[date timeIntervalSince1970] forKey:kMirrorGoingOnTaskStartTimestampKey];
+    [defaults removeObjectForKey:kMirrorGoingOnTaskNoteKey];
 }
 
-// 停止计时的公开入口；例如 09:00 开始“阅读”、10:15 停止，会把最后一条原始记录结束在 10:15 并发停止通知。
+// 停止计时的公开入口；例如 09:00 开始“阅读”、10:15 停止，会新增一条完整 raw record 并发停止通知。
 + (void)stopTask:(NSString *)taskName at:(NSDate *)accurateDate
 {
     [MirrorStorage p_stopTask:taskName at:accurateDate];
@@ -306,29 +333,48 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
-// 只结束最后一条正在计时的原始记录；例如跨天 1/1 23:00 到 1/2 01:00 仍保存为一条 raw record，不在这里切分。
-+ (void)p_stopTask:(NSString *)taskName at:(NSDate *)accurateDate // 这里taskname没用
++ (void)cancelGoingOnTask
 {
-    NSDate *date = [self dateWithoutSeconds:accurateDate];
-    NSMutableArray <MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    if (records.count == 0) {
+    if ([MirrorStorage isGoingOnTask].length == 0) {
         return;
     }
-    MirrorRecordModel *recordToBeEditted = records[records.count-1]; // 最后(新)一个record
-    long start = recordToBeEditted.startTime;
-    long end = [date timeIntervalSince1970];
-    long length = end - start;
-    NSLog(@"%@计时结束 %ld", taskName, length);
-    
-    if (end <= start || length < kMinSeconds) {
-        [records removeObjectAtIndex:records.count-1];
-        [MirrorStorage saveMirrorRecords:records];
+    [MirrorStorage p_clearGoingOnTask];
+    [MirrorStorage p_endLiveActivity];
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
+    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
+// 只把本地计时状态落成完整 raw record；例如跨天 1/1 23:00 到 1/2 01:00 仍保存为一条 raw record，不在这里切分。
++ (void)p_stopTask:(NSString *)taskName at:(NSDate *)accurateDate
+{
+    NSString *goingOnTask = [MirrorStorage isGoingOnTask];
+    NSDate *startDate = [MirrorStorage goingOnTaskStartDate];
+    if (goingOnTask.length == 0 || startDate == nil) {
         return;
     }
 
-    recordToBeEditted.endTime = round([date timeIntervalSince1970]);
-    records[records.count - 1] = recordToBeEditted;
+    NSDate *date = [self dateWithoutSeconds:accurateDate];
+    long start = round([startDate timeIntervalSince1970]);
+    long end = [date timeIntervalSince1970];
+    long length = end - start;
+    NSLog(@"%@计时结束 %ld", goingOnTask, length);
+    
+    if (end <= start || length < kMinSeconds) {
+        [MirrorStorage p_clearGoingOnTask];
+        return;
+    }
+
+    NSMutableArray <MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:goingOnTask.length > 0 ? goingOnTask : taskName startTime:start endTime:round([date timeIntervalSince1970])];
+    newRecord.note = [MirrorStorage p_goingOnTaskNote];
+    [records addObject:newRecord];
+    [records sortUsingComparator:^NSComparisonResult(MirrorRecordModel *record1, MirrorRecordModel *record2) {
+        if (record1.startTime < record2.startTime) return NSOrderedAscending;
+        if (record1.startTime > record2.startTime) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
     [MirrorStorage saveMirrorRecords:records];
+    [MirrorStorage p_clearGoingOnTask];
 }
 
 // 检查新任务名是否已存在；例如已有“阅读”时再输入“阅读”，返回 TaskNameExistsTypeExistsInCurrentTasks。
@@ -347,15 +393,67 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
 + (void)deletePeriodAtIndex:(NSInteger)index
 {
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    BOOL deletesGoingOnTask = index >= 0 && index < records.count && records[index].endTime == 0;
+    if (index < 0 || index >= records.count) {
+        return;
+    }
     [records removeObjectAtIndex:index];
     [MirrorStorage saveMirrorRecords:records];
-    if (deletesGoingOnTask) {
-        [MirrorStorage p_endLiveActivity];
-    }
     NSLog(@"Period deleted");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodDeleteNotification object:nil userInfo:nil];
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
+}
+
++ (void)p_migrateLegacyGoingOnRecordIfNeeded
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    if ([defaults stringForKey:kMirrorGoingOnTaskNameKey].length > 0 && [defaults doubleForKey:kMirrorGoingOnTaskStartTimestampKey] > 0) {
+        return;
+    }
+
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    MirrorRecordModel *lastRecord = records.lastObject;
+    if (lastRecord == nil || lastRecord.endTime > lastRecord.startTime) {
+        return;
+    }
+
+    [defaults setObject:lastRecord.taskName ?: @"" forKey:kMirrorGoingOnTaskNameKey];
+    [defaults setDouble:lastRecord.startTime forKey:kMirrorGoingOnTaskStartTimestampKey];
+    [defaults setObject:lastRecord.note ?: @"" forKey:kMirrorGoingOnTaskNoteKey];
+    [records removeLastObject];
+    [MirrorStorage saveMirrorRecords:records];
+}
+
++ (void)p_clearGoingOnTask
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults removeObjectForKey:kMirrorGoingOnTaskNameKey];
+    [defaults removeObjectForKey:kMirrorGoingOnTaskStartTimestampKey];
+    [defaults removeObjectForKey:kMirrorGoingOnTaskNoteKey];
+}
+
++ (NSString *)p_goingOnTaskName
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *taskName = [defaults stringForKey:kMirrorGoingOnTaskNameKey];
+    NSTimeInterval startTimestamp = [defaults doubleForKey:kMirrorGoingOnTaskStartTimestampKey];
+    if (taskName.length == 0 || startTimestamp <= 0) {
+        return @"";
+    }
+    return taskName;
+}
+
++ (NSDate * _Nullable)p_goingOnTaskStartDate
+{
+    NSTimeInterval startTimestamp = [[NSUserDefaults standardUserDefaults] doubleForKey:kMirrorGoingOnTaskStartTimestampKey];
+    if (startTimestamp <= 0) {
+        return nil;
+    }
+    return [NSDate dateWithTimeIntervalSince1970:startTimestamp];
+}
+
++ (NSString *)p_goingOnTaskNote
+{
+    return [[NSUserDefaults standardUserDefaults] stringForKey:kMirrorGoingOnTaskNoteKey] ?: @"";
 }
 
 // 通过 Swift Live Activity 管理器启动实时活动；例如“阅读 09:00”会传 taskName、开始时间戳和颜色。
@@ -811,8 +909,8 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         if (printDetailsToDebug) {
             NSLog(@"period数据：[%@,%@]，选取的时间段：[%@,%@]", [MirrorTool timeFromTimestamp:record.startTime printTimeStamp:NO], [MirrorTool timeFromTimestamp:record.endTime printTimeStamp:NO], [MirrorTool timeFromTimestamp:startTime printTimeStamp:NO], [MirrorTool timeFromTimestamp:endTime printTimeStamp:NO]);
         }
-        if (record.endTime == 0) {
-            if (printDetailsToDebug) NSLog(@"✖️正在计时中，不管");
+        if (record.endTime <= record.startTime) {
+            if (printDetailsToDebug) NSLog(@"✖️无效时长，不管");
             continue;
         }
         // r.end < starttime
@@ -845,8 +943,8 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
         if (printDetailsToDebug) {
             NSLog(@"period数据：[%@,%@]，选取的时间段：[%@,%@]", [MirrorTool timeFromTimestamp:record.startTime printTimeStamp:NO], [MirrorTool timeFromTimestamp:record.startTime printTimeStamp:NO], [MirrorTool timeFromTimestamp:startTime printTimeStamp:NO], [MirrorTool timeFromTimestamp:endTime printTimeStamp:NO]);
         }
-        if (record.endTime == 0) {
-            if (printDetailsToDebug) NSLog(@"✖️正在计时中，不管");
+        if (record.endTime <= record.startTime) {
+            if (printDetailsToDebug) NSLog(@"✖️无效时长，不管");
             continue;
         }
         // r.end < starttime

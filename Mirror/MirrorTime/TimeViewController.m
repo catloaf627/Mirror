@@ -603,7 +603,7 @@
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
     long now = [[NSDate now] timeIntervalSince1970];
     for (MirrorRecordModel *record in records) {
-        if (record.endTime == 0 || record.endTime > now) {
+        if (record.endTime > now) {
             [occupiedRecords addObject:record];
         }
     }

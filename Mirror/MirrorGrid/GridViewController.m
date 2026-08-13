@@ -780,12 +780,14 @@
 - (NSDate *)getMinDateForGrid
 {
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
-    BOOL hasRecord = allRecords.count > 0 && allRecords[0].endTime != 0;
     NSDate *today = [NSDate now];
     NSDate *realFirstDate = today;
-    if (hasRecord) {
-        NSDate *firstRecordDate = [NSDate dateWithTimeIntervalSince1970:allRecords[0].startTime];
-        realFirstDate = [firstRecordDate compare:today] == NSOrderedAscending ? firstRecordDate : today;
+    for (MirrorRecordModel *record in allRecords) {
+        if (record.endTime > record.startTime) {
+            NSDate *firstRecordDate = [NSDate dateWithTimeIntervalSince1970:record.startTime];
+            realFirstDate = [firstRecordDate compare:today] == NSOrderedAscending ? firstRecordDate : today;
+            break;
+        }
     }
     
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
@@ -810,13 +812,18 @@
 - (NSDate *)getMaxDateForGrid
 {
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
-    BOOL hasRecord = allRecords.count > 0 && allRecords[0].endTime != 0;
-    if (!hasRecord) {
+    MirrorRecordModel *lastValidRecord = nil;
+    for (MirrorRecordModel *record in allRecords.reverseObjectEnumerator) {
+        if (record.endTime > record.startTime) {
+            lastValidRecord = record;
+            break;
+        }
+    }
+    if (!lastValidRecord) {
         return [NSDate now];
     }
     
-    MirrorRecordModel *lastRecord = allRecords[allRecords.count - 1];
-    NSDate *lastRecordEndDate = [NSDate dateWithTimeIntervalSince1970:lastRecord.endTime];
+    NSDate *lastRecordEndDate = [NSDate dateWithTimeIntervalSince1970:lastValidRecord.endTime];
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
     NSDateComponents *endComponents = [gregorian components:(NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond) fromDate:lastRecordEndDate];

@@ -383,7 +383,7 @@ static CGFloat const kCircleLineWidth = 18;
     if ([self canStopAndKeepRecord]) {
         [MirrorStorage stopTask:self.taskName at:[NSDate now]];
     } else {
-        [MirrorStorage deletePeriodAtIndex:[MirrorStorage retriveMirrorRecords].count-1];
+        [MirrorStorage cancelGoingOnTask];
     }
 }
 
@@ -393,15 +393,13 @@ static CGFloat const kCircleLineWidth = 18;
         return;
     }
 
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    NSInteger periodIndex = records.count - 1;
-    if (periodIndex < 0 || records[periodIndex].endTime != 0) {
+    if ([MirrorStorage isGoingOnTask].length == 0) {
         return;
     }
 
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"note"] message:nil preferredStyle:UIAlertControllerStyleAlert];
     [alert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
-        textField.text = records[periodIndex].note;
+        textField.text = [MirrorStorage goingOnTaskNote];
         textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"note"];
         textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     }];
@@ -412,7 +410,7 @@ static CGFloat const kCircleLineWidth = 18;
         if (note.length > 200) {
             note = [note substringToIndex:200];
         }
-        [MirrorStorage editPeriodNote:note periodIndex:periodIndex];
+        [MirrorStorage saveGoingOnTaskNote:note];
     }];
     [alert addAction:cancelAction];
     [alert addAction:saveAction];
@@ -433,11 +431,7 @@ static CGFloat const kCircleLineWidth = 18;
 
 - (NSDate *)startTime
 {
-    NSMutableArray<MirrorRecordModel *> * records = [MirrorStorage retriveMirrorRecords];
-    long startTimestamp = records[records.count -1].startTime;
-//    startTimestamp = startTimestamp - 3600*3 - 60*25;
-    NSDate *startTime = [NSDate dateWithTimeIntervalSince1970:startTimestamp];
-    return startTime;
+    return [MirrorStorage goingOnTaskStartDate] ?: [NSDate now];
 }
 
 - (NSDate *)accurateStartDate

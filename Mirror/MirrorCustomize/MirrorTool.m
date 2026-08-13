@@ -137,7 +137,7 @@
     long seconds = 0;
     for (int i=0; i<periods.count; i++) {
         MirrorRecordModel *period = periods[i];
-        if (period.endTime != 0) {
+        if (period.endTime > period.startTime) {
             seconds = seconds + (period.endTime - period.startTime);
         }
     }

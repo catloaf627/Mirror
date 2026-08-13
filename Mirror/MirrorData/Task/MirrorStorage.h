@@ -21,6 +21,12 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (NSString *)isGoingOnTask; // 返回为空意味着没有正在进行的task
 
++ (NSDate * _Nullable)goingOnTaskStartDate;
+
++ (NSString *)goingOnTaskNote;
+
++ (void)saveGoingOnTaskNote:(NSString *)note;
+
 + (NSMutableArray<MirrorTaskModel *> *)tasksWithAddNew;
 
 // Actions
@@ -44,6 +50,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 + (void)startTask:(NSString *)taskName at:(NSDate *)accurateDate;
 
 + (void)stopTask:(NSString *)taskName at:(NSDate *)accurateDate;
+
++ (void)cancelGoingOnTask;
 
 + (void)resumeGoingOnLiveActivityIfNeeded;
 
