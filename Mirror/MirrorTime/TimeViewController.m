@@ -649,6 +649,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     if ([selectedCell dismissActionButtonsIfNeeded]) {
         return;
     }
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     self.selectedCellFrame = selectedCell.frame; // update selected cell frame的时机
     self.selectedTaskColor = [UIColor mirrorColorNamed:selectedModel.color];
     NSString *goingOnTask = [MirrorStorage isGoingOnTask];

@@ -425,12 +425,19 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     return -M_PI_2 + 2*M_PI*(minuteInHour / 60.0);
 }
 
+- (void)triggerButtonHapticFeedback
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+}
+
 - (void)stopButtonClicked
 {
-    [self dismissViewControllerAnimated:YES completion:nil];
     if ([self canStopAndKeepRecord]) {
+        [self triggerButtonHapticFeedback];
+        [self dismissViewControllerAnimated:YES completion:nil];
         [MirrorStorage stopTask:self.taskName at:[NSDate now]];
     } else {
+        [self dismissViewControllerAnimated:YES completion:nil];
         [MirrorStorage cancelGoingOnTask];
     }
 }
