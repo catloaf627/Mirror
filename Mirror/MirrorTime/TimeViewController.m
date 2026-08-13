@@ -28,10 +28,9 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
-@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIAdaptivePresentationControllerDelegate>
+@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
-@property (nonatomic, assign) BOOL isLanguagePickerPresented;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
 // Data source
@@ -86,7 +85,6 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [self updateLanguageButtonTint];
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
 }
 
@@ -145,28 +143,14 @@
     [languageNames enumerateObjectsUsingBlock:^(NSString *languageName, NSUInteger index, BOOL *stop) {
         NSString *title = index == preferredLanguageKey ? [languageName stringByAppendingString:@" ✓"] : languageName;
         [alertController addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            self.isLanguagePickerPresented = NO;
-            [self updateLanguageButtonTint];
             [MirrorSettings changeLanguageWithKey:index];
         }]];
     }];
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-        self.isLanguagePickerPresented = NO;
-        [self updateLanguageButtonTint];
-    }]];
-    alertController.presentationController.delegate = self;
-    self.isLanguagePickerPresented = YES;
-    [self updateLanguageButtonTint];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
     alertController.popoverPresentationController.sourceView = self.settingsButton;
     alertController.popoverPresentationController.sourceRect = self.settingsButton.bounds;
     alertController.popoverPresentationController.permittedArrowDirections = UIPopoverArrowDirectionUp;
     [self presentViewController:alertController animated:YES completion:nil];
-}
-
-- (void)presentationControllerDidDismiss:(UIPresentationController *)presentationController
-{
-    self.isLanguagePickerPresented = NO;
-    [self updateLanguageButtonTint];
 }
 
 - (void)longPressTask:(UILongPressGestureRecognizer *)longPress
@@ -683,16 +667,10 @@
         _settingsButton = [UIButton new];
         UIImage *iconImage = [[UIImage systemImageNamed:@"a.square"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
         [_settingsButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+        _settingsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
         [_settingsButton addTarget:self action:@selector(showLanguagePicker) forControlEvents:UIControlEventTouchUpInside];
-        [self updateLanguageButtonTint];
     }
     return _settingsButton;
-}
-
-- (void)updateLanguageButtonTint
-{
-    MirrorColorType colorType = self.isLanguagePickerPresented ? MirrorColorTypeTabbarIconTextHightlight : MirrorColorTypeTabbarIconText;
-    self.settingsButton.tintColor = [UIColor mirrorColorNamed:colorType];
 }
 
 - (NSMutableArray<MirrorTaskModel *> *)data
