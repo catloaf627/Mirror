@@ -32,9 +32,11 @@
 @interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIDocumentPickerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
+@property (nonatomic, strong) UIView *navigationDebugHitView;
+@property (nonatomic, assign) NSInteger navigationDebugTapCount;
+@property (nonatomic, strong) NSDate *lastNavigationDebugTapDate;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
-@property (nonatomic, strong) UIButton *cloudButton;
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorTaskModel *> *data;
 // Mark
@@ -88,7 +90,13 @@
 {
     [super viewWillAppear:animated];
     [self refreshNavigationButtonColors];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.cloudButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+}
+
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    [self removeNavigationDebugGesture];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -97,6 +105,7 @@
     [self.collectionView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
     }];
+    [self addNavigationDebugGesture];
     [self presentGoingOnTaskIfNeeded];
 }
 
@@ -107,7 +116,8 @@
     [[MirrorTabsManager sharedInstance] updateTimeTabItemWithTabController:self.tabBarController];
     if (self.tabBarController.selectedIndex == 0) {
         [self refreshNavigationButtonColors];
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.cloudButton];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+        [self addNavigationDebugGesture];
     }
     // reset ui
     self.collectionView = nil;
@@ -138,7 +148,6 @@
 {
     UIColor *color = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.settingsButton.tintColor = color;
-    self.cloudButton.tintColor = color;
 }
 
 #pragma mark - UIDocumentPickerDelegate
@@ -181,20 +190,74 @@
 
 #pragma mark - Actions
 
-- (void)showCloudSummary
+- (void)addNavigationDebugGesture
 {
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    NSNumber *taskCount = [MirrorStorage iCloudTaskCount] ?: @0;
-    NSNumber *recordCount = [MirrorStorage iCloudRecordCount] ?: @0;
-    NSString *message = [NSString stringWithFormat:[MirrorLanguage mirror_stringWithKey:@"icloud_summary_message"], taskCount.stringValue, recordCount.stringValue];
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:message preferredStyle:UIAlertControllerStyleAlert];
+    [self removeNavigationDebugGesture];
+
+    UIWindow *window = self.view.window;
+    UINavigationBar *navigationBar = self.navigationController.navigationBar;
+    if (!window || !navigationBar) {
+        return;
+    }
+
+    CGRect navigationBarFrame = [navigationBar.superview convertRect:navigationBar.frame toView:window];
+    UIView *hitView = [[UIView alloc] initWithFrame:CGRectMake(CGRectGetMinX(navigationBarFrame) + 70,
+                                                               CGRectGetMinY(navigationBarFrame),
+                                                               MAX(0, CGRectGetWidth(navigationBarFrame) - 70),
+                                                               CGRectGetHeight(navigationBarFrame))];
+    hitView.backgroundColor = UIColor.clearColor;
+    hitView.userInteractionEnabled = YES;
+    self.navigationDebugHitView = hitView;
+    [window addSubview:hitView];
+
+    UITapGestureRecognizer *debugTapRecognizer = [UITapGestureRecognizer new];
+    debugTapRecognizer.numberOfTouchesRequired = 2;
+    [debugTapRecognizer addTarget:self action:@selector(countNavigationDebugTap:)];
+    [hitView addGestureRecognizer:debugTapRecognizer];
+}
+
+- (void)removeNavigationDebugGesture
+{
+    [self.navigationDebugHitView removeFromSuperview];
+    self.navigationDebugHitView = nil;
+    self.navigationDebugTapCount = 0;
+    self.lastNavigationDebugTapDate = nil;
+}
+
+- (void)countNavigationDebugTap:(UITapGestureRecognizer *)tapRecognizer
+{
+    if (tapRecognizer.state != UIGestureRecognizerStateRecognized || self.presentedViewController) {
+        return;
+    }
+
+    NSDate *now = [NSDate date];
+    if (self.lastNavigationDebugTapDate && [now timeIntervalSinceDate:self.lastNavigationDebugTapDate] > 2) {
+        self.navigationDebugTapCount = 0;
+    }
+
+    self.lastNavigationDebugTapDate = now;
+    self.navigationDebugTapCount += 1;
+    if (self.navigationDebugTapCount < 11) {
+        return;
+    }
+
+    self.navigationDebugTapCount = 0;
+    self.lastNavigationDebugTapDate = nil;
+    [self showJSONImportExportAlert];
+}
+
+- (void)showJSONImportExportAlert
+{
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"export_or_import"]
+                                                                             message:nil
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
     [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"export_json"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self exportJSONData];
     }]];
     [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"import_json"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self showJSONDocumentPicker];
     }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleCancel handler:nil]];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
     [self presentViewController:alertController animated:YES completion:nil];
 }
 
@@ -213,8 +276,8 @@
     [data writeToURL:url atomically:NO];
     UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:nil];
     activityViewController.excludedActivityTypes = @[];
-    activityViewController.popoverPresentationController.sourceView = self.cloudButton;
-    activityViewController.popoverPresentationController.sourceRect = self.cloudButton.bounds;
+    activityViewController.popoverPresentationController.sourceView = self.navigationDebugHitView ?: self.view;
+    activityViewController.popoverPresentationController.sourceRect = self.navigationDebugHitView ? self.navigationDebugHitView.bounds : CGRectMake(self.view.bounds.size.width / 2, 0, 1, 1);
     [self presentViewController:activityViewController animated:YES completion:nil];
 }
 
@@ -775,22 +838,6 @@
     return _settingsButton;
 }
 
-- (UIButton *)cloudButton
-{
-    if (!_cloudButton) {
-        _cloudButton = [UIButton new];
-        _cloudButton.accessibilityIdentifier = @"MirrorNaviIconUsesCustomConfiguration";
-        UIImage *iconImage = [[UIImage systemImageNamed:@"icloud"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_cloudButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        if (@available(iOS 13.0, *)) {
-            UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular];
-            [_cloudButton setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateNormal];
-        }
-        _cloudButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
-        [_cloudButton addTarget:self action:@selector(showCloudSummary) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _cloudButton;
-}
 
 - (NSMutableArray<MirrorTaskModel *> *)data
 {
