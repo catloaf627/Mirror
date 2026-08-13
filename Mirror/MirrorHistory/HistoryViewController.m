@@ -12,6 +12,7 @@
 #import "MirrorNaviManager.h"
 #import "UIColor+MirrorColor.h"
 #import <Masonry/Masonry.h>
+#import <QuartzCore/QuartzCore.h>
 #import "TaskProgressListView.h"
 #import "LegendView.h"
 #import "MirrorLanguage.h"
@@ -23,6 +24,7 @@
 #import "MirrorStorage.h"
 #import "MirrorTimeText.h"
 #import "UIFont+MirrorFont.h"
+#import <limits.h>
 
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
@@ -43,6 +45,13 @@
 @property (nonatomic, strong) UIImageView *rightArrow;
 @property (nonatomic, strong) UILabel *dateLabel;
 @property (nonatomic, strong) MASConstraint *dateLabelWidthConstraint;
+@property (nonatomic, strong) UIView *rangeBarTrackView;
+@property (nonatomic, strong) UIView *rangeBarSelectionView;
+@property (nonatomic, strong) CAGradientLayer *rangeBarGradientLayer;
+@property (nonatomic, strong) MASConstraint *rangeBarSelectionLeftConstraint;
+@property (nonatomic, strong) MASConstraint *rangeBarSelectionWidthConstraint;
+@property (nonatomic, assign) long selectedStartTime;
+@property (nonatomic, assign) long selectedEndTime;
 @property (nonatomic, strong) LegendView *legendView;
 @property (nonatomic, strong) TaskProgressListView *taskProgressListView;
 @property (nonatomic, strong) PiechartView *piechartView;
@@ -90,6 +99,15 @@
     _isLoaded = YES;
 }
 
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    self.rangeBarGradientLayer.frame = self.rangeBarSelectionView.bounds;
+    [CATransaction commit];
+}
+
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
@@ -107,6 +125,12 @@
     self.leftArrow = nil;
     self.rightArrow = nil;
     self.dateLabel = nil;
+    self.dateLabelWidthConstraint = nil;
+    self.rangeBarTrackView = nil;
+    self.rangeBarSelectionView = nil;
+    self.rangeBarGradientLayer = nil;
+    self.rangeBarSelectionLeftConstraint = nil;
+    self.rangeBarSelectionWidthConstraint = nil;
     self.legendView = nil;
     self.taskProgressListView = nil;
     self.piechartView = nil;
@@ -157,6 +181,7 @@
         }];
     }
     self.piechartView.hidden = ![MirrorSettings appliedPieChartData];
+    [self updateRangeBar];
 
 }
 
@@ -199,11 +224,24 @@
         make.left.mas_equalTo(_leftArrow.mas_right);
         make.right.mas_equalTo(_rightArrow.mas_left);
     }];
+    [self.view addSubview:self.rangeBarTrackView];
+    [self.rangeBarTrackView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
+        make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
+        make.top.mas_equalTo(self.interactionView.mas_bottom);
+        make.height.mas_equalTo(8*kHeightRatio);
+    }];
+    [self.rangeBarTrackView addSubview:self.rangeBarSelectionView];
+    [self.rangeBarSelectionView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.bottom.offset(0);
+        self.rangeBarSelectionLeftConstraint = make.left.offset(0);
+        self.rangeBarSelectionWidthConstraint = make.width.mas_equalTo(0);
+    }];
     [self.view addSubview:self.legendView];
     [self.legendView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.interactionView.mas_bottom).offset(kGapInLine);
+        make.top.mas_equalTo(self.rangeBarTrackView.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
     [self.view addSubview:self.taskProgressListView];
@@ -238,6 +276,7 @@
     [tapRecognizer addTarget:self action:@selector(tapGestureRecognizerAction:)];
     [self.interactionView addGestureRecognizer:tapRecognizer];
     [self addPeriodSwipeGestures];
+    [self updateRangeBar];
 
 
 }
@@ -379,6 +418,8 @@
         endTime = startTime + numberOfDaysIYear*86400;
     }
     
+    self.selectedStartTime = startTime;
+    self.selectedEndTime = endTime;
     self.legendData = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
     self.data = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:YES];
     // update label
@@ -398,6 +439,59 @@
 - (void)updateSpanText:(NSString *)text
 {
     self.dateLabel.text = text;
+}
+
+- (void)updateRangeBar
+{
+    NSArray<NSNumber *> *range = [self fullRecordsStartEndRange];
+    if (range.count < 2 || self.selectedEndTime <= self.selectedStartTime) {
+        self.rangeBarTrackView.hidden = YES;
+        return;
+    }
+
+    long fullStartTime = range[0].longValue;
+    long fullEndTime = range[1].longValue;
+    long fullDuration = fullEndTime - fullStartTime;
+    if (fullDuration <= 0) {
+        self.rangeBarTrackView.hidden = YES;
+        return;
+    }
+
+    CGFloat trackWidth = self.view.frame.size.width - 2*kLeftRightSpacing;
+    CGFloat startRatio = (self.selectedStartTime - fullStartTime) / (CGFloat)fullDuration;
+    CGFloat endRatio = (self.selectedEndTime - fullStartTime) / (CGFloat)fullDuration;
+    startRatio = MIN(1, MAX(0, startRatio));
+    endRatio = MIN(1, MAX(0, endRatio));
+
+    CGFloat left = trackWidth * startRatio;
+    CGFloat width = trackWidth * MAX(0, endRatio - startRatio);
+    self.rangeBarTrackView.hidden = width <= 0;
+    [self.rangeBarSelectionLeftConstraint setOffset:left];
+    [self.rangeBarSelectionWidthConstraint setOffset:MAX(2*kWidthRatio, width)];
+    [self.rangeBarTrackView layoutIfNeeded];
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    self.rangeBarGradientLayer.frame = self.rangeBarSelectionView.bounds;
+    [CATransaction commit];
+}
+
+- (NSArray<NSNumber *> *)fullRecordsStartEndRange
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (records.count == 0) {
+        return @[];
+    }
+
+    long startTime = LONG_MAX;
+    long endTime = 0;
+    for (MirrorRecordModel *record in records) {
+        startTime = MIN(startTime, record.startTime);
+        endTime = MAX(endTime, record.endTime);
+    }
+    if (startTime == LONG_MAX || endTime <= startTime) {
+        return @[];
+    }
+    return @[@(startTime), @(endTime)];
 }
 
 #pragma mark - Getters
@@ -453,6 +547,48 @@
         _interactionView = [UIView new];
     }
     return _interactionView;
+}
+
+- (UIView *)rangeBarTrackView
+{
+    if (!_rangeBarTrackView) {
+        _rangeBarTrackView = [UIView new];
+        _rangeBarTrackView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
+        _rangeBarTrackView.layer.cornerRadius = 4*kHeightRatio;
+        _rangeBarTrackView.clipsToBounds = YES;
+    }
+    return _rangeBarTrackView;
+}
+
+- (UIView *)rangeBarSelectionView
+{
+    if (!_rangeBarSelectionView) {
+        _rangeBarSelectionView = [UIView new];
+        _rangeBarSelectionView.layer.cornerRadius = 4*kHeightRatio;
+        _rangeBarSelectionView.clipsToBounds = YES;
+        [_rangeBarSelectionView.layer addSublayer:self.rangeBarGradientLayer];
+    }
+    return _rangeBarSelectionView;
+}
+
+- (CAGradientLayer *)rangeBarGradientLayer
+{
+    if (!_rangeBarGradientLayer) {
+        _rangeBarGradientLayer = [CAGradientLayer layer];
+        _rangeBarGradientLayer.startPoint = CGPointMake(0, 0.5);
+        _rangeBarGradientLayer.endPoint = CGPointMake(1, 0.5);
+        _rangeBarGradientLayer.colors = @[
+            (__bridge id)[UIColor mirrorColorNamed:MirrorColorTypeCellPink].CGColor,
+            (__bridge id)[UIColor mirrorColorNamed:MirrorColorTypeCellOrange].CGColor,
+            (__bridge id)[UIColor mirrorColorNamed:MirrorColorTypeCellYellow].CGColor,
+            (__bridge id)[UIColor mirrorColorNamed:MirrorColorTypeCellGreen].CGColor,
+            (__bridge id)[UIColor mirrorColorNamed:MirrorColorTypeCellTeal].CGColor,
+            (__bridge id)[UIColor mirrorColorNamed:MirrorColorTypeCellBlue].CGColor,
+            (__bridge id)[UIColor mirrorColorNamed:MirrorColorTypeCellPurple].CGColor,
+            (__bridge id)[UIColor mirrorColorNamed:MirrorColorTypeCellGray].CGColor,
+        ];
+    }
+    return _rangeBarGradientLayer;
 }
 
 - (UILabel *)dateLabel
@@ -549,10 +685,11 @@
 {
     CGFloat navi = self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height;
     CGFloat typeSwitch_plusGapBelow = 32*kHeightRatio + kGapInLine;
-    CGFloat interaction_plusGapBelow = 60*kHeightRatio + kGapInLine;
+    CGFloat interaction_plusGapBelow = 60*kHeightRatio;
+    CGFloat rangeBar_plusGapBelow = 8*kHeightRatio + kGapInLine;
     CGFloat legend_plusGapBelow = [self.legendView legendViewHeight] + kGapInLine;
     CGFloat tabbar_plusGapAbove = self.tabBarController.tabBar.frame.size.height + kGapInLine;
-    CGFloat leftHeight = kScreenHeight - navi - typeSwitch_plusGapBelow - interaction_plusGapBelow - legend_plusGapBelow - tabbar_plusGapAbove;
+    CGFloat leftHeight = kScreenHeight - navi - typeSwitch_plusGapBelow - interaction_plusGapBelow - rangeBar_plusGapBelow - legend_plusGapBelow - tabbar_plusGapAbove;
     CGFloat leftWidth = kScreenWidth - 2*kLeftRightSpacing;
 
     return @[@(leftWidth), @(leftHeight)];
