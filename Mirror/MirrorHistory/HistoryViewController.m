@@ -27,7 +27,7 @@
 #import <limits.h>
 
 #define kLeftRightSpacing (20*kWidthRatio)
-#define kGapInLine (10*kHeightRatio)
+#define kGapInLine (15*kHeightRatio)
 
 @interface HistoryViewController () <TaskProgressListDelegate>
 
@@ -422,18 +422,34 @@
     self.selectedEndTime = endTime;
     self.legendData = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
     self.data = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:YES];
-    // update label
-    NSString *startDate = [MirrorTimeText YYYYmmddWeekday:[NSDate dateWithTimeIntervalSince1970:startTime]];
-    NSString *endDate = [MirrorTimeText YYYYmmddWeekday:[NSDate dateWithTimeIntervalSince1970:endTime-1]];// 这里减1是因为，period本身在读的时候取的是左闭右开，例如2023.4.17,Mon,00:00 - 2023.4.19,Wed,00:00间隔为2天，指的就是2023.4.17, 2023.4.18这两天，2023.4.19本身是不做数的。因此这里传日期的时候要减去1，将结束时间2023.4.19,Wed,00:00改为2023.4.18,Wed,23:59，这样传过去的label就只展示左闭右开区间里真实囊括的两天了。
-    
-    if ([startDate isEqualToString:endDate]) {
-        [self updateSpanText:startDate];
-    } else {
-        startDate = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:startTime]];
-        endDate = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:endTime-1]];
-        NSString *combine  = [[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate];
-        [self updateSpanText:combine];
+    [self updateSpanText:[self spanTextWithSpanType:spanType startTime:startTime endTime:endTime]];
+}
+
+- (NSString *)spanTextWithSpanType:(SpanType)spanType startTime:(long)startTime endTime:(long)endTime
+{
+    NSDate *startDateObject = [NSDate dateWithTimeIntervalSince1970:startTime];
+    if (spanType == SpanTypeYear) {
+        NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+        calendar.timeZone = [NSTimeZone systemTimeZone];
+        NSDateComponents *components = [calendar components:NSCalendarUnitYear fromDate:startDateObject];
+        if ([MirrorSettings appliedChinese]) {
+            return [NSString stringWithFormat:@"%ld年", (long)components.year];
+        }
+        return [NSString stringWithFormat:@"%ld", (long)components.year];
     }
+    if (spanType == SpanTypeMonth) {
+        return [MirrorTimeText YYYYmm:startDateObject];
+    }
+
+    NSString *startDate = [MirrorTimeText YYYYmmddWeekday:startDateObject];
+    NSString *endDate = [MirrorTimeText YYYYmmddWeekday:[NSDate dateWithTimeIntervalSince1970:endTime-1]];// 这里减1是因为，period本身在读的时候取的是左闭右开，例如2023.4.17,Mon,00:00 - 2023.4.19,Wed,00:00间隔为2天，指的就是2023.4.17, 2023.4.18这两天，2023.4.19本身是不做数的。因此这里传日期的时候要减去1，将结束时间2023.4.19,Wed,00:00改为2023.4.18,Wed,23:59，这样传过去的label就只展示左闭右开区间里真实囊括的两天了。
+    if ([startDate isEqualToString:endDate]) {
+        return startDate;
+    }
+
+    startDate = [MirrorTimeText YYYYmmdd:startDateObject];
+    endDate = [MirrorTimeText YYYYmmdd:[NSDate dateWithTimeIntervalSince1970:endTime-1]];
+    return [[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate];
 }
 
 - (void)updateSpanText:(NSString *)text
@@ -632,9 +648,9 @@
 - (UIImageView *)leftArrow
 {
     if (!_leftArrow) {
-        UIImage *image = [[UIImage systemImageNamed:@"chevron.left"] imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeText]];
-        UIImage *imageWithRightColor = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        _leftArrow = [[UIImageView alloc] initWithImage:imageWithRightColor];
+        UIImage *image = [[UIImage systemImageNamed:@"chevron.left"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        _leftArrow = [[UIImageView alloc] initWithImage:image];
+        _leftArrow.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconText];
     }
     return _leftArrow;
 }
@@ -642,9 +658,9 @@
 - (UIView *)rightArrow
 {
     if (!_rightArrow) {
-        UIImage *image = [[UIImage systemImageNamed:@"chevron.right"] imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeText]];
-        UIImage *imageWithRightColor = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        _rightArrow = [[UIImageView alloc] initWithImage:imageWithRightColor];
+        UIImage *image = [[UIImage systemImageNamed:@"chevron.right"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        _rightArrow = [[UIImageView alloc] initWithImage:image];
+        _rightArrow.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconText];
     }
     return _rightArrow;
 }
