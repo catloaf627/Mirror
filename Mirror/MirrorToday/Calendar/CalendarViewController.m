@@ -528,8 +528,7 @@
     if (!_todayButton) {
         _todayButton = [UIButton buttonWithType:UIButtonTypeSystem];
         _todayButton.titleLabel.font = [UIFont mirrorButtonFont];
-        _todayButton.layer.cornerRadius = 8*kWidthRatio;
-        _todayButton.clipsToBounds = YES;
+        _todayButton.backgroundColor = UIColor.clearColor;
         [_todayButton setTitle:[MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
         [_todayButton addTarget:self action:@selector(goToToday) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -570,14 +569,18 @@
     self.dateHeaderView.backgroundColor = self.view.backgroundColor;
     self.dateButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     [self.dateButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
-    self.todayButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    [self.todayButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeBackground] forState:UIControlStateNormal];
+
+    BOOL isToday = [self isSelectedDateToday];
+    UIColor *textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.todayButton.enabled = !isToday;
+    self.todayButton.backgroundColor = UIColor.clearColor;
+    [self.todayButton setTitleColor:textColor forState:UIControlStateNormal];
+    [self.todayButton setTitleColor:[textColor colorWithAlphaComponent:0.35] forState:UIControlStateDisabled];
 }
 
 - (void)updateNavigationItem
 {
-    UIView *rightButton = [self isSelectedDateToday] ? nil : self.todayButtonContainer;
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"calendar"] leftButton:nil rightButton:rightButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"calendar"] leftButton:nil rightButton:self.todayButtonContainer];
 }
 
 - (BOOL)isSelectedDateToday
