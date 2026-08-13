@@ -14,6 +14,7 @@
 #define kTimelineRecordResizeHandleSideWidth (120*kWidthRatio)
 #define kTimelineRecordHandleSize (10*kWidthRatio)
 #define kTimelineRecordEditAnimationKey @"TimelineRecordEditAnimation"
+#define kTimelineRecordMenuScale 1.04
 
 typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     TimelineRecordDragModeNone,
@@ -78,10 +79,11 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     if (@available(iOS 16.0, *)) {
         self.editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
         [self.foregroundView addInteraction:self.editMenuInteraction];
-        UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
-        tapRecognizer.delegate = self;
-        [self.foregroundView addGestureRecognizer:tapRecognizer];
     }
+
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapRecordView:)];
+    tapRecognizer.delegate = self;
+    [self.foregroundView addGestureRecognizer:tapRecognizer];
 
     UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressRecordView:)];
     longPressRecognizer.delegate = self;
@@ -171,22 +173,16 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
                                           handleSize);
 }
 
-- (void)showEditMenu:(UITapGestureRecognizer *)recognizer
+- (void)tapRecordView:(UITapGestureRecognizer *)recognizer
 {
     if (self.isInlineEditing) {
         [self endInlineEditing];
         return;
     }
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
     if ([self.delegate respondsToSelector:@selector(timelineRecordViewDidRequestMenuDismissal:)]) {
         [self.delegate timelineRecordViewDidRequestMenuDismissal:self];
     }
-    [self beginSelectionShowsHandles:NO animated:NO];
-    if (@available(iOS 16.0, *)) {
-        CGPoint point = [recognizer locationInView:self.foregroundView];
-        UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
-        [self.editMenuInteraction presentEditMenuWithConfiguration:configuration];
-    }
+    [self.delegate timelineRecordViewDidRequestInlineEditing:self];
 }
 
 - (void)longPressRecordView:(UILongPressGestureRecognizer *)recognizer
@@ -194,10 +190,18 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     if (recognizer.state != UIGestureRecognizerStateBegan) {
         return;
     }
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
+    [self endInlineEditing];
     if ([self.delegate respondsToSelector:@selector(timelineRecordViewDidRequestMenuDismissal:)]) {
         [self.delegate timelineRecordViewDidRequestMenuDismissal:self];
     }
-    [self.delegate timelineRecordViewDidRequestInlineEditing:self];
+    [self endSelection];
+    if (@available(iOS 16.0, *)) {
+        [self applyMenuScaleAnimation];
+        CGPoint point = [recognizer locationInView:self.foregroundView];
+        UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
+        [self.editMenuInteraction presentEditMenuWithConfiguration:configuration];
+    }
 }
 
 - (void)panRecord:(UIPanGestureRecognizer *)recognizer
@@ -250,7 +254,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     self.dayEndTimestamp = dayEndTimestamp;
     self.originalTop = CGRectGetMinY(self.frame);
     self.originalHeight = CGRectGetHeight(self.frame);
-    [self beginSelectionShowsHandles:YES animated:YES];
+    [self beginSelectionShowsHandles:YES animated:NO];
     [self.delegate timelineRecordView:self didChangeScrollEnabled:NO];
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
 }
@@ -335,7 +339,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         newEndTimestamp = newStartTimestamp + duration;
     }
 
-    [self endInlineEditing];
+    self.dragMode = TimelineRecordDragModeNone;
     if (dragMode == TimelineRecordDragModeStart && newStartTimestamp != self.originalStartTimestamp) {
         [self.delegate timelineRecordView:self didCommitStartTimestamp:newStartTimestamp];
     } else if (dragMode == TimelineRecordDragModeEnd && newEndTimestamp != self.originalEndTimestamp) {
@@ -400,6 +404,28 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     [self.layer removeAnimationForKey:kTimelineRecordEditAnimationKey];
 }
 
+- (void)applyMenuScaleAnimation
+{
+    [UIView animateWithDuration:0.16
+                          delay:0
+         usingSpringWithDamping:0.72
+          initialSpringVelocity:0.4
+                        options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+        self.transform = CGAffineTransformMakeScale(kTimelineRecordMenuScale, kTimelineRecordMenuScale);
+    } completion:nil];
+}
+
+- (void)resetMenuScaleAnimation
+{
+    [UIView animateWithDuration:0.14
+                          delay:0
+                        options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionAllowUserInteraction
+                     animations:^{
+        self.transform = CGAffineTransformIdentity;
+    } completion:nil];
+}
+
 - (CGFloat)timelineYForTimestamp:(long)timestamp
 {
     long clampedTimestamp = MIN(MAX(timestamp, self.dayStartTimestamp), self.dayEndTimestamp);
@@ -441,6 +467,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
 - (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willDismissMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
 {
+    [self resetMenuScaleAnimation];
     if (!self.isInlineEditing) {
         [self endSelection];
     }

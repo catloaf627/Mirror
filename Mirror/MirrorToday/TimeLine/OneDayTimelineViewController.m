@@ -260,29 +260,23 @@
 
 - (void)timelineRecordView:(TimelineRecordView *)recordView didCommitStartTimestamp:(long)timestamp
 {
-    [MirrorStorage editPeriodIsStartTime:YES to:timestamp periodIndex:recordView.periodIndex];
-    if (self.activeRecordView == recordView) {
-        self.activeRecordView = nil;
-    }
-    [self reloadData];
+    NSInteger periodIndex = recordView.periodIndex;
+    [MirrorStorage editPeriodIsStartTime:YES to:timestamp periodIndex:periodIndex];
+    [self reloadDataKeepingInlineEditingForPeriodIndex:periodIndex];
 }
 
 - (void)timelineRecordView:(TimelineRecordView *)recordView didCommitEndTimestamp:(long)timestamp
 {
-    [MirrorStorage editPeriodIsStartTime:NO to:timestamp periodIndex:recordView.periodIndex];
-    if (self.activeRecordView == recordView) {
-        self.activeRecordView = nil;
-    }
-    [self reloadData];
+    NSInteger periodIndex = recordView.periodIndex;
+    [MirrorStorage editPeriodIsStartTime:NO to:timestamp periodIndex:periodIndex];
+    [self reloadDataKeepingInlineEditingForPeriodIndex:periodIndex];
 }
 
 - (void)timelineRecordView:(TimelineRecordView *)recordView didCommitStartTimestamp:(long)startTimestamp endTimestamp:(long)endTimestamp
 {
-    [MirrorStorage editPeriodStartTime:startTimestamp endTime:endTimestamp periodIndex:recordView.periodIndex];
-    if (self.activeRecordView == recordView) {
-        self.activeRecordView = nil;
-    }
-    [self reloadData];
+    NSInteger periodIndex = recordView.periodIndex;
+    [MirrorStorage editPeriodStartTime:startTimestamp endTime:endTimestamp periodIndex:periodIndex];
+    [self reloadDataKeepingInlineEditingForPeriodIndex:periodIndex];
 }
 
 #pragma mark - Timeline
@@ -313,6 +307,26 @@
     if (!self.didScrollToDefaultHours) {
         [self.timelineScrollView setContentOffset:CGPointMake(0, self.hourHeight * 7.0) animated:NO];
         self.didScrollToDefaultHours = YES;
+    }
+}
+
+- (void)reloadDataKeepingInlineEditingForPeriodIndex:(NSInteger)periodIndex
+{
+    [self reloadData];
+    [self restoreInlineEditingForPeriodIndex:periodIndex];
+}
+
+- (void)restoreInlineEditingForPeriodIndex:(NSInteger)periodIndex
+{
+    for (UIView *subview in self.timelineContentView.subviews) {
+        if (![subview isKindOfClass:TimelineRecordView.class]) {
+            continue;
+        }
+        TimelineRecordView *recordView = (TimelineRecordView *)subview;
+        if (recordView.periodIndex == periodIndex) {
+            [self timelineRecordViewDidRequestInlineEditing:recordView];
+            return;
+        }
     }
 }
 
