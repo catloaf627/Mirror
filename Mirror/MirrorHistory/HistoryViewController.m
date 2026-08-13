@@ -102,10 +102,7 @@
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
-    self.rangeBarGradientLayer.frame = self.rangeBarSelectionView.bounds;
-    [CATransaction commit];
+    [self updateRangeBarGradientLayerFrame];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -467,10 +464,27 @@
 
     CGFloat left = trackWidth * startRatio;
     CGFloat width = trackWidth * MAX(0, endRatio - startRatio);
-    self.rangeBarTrackView.hidden = width <= 0;
+    BOOL shouldHideRangeBar = width <= 0;
+    BOOL shouldAnimate = !self.rangeBarTrackView.hidden && !shouldHideRangeBar && self.rangeBarTrackView.window;
+    self.rangeBarTrackView.hidden = shouldHideRangeBar;
     [self.rangeBarSelectionLeftConstraint setOffset:left];
     [self.rangeBarSelectionWidthConstraint setOffset:MAX(2*kWidthRatio, width)];
-    [self.rangeBarTrackView layoutIfNeeded];
+
+    if (shouldAnimate) {
+        [UIView animateWithDuration:0.25 delay:0 options:UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState animations:^{
+            [self.rangeBarTrackView layoutIfNeeded];
+            [self updateRangeBarGradientLayerFrame];
+        } completion:^(BOOL finished) {
+            [self updateRangeBarGradientLayerFrame];
+        }];
+    } else {
+        [self.rangeBarTrackView layoutIfNeeded];
+        [self updateRangeBarGradientLayerFrame];
+    }
+}
+
+- (void)updateRangeBarGradientLayerFrame
+{
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
     self.rangeBarGradientLayer.frame = self.rangeBarSelectionView.bounds;
