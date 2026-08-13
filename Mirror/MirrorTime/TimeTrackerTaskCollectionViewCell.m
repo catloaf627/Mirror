@@ -50,6 +50,7 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     self.taskNameLabel.textColor = [UIColor mirrorColorPulsed:task.color];
     self.contentView.backgroundColor = taskColor;
     self.backView.backgroundColor = taskColor;
+    self.backView.layer.borderColor = [UIColor mirrorColorPulsed:task.color].CGColor;
 }
 
 - (void)p_setupUI
@@ -195,8 +196,8 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     }
 
     CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.rotation.z"];
-    animation.values = @[@(-0.015), @(0.015), @(-0.012)];
-    animation.duration = 0.18;
+    animation.values = @[@(-0.035), @(0.035), @(-0.028)];
+    animation.duration = 0.14;
     animation.repeatCount = HUGE_VALF;
     animation.autoreverses = YES;
     animation.timeOffset = (arc4random_uniform(100) / 100.0) * animation.duration;
@@ -239,6 +240,7 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     if (!_backView) {
         _backView = [UIView new];
         _backView.layer.cornerRadius = kCornerRadius;
+        _backView.layer.borderWidth = 1.5;
         _backView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
         _backView.layer.shadowRadius = kShadowWidth / 2;
         _backView.layer.shadowOpacity = 0.2;

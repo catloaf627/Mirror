@@ -29,6 +29,8 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
+static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAnimation";
+
 @interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIDocumentPickerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
@@ -43,9 +45,6 @@
 // Mark
 @property (nonatomic, assign) CGRect selectedCellFrame; // cell.x, cell.y, cell.width, cell.height
 @property (nonatomic, strong) UIColor *selectedTaskColor;
-@property (nonatomic, strong) NSIndexPath *movingIndexPath;
-@property (nonatomic, assign) CGPoint longPressStartPoint;
-@property (nonatomic, assign) BOOL didMoveLongPressedTask;
 @property (nonatomic, assign) BOOL isEditingTasks;
 // UI
 @property (nonatomic, strong) UICollectionView *collectionView;
@@ -98,6 +97,7 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
+    [self exitEditingTasksIfNeededAnimated:NO];
     [self removeNavigationDebugGesture];
 }
 
@@ -151,6 +151,7 @@
     UIColor *color = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.settingsButton.tintColor = color;
     self.editButton.tintColor = self.isEditingTasks ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : color;
+    [self updateEditButtonShakeAnimation];
 }
 
 #pragma mark - Actions
@@ -160,6 +161,7 @@
     self.isEditingTasks = !self.isEditingTasks;
     self.editButton.selected = self.isEditingTasks;
     self.editButton.tintColor = self.isEditingTasks ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : [UIColor mirrorColorNamed:MirrorColorTypeText];
+    [self updateEditButtonShakeAnimation];
     [self updateVisibleTaskCellsForEditingModeAnimated:YES];
 }
 
@@ -171,6 +173,47 @@
         }
         [cell setEditingModeEnabled:self.isEditingTasks animated:animated];
     }
+}
+
+- (void)exitEditingTasksIfNeededAnimated:(BOOL)animated
+{
+    if (!self.isEditingTasks) {
+        return;
+    }
+    self.isEditingTasks = NO;
+    self.editButton.selected = NO;
+    self.editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    [self updateEditButtonShakeAnimation];
+    [self updateVisibleTaskCellsForEditingModeAnimated:animated];
+}
+
+- (void)updateEditButtonShakeAnimation
+{
+    if (self.isEditingTasks) {
+        [self startEditButtonShakeAnimation];
+    } else {
+        [self stopEditButtonShakeAnimation];
+    }
+}
+
+- (void)startEditButtonShakeAnimation
+{
+    if ([self.editButton.layer animationForKey:kEditButtonShakeAnimationKey]) {
+        return;
+    }
+
+    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.rotation.z"];
+    animation.values = @[@(-0.07), @(0.07), @(-0.055)];
+    animation.duration = 0.12;
+    animation.repeatCount = HUGE_VALF;
+    animation.autoreverses = YES;
+    [self.editButton.layer addAnimation:animation forKey:kEditButtonShakeAnimationKey];
+}
+
+- (void)stopEditButtonShakeAnimation
+{
+    [self.editButton.layer removeAnimationForKey:kEditButtonShakeAnimationKey];
+    self.editButton.transform = CGAffineTransformIdentity;
 }
 
 #pragma mark - UIDocumentPickerDelegate
@@ -333,73 +376,12 @@
     [self presentViewController:alertController animated:YES completion:nil];
 }
 
-- (void)longPressTask:(UILongPressGestureRecognizer *)longPress
-{
-    CGPoint location = [longPress locationInView:self.collectionView];
-    switch (longPress.state) {
-        case UIGestureRecognizerStateBegan:
-        {
-            NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:location];
-            if (![self canMoveTaskAtIndexPath:indexPath]) {
-                return;
-            }
-            self.movingIndexPath = indexPath;
-            self.longPressStartPoint = location;
-            self.didMoveLongPressedTask = NO;
-            UICollectionViewCell *selectedCell = [self.collectionView cellForItemAtIndexPath:indexPath];
-            selectedCell.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
-            selectedCell.layer.shadowRadius = 4;
-            selectedCell.layer.shadowOpacity = 1;
-            [self.collectionView beginInteractiveMovementForItemAtIndexPath:indexPath];
-        }
-            break;
-        case UIGestureRecognizerStateChanged:
-            if (self.movingIndexPath == nil) {
-                return;
-            }
-            CGFloat xOffset = location.x - self.longPressStartPoint.x;
-            CGFloat yOffset = location.y - self.longPressStartPoint.y;
-            if (sqrt(xOffset * xOffset + yOffset * yOffset) > 8) {
-                self.didMoveLongPressedTask = YES;
-            }
-            [self.collectionView updateInteractiveMovementTargetPosition:location];
-            break;
-        case UIGestureRecognizerStateEnded:
-            if (self.movingIndexPath == nil) {
-                return;
-            }
-            [self resetLongPressedCellShadow];
-            if (self.didMoveLongPressedTask) {
-                [self.collectionView endInteractiveMovement];
-            } else {
-                [self.collectionView cancelInteractiveMovement];
-            }
-            self.movingIndexPath = nil;
-            self.didMoveLongPressedTask = NO;
-            break;
-        default:
-            [self resetLongPressedCellShadow];
-            [self.collectionView cancelInteractiveMovement];
-            self.movingIndexPath = nil;
-            self.didMoveLongPressedTask = NO;
-            break;
-    }
-}
-
 - (BOOL)canMoveTaskAtIndexPath:(NSIndexPath *)indexPath
 {
     if (indexPath == nil || indexPath.item >= self.data.count) {
         return NO;
     }
     return !self.data[indexPath.item].isAddTaskModel;
-}
-
-- (void)resetLongPressedCellShadow
-{
-    UICollectionViewCell *selectedCell = [self.collectionView cellForItemAtIndexPath:self.movingIndexPath];
-    selectedCell.layer.shadowColor = [UIColor clearColor].CGColor;
-    selectedCell.layer.shadowRadius = 0;
-    selectedCell.layer.shadowOpacity = 0;
 }
 
 - (void)presentEditTaskSheetAtIndexPath:(NSIndexPath *)indexPath
@@ -790,34 +772,6 @@
     return CGSizeMake(kScreenWidth, 30*kHeightRatio); // 起到提示效果
 }
 
-- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath
-{
-    return [self canMoveTaskAtIndexPath:indexPath];
-}
-
-- (NSIndexPath *)collectionView:(UICollectionView *)collectionView targetIndexPathForMoveFromItemAtIndexPath:(NSIndexPath *)originalIndexPath toProposedIndexPath:(NSIndexPath *)proposedIndexPath
-{
-    if ([self canMoveTaskAtIndexPath:proposedIndexPath]) {
-        return proposedIndexPath;
-    }
-    NSInteger lastTaskIndex = MAX(0, self.data.count - 2);
-    return [NSIndexPath indexPathForItem:lastTaskIndex inSection:0];
-}
-
-- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath
-{
-    if (![self canMoveTaskAtIndexPath:sourceIndexPath]) {
-        return;
-    }
-    NSInteger destinationItem = MIN(destinationIndexPath.item, self.data.count - 2);
-    NSMutableArray<MirrorTaskModel *> *allTasks = [MirrorStorage retriveMirrorTasks];
-    MirrorTaskModel *selectedTask = allTasks[sourceIndexPath.item];
-    [allTasks removeObjectAtIndex:sourceIndexPath.item];
-    [allTasks insertObject:selectedTask atIndex:destinationItem];
-    [MirrorStorage reorderTasks:allTasks];
-    self.data = [MirrorStorage tasksWithAddNew];
-}
-
 #pragma mark - TimeTrackerTaskCollectionViewCellDelegate
 
 - (void)timeTrackerTaskCollectionViewCellDidTapEdit:(TimeTrackerTaskCollectionViewCell *)cell
@@ -853,8 +807,6 @@
         [_collectionView registerClass:[TimeTrackerAddTaskCollectionViewCell class] forCellWithReuseIdentifier:[TimeTrackerAddTaskCollectionViewCell identifier]];
         [_collectionView registerClass:[UICollectionViewCell class] forSupplementaryViewOfKind:UICollectionElementKindSectionHeader withReuseIdentifier:@"header"];
         [_collectionView registerClass:[HintFooter class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"footer"];
-        UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressTask:)];
-        [_collectionView addGestureRecognizer:longPress];
     }
     return _collectionView;
 }
@@ -875,9 +827,11 @@
 {
     if (!_editButton) {
         _editButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"pencil.circle"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_editButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        _editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
+        UIImage *normalImage = [[UIImage systemImageNamed:@"ellipsis.circle"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage *selectedImage = [[UIImage systemImageNamed:@"ellipsis.circle.badge.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        [_editButton setImage:normalImage forState:UIControlStateNormal];
+        [_editButton setImage:selectedImage forState:UIControlStateSelected];
+        _editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         [_editButton addTarget:self action:@selector(tapEditButton) forControlEvents:UIControlEventTouchUpInside];
     }
     return _editButton;
