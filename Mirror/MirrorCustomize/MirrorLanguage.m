@@ -27,6 +27,7 @@
     // tabs
     [mirrorDict setValue:ML(@"Start", @"计时", @"Iniciar", @"Démarrer", @"開始", @"시작") forKey:@"start"];
     [mirrorDict setValue:ML(@"Today", @"今天", @"Hoy", @"Aujourd'hui", @"今日", @"오늘") forKey:@"today"];
+    [mirrorDict setValue:ML(@"Calendar", @"日历", @"Calendario", @"Calendrier", @"カレンダー", @"캘린더") forKey:@"calendar"];
     [mirrorDict setValue:ML(@"Data", @"数据", @"Datos", @"Données", @"データ", @"데이터") forKey:@"data"];
     [mirrorDict setValue:ML(@"Record", @"记录", @"Historial", @"Historique", @"記録", @"기록") forKey:@"record"];
     

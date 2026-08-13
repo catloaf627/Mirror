@@ -10,6 +10,7 @@
 #import "MirrorTool.h"
 #import "MirrorSettings.h"
 #import "MirrorTimeText.h"
+#import "MirrorLanguage.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 #import "MirrorMacro.h"
@@ -198,7 +199,10 @@
 @interface CalendarViewController () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) NSDate *selectedDate;
+@property (nonatomic, strong) UIView *dateHeaderView;
 @property (nonatomic, strong) UIButton *dateButton;
+@property (nonatomic, strong) UIButton *todayButton;
+@property (nonatomic, strong) UIView *todayButtonContainer;
 @property (nonatomic, strong) OneDayTimelineViewController *timelineViewController;
 @property (nonatomic, strong) NSMutableDictionary<NSValue *, NSNumber *> *disabledNavigationGestureStates;
 @property (nonatomic, assign) BOOL didHandleLeftEdgeSwipe;
@@ -218,7 +222,7 @@
 {
     [super viewWillAppear:animated];
     [self disableInteractivePopGesture];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"Calendar" leftButton:nil rightButton:nil];
+    [self updateNavigationItem];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -244,7 +248,7 @@
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
 
     OneDayTimelineViewController *timelineViewController = [[OneDayTimelineViewController alloc] initWithDate:self.selectedDate
-                                                                                                  headerView:self.dateButton
+                                                                                                  headerView:self.dateHeaderView
                                                                                                 headerHeight:kDatePickerHeaderHeight
                                                                                                 headerInsets:UIEdgeInsetsMake(0, kLeftRightSpacing, 8*kHeightRatio, kLeftRightSpacing)
                                                                                          headerConfiguration:nil];
@@ -312,6 +316,13 @@
     calendar.timeZone = [NSTimeZone systemTimeZone];
     NSDate *date = [calendar dateByAddingUnit:NSCalendarUnitDay value:dayOffset toDate:self.selectedDate options:0];
     [self updateSelectedDate:date];
+    [[[UISelectionFeedbackGenerator alloc] init] selectionChanged];
+}
+
+- (void)goToToday
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [self updateSelectedDate:[NSDate now]];
 }
 
 - (void)addDateSwipeGestures
@@ -336,7 +347,7 @@
         return;
     }
     self.selectedDate = date;
-    [self updateDateButtonTitle];
+    [self updateDateHeaderState];
     [self.timelineViewController updateDate:date];
 }
 
@@ -387,6 +398,19 @@
 
 #pragma mark - Getters
 
+- (UIView *)dateHeaderView
+{
+    if (!_dateHeaderView) {
+        _dateHeaderView = [UIView new];
+        [_dateHeaderView addSubview:self.dateButton];
+        [self.dateButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.edges.offset(0);
+        }];
+        [self updateDateHeaderState];
+    }
+    return _dateHeaderView;
+}
+
 - (UIButton *)dateButton
 {
     if (!_dateButton) {
@@ -400,14 +424,63 @@
         _dateButton.imageEdgeInsets = UIEdgeInsetsMake(0, 0, 0, 8*kWidthRatio);
         _dateButton.titleEdgeInsets = UIEdgeInsetsMake(0, 8*kWidthRatio, 0, 0);
         [_dateButton addTarget:self action:@selector(showCalendarPicker) forControlEvents:UIControlEventTouchUpInside];
-        [self updateDateButtonTitle];
     }
     return _dateButton;
 }
 
-- (void)updateDateButtonTitle
+- (UIButton *)todayButton
+{
+    if (!_todayButton) {
+        _todayButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        _todayButton.titleLabel.font = [UIFont mirrorButtonFont];
+        _todayButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _todayButton.layer.cornerRadius = 8*kWidthRatio;
+        _todayButton.clipsToBounds = YES;
+        [_todayButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeBackground] forState:UIControlStateNormal];
+        [_todayButton setTitle:[MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
+        [_todayButton addTarget:self action:@selector(goToToday) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _todayButton;
+}
+
+- (UIView *)todayButtonContainer
+{
+    if (!_todayButtonContainer) {
+        _todayButtonContainer = [UIView new];
+        [_todayButtonContainer addSubview:self.todayButton];
+        [self.todayButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.right.offset(0);
+            make.height.mas_equalTo(24*kHeightRatio);
+            make.width.mas_equalTo([self todayButtonWidth]);
+        }];
+        _todayButtonContainer.frame = CGRectMake(0, 0, [self todayButtonWidth], 44*kHeightRatio);
+    }
+    return _todayButtonContainer;
+}
+
+- (CGFloat)todayButtonWidth
+{
+    CGSize titleSize = [[MirrorLanguage mirror_stringWithKey:@"today"] sizeWithAttributes:@{NSFontAttributeName: [UIFont mirrorButtonFont]}];
+    return ceil(titleSize.width) + 24*kWidthRatio;
+}
+
+- (void)updateDateHeaderState
 {
     [_dateButton setTitle:[MirrorTimeText YYYYmmddWeekday:self.selectedDate ?: [NSDate now]] forState:UIControlStateNormal];
+    [self updateNavigationItem];
+}
+
+- (void)updateNavigationItem
+{
+    UIView *rightButton = [self isSelectedDateToday] ? nil : self.todayButtonContainer;
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"calendar"] leftButton:nil rightButton:rightButton];
+}
+
+- (BOOL)isSelectedDateToday
+{
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    return [calendar isDate:self.selectedDate ?: [NSDate now] inSameDayAsDate:[NSDate now]];
 }
 
 @end
