@@ -30,6 +30,7 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
 @property (nonatomic, strong) UIButton *deleteButton;
 @property (nonatomic, strong) MASConstraint *taskNameCenterXConstraint;
 @property (nonatomic, strong) MASConstraint *hintCenterXConstraint;
+@property (nonatomic, strong) UIColor *selectedBorderColor;
 @property (nonatomic, assign) BOOL didSetupUI;
 @property (nonatomic, assign) BOOL isEditingModeEnabled;
 @property (nonatomic, assign) BOOL isShowingActionButtons;
@@ -51,7 +52,9 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     self.taskNameLabel.text = taskName;
     self.hintLabel.text = [MirrorTimeText Xh:[MirrorTool getTotalTimeOfPeriods:[MirrorStorage getAllTaskRecords:taskName]]];
     self.taskNameLabel.textColor = [UIColor mirrorColorPulsed:task.color];
+    self.selectedBorderColor = [UIColor mirrorColorPulsed:task.color];
     self.contentView.backgroundColor = taskColor;
+    self.contentView.layer.borderColor = self.selectedBorderColor.CGColor;
 }
 
 - (void)p_setupUI
@@ -71,6 +74,7 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
         make.bottom.offset(-kShadowWidth);
     }];
     self.contentView.layer.cornerRadius = kCornerRadius;
+    self.contentView.layer.borderWidth = 0;
     self.contentView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
     self.contentView.layer.shadowRadius = kShadowWidth / 2;
     self.contentView.layer.shadowOpacity = 0.2;
@@ -108,6 +112,7 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     [super prepareForReuse];
     [self setEditingModeEnabled:NO animated:NO];
     [self setActionButtonsVisible:NO animated:NO];
+    [self setReorderSelected:NO animated:NO];
 }
 
 #pragma mark - Actions
@@ -181,6 +186,25 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     }
     [self setActionButtonsVisible:NO animated:YES];
     return YES;
+}
+
+- (void)setReorderSelected:(BOOL)selected animated:(BOOL)animated
+{
+    void (^stateChange)(void) = ^{
+        self.contentView.layer.borderWidth = selected ? 2.5 : 0;
+        self.contentView.layer.borderColor = (self.selectedBorderColor ?: [UIColor mirrorColorNamed:MirrorColorTypeText]).CGColor;
+    };
+
+    if (!animated) {
+        stateChange();
+        return;
+    }
+
+    [UIView animateWithDuration:0.16
+                          delay:0
+                        options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionBeginFromCurrentState
+                     animations:stateChange
+                     completion:nil];
 }
 
 - (void)startEditingShakeAnimation

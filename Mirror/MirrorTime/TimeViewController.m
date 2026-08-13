@@ -49,6 +49,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 // UI
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) UILongPressGestureRecognizer *taskReorderLongPressRecognizer;
+@property (nonatomic, weak) TimeTrackerTaskCollectionViewCell *reorderSelectedCell;
 
 @end
 
@@ -186,6 +187,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     self.editButton.selected = NO;
     self.editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.taskReorderLongPressRecognizer.enabled = NO;
+    [self clearReorderSelectedCellAnimated:animated];
     [self updateEditButtonShakeAnimation];
     [self updateVisibleTaskCellsForEditingModeAnimated:animated];
 }
@@ -400,6 +402,9 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
             if (![self canMoveTaskAtIndexPath:indexPath]) {
                 return;
             }
+            TimeTrackerTaskCollectionViewCell *cell = (TimeTrackerTaskCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+            self.reorderSelectedCell = cell;
+            [cell setReorderSelected:YES animated:YES];
             [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
             [self.collectionView beginInteractiveMovementForItemAtIndexPath:indexPath];
             break;
@@ -408,12 +413,23 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
             [self.collectionView updateInteractiveMovementTargetPosition:location];
             break;
         case UIGestureRecognizerStateEnded:
+            [self clearReorderSelectedCellAnimated:YES];
             [self.collectionView endInteractiveMovement];
             break;
         default:
+            [self clearReorderSelectedCellAnimated:YES];
             [self.collectionView cancelInteractiveMovement];
             break;
     }
+}
+
+- (void)clearReorderSelectedCellAnimated:(BOOL)animated
+{
+    if (!self.reorderSelectedCell) {
+        return;
+    }
+    [self.reorderSelectedCell setReorderSelected:NO animated:animated];
+    self.reorderSelectedCell = nil;
 }
 
 - (void)presentEditTaskSheetAtIndexPath:(NSIndexPath *)indexPath
@@ -876,7 +892,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 {
     if (!_taskReorderLongPressRecognizer) {
         _taskReorderLongPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleTaskReorderLongPress:)];
-        _taskReorderLongPressRecognizer.minimumPressDuration = 0.45;
+        _taskReorderLongPressRecognizer.minimumPressDuration = 0.25;
         _taskReorderLongPressRecognizer.enabled = NO;
     }
     return _taskReorderLongPressRecognizer;

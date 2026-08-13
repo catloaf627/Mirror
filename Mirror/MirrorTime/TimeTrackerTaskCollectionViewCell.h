@@ -31,6 +31,7 @@ static CGFloat const kInterspacing = 16;
 - (void)setEditingModeEnabled:(BOOL)editingModeEnabled animated:(BOOL)animated;
 - (void)setActionButtonsVisible:(BOOL)visible animated:(BOOL)animated;
 - (BOOL)dismissActionButtonsIfNeeded;
+- (void)setReorderSelected:(BOOL)selected animated:(BOOL)animated;
 
 @end
 
