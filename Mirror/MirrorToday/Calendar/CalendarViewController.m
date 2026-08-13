@@ -256,6 +256,7 @@
 @property (nonatomic, strong) UIView *todayButtonContainer;
 @property (nonatomic, strong) OneDayTimelineViewController *timelineViewController;
 @property (nonatomic, assign) BOOL didHandleDatePan;
+@property (nonatomic, assign) BOOL isAnimatingDateTransition;
 @property (nonatomic, assign) BOOL isLoaded;
 
 @end
@@ -397,14 +398,14 @@
 
 - (void)moveSelectedDateByDayOffset:(NSInteger)dayOffset
 {
-    if (dayOffset == 0) {
+    if (dayOffset == 0 || self.isAnimatingDateTransition) {
         return;
     }
 
     NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
     calendar.timeZone = [NSTimeZone systemTimeZone];
     NSDate *date = [calendar dateByAddingUnit:NSCalendarUnitDay value:dayOffset toDate:self.selectedDate options:0];
-    [self updateSelectedDate:date];
+    [self updateSelectedDate:date animatedWithDayOffset:dayOffset];
     [[[UISelectionFeedbackGenerator alloc] init] selectionChanged];
 }
 
@@ -447,6 +448,49 @@
     self.selectedDate = date;
     [self updateDateHeaderState];
     [self.timelineViewController updateDate:date];
+}
+
+- (void)updateSelectedDate:(NSDate *)date animatedWithDayOffset:(NSInteger)dayOffset
+{
+    if (!date || dayOffset == 0) {
+        return;
+    }
+    if (UIAccessibilityIsReduceMotionEnabled()) {
+        [self updateSelectedDate:date];
+        return;
+    }
+
+    UIView *timelineView = self.timelineViewController.view;
+    UIView *snapshotView = [timelineView snapshotViewAfterScreenUpdates:NO];
+    if (!snapshotView) {
+        [self updateSelectedDate:date];
+        return;
+    }
+
+    self.isAnimatingDateTransition = YES;
+    self.view.userInteractionEnabled = NO;
+    snapshotView.frame = timelineView.frame;
+    [self.view addSubview:snapshotView];
+
+    CGFloat width = CGRectGetWidth(timelineView.bounds);
+    CGFloat incomingOffset = dayOffset > 0 ? width : -width;
+    CGFloat outgoingOffset = -incomingOffset;
+    timelineView.transform = CGAffineTransformMakeTranslation(incomingOffset, 0);
+    [self updateSelectedDate:date];
+    [self.view layoutIfNeeded];
+
+    [UIView animateWithDuration:0.28
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+        snapshotView.transform = CGAffineTransformMakeTranslation(outgoingOffset, 0);
+        timelineView.transform = CGAffineTransformIdentity;
+    } completion:^(BOOL finished) {
+        timelineView.transform = CGAffineTransformIdentity;
+        [snapshotView removeFromSuperview];
+        self.view.userInteractionEnabled = YES;
+        self.isAnimatingDateTransition = NO;
+    }];
 }
 
 #pragma mark - Getters
