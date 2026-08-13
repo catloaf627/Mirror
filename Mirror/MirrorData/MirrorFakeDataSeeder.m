@@ -134,7 +134,7 @@
 
 + (NSArray<NSString *> *)fakeTaskEnglishNames
 {
-    return @[@"Gym", @"Tennis", @"Swim", @"Code", @"Cook", @"Read", @"Study"];
+    return @[@"Gym", @"Tennis", @"Swim", @"Code", @"Cook", @"Read"];
 }
 
 // 每天的 fake record 生成规则：
@@ -296,8 +296,7 @@
         @"Code": ML(@"Code", @"编程", @"Programar", @"Coder", @"コーディング", @"코딩"),
         @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Natation", @"水泳", @"수영"),
         @"Read": ML(@"Read", @"阅读", @"Leer", @"Lire", @"読書", @"독서"),
-        @"Cook": ML(@"Cook", @"做饭", @"Cocinar", @"Cuisiner", @"料理", @"요리"),
-        @"Study": ML(@"Study", @"学习", @"Estudiar", @"Étudier", @"勉強", @"공부")
+        @"Cook": ML(@"Cook", @"做饭", @"Cocinar", @"Cuisiner", @"料理", @"요리")
     };
     return taskNames[englishName] ?: ML(englishName, englishName, englishName, englishName, englishName, englishName);
 }
