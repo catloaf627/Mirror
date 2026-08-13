@@ -31,9 +31,7 @@ static NSTimeInterval const kHintFooterRotationInterval = 5.0;
     [self p_setupUIIfNeeded];
     self.hints = @[[MirrorLanguage mirror_stringWithKey:@"timeVC_hint0"],
                    [MirrorLanguage mirror_stringWithKey:@"timeVC_hint1"],
-                   [MirrorLanguage mirror_stringWithKey:@"timeVC_hint3"],
-                   [MirrorLanguage mirror_stringWithKey:@"timeVC_hint4"],
-                   [MirrorLanguage mirror_stringWithKey:@"timeVC_hint5"]];
+                   [MirrorLanguage mirror_stringWithKey:@"timeVC_hint2"]];
     self.currentHintIndex = 0;
     [self updateHintAnimated:NO];
     [self startHintTimer];

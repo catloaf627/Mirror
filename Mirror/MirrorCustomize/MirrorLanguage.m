@@ -99,8 +99,8 @@
     
     // Time VC
     [mirrorDict setValue:ML(@"Tap the top-right button to edit tasks", @"点击右上角按钮进入编辑模式", @"Toca el botón superior derecho para editar tareas", @"Touchez le bouton en haut à droite pour modifier les tâches", @"右上のボタンでタスクを編集できます", @"오른쪽 위 버튼을 눌러 작업을 편집하세요") forKey:@"timeVC_hint0"];
-    [mirrorDict setValue:ML(@"Tap a card in edit mode to show actions", @"编辑模式下点击卡片可显示操作", @"Toca una tarjeta en modo edición para ver acciones", @"Touchez une carte en mode édition pour afficher les actions", @"編集モードでカードをタップすると操作が表示されます", @"편집 모드에서 카드를 탭하면 작업 버튼이 보입니다") forKey:@"timeVC_hint1"];
-    [mirrorDict setValue:ML(@"Up to 8 tasks can be created", @"最多可建立8个任务", @"Se pueden crear hasta 8 tareas", @"Jusqu'à 8 tâches peuvent être créées", @"最大8個のタスクを作成できます", @"최대 8개의 작업을 만들 수 있습니다") forKey:@"timeVC_hint3"];
+    [mirrorDict setValue:ML(@"Long press in edit mode to reorder tasks", @"编辑模式下长按可以调整任务顺序", @"Mantén presionado en modo edición para reordenar tareas", @"Appuyez longuement en mode édition pour réordonner les tâches", @"編集モードで長押ししてタスクを並べ替え", @"편집 모드에서 길게 눌러 작업 순서를 변경하세요") forKey:@"timeVC_hint1"];
+    [mirrorDict setValue:ML(@"Up to 8 tasks can be created", @"最多可建立8个任务", @"Se pueden crear hasta 8 tareas", @"Jusqu'à 8 tâches peuvent être créées", @"最大8個のタスクを作成できます", @"최대 8개의 작업을 만들 수 있습니다") forKey:@"timeVC_hint2"];
     [mirrorDict setValue:ML(@"Tap timeline records to drag", @"轻点时间线记录可拖动", @"Toca registros para arrastrarlos", @"Touchez un enregistrement pour le déplacer", @"タイムライン記録をタップしてドラッグ", @"타임라인 기록을 탭해 드래그") forKey:@"timeVC_hint4"];
     [mirrorDict setValue:ML(@"Long press timeline records to delete", @"长按时间线记录可删除", @"Mantén registros para eliminarlos", @"Appuyez longuement pour supprimer", @"タイムライン記録を長押しして削除", @"타임라인 기록을 길게 눌러 삭제") forKey:@"timeVC_hint5"];
     
