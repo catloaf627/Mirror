@@ -490,13 +490,15 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     long startTime = round([startDate timeIntervalSince1970]);
     long maximumEndTime = 0;
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    for (MirrorRecordModel *record in records) {
+    for (NSInteger index = records.count - 1; index >= 0; index--) {
+        MirrorRecordModel *record = records[index];
         if (record.endTime <= record.startTime) {
             continue;
         }
-        if (record.startTime > startTime && (maximumEndTime == 0 || record.startTime < maximumEndTime)) {
-            maximumEndTime = record.startTime;
+        if (record.startTime <= startTime) {
+            break;
         }
+        maximumEndTime = record.startTime;
     }
     if (maximumEndTime == 0) {
         return nil;
