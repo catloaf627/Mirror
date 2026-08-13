@@ -30,7 +30,7 @@ static UIColor *MirrorTrackingBackgroundColor(void)
 
 static UIColor *MirrorTrackingCircleTrackColor(void)
 {
-    return [UIColor colorWithWhite:0.08 alpha:0.65];
+    return [UIColor colorWithWhite:0.08 alpha:0.2];
 }
 
 static UIColor *MirrorTrackingPrimaryTextColor(void)
