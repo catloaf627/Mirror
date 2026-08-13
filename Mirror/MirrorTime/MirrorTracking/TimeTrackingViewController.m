@@ -66,11 +66,6 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 @property (nonatomic, assign) CGFloat startAngle;
 @property (nonatomic, strong) UIColor *taskColor;
 @property (nonatomic, strong) UIColor *pulseColor;
-@property (nonatomic, strong) CAShapeLayer *trackLayer;
-@property (nonatomic, strong) CAGradientLayer *gradientLayer;
-@property (nonatomic, strong) CAShapeLayer *progressMaskLayer;
-@property (nonatomic, strong) CAShapeLayer *startCapLayer;
-@property (nonatomic, strong) CAShapeLayer *endCapLayer;
 
 @end
 
@@ -97,82 +92,186 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 - (void)setupLayers
 {
     self.backgroundColor = UIColor.clearColor;
-    self.trackLayer = [CAShapeLayer layer];
-    self.trackLayer.fillColor = UIColor.clearColor.CGColor;
-    self.trackLayer.lineCap = kCALineCapRound;
-    self.trackLayer.lineWidth = kCircleLineWidth;
-    [self.layer addSublayer:self.trackLayer];
-
-    self.startCapLayer = [CAShapeLayer layer];
-    [self.layer addSublayer:self.startCapLayer];
-
-    self.gradientLayer = [CAGradientLayer layer];
-    if (@available(iOS 12.0, *)) {
-        self.gradientLayer.type = kCAGradientLayerConic;
-    }
-    self.gradientLayer.startPoint = CGPointMake(0.5, 0.5);
-    self.gradientLayer.endPoint = CGPointMake(1, 0.5);
-    [self.layer addSublayer:self.gradientLayer];
-
-    self.progressMaskLayer = [CAShapeLayer layer];
-    self.progressMaskLayer.fillColor = UIColor.clearColor.CGColor;
-    self.progressMaskLayer.strokeColor = UIColor.blackColor.CGColor;
-    self.progressMaskLayer.lineCap = kCALineCapButt;
-    self.progressMaskLayer.lineWidth = kCircleLineWidth;
-    self.gradientLayer.mask = self.progressMaskLayer;
-
-    self.endCapLayer = [CAShapeLayer layer];
-    [self.layer addSublayer:self.endCapLayer];
-}
-
-- (void)layoutSubviews
-{
-    [super layoutSubviews];
-    [self updateCircleLayers];
+    self.contentMode = UIViewContentModeRedraw;
 }
 
 - (void)setIsCountingDown:(BOOL)isCountingDown
 {
     _isCountingDown = isCountingDown;
-    [self updateCircleLayers];
+    [self setNeedsDisplay];
 }
 
 - (void)setProgress:(CGFloat)progress
 {
     _progress = progress;
-    [self updateCircleLayers];
+    [self setNeedsDisplay];
 }
 
 - (void)setStartAngle:(CGFloat)startAngle
 {
     _startAngle = startAngle;
-    [self updateCircleLayers];
+    [self setNeedsDisplay];
 }
 
 - (void)setTaskColor:(UIColor *)taskColor
 {
     _taskColor = taskColor;
-    [self updateCircleLayers];
+    [self setNeedsDisplay];
 }
 
 - (void)setPulseColor:(UIColor *)pulseColor
 {
     _pulseColor = pulseColor;
-    [self updateCircleLayers];
+    [self setNeedsDisplay];
 }
 
-- (UIBezierPath *)semiCapPathWithCenter:(CGPoint)center angle:(CGFloat)angle radius:(CGFloat)radius forward:(BOOL)forward
+- (CGFloat)normalizedAngleDeltaFromAngle:(CGFloat)angle startAngle:(CGFloat)startAngle
 {
-    CGPoint outerPoint = CGPointMake(center.x + radius*cos(angle), center.y + radius*sin(angle));
-
-    UIBezierPath *path = [UIBezierPath bezierPath];
-    [path moveToPoint:outerPoint];
-    [path addArcWithCenter:center radius:radius startAngle:angle endAngle:angle + M_PI clockwise:forward];
-    [path closePath];
-    return path;
+    CGFloat delta = angle - startAngle;
+    while (delta < 0) {
+        delta += 2*M_PI;
+    }
+    while (delta >= 2*M_PI) {
+        delta -= 2*M_PI;
+    }
+    return delta;
 }
 
-- (void)updateCircleLayers
+- (BOOL)colorComponentsFromColor:(UIColor *)color red:(CGFloat *)red green:(CGFloat *)green blue:(CGFloat *)blue alpha:(CGFloat *)alpha
+{
+    if ([color getRed:red green:green blue:blue alpha:alpha]) {
+        return YES;
+    }
+    CGFloat white = 0;
+    if ([color getWhite:&white alpha:alpha]) {
+        *red = white;
+        *green = white;
+        *blue = white;
+        return YES;
+    }
+    return NO;
+}
+
+- (UIImage *)ringImageWithRect:(CGRect)rect center:(CGPoint)center radius:(CGFloat)radius startAngle:(CGFloat)startAngle sweepAngle:(CGFloat)sweepAngle
+{
+    CGFloat scale = UIScreen.mainScreen.scale;
+    size_t width = MAX(1, (size_t)ceil(CGRectGetWidth(rect) * scale));
+    size_t height = MAX(1, (size_t)ceil(CGRectGetHeight(rect) * scale));
+    size_t bytesPerRow = width * 4;
+    unsigned char *pixels = calloc(height * bytesPerRow, 1);
+    if (!pixels) {
+        return nil;
+    }
+
+    CGFloat startRed = 0, startGreen = 0, startBlue = 0, startAlpha = 0;
+    CGFloat endRed = 0, endGreen = 0, endBlue = 0, endAlpha = 0;
+    if (![self colorComponentsFromColor:self.taskColor red:&startRed green:&startGreen blue:&startBlue alpha:&startAlpha] ||
+        ![self colorComponentsFromColor:self.pulseColor red:&endRed green:&endGreen blue:&endBlue alpha:&endAlpha]) {
+        free(pixels);
+        return nil;
+    }
+
+    CGFloat halfLineWidth = kCircleLineWidth / 2.0;
+    CGFloat capRadius = halfLineWidth;
+    CGFloat innerRadius = radius - halfLineWidth;
+    CGFloat outerRadius = radius + halfLineWidth;
+    CGFloat edgeWidth = 1.0 / scale;
+    BOOL drawsCaps = YES;
+    CGFloat capLength = drawsCaps ? capRadius : 0;
+    CGFloat ringLength = radius * sweepAngle;
+    CGFloat totalLength = MAX(0.001, ringLength + 2*capLength);
+    CGFloat startUnitX = cos(startAngle);
+    CGFloat startUnitY = sin(startAngle);
+    CGFloat startCapCenterX = center.x + radius * startUnitX;
+    CGFloat startCapCenterY = center.y + radius * startUnitY;
+    CGFloat startTangentX = -sin(startAngle);
+    CGFloat startTangentY = cos(startAngle);
+    CGFloat startCapTipX = startCapCenterX - capRadius * startTangentX;
+    CGFloat startCapTipY = startCapCenterY - capRadius * startTangentY;
+    CGFloat endAngle = startAngle + sweepAngle;
+    CGFloat endUnitX = cos(endAngle);
+    CGFloat endUnitY = sin(endAngle);
+    CGFloat endCapCenterX = center.x + radius * endUnitX;
+    CGFloat endCapCenterY = center.y + radius * endUnitY;
+    CGFloat endTangentX = -sin(endAngle);
+    CGFloat endTangentY = cos(endAngle);
+
+    for (size_t y = 0; y < height; y++) {
+        CGFloat pointY = ((CGFloat)y + 0.5) / scale;
+        for (size_t x = 0; x < width; x++) {
+            CGFloat pointX = ((CGFloat)x + 0.5) / scale;
+            size_t offset = y * bytesPerRow + x * 4;
+
+            void (^blendPixel)(CGFloat, CGFloat) = ^(CGFloat coverage, CGFloat selectedProgress) {
+                if (coverage <= 0) {
+                    return;
+                }
+                CGFloat progress = MIN(1, MAX(0, selectedProgress));
+                CGFloat red = startRed + (endRed - startRed) * progress;
+                CGFloat green = startGreen + (endGreen - startGreen) * progress;
+                CGFloat blue = startBlue + (endBlue - startBlue) * progress;
+                CGFloat alpha = (startAlpha + (endAlpha - startAlpha) * progress) * MIN(1, MAX(0, coverage));
+                CGFloat dstAlpha = pixels[offset + 3] / 255.0;
+                CGFloat outAlpha = alpha + dstAlpha * (1 - alpha);
+                CGFloat outRed = red * alpha + (pixels[offset] / 255.0) * (1 - alpha);
+                CGFloat outGreen = green * alpha + (pixels[offset + 1] / 255.0) * (1 - alpha);
+                CGFloat outBlue = blue * alpha + (pixels[offset + 2] / 255.0) * (1 - alpha);
+                pixels[offset] = (unsigned char)lrint(MIN(1, MAX(0, outRed)) * 255);
+                pixels[offset + 1] = (unsigned char)lrint(MIN(1, MAX(0, outGreen)) * 255);
+                pixels[offset + 2] = (unsigned char)lrint(MIN(1, MAX(0, outBlue)) * 255);
+                pixels[offset + 3] = (unsigned char)lrint(MIN(1, MAX(0, outAlpha)) * 255);
+            };
+
+            if (drawsCaps) {
+                CGFloat startCapDistance = hypot(pointX - startCapCenterX, pointY - startCapCenterY);
+                CGFloat startCapProjection = (pointX - startCapCenterX) * startTangentX + (pointY - startCapCenterY) * startTangentY;
+                CGFloat startCapCoverage = MIN(1, MAX(0, (capRadius - startCapDistance) / edgeWidth));
+                CGFloat startCapSideCoverage = MIN(1, MAX(0, (edgeWidth - startCapProjection) / edgeWidth));
+                startCapCoverage *= startCapSideCoverage;
+                CGFloat projection = (startCapProjection + capRadius) / capRadius;
+                blendPixel(startCapCoverage, MIN(1, MAX(0, projection)) * capLength / totalLength);
+            }
+
+            CGFloat dx = pointX - center.x;
+            CGFloat dy = pointY - center.y;
+            CGFloat distance = hypot(dx, dy);
+            CGFloat innerCoverage = MIN(1, MAX(0, (distance - innerRadius) / edgeWidth));
+            CGFloat outerCoverage = MIN(1, MAX(0, (outerRadius - distance) / edgeWidth));
+            CGFloat ringCoverage = innerCoverage * outerCoverage;
+            CGFloat angle = atan2(dy, dx);
+            CGFloat delta = [self normalizedAngleDeltaFromAngle:angle startAngle:startAngle];
+            if (delta <= sweepAngle) {
+                blendPixel(ringCoverage, (capLength + radius * delta) / totalLength);
+            }
+
+            if (drawsCaps) {
+                CGFloat endCapDistance = hypot(pointX - endCapCenterX, pointY - endCapCenterY);
+                CGFloat endCapProjection = (pointX - endCapCenterX) * endTangentX + (pointY - endCapCenterY) * endTangentY;
+                CGFloat endCapCoverage = MIN(1, MAX(0, (capRadius - endCapDistance) / edgeWidth));
+                CGFloat endCapSideCoverage = MIN(1, MAX(0, (endCapProjection + edgeWidth * 2) / edgeWidth));
+                endCapCoverage *= endCapSideCoverage;
+                CGFloat projection = endCapProjection / capRadius;
+                blendPixel(endCapCoverage, (capLength + ringLength + MIN(1, MAX(0, projection)) * capLength) / totalLength);
+            }
+        }
+    }
+
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    CGContextRef bitmapContext = CGBitmapContextCreate(pixels, width, height, 8, bytesPerRow, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    CGImageRef imageRef = bitmapContext ? CGBitmapContextCreateImage(bitmapContext) : NULL;
+    UIImage *image = imageRef ? [UIImage imageWithCGImage:imageRef scale:scale orientation:UIImageOrientationUp] : nil;
+    if (imageRef) {
+        CGImageRelease(imageRef);
+    }
+    if (bitmapContext) {
+        CGContextRelease(bitmapContext);
+    }
+    CGColorSpaceRelease(colorSpace);
+    free(pixels);
+    return image;
+}
+
+- (void)drawRect:(CGRect)rect
 {
     if (CGRectIsEmpty(self.bounds) || !self.taskColor || !self.pulseColor) {
         return;
@@ -182,52 +281,21 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     CGPoint center = CGPointMake(CGRectGetMidX(circleRect), CGRectGetMidY(circleRect));
     CGFloat radius = MIN(CGRectGetWidth(circleRect), CGRectGetHeight(circleRect))/2;
     CGFloat progress = MAX(0, MIN(1, self.progress));
+    if (progress <= 0) {
+        return;
+    }
+
     CGFloat startAngle = self.startAngle;
-    CGFloat endAngle = startAngle + 2*M_PI*progress;
-    BOOL drawsFullRing = !self.isCountingDown && progress >= 1;
-    CGFloat drawStartAngle = startAngle;
-    CGFloat drawEndAngle = endAngle;
-    CGFloat capRadius = kCircleLineWidth/2;
-    CGFloat gradientProgress = drawsFullRing ? 1 : MIN(1, MAX(0.01, (drawEndAngle - drawStartAngle) / (2*M_PI)));
-    CGFloat pulseStartProgress = drawsFullRing ? 1 : MAX(0.001, gradientProgress - 0.01);
-    CGFloat pulseHoldProgress = drawsFullRing ? 1 : MIN(0.999, gradientProgress + 0.01);
-    CGPoint gradientEndPoint = CGPointMake(0.5 + cos(drawStartAngle)/2, 0.5 + sin(drawStartAngle)/2);
+    CGFloat sweepAngle = (!self.isCountingDown && progress >= 1) ? 2*M_PI : 2*M_PI*progress;
+
     UIBezierPath *trackPath = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:startAngle endAngle:startAngle + 2*M_PI clockwise:YES];
-    UIBezierPath *progressPath = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:drawStartAngle endAngle:drawEndAngle clockwise:YES];
-    CGFloat startCapX = center.x + radius * cos(drawStartAngle);
-    CGFloat startCapY = center.y + radius * sin(drawStartAngle);
-    CGFloat capAngle = drawsFullRing ? drawStartAngle : drawEndAngle;
-    CGFloat endCapX = center.x + radius * cos(capAngle);
-    CGFloat endCapY = center.y + radius * sin(capAngle);
+    trackPath.lineWidth = kCircleLineWidth;
+    trackPath.lineCapStyle = kCGLineCapRound;
+    [MirrorTrackingCircleTrackColor() setStroke];
+    [trackPath stroke];
 
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
-
-    self.trackLayer.frame = self.bounds;
-    self.trackLayer.path = trackPath.CGPath;
-    self.trackLayer.strokeColor = MirrorTrackingCircleTrackColor().CGColor;
-
-    self.gradientLayer.frame = self.bounds;
-    self.gradientLayer.startPoint = CGPointMake(0.5, 0.5);
-    self.gradientLayer.endPoint = gradientEndPoint;
-    self.gradientLayer.transform = CATransform3DIdentity;
-    self.gradientLayer.colors = @[(id)self.taskColor.CGColor, (id)self.pulseColor.CGColor, (id)self.pulseColor.CGColor, (id)self.taskColor.CGColor];
-    self.gradientLayer.locations = @[@0, @(pulseStartProgress), @(pulseHoldProgress), @1];
-    self.gradientLayer.hidden = progress <= 0;
-
-    self.progressMaskLayer.frame = self.bounds;
-    self.progressMaskLayer.path = progressPath.CGPath;
-    self.progressMaskLayer.hidden = progress <= 0;
-
-    self.startCapLayer.path = [self semiCapPathWithCenter:CGPointMake(startCapX, startCapY) angle:drawStartAngle radius:capRadius forward:NO].CGPath;
-    self.startCapLayer.fillColor = self.taskColor.CGColor;
-    self.startCapLayer.hidden = progress <= 0;
-
-    self.endCapLayer.path = [self semiCapPathWithCenter:CGPointMake(endCapX, endCapY) angle:capAngle radius:capRadius forward:YES].CGPath;
-    self.endCapLayer.fillColor = self.pulseColor.CGColor;
-    self.endCapLayer.hidden = progress <= 0;
-
-    [CATransaction commit];
+    UIImage *ringImage = [self ringImageWithRect:self.bounds center:center radius:radius startAngle:startAngle sweepAngle:sweepAngle];
+    [ringImage drawInRect:self.bounds];
 }
 
 @end
@@ -482,7 +550,9 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 
 - (NSDate *)startTime
 {
-    return [MirrorStorage goingOnTaskStartDate] ?: [NSDate now];
+    NSDate *startTime = [MirrorStorage goingOnTaskStartDate] ?: [NSDate date];
+    startTime = [startTime dateByAddingTimeInterval:-3600]; //gizmo
+    return startTime;
 }
 
 - (NSDate *)accurateStartDate
