@@ -141,7 +141,7 @@
 // 1. 每月 2 号到随机的 3/4/5 号视为生理期，不生成运动和编程。
 // 2. 非生理期每天早上生成一条运动：偶数 dayIndex 健身；非健身日夏天游泳、冬天网球，其他季节游泳/网球按概率切换。
 // 3. 运动时间在 7 点左右，周末有概率推迟到 8/9 点，运动时长 1.5 到 2 小时。
-// 4. 编程从运动结束后 1 到 2 小时开始，时长 1 到 8 小时，偶尔偷懒缩短或跳过。
+// 4. 编程从运动结束后 1 到 2 小时开始，时长 1 到 6 小时，偶尔偷懒跳过。
 // 5. 做饭基本每天晚饭时间生成，18 到 19 点开始，持续 20 到 90 分钟。
 // 6. 当天比较 chill 时晚上生成阅读；阅读 note 由连续书单进度决定。
 + (void)appendRecordsForDateComponents:(NSDateComponents *)components dayIndex:(NSInteger)dayIndex monthIndex:(NSInteger)monthIndex records:(NSMutableArray<MirrorRecordModel *> *)records readingBookIndex:(NSInteger *)readingBookIndex readingRemainingMinutes:(NSInteger *)readingRemainingMinutes
@@ -188,11 +188,10 @@
 
         NSInteger movementEndMinutes = movementHour * 60 + movementMinute + movementDuration;
         NSInteger codeStartMinutes = movementEndMinutes + 60 + [self randomValueForDayIndex:dayIndex salt:31 modulo:61];
-        if ([self randomValueForDayIndex:dayIndex salt:37 modulo:7] >= 2) {
-            NSInteger codeDuration = 60 + [self randomValueForDayIndex:dayIndex salt:41 modulo:421];
-            if ([self randomPercentForDayIndex:dayIndex salt:43] < 14) {
-                codeDuration = 45 + [self randomValueForDayIndex:dayIndex salt:47 modulo:76];
-            }
+        BOOL shouldCode = [self randomValueForDayIndex:dayIndex salt:37 modulo:7] >= 2;
+        BOOL isLazyCodeDay = [self randomPercentForDayIndex:dayIndex salt:43] < 14;
+        if (shouldCode && !isLazyCodeDay) {
+            NSInteger codeDuration = 60 + [self randomValueForDayIndex:dayIndex salt:41 modulo:301];
             NSInteger latestCodeEnd = 17 * 60 + 45;
             codeDuration = MIN(codeDuration, MAX(60, latestCodeEnd - codeStartMinutes));
             if (codeDuration >= 60 && codeStartMinutes < 18 * 60) {
