@@ -12,6 +12,7 @@
 #import "MirrorMacro.h"
 
 static CGFloat const kCollectionViewPadding = 20; // 左右留白
+static CGFloat const kNaviIconPointSize = 23;
 
 @interface MirrorNaviManager ()
 
@@ -60,6 +61,8 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
     self.titleLabel.text = title;
     self.leftButton = leftButton;
     self.rightButton = rightButton;
+    [self applyIconConfigurationToView:self.leftButton];
+    [self applyIconConfigurationToView:self.rightButton];
     
     // 固定写死的布局
     [_controller.navigationBar addSubview:self.titleLabel];
@@ -84,6 +87,28 @@ static CGFloat const kCollectionViewPadding = 20; // 左右留白
             make.height.mas_equalTo(_controller.navigationBar.frame.size.height);
             make.width.mas_equalTo(MAX(_controller.navigationBar.frame.size.height, self.rightButton.frame.size.width));
         }];
+    }
+}
+
+- (void)applyIconConfigurationToView:(UIView *)view
+{
+    if (!view) {
+        return;
+    }
+
+    if ([view isKindOfClass:UIButton.class]) {
+        UIButton *button = (UIButton *)view;
+        if (@available(iOS 13.0, *)) {
+            UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:kNaviIconPointSize weight:UIImageSymbolWeightRegular];
+            [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateNormal];
+            [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateHighlighted];
+            [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateSelected];
+        }
+        button.imageView.contentMode = UIViewContentModeScaleAspectFit;
+    }
+
+    for (UIView *subview in view.subviews) {
+        [self applyIconConfigurationToView:subview];
     }
 }
 
