@@ -898,8 +898,8 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 {
     if (!_editButton) {
         _editButton = [UIButton new];
-        UIImage *normalImage = [[UIImage systemImageNamed:@"ellipsis.circle"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIImage *selectedImage = [[UIImage systemImageNamed:@"ellipsis.circle.badge.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage *normalImage = [[UIImage systemImageNamed:@"applepencil"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage *selectedImage = [[UIImage systemImageNamed:@"applepencil.and.scribble"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         [_editButton setImage:normalImage forState:UIControlStateNormal];
         [_editButton setImage:selectedImage forState:UIControlStateSelected];
         _editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
