@@ -12,7 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithData:(MirrorReadModel *)data;
 - (instancetype)initWithData:(MirrorReadModel *)data highlightedRecords:(NSMutableArray<MirrorRecordModel *> *)highlightedRecords;
-- (instancetype)initWithRecords:(NSMutableArray<MirrorRecordModel *> *)records titleKey:(NSString *)titleKey;
 
 @end
 

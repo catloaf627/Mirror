@@ -19,7 +19,6 @@
 #import "MirrorTool.h"
 #import "MirrorTimeText.h"
 #import "MirrorSettings.h"
-#import "RecordsTimelineViewController.h"
 #import "CellAnimation.h"
 #import "MirrorLanguage.h"
 #import "HintFooter.h"
@@ -522,25 +521,13 @@
     if (goingOnTask.length > 0) {
         if ([goingOnTask isEqualToString:selectedModel.taskName]) {
             [self presentTrackingViewControllerWithTaskName:selectedModel.taskName accurateStartDate:nil animated:YES];
-        } else {
-            [self showStartNowUnavailableAlert];
         }
-        return;
-    }
-
-    if (![self canStartTaskNow]) {
-        [self showStartNowUnavailableAlert];
         return;
     }
 
     NSDate *startDate = [NSDate now];
     [MirrorStorage startTask:selectedModel.taskName at:startDate];
     [self presentTrackingViewControllerWithTaskName:selectedModel.taskName accurateStartDate:startDate animated:YES];
-}
-
-- (BOOL)canStartTaskNow
-{
-    return [self occupiedRecords].count == 0;
 }
 
 - (void)presentGoingOnTaskIfNeeded
@@ -551,6 +538,12 @@
 
     NSString *goingOnTask = [MirrorStorage isGoingOnTask];
     if (goingOnTask.length == 0) {
+        return;
+    }
+    NSDictionary *autoFinishInfo = [MirrorStorage finishGoingOnTaskIfExceededMaximumEndDate];
+    if (autoFinishInfo) {
+        [self reloadData];
+        [self showAutoFinishedCountingAlert:autoFinishInfo];
         return;
     }
 
@@ -581,33 +574,16 @@
     [self presentTrackingViewControllerWithTaskName:goingOnTask accurateStartDate:nil animated:NO];
 }
 
-- (void)showStartNowUnavailableAlert
+- (void)showAutoFinishedCountingAlert:(NSDictionary *)autoFinishInfo
 {
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"now_is_occupied"] message:nil preferredStyle:UIAlertControllerStyleAlert];
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"check_occupied_records"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self showOccupiedRecords];
-    }]];
+    NSString *taskName = autoFinishInfo[@"taskName"] ?: @"";
+    BOOL didSaveRecord = [autoFinishInfo[@"didSaveRecord"] boolValue];
+    NSString *messageKey = didSaveRecord ? @"counting_auto_stopped_due_to_next_record" : @"counting_auto_cancelled_due_to_next_record";
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                             message:[MirrorLanguage mirror_stringWithKey:messageKey with1Placeholder:taskName]
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
     [self presentViewController:alertController animated:YES completion:nil];
-}
-
-- (void)showOccupiedRecords
-{
-    NSMutableArray<MirrorRecordModel *> *occupiedRecords = [self occupiedRecords];
-    RecordsTimelineViewController *recordsVC = [[RecordsTimelineViewController alloc] initWithRecords:occupiedRecords titleKey:@"occupied_records"];
-    [self.navigationController pushViewController:recordsVC animated:YES];
-}
-
-- (NSMutableArray<MirrorRecordModel *> *)occupiedRecords
-{
-    NSMutableArray<MirrorRecordModel *> *occupiedRecords = [NSMutableArray new];
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    long now = [[NSDate now] timeIntervalSince1970];
-    for (MirrorRecordModel *record in records) {
-        if (record.endTime > now) {
-            [occupiedRecords addObject:record];
-        }
-    }
-    return occupiedRecords;
 }
 
 - (void)presentTrackingViewControllerWithTaskName:(NSString *)taskName accurateStartDate:(NSDate *)accurateStartDate animated:(BOOL)animated

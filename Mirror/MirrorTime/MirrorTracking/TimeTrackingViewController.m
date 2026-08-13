@@ -216,6 +216,7 @@ static CGFloat const kCircleLineWidth = 18;
 @property (nonatomic, assign) MirrorColorType taskColorType;
 @property (nonatomic, assign) NSTimeInterval timeInterval;
 @property (nonatomic, assign) NSTimeInterval accurateTimeInterval;
+@property (nonatomic, assign) BOOL didFinishAutomatically;
 
 
 // Timer
@@ -333,6 +334,10 @@ static CGFloat const kCircleLineWidth = 18;
 
 - (void)updateLabels
 {
+    if ([self finishAutomaticallyIfNeeded]) {
+        return;
+    }
+
     BOOL canStop = [self canStopAndKeepRecord];
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
 
@@ -356,6 +361,36 @@ static CGFloat const kCircleLineWidth = 18;
         make.centerX.offset(canStop ? -18 : 0);
     }];
     [self.circleView setNeedsDisplay];
+}
+
+- (BOOL)finishAutomaticallyIfNeeded
+{
+    if (self.didFinishAutomatically) {
+        return YES;
+    }
+    NSDictionary *autoFinishInfo = [MirrorStorage finishGoingOnTaskIfExceededMaximumEndDate];
+    if (!autoFinishInfo) {
+        return NO;
+    }
+
+    self.didFinishAutomatically = YES;
+    UIViewController *presentingViewController = self.presentingViewController;
+    [self dismissViewControllerAnimated:YES completion:^{
+        [self showAutoFinishedCountingAlert:autoFinishInfo fromViewController:presentingViewController];
+    }];
+    return YES;
+}
+
+- (void)showAutoFinishedCountingAlert:(NSDictionary *)autoFinishInfo fromViewController:(UIViewController *)viewController
+{
+    NSString *taskName = autoFinishInfo[@"taskName"] ?: @"";
+    BOOL didSaveRecord = [autoFinishInfo[@"didSaveRecord"] boolValue];
+    NSString *messageKey = didSaveRecord ? @"counting_auto_stopped_due_to_next_record" : @"counting_auto_cancelled_due_to_next_record";
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                             message:[MirrorLanguage mirror_stringWithKey:messageKey with1Placeholder:taskName]
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+    [viewController presentViewController:alertController animated:YES completion:nil];
 }
 
 - (CGFloat)hourCircleProgress
@@ -437,7 +472,7 @@ static CGFloat const kCircleLineWidth = 18;
 - (NSDate *)accurateStartDate
 {
     if (!_accurateStartDate) {
-        _accurateStartDate = self.startTime;
+        _accurateStartDate = [MirrorStorage goingOnTaskAccurateStartDate] ?: self.startTime;
     }
     return _accurateStartDate;
 }

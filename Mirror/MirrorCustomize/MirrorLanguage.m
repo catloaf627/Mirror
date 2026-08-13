@@ -155,8 +155,6 @@
     // Time editing
     [mirrorDict setValue:ML(@"Starts at", @"开始于", @"Comienza a las", @"Commence à", @"開始時刻", @"시작 시각") forKey:@"starts_at"];
     [mirrorDict setValue:ML(@"OR", @"或", @"O", @"OU", @"または", @"또는") forKey:@"or"];
-    [mirrorDict setValue:ML(@"A current or future time period is already occupied, so Start Now is unavailable", @"当前或未来时间段已被其他记录占用，无法立即开始计时", @"Ya hay un periodo actual o futuro ocupado, así que no se puede empezar ahora", @"Une période actuelle ou future est déjà occupée, le démarrage immédiat est indisponible", @"現在または未来の時間帯がすでに使用中のため、今すぐ開始できません", @"현재 또는 미래 시간대가 이미 사용 중이라 지금 시작할 수 없습니다") forKey:@"now_is_occupied"];
-    [mirrorDict setValue:ML(@"Check occupied records", @"查看占用记录", @"Revisar registros ocupados", @"Voir les enregistrements occupés", @"使用中の記録を確認", @"점유된 기록 확인") forKey:@"check_occupied_records"];
     [mirrorDict setValue:ML(@"Start now", @"开始计时", @"Empezar ahora", @"Commencer maintenant", @"今すぐ開始", @"지금 시작") forKey:@"start_now"];
     [mirrorDict setValue:ML(@" hours", @" 小时", @" horas", @" heures", @" 時間", @"시간") forKey:@"picker_hours"];
     [mirrorDict setValue:ML(@" mins", @" 分钟", @" min", @" min", @" 分", @"분") forKey:@"picker_mins"];
@@ -166,9 +164,6 @@
     // All records
     [mirrorDict setValue:ML(@"All records", @"所有记录", @"Todos los registros", @"Tous les enregistrements", @"すべての記録", @"모든 기록") forKey:@"all_records"];
     [mirrorDict setValue:ML(@"Records", @"记录", @"Registros", @"Enregistrements", @"記録", @"기록") forKey:@"records"];
-    [mirrorDict setValue:ML(@"Occupied records", @"占用记录", @"Registros ocupados", @"Enregistrements occupés", @"使用中の記録", @"점유된 기록") forKey:@"occupied_records"];
-    [mirrorDict setValue:ML(@"Clear future records to start counting", @"清空未来记录以便开启计时功能", @"Borrar registros futuros para empezar a contar", @"Effacer les futurs enregistrements pour démarrer", @"計時を開始するため未来の記録を消去", @"타이머를 시작하려면 미래 기록 지우기") forKey:@"delete_future_records_to_start_counting"];
-    [mirrorDict setValue:ML(@"Delete all records after now?", @"删除当前时间之后的所有记录？", @"¿Eliminar todos los registros posteriores a ahora?", @"Supprimer tous les enregistrements après maintenant ?", @"今以降のすべての記録を削除しますか？", @"지금 이후의 모든 기록을 삭제할까요?") forKey:@"delete_future_records_?"];
     [mirrorDict setValue:ML(@"Check all records of %@ for %@?", @"查看 %@ 在 %@ 的所有记录？", @"¿Revisar todos los registros de %@ para %@?", @"Voir tous les enregistrements de %@ pour %@ ?", @"%@ の %@ のすべての記録を確認しますか？", @"%@의 %@ 모든 기록을 확인할까요?") forKey:@"check_task_records_for_period_?"];
     [mirrorDict setValue:ML(@"the year of %@", @"%@年", @"el año %@", @"l’année %@", @"%@年", @"%@년") forKey:@"period_year_format"];
     [mirrorDict setValue:ML(@"the week from %@ to %@", @"%@ 至 %@ 这一周", @"la semana del %@ al %@", @"la semaine du %@ au %@", @"%@ から %@ までの週", @"%@부터 %@까지의 주") forKey:@"period_week_format"];
@@ -196,6 +191,8 @@
     [mirrorDict setValue:ML(@"%@ hours ", @"%@小时", @"%@ horas ", @"%@ heures ", @"%@時間", @"%@시간") forKey:@"hours"];
     [mirrorDict setValue:ML(@"%@ mins ", @"%@分钟", @"%@ min ", @"%@ min ", @"%@分", @"%@분") forKey:@"mins"];
     [mirrorDict setValue:ML(@"%@ seconds", @"%@秒", @"%@ segundos", @"%@ secondes", @"%@秒", @"%@초") forKey:@"seconds"];
+    [mirrorDict setValue:ML(@"%@ reached the next record, so it was stopped automatically to avoid overlap.", @"%@ 已到达下一条记录的开始时间，为避免重叠，已自动停止。", @"%@ llegó al siguiente registro, así que se detuvo automáticamente para evitar solaparse.", @"%@ a atteint l’enregistrement suivant et s’est arrêté automatiquement pour éviter un chevauchement.", @"%@ は次の記録の開始時刻に達したため、重複を避けて自動停止しました。", @"%@이 다음 기록 시작 시간에 도달해 겹치지 않도록 자동 중지되었습니다.") forKey:@"counting_auto_stopped_due_to_next_record"];
+    [mirrorDict setValue:ML(@"%@ reached the next record before 60 seconds, so it was cancelled to avoid overlap.", @"%@ 在满 60 秒前到达了下一条记录的开始时间，为避免重叠，已自动取消。", @"%@ llegó al siguiente registro antes de 60 segundos, así que se canceló para evitar solaparse.", @"%@ a atteint l’enregistrement suivant avant 60 secondes et a été annulé pour éviter un chevauchement.", @"%@ は60秒経過前に次の記録の開始時刻に達したため、重複を避けて自動キャンセルされました。", @"%@이 60초 전에 다음 기록 시작 시간에 도달해 겹치지 않도록 자동 취소되었습니다.") forKey:@"counting_auto_cancelled_due_to_next_record"];
     
     NSString *format = [MirrorLanguage localizedValue:[mirrorDict valueForKey:key] languageKey:[MirrorSettings preferredLanguageKey] fallback:key];
     return [NSString stringWithFormat:format, placeholder];

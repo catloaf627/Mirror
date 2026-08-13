@@ -17,6 +17,7 @@ static NSString * const kMirrorJSONFileName = @"mirror.json";
 static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwang.dev.Mirror";
 static NSString * const kMirrorGoingOnTaskNameKey = @"MirrorGoingOnTaskNameKey";
 static NSString * const kMirrorGoingOnTaskStartTimestampKey = @"MirrorGoingOnTaskStartTimestampKey";
+static NSString * const kMirrorGoingOnTaskAccurateStartTimestampKey = @"MirrorGoingOnTaskAccurateStartTimestampKey";
 static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 
 @interface MirrorStorage ()
@@ -25,9 +26,12 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 + (NSArray<MirrorRecordModel *> *)daySegmentsForRecord:(MirrorRecordModel *)record clippedToStart:(long)rangeStart end:(long)rangeEnd;
 + (void)p_migrateLegacyGoingOnRecordIfNeeded;
 + (void)p_saveGoingOnTask:(NSString *)taskName at:(NSDate *)accurateDate;
++ (BOOL)p_stopTask:(NSString *)taskName at:(NSDate *)accurateDate;
++ (NSDate * _Nullable)p_goingOnTaskMaximumEndDate;
 + (void)p_clearGoingOnTask;
 + (NSString *)p_goingOnTaskName;
 + (NSDate * _Nullable)p_goingOnTaskStartDate;
++ (NSDate * _Nullable)p_goingOnTaskAccurateStartDate;
 + (NSString *)p_goingOnTaskNote;
 
 @end
@@ -47,6 +51,18 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 {
     [MirrorStorage p_migrateLegacyGoingOnRecordIfNeeded];
     return [MirrorStorage p_goingOnTaskStartDate];
+}
+
++ (NSDate * _Nullable)goingOnTaskAccurateStartDate
+{
+    [MirrorStorage p_migrateLegacyGoingOnRecordIfNeeded];
+    return [MirrorStorage p_goingOnTaskAccurateStartDate];
+}
+
++ (NSDate * _Nullable)goingOnTaskMaximumEndDate
+{
+    [MirrorStorage p_migrateLegacyGoingOnRecordIfNeeded];
+    return [MirrorStorage p_goingOnTaskMaximumEndDate];
 }
 
 + (NSString *)goingOnTaskNote
@@ -70,6 +86,10 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     NSString *taskName = [MirrorStorage isGoingOnTask];
     NSDate *startDate = [MirrorStorage goingOnTaskStartDate];
     if (taskName.length == 0 || startDate == nil) {
+        return;
+    }
+    NSDate *maximumEndDate = [MirrorStorage goingOnTaskMaximumEndDate];
+    if (maximumEndDate && [[NSDate now] compare:maximumEndDate] != NSOrderedAscending) {
         return;
     }
 
@@ -320,6 +340,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults setObject:taskName ?: @"" forKey:kMirrorGoingOnTaskNameKey];
     [defaults setDouble:[date timeIntervalSince1970] forKey:kMirrorGoingOnTaskStartTimestampKey];
+    [defaults setDouble:[accurateDate timeIntervalSince1970] forKey:kMirrorGoingOnTaskAccurateStartTimestampKey];
     [defaults removeObjectForKey:kMirrorGoingOnTaskNoteKey];
 }
 
@@ -344,28 +365,53 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
++ (NSDictionary *)finishGoingOnTaskIfExceededMaximumEndDate
+{
+    NSString *goingOnTask = [MirrorStorage isGoingOnTask];
+    NSDate *maximumEndDate = [MirrorStorage goingOnTaskMaximumEndDate];
+    if (goingOnTask.length == 0 || maximumEndDate == nil || [[NSDate now] compare:maximumEndDate] == NSOrderedAscending) {
+        return nil;
+    }
+
+    BOOL didSaveRecord = [MirrorStorage p_stopTask:goingOnTask at:maximumEndDate];
+    [MirrorStorage p_endLiveActivity];
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
+    return @{
+        @"taskName": goingOnTask,
+        @"didSaveRecord": @(didSaveRecord),
+    };
+}
+
 // 只把本地计时状态落成完整 raw record；例如跨天 1/1 23:00 到 1/2 01:00 仍保存为一条 raw record，不在这里切分。
-+ (void)p_stopTask:(NSString *)taskName at:(NSDate *)accurateDate
++ (BOOL)p_stopTask:(NSString *)taskName at:(NSDate *)accurateDate
 {
     NSString *goingOnTask = [MirrorStorage isGoingOnTask];
     NSDate *startDate = [MirrorStorage goingOnTaskStartDate];
     if (goingOnTask.length == 0 || startDate == nil) {
-        return;
+        return NO;
     }
 
     NSDate *date = [self dateWithoutSeconds:accurateDate];
+    NSTimeInterval accurateEndTimestamp = [accurateDate timeIntervalSince1970];
     long start = round([startDate timeIntervalSince1970]);
     long end = [date timeIntervalSince1970];
+    NSDate *maximumEndDate = [MirrorStorage p_goingOnTaskMaximumEndDate];
+    if (maximumEndDate && end > [maximumEndDate timeIntervalSince1970]) {
+        end = round([maximumEndDate timeIntervalSince1970]);
+        accurateEndTimestamp = [maximumEndDate timeIntervalSince1970];
+    }
+    NSDate *accurateStartDate = [MirrorStorage p_goingOnTaskAccurateStartDate] ?: startDate;
     long length = end - start;
+    NSTimeInterval accurateLength = [[NSDate dateWithTimeIntervalSince1970:accurateEndTimestamp] timeIntervalSinceDate:accurateStartDate];
     NSLog(@"%@计时结束 %ld", goingOnTask, length);
     
-    if (end <= start || length < kMinSeconds) {
+    if (end <= start || length < kMinSeconds || accurateLength < kMinSeconds) {
         [MirrorStorage p_clearGoingOnTask];
-        return;
+        return NO;
     }
 
     NSMutableArray <MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:goingOnTask.length > 0 ? goingOnTask : taskName startTime:start endTime:round([date timeIntervalSince1970])];
+    MirrorRecordModel *newRecord = [[MirrorRecordModel alloc] initWithTitle:goingOnTask.length > 0 ? goingOnTask : taskName startTime:start endTime:end];
     newRecord.note = [MirrorStorage p_goingOnTaskNote];
     [records addObject:newRecord];
     [records sortUsingComparator:^NSComparisonResult(MirrorRecordModel *record1, MirrorRecordModel *record2) {
@@ -375,6 +421,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     }];
     [MirrorStorage saveMirrorRecords:records];
     [MirrorStorage p_clearGoingOnTask];
+    return YES;
 }
 
 // 检查新任务名是否已存在；例如已有“阅读”时再输入“阅读”，返回 TaskNameExistsTypeExistsInCurrentTasks。
@@ -418,6 +465,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 
     [defaults setObject:lastRecord.taskName ?: @"" forKey:kMirrorGoingOnTaskNameKey];
     [defaults setDouble:lastRecord.startTime forKey:kMirrorGoingOnTaskStartTimestampKey];
+    [defaults setDouble:lastRecord.startTime forKey:kMirrorGoingOnTaskAccurateStartTimestampKey];
     [defaults setObject:lastRecord.note ?: @"" forKey:kMirrorGoingOnTaskNoteKey];
     [records removeLastObject];
     [MirrorStorage saveMirrorRecords:records];
@@ -428,7 +476,32 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     [defaults removeObjectForKey:kMirrorGoingOnTaskNameKey];
     [defaults removeObjectForKey:kMirrorGoingOnTaskStartTimestampKey];
+    [defaults removeObjectForKey:kMirrorGoingOnTaskAccurateStartTimestampKey];
     [defaults removeObjectForKey:kMirrorGoingOnTaskNoteKey];
+}
+
++ (NSDate * _Nullable)p_goingOnTaskMaximumEndDate
+{
+    NSDate *startDate = [MirrorStorage p_goingOnTaskStartDate];
+    if (startDate == nil) {
+        return nil;
+    }
+
+    long startTime = round([startDate timeIntervalSince1970]);
+    long maximumEndTime = 0;
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    for (MirrorRecordModel *record in records) {
+        if (record.endTime <= record.startTime) {
+            continue;
+        }
+        if (record.startTime > startTime && (maximumEndTime == 0 || record.startTime < maximumEndTime)) {
+            maximumEndTime = record.startTime;
+        }
+    }
+    if (maximumEndTime == 0) {
+        return nil;
+    }
+    return [NSDate dateWithTimeIntervalSince1970:maximumEndTime];
 }
 
 + (NSString *)p_goingOnTaskName
@@ -449,6 +522,16 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
         return nil;
     }
     return [NSDate dateWithTimeIntervalSince1970:startTimestamp];
+}
+
++ (NSDate * _Nullable)p_goingOnTaskAccurateStartDate
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSTimeInterval accurateStartTimestamp = [defaults doubleForKey:kMirrorGoingOnTaskAccurateStartTimestampKey];
+    if (accurateStartTimestamp <= 0) {
+        return [MirrorStorage p_goingOnTaskStartDate];
+    }
+    return [NSDate dateWithTimeIntervalSince1970:accurateStartTimestamp];
 }
 
 + (NSString *)p_goingOnTaskNote

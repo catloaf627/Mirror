@@ -23,6 +23,10 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (NSDate * _Nullable)goingOnTaskStartDate;
 
++ (NSDate * _Nullable)goingOnTaskAccurateStartDate;
+
++ (NSDate * _Nullable)goingOnTaskMaximumEndDate;
+
 + (NSString *)goingOnTaskNote;
 
 + (void)saveGoingOnTaskNote:(NSString *)note;
@@ -52,6 +56,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 + (void)stopTask:(NSString *)taskName at:(NSDate *)accurateDate;
 
 + (void)cancelGoingOnTask;
+
++ (NSDictionary * _Nullable)finishGoingOnTaskIfExceededMaximumEndDate;
 
 + (void)resumeGoingOnLiveActivityIfNeeded;
 

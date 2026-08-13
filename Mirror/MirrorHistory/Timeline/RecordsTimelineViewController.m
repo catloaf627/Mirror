@@ -33,12 +33,9 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
-@property (nonatomic, strong) UIButton *deleteFutureRecordsButton;
 @property (nonatomic, strong) MirrorReadModel *data;
-@property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *records;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *highlightedRecords;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *sortedTimelineRecords;
-@property (nonatomic, copy) NSString *titleKey;
 @property (nonatomic, weak) UIView *firstHighlightedRow;
 @property (nonatomic, assign) NSInteger selectedPeriodIndex;
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
@@ -77,23 +74,10 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     return self;
 }
 
-- (instancetype)initWithRecords:(NSMutableArray<MirrorRecordModel *> *)records titleKey:(NSString *)titleKey
-{
-    self = [super init];
-    if (self) {
-        self.records = records;
-        self.titleKey = titleKey;
-        [self addObservers];
-    }
-    return self;
-}
-
 - (void)addObservers
 {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
-    if (self.titleKey.length == 0) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
-    }
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
 }
 
@@ -119,7 +103,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[self navigationTitle] leftButton:nil rightButton:nil];
     self.scrollView = nil;
     self.contentView = nil;
-    self.deleteFutureRecordsButton = nil;
     self.sortedTimelineRecords = nil;
     self.timelineBatchStartIndex = 0;
     self.timelineBatchEndIndex = 0;
@@ -137,11 +120,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         return;
     }
     
-    if (self.titleKey.length > 0) {
-        [self reloadCustomRecords];
-    } else {
-        self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
-    }
+    self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
     if (self.scrollView != nil) {
         self.savedTimelineContentOffset = self.scrollView.contentOffset;
         self.savedTimelineBatchStartIndex = self.timelineBatchStartIndex;
@@ -149,7 +128,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     }
     self.scrollView = nil;
     self.contentView = nil;
-    self.deleteFutureRecordsButton = nil;
     self.sortedTimelineRecords = nil;
     self.timelineBatchStartIndex = 0;
     self.timelineBatchEndIndex = 0;
@@ -162,69 +140,23 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 - (NSString *)navigationTitle
 {
-    if (self.titleKey.length > 0) {
-        return [MirrorLanguage mirror_stringWithKey:self.titleKey];
-    }
     return self.data.taskModel.taskName;
-}
-
-- (void)reloadCustomRecords
-{
-    NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage retriveMirrorRecords];
-    NSMutableSet<NSNumber *> *visibleOriginalIndexes = [NSMutableSet new];
-    for (MirrorRecordModel *record in self.records) {
-        [visibleOriginalIndexes addObject:@(record.originalIndex)];
-    }
-    
-    NSMutableArray<MirrorRecordModel *> *updatedRecords = [NSMutableArray new];
-    for (MirrorRecordModel *record in allRecords) {
-        if ([visibleOriginalIndexes containsObject:@(record.originalIndex)]) {
-            [updatedRecords addObject:record];
-        }
-    }
-    self.records = updatedRecords;
 }
 
 - (NSMutableArray<MirrorRecordModel *> *)timelineRecords
 {
-    if (self.titleKey.length > 0) {
-        return self.records;
-    }
     return self.data.records;
-}
-
-- (BOOL)isOccupiedRecordsPage
-{
-    return [self.titleKey isEqualToString:@"occupied_records"];
-}
-
-- (BOOL)shouldShowDeleteFutureRecordsButton
-{
-    return [self isOccupiedRecordsPage] && self.records.count > 0;
 }
 
 - (void)p_setupUI
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    if ([self shouldShowDeleteFutureRecordsButton]) {
-        [self.view addSubview:self.deleteFutureRecordsButton];
-        [self.deleteFutureRecordsButton mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.left.mas_equalTo(self.view).offset(kHorizontalPadding * kWidthRatio);
-            make.right.mas_equalTo(self.view).offset(-kHorizontalPadding * kWidthRatio);
-            make.bottom.mas_equalTo(self.view).offset(-16 * kHeightRatio);
-            make.height.mas_equalTo(48 * kHeightRatio);
-        }];
-    }
     
     [self.view addSubview:self.scrollView];
     [self.scrollView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.mas_equalTo(self.view);
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
-        if ([self shouldShowDeleteFutureRecordsButton]) {
-            make.bottom.mas_equalTo(self.deleteFutureRecordsButton.mas_top).offset(-12 * kHeightRatio);
-        } else {
-            make.bottom.mas_equalTo(self.view);
-        }
+        make.bottom.mas_equalTo(self.view);
     }];
     
     [self.scrollView addSubview:self.contentView];
@@ -579,28 +511,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     return row;
 }
 
-#pragma mark - Actions
-
-- (void)deleteFutureRecords
-{
-    [self deleteAllVisibleFutureRecords];
-}
-
-- (void)deleteAllVisibleFutureRecords
-{
-    NSArray<MirrorRecordModel *> *recordsToDelete = [self.records sortedArrayUsingComparator:^NSComparisonResult(MirrorRecordModel *record0, MirrorRecordModel *record1) {
-        if (record0.originalIndex > record1.originalIndex) return NSOrderedAscending;
-        if (record0.originalIndex < record1.originalIndex) return NSOrderedDescending;
-        return NSOrderedSame;
-    }];
-    
-    for (MirrorRecordModel *record in recordsToDelete) {
-        [MirrorStorage deletePeriodAtIndex:record.originalIndex];
-    }
-    self.records = [NSMutableArray new];
-    [self reloadData];
-}
-
 #pragma mark - Edit Menu
 
 - (void)showEditMenu:(UITapGestureRecognizer *)recognizer
@@ -673,28 +583,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     return [self recordMenuForPeriodIndex:self.selectedPeriodIndex];
 }
 
-- (void)removeCustomRecordWithOriginalIndex:(NSInteger)originalIndex
-{
-    NSInteger indexToRemove = NSNotFound;
-    for (NSInteger index = 0; index < self.records.count; index++) {
-        if (self.records[index].originalIndex == originalIndex) {
-            indexToRemove = index;
-            break;
-        }
-    }
-    if (indexToRemove == NSNotFound) {
-        return;
-    }
-    
-    [self.records removeObjectAtIndex:indexToRemove];
-    for (MirrorRecordModel *record in self.records) {
-        if (record.originalIndex > originalIndex) {
-            record.originalIndex = record.originalIndex - 1;
-        }
-    }
-    [self reloadData];
-}
-
 - (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willPresentMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
 {
     self.isRecordEditMenuVisible = YES;
@@ -736,9 +624,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     
     UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [MirrorStorage deletePeriodAtIndex:periodIndex];
-        if (self.titleKey.length > 0) {
-            [self removeCustomRecordWithOriginalIndex:periodIndex];
-        }
     }];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
     
@@ -819,28 +704,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         _contentView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
     }
     return _contentView;
-}
-
-- (UIButton *)deleteFutureRecordsButton
-{
-    if (!_deleteFutureRecordsButton) {
-        _deleteFutureRecordsButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        _deleteFutureRecordsButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
-        _deleteFutureRecordsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
-        _deleteFutureRecordsButton.titleLabel.font = [UIFont mirrorLabelFont];
-        _deleteFutureRecordsButton.titleLabel.adjustsFontSizeToFitWidth = YES;
-        _deleteFutureRecordsButton.layer.cornerRadius = 14;
-        _deleteFutureRecordsButton.layer.borderWidth = 1;
-        _deleteFutureRecordsButton.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint].CGColor;
-        UIImage *trashImage = [[UIImage systemImageNamed:@"trash"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        [_deleteFutureRecordsButton setImage:trashImage forState:UIControlStateNormal];
-        [_deleteFutureRecordsButton setTitle:[MirrorLanguage mirror_stringWithKey:@"delete_future_records_to_start_counting"] forState:UIControlStateNormal];
-        [_deleteFutureRecordsButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeTextHint] forState:UIControlStateNormal];
-        _deleteFutureRecordsButton.imageEdgeInsets = UIEdgeInsetsMake(0, 0, 0, 8 * kWidthRatio);
-        _deleteFutureRecordsButton.titleEdgeInsets = UIEdgeInsetsMake(0, 8 * kWidthRatio, 0, 0);
-        [_deleteFutureRecordsButton addTarget:self action:@selector(deleteFutureRecords) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _deleteFutureRecordsButton;
 }
 
 @end
