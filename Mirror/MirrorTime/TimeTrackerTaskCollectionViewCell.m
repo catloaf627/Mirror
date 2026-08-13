@@ -17,16 +17,19 @@
 
 static CGFloat const kShadowWidth = 5;
 static CGFloat const kCornerRadius = 14;
+static CGFloat const kActionButtonSize = 32;
+static CGFloat const kActionButtonSpacing = 4;
+static CGFloat const kTextShiftWhenActionsVisible = 24;
 static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimation";
 
 @interface TimeTrackerTaskCollectionViewCell ()
 
 @property (nonatomic, strong) UILabel *taskNameLabel;
 @property (nonatomic, strong) UILabel *hintLabel;
-@property (nonatomic, strong) UIView *backView;
 @property (nonatomic, strong) UIButton *editButton;
 @property (nonatomic, strong) UIButton *deleteButton;
-@property (nonatomic, strong) UIButton *mergeButton;
+@property (nonatomic, strong) MASConstraint *taskNameCenterXConstraint;
+@property (nonatomic, strong) MASConstraint *hintCenterXConstraint;
 @property (nonatomic, assign) BOOL didSetupUI;
 @property (nonatomic, assign) BOOL isEditingModeEnabled;
 @property (nonatomic, assign) BOOL isShowingActionButtons;
@@ -49,8 +52,6 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     self.hintLabel.text = [MirrorTimeText Xh:[MirrorTool getTotalTimeOfPeriods:[MirrorStorage getAllTaskRecords:taskName]]];
     self.taskNameLabel.textColor = [UIColor mirrorColorPulsed:task.color];
     self.contentView.backgroundColor = taskColor;
-    self.backView.backgroundColor = taskColor;
-    self.backView.layer.borderColor = [UIColor mirrorColorPulsed:task.color].CGColor;
 }
 
 - (void)p_setupUI
@@ -74,44 +75,32 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     self.contentView.layer.shadowRadius = kShadowWidth / 2;
     self.contentView.layer.shadowOpacity = 0.2;
 
-    [self addSubview:self.backView];
-    [self.backView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo(self.contentView);
-    }];
-    self.backView.hidden = YES;
-
+    [self.contentView addSubview:self.deleteButton];
+    [self.contentView addSubview:self.editButton];
     [self.contentView addSubview:self.taskNameLabel];
     [self.contentView addSubview:self.hintLabel];
+    [self.deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.contentView).offset(14);
+        make.bottom.mas_equalTo(self.contentView.mas_centerY).offset(-kActionButtonSpacing / 2);
+        make.width.height.mas_equalTo(kActionButtonSize);
+    }];
+    [self.editButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.deleteButton);
+        make.top.mas_equalTo(self.contentView.mas_centerY).offset(kActionButtonSpacing / 2);
+        make.width.height.mas_equalTo(kActionButtonSize);
+    }];
     [self.taskNameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(self.contentView);
+        self.taskNameCenterXConstraint = make.centerX.mas_equalTo(self.contentView);
         make.centerY.mas_equalTo(self.contentView).offset(-8);
-        make.left.offset(8);
-        make.right.offset(-8);
+        make.width.lessThanOrEqualTo(self.contentView).offset(-62);
     }];
     [self.hintLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.mas_equalTo(self.taskNameLabel.mas_bottom).offset(8);
-        make.centerX.mas_equalTo(self.contentView);
-        make.left.offset(8);
-        make.right.offset(-8);
+        self.hintCenterXConstraint = make.centerX.mas_equalTo(self.contentView);
+        make.width.lessThanOrEqualTo(self.contentView).offset(-62);
     }];
 
-    [self.backView addSubview:self.deleteButton];
-    [self.backView addSubview:self.mergeButton];
-    [self.backView addSubview:self.editButton];
-    [self.mergeButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.center.mas_equalTo(self.backView);
-        make.width.height.mas_equalTo(32);
-    }];
-    [self.deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.mas_equalTo(self.mergeButton);
-        make.right.mas_equalTo(self.mergeButton.mas_left).offset(-18);
-        make.width.height.mas_equalTo(32);
-    }];
-    [self.editButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.mas_equalTo(self.mergeButton);
-        make.left.mas_equalTo(self.mergeButton.mas_right).offset(18);
-        make.width.height.mas_equalTo(32);
-    }];
+    [self setActionButtonsVisible:NO animated:NO];
 }
 
 - (void)prepareForReuse
@@ -133,11 +122,6 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     [self.delegate timeTrackerTaskCollectionViewCellDidTapDelete:self];
 }
 
-- (void)tapMergeButton
-{
-    [self.delegate timeTrackerTaskCollectionViewCellDidTapMerge:self];
-}
-
 - (void)setEditingModeEnabled:(BOOL)editingModeEnabled
 {
     [self setEditingModeEnabled:editingModeEnabled animated:NO];
@@ -148,6 +132,7 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     self.isEditingModeEnabled = editingModeEnabled;
     if (editingModeEnabled) {
         [self startEditingShakeAnimation];
+        [self setActionButtonsVisible:YES animated:animated];
     } else {
         [self stopEditingShakeAnimation];
         [self setActionButtonsVisible:NO animated:animated];
@@ -156,28 +141,37 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
 
 - (void)setActionButtonsVisible:(BOOL)visible animated:(BOOL)animated
 {
-    BOOL currentlyVisible = !self.backView.hidden;
-    if (currentlyVisible == visible && self.isShowingActionButtons == visible) {
+    CGFloat expectedAlpha = visible ? 1 : 0;
+    if (self.isShowingActionButtons == visible && self.deleteButton.alpha == expectedAlpha && self.editButton.alpha == expectedAlpha) {
         return;
     }
 
     self.isShowingActionButtons = visible;
-    UIViewAnimationOptions direction = visible ? UIViewAnimationOptionTransitionFlipFromRight : UIViewAnimationOptionTransitionFlipFromLeft;
     void (^stateChange)(void) = ^{
-        self.contentView.hidden = visible;
-        self.backView.hidden = !visible;
+        self.deleteButton.alpha = visible ? 1 : 0;
+        self.editButton.alpha = visible ? 1 : 0;
+        self.deleteButton.userInteractionEnabled = visible;
+        self.editButton.userInteractionEnabled = visible;
+        self.deleteButton.transform = visible ? CGAffineTransformIdentity : CGAffineTransformMakeScale(0.72, 0.72);
+        self.editButton.transform = visible ? CGAffineTransformIdentity : CGAffineTransformMakeScale(0.72, 0.72);
+        [self.taskNameCenterXConstraint setOffset:visible ? kTextShiftWhenActionsVisible : 0];
+        [self.hintCenterXConstraint setOffset:visible ? kTextShiftWhenActionsVisible : 0];
+        [self.contentView layoutIfNeeded];
     };
 
-    if (!animated || currentlyVisible == visible) {
+    if (!animated) {
         stateChange();
         return;
     }
 
-    [UIView transitionWithView:self
-                      duration:0.28
-                       options:direction | UIViewAnimationOptionAllowUserInteraction
-                    animations:stateChange
-                    completion:nil];
+    [self.contentView layoutIfNeeded];
+    [UIView animateWithDuration:0.24
+                          delay:0
+         usingSpringWithDamping:0.82
+          initialSpringVelocity:0.35
+                        options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionBeginFromCurrentState
+                     animations:stateChange
+                     completion:nil];
 }
 
 - (BOOL)dismissActionButtonsIfNeeded
@@ -235,19 +229,6 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
     return _hintLabel;
 }
 
-- (UIView *)backView
-{
-    if (!_backView) {
-        _backView = [UIView new];
-        _backView.layer.cornerRadius = kCornerRadius;
-        _backView.layer.borderWidth = 1.5;
-        _backView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
-        _backView.layer.shadowRadius = kShadowWidth / 2;
-        _backView.layer.shadowOpacity = 0.2;
-    }
-    return _backView;
-}
-
 - (UIButton *)editButton
 {
     if (!_editButton) {
@@ -270,18 +251,6 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
         [_deleteButton addTarget:self action:@selector(tapDeleteButton) forControlEvents:UIControlEventTouchUpInside];
     }
     return _deleteButton;
-}
-
-- (UIButton *)mergeButton
-{
-    if (!_mergeButton) {
-        _mergeButton = [UIButton new];
-        _mergeButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _mergeButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"merge"];
-        [_mergeButton setImage:[UIImage systemImageNamed:@"inset.filled.righthalf.arrow.right.rectangle"] forState:UIControlStateNormal];
-        [_mergeButton addTarget:self action:@selector(tapMergeButton) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _mergeButton;
 }
 
 @end

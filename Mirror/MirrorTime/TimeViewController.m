@@ -48,6 +48,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 @property (nonatomic, assign) BOOL isEditingTasks;
 // UI
 @property (nonatomic, strong) UICollectionView *collectionView;
+@property (nonatomic, strong) UILongPressGestureRecognizer *taskReorderLongPressRecognizer;
 
 @end
 
@@ -161,6 +162,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     self.isEditingTasks = !self.isEditingTasks;
     self.editButton.selected = self.isEditingTasks;
     self.editButton.tintColor = self.isEditingTasks ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.taskReorderLongPressRecognizer.enabled = self.isEditingTasks;
     [self updateEditButtonShakeAnimation];
     [self updateVisibleTaskCellsForEditingModeAnimated:YES];
 }
@@ -183,6 +185,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     self.isEditingTasks = NO;
     self.editButton.selected = NO;
     self.editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.taskReorderLongPressRecognizer.enabled = NO;
     [self updateEditButtonShakeAnimation];
     [self updateVisibleTaskCellsForEditingModeAnimated:animated];
 }
@@ -384,6 +387,35 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     return !self.data[indexPath.item].isAddTaskModel;
 }
 
+- (void)handleTaskReorderLongPress:(UILongPressGestureRecognizer *)gestureRecognizer
+{
+    if (!self.isEditingTasks) {
+        return;
+    }
+
+    CGPoint location = [gestureRecognizer locationInView:self.collectionView];
+    switch (gestureRecognizer.state) {
+        case UIGestureRecognizerStateBegan: {
+            NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:location];
+            if (![self canMoveTaskAtIndexPath:indexPath]) {
+                return;
+            }
+            [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+            [self.collectionView beginInteractiveMovementForItemAtIndexPath:indexPath];
+            break;
+        }
+        case UIGestureRecognizerStateChanged:
+            [self.collectionView updateInteractiveMovementTargetPosition:location];
+            break;
+        case UIGestureRecognizerStateEnded:
+            [self.collectionView endInteractiveMovement];
+            break;
+        default:
+            [self.collectionView cancelInteractiveMovement];
+            break;
+    }
+}
+
 - (void)presentEditTaskSheetAtIndexPath:(NSIndexPath *)indexPath
 {
     if (![self canMoveTaskAtIndexPath:indexPath]) {
@@ -574,8 +606,12 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         [MirrorStorage deleteTask:taskName];
     }];
-    [deleteTaskAlert addAction:cancelAction];
+    UIAlertAction *mergeAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        [self presentMergeTaskPickerAtIndexPath:indexPath];
+    }];
     [deleteTaskAlert addAction:deleteAction];
+    [deleteTaskAlert addAction:mergeAction];
+    [deleteTaskAlert addAction:cancelAction];
     [self presentViewController:deleteTaskAlert animated:YES completion:nil];
 }
 
@@ -592,10 +628,6 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     // 点击了task model
     TimeTrackerTaskCollectionViewCell *selectedCell = (TimeTrackerTaskCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:selectedIndexPath];
     if (self.isEditingTasks) {
-        if ([selectedCell dismissActionButtonsIfNeeded]) {
-            return;
-        }
-        [selectedCell setActionButtonsVisible:YES animated:YES];
         return;
     }
     if ([selectedCell dismissActionButtonsIfNeeded]) {
@@ -618,6 +650,40 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     }
     [MirrorStorage startTask:selectedModel.taskName at:startDate];
     [self presentTrackingViewControllerWithTaskName:selectedModel.taskName accurateStartDate:startDate animated:YES];
+}
+
+- (BOOL)collectionView:(UICollectionView *)collectionView canMoveItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    return self.isEditingTasks && [self canMoveTaskAtIndexPath:indexPath];
+}
+
+- (NSIndexPath *)collectionView:(UICollectionView *)collectionView targetIndexPathForMoveFromItemAtIndexPath:(NSIndexPath *)originalIndexPath toProposedIndexPath:(NSIndexPath *)proposedIndexPath
+{
+    if (![self canMoveTaskAtIndexPath:proposedIndexPath]) {
+        NSInteger lastTaskIndex = MAX(0, (NSInteger)[MirrorStorage retriveMirrorTasks].count - 1);
+        return [NSIndexPath indexPathForItem:lastTaskIndex inSection:originalIndexPath.section];
+    }
+    return proposedIndexPath;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath
+{
+    if (![self canMoveTaskAtIndexPath:sourceIndexPath] || ![self canMoveTaskAtIndexPath:destinationIndexPath]) {
+        [collectionView reloadData];
+        return;
+    }
+
+    MirrorTaskModel *movedTask = self.data[sourceIndexPath.item];
+    [self.data removeObjectAtIndex:sourceIndexPath.item];
+    [self.data insertObject:movedTask atIndex:destinationIndexPath.item];
+
+    NSMutableArray<MirrorTaskModel *> *orderedTasks = [NSMutableArray new];
+    for (MirrorTaskModel *task in self.data) {
+        if (!task.isAddTaskModel) {
+            [orderedTasks addObject:task];
+        }
+    }
+    [MirrorStorage reorderTasks:orderedTasks];
 }
 
 - (BOOL)isNowOccupiedByRecord
@@ -786,12 +852,6 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     [self presentDeleteTaskAlertAtIndexPath:indexPath];
 }
 
-- (void)timeTrackerTaskCollectionViewCellDidTapMerge:(TimeTrackerTaskCollectionViewCell *)cell
-{
-    NSIndexPath *indexPath = [self.collectionView indexPathForCell:cell];
-    [self presentMergeTaskPickerAtIndexPath:indexPath];
-}
-
 #pragma mark - Getters
 
 - (UICollectionView *)collectionView
@@ -802,6 +862,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
         _collectionView.delegate = self;
         _collectionView.dataSource = self;
         _collectionView.backgroundColor = self.view.backgroundColor;
+        [_collectionView addGestureRecognizer:self.taskReorderLongPressRecognizer];
         
         [_collectionView registerClass:[TimeTrackerTaskCollectionViewCell class] forCellWithReuseIdentifier:[TimeTrackerTaskCollectionViewCell identifier]];
         [_collectionView registerClass:[TimeTrackerAddTaskCollectionViewCell class] forCellWithReuseIdentifier:[TimeTrackerAddTaskCollectionViewCell identifier]];
@@ -809,6 +870,16 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
         [_collectionView registerClass:[HintFooter class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"footer"];
     }
     return _collectionView;
+}
+
+- (UILongPressGestureRecognizer *)taskReorderLongPressRecognizer
+{
+    if (!_taskReorderLongPressRecognizer) {
+        _taskReorderLongPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleTaskReorderLongPress:)];
+        _taskReorderLongPressRecognizer.minimumPressDuration = 0.45;
+        _taskReorderLongPressRecognizer.enabled = NO;
+    }
+    return _taskReorderLongPressRecognizer;
 }
 
 - (UIButton *)settingsButton
