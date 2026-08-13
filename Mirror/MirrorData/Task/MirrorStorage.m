@@ -10,7 +10,6 @@
 #import "MirrorLanguage.h"
 #import "MirrorTool.h"
 #import "MirrorMacro.h"
-#import <AudioToolbox/AudioToolbox.h>
 
 static NSInteger const kMaxTaskCnt = 8;
 static NSString * const kMirrorJSONFileName = @"mirror.json";
@@ -119,7 +118,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     NSLog(@"Create");
     [MirrorStorage saveMirrorTasks:tasks];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskCreateNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 删除一个任务及其所有原始记录；例如删除“英语”，会移除英语任务、英语的全部 periods，如果它正在计时还会结束 Live Activity。
@@ -155,7 +153,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     }
     // 通知
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskDeleteNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 将一个任务合并到另一个任务；例如把“英语”的所有记录改名为“学习”，再从任务列表删除“英语”。
@@ -188,7 +185,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     
     NSLog(@"Merge task");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskMergeNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 切换任务隐藏状态；例如把“工作”设为 hidden 后，Grid/History 这类隐藏过滤数据源不再统计它。
@@ -209,7 +205,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     }
     [MirrorStorage saveMirrorTasks:tasks];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskHiddenNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 修改任务名称，并同步改所有原始记录里的 taskName；例如“英语”改成“English”，历史记录也会一起改名。
@@ -233,7 +228,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     }
     [MirrorStorage saveMirrorRecords:records];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskEditNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 
@@ -251,7 +245,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     }
     [MirrorStorage saveMirrorTasks:tasks];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskEditNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 保存任务排序；例如用户拖动后传入 [工作, 阅读, 运动]，后续图表也按这个顺序聚合展示。
@@ -260,7 +253,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage saveMirrorTasks:taskArray]; // reorder 的话直接保存数组即可
     NSLog(@"Edit order");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskChangeOrderNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 插入一条原始记录；例如 Today 页点 23:45 添加 1 小时，会保存为 23:45-00:45 一条记录，UI 数据源再按天切。
@@ -284,7 +276,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage saveMirrorRecords:records];
     NSLog(@"Insert period start %@, end %@", [MirrorTool timeFromDate:startDate printTimeStamp:NO], [MirrorTool timeFromDate:endDate printTimeStamp:NO]);
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 按查询范围和自然日切 UI 片段；例如原始记录 1/1 08:00-1/3 08:00，查询 1/2 00:00-1/3 00:00 时只返回 1/2 全天片段。
@@ -330,7 +321,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage p_startLiveActivityWithTaskName:taskName startDate:date colorType:task.color];
     NSLog(@"Start at %@", [MirrorTool timeFromDate:accurateDate printTimeStamp:NO]);
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStartNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 只保存“正在计时”的本地状态，不发通知也不启动 Live Activity。
@@ -351,7 +341,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage p_endLiveActivity];
     NSLog(@"Stop at %@", [MirrorTool timeFromDate:accurateDate printTimeStamp:NO]);
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 + (void)cancelGoingOnTask
@@ -362,7 +351,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage p_clearGoingOnTask];
     [MirrorStorage p_endLiveActivity];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 + (NSDictionary *)finishGoingOnTaskIfExceededMaximumEndDate
@@ -447,7 +435,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage saveMirrorRecords:records];
     NSLog(@"Period deleted");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodDeleteNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 + (void)p_migrateLegacyGoingOnRecordIfNeeded
@@ -580,7 +567,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage saveMirrorRecords:records];
     NSLog(@"Period is edited");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 同步修改某条原始记录的起止时间；例如拖动整块 period 时保持 duration 不变，一次写入 start/end。
@@ -594,7 +580,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage saveMirrorRecords:records];
     NSLog(@"Period is edited");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
-    AudioServicesPlaySystemSound((SystemSoundID)kAudioClick);
 }
 
 // 修改某条原始记录的备注；例如给 records[2] 写入一段用户备注，最多保留 200 个字符。

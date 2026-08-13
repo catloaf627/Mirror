@@ -31,7 +31,7 @@
 
 static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAnimation";
 
-@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIDocumentPickerDelegate>
+@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIDocumentPickerDelegate, UIGestureRecognizerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 @property (nonatomic, strong) UIView *navigationDebugHitView;
@@ -48,6 +48,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 @property (nonatomic, assign) BOOL isEditingTasks;
 // UI
 @property (nonatomic, strong) UICollectionView *collectionView;
+@property (nonatomic, strong) UITapGestureRecognizer *editingDismissTapRecognizer;
 @property (nonatomic, strong) UILongPressGestureRecognizer *taskReorderLongPressRecognizer;
 @property (nonatomic, weak) TimeTrackerTaskCollectionViewCell *reorderSelectedCell;
 
@@ -140,6 +141,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
     [self.view addSubview:self.collectionView];
+    [self.view addGestureRecognizer:self.editingDismissTapRecognizer];
     [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kCollectionViewPadding);
         make.right.mas_equalTo(self.view).offset(-kCollectionViewPadding);
@@ -164,6 +166,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     self.editButton.selected = self.isEditingTasks;
     self.editButton.tintColor = self.isEditingTasks ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.taskReorderLongPressRecognizer.enabled = self.isEditingTasks;
+    self.editingDismissTapRecognizer.enabled = self.isEditingTasks;
     [self updateEditButtonShakeAnimation];
     [self updateVisibleTaskCellsForEditingModeAnimated:YES];
 }
@@ -178,6 +181,14 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     }
 }
 
+- (void)dismissEditingTasksFromBackgroundTap:(UITapGestureRecognizer *)tapRecognizer
+{
+    if (tapRecognizer.state != UIGestureRecognizerStateRecognized) {
+        return;
+    }
+    [self exitEditingTasksIfNeededAnimated:YES];
+}
+
 - (void)exitEditingTasksIfNeededAnimated:(BOOL)animated
 {
     if (!self.isEditingTasks) {
@@ -187,6 +198,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     self.editButton.selected = NO;
     self.editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.taskReorderLongPressRecognizer.enabled = NO;
+    self.editingDismissTapRecognizer.enabled = NO;
     [self clearReorderSelectedCellAnimated:animated];
     [self updateEditButtonShakeAnimation];
     [self updateVisibleTaskCellsForEditingModeAnimated:animated];
@@ -387,6 +399,22 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
         return NO;
     }
     return !self.data[indexPath.item].isAddTaskModel;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{
+    if (gestureRecognizer != self.editingDismissTapRecognizer || !self.isEditingTasks) {
+        return YES;
+    }
+
+    UIView *view = touch.view;
+    while (view && view != self.view) {
+        if ([view isKindOfClass:TimeTrackerTaskCollectionViewCell.class]) {
+            return NO;
+        }
+        view = view.superview;
+    }
+    return YES;
 }
 
 - (void)handleTaskReorderLongPress:(UILongPressGestureRecognizer *)gestureRecognizer
@@ -887,6 +915,17 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
         [_collectionView registerClass:[HintFooter class] forSupplementaryViewOfKind:UICollectionElementKindSectionFooter withReuseIdentifier:@"footer"];
     }
     return _collectionView;
+}
+
+- (UITapGestureRecognizer *)editingDismissTapRecognizer
+{
+    if (!_editingDismissTapRecognizer) {
+        _editingDismissTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissEditingTasksFromBackgroundTap:)];
+        _editingDismissTapRecognizer.cancelsTouchesInView = NO;
+        _editingDismissTapRecognizer.delegate = self;
+        _editingDismissTapRecognizer.enabled = NO;
+    }
+    return _editingDismissTapRecognizer;
 }
 
 - (UILongPressGestureRecognizer *)taskReorderLongPressRecognizer
