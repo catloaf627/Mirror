@@ -8,6 +8,7 @@
 #import "TimeViewController.h"
 #import "UIColor+MirrorColor.h"
 #import <Masonry/Masonry.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import "TimeTrackerTaskCollectionViewCell.h"
 #import "TimeTrackerAddTaskCollectionViewCell.h"
 #import "MirrorMacro.h"
@@ -16,6 +17,7 @@
 #import "TimeTrackingViewController.h"
 #import "MirrorStorage.h"
 #import "MirrorTool.h"
+#import "MirrorTimeText.h"
 #import "MirrorSettings.h"
 #import "RecordsTimelineViewController.h"
 #import "CellAnimation.h"
@@ -28,7 +30,7 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
-@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate>
+@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIDocumentPickerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
@@ -131,6 +133,44 @@
     }];
 }
 
+#pragma mark - UIDocumentPickerDelegate
+
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls
+{
+    NSURL *url = urls.firstObject;
+    if (!url) {
+        return;
+    }
+
+    BOOL fileUrlAuthorized = [url startAccessingSecurityScopedResource];
+    if (!fileUrlAuthorized) {
+        return;
+    }
+
+    NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
+    NSError *coordinateError = nil;
+    [fileCoordinator coordinateReadingItemAtURL:url options:0 error:&coordinateError byAccessor:^(NSURL *newURL) {
+        NSError *readError = nil;
+        NSData *data = [NSData dataWithContentsOfURL:newURL options:NSDataReadingMappedIfSafe error:&readError];
+        if (readError || ![MirrorStorage canImportJSONData:data]) {
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"wrong_data_format"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+            [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+            [self presentViewController:alertController animated:YES completion:nil];
+            return;
+        }
+
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"import_data_?"] message:[MirrorLanguage mirror_stringWithKey:@"import_data_?_message"] preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];
+        [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"import"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            [MirrorStorage importJSONData:data];
+            [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
+            [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
+        }]];
+        [self presentViewController:alertController animated:YES completion:nil];
+    }];
+    [url stopAccessingSecurityScopedResource];
+}
+
 #pragma mark - Actions
 
 - (void)showCloudSummary
@@ -140,8 +180,42 @@
     NSNumber *recordCount = [MirrorStorage iCloudRecordCount] ?: @0;
     NSString *message = [NSString stringWithFormat:[MirrorLanguage mirror_stringWithKey:@"icloud_summary_message"], taskCount.stringValue, recordCount.stringValue];
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:message preferredStyle:UIAlertControllerStyleAlert];
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"export_json"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self exportJSONData];
+    }]];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"import_json"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self showJSONDocumentPicker];
+    }]];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleCancel handler:nil]];
     [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)exportJSONData
+{
+    NSData *data = [MirrorStorage exportJSONData];
+    if (!data) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"no_data"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alertController animated:YES completion:nil];
+        return;
+    }
+
+    NSString *filename = [[@"Mirror" stringByAppendingString:[MirrorTimeText getPreciseTimeString]] stringByAppendingString:@".json"];
+    NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingString:filename]];
+    [data writeToURL:url atomically:NO];
+    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:nil];
+    activityViewController.excludedActivityTypes = @[];
+    activityViewController.popoverPresentationController.sourceView = self.cloudButton;
+    activityViewController.popoverPresentationController.sourceRect = self.cloudButton.bounds;
+    [self presentViewController:activityViewController animated:YES completion:nil];
+}
+
+- (void)showJSONDocumentPicker
+{
+    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeData]];
+    documentPicker.delegate = self;
+    documentPicker.modalPresentationStyle = UIModalPresentationFormSheet;
+    [self presentViewController:documentPicker animated:YES completion:nil];
 }
 
 - (void)showLanguagePicker
