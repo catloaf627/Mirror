@@ -12,7 +12,6 @@
 #import "MirrorMacro.h"
 #import "MirrorLanguage.h"
 #import "MirrorStorage.h"
-#import "MirrorTool.h"
 #import "CellAnimation.h"
 #import <QuartzCore/QuartzCore.h>
 
@@ -23,6 +22,42 @@ static CGFloat const kIntervalSize = 70;
 
 static NSString *const kHintFont = @"TrebuchetMS-Italic";
 static CGFloat const kCircleLineWidth = 18;
+
+static UIColor *MirrorTrackingBackgroundColor(void)
+{
+    return [UIColor colorWithWhite:0 alpha:0.8];
+}
+
+static UIColor *MirrorTrackingCircleTrackColor(void)
+{
+    return [UIColor colorWithWhite:0.08 alpha:0.65];
+}
+
+static UIColor *MirrorTrackingPrimaryTextColor(void)
+{
+    return [UIColor colorWithWhite:1 alpha:0.92];
+}
+
+static UIColor *MirrorTrackingButtonBackgroundColor(void)
+{
+    return [UIColor colorWithWhite:1 alpha:0.14];
+}
+
+static UIColor *MirrorTrackingButtonHighlightedColor(void)
+{
+    return [UIColor colorWithWhite:1 alpha:0.22];
+}
+
+static UIImage *MirrorTrackingImageWithColor(UIColor *color)
+{
+    CGRect rect = CGRectMake(0, 0, 1, 1);
+    UIGraphicsBeginImageContextWithOptions(rect.size, NO, 0);
+    [color setFill];
+    UIRectFill(rect);
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
 
 @interface MirrorTrackingCircleView : UIView
 
@@ -170,7 +205,7 @@ static CGFloat const kCircleLineWidth = 18;
 
     self.trackLayer.frame = self.bounds;
     self.trackLayer.path = trackPath.CGPath;
-    self.trackLayer.strokeColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG].CGColor;
+    self.trackLayer.strokeColor = MirrorTrackingCircleTrackColor().CGColor;
 
     self.gradientLayer.frame = self.bounds;
     self.gradientLayer.startPoint = CGPointMake(0.5, 0.5);
@@ -235,7 +270,6 @@ static CGFloat const kCircleLineWidth = 18;
 {
     self = [super init];
     if (self) {
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
         self.taskName = taskName;
         self.accurateStartDate = accurateStartDate;
         MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
@@ -245,20 +279,6 @@ static CGFloat const kCircleLineWidth = 18;
     return self;
 }
 
-- (void)restartVC
-{
-    // 将vc.view里的所有subviews全部置为nil
-    self.taskNameLabel = nil;
-    self.noteButton = nil;
-    self.circleView = nil;
-    self.timeIntervalLabel = nil;
-    self.stopButton = nil;
-    // 将vc.view里的所有subviews从父view上移除
-    [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    [self  p_setupUI];
-}
-
-
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self p_setupUI];
@@ -266,7 +286,6 @@ static CGFloat const kCircleLineWidth = 18;
 
 - (void)dealloc // 页面被销毁，销毁timer
 {
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self.timer invalidate];
     self.timer = nil;
 }
@@ -281,8 +300,7 @@ static CGFloat const kCircleLineWidth = 18;
 - (void)p_setupUI
 {
     self.view.clipsToBounds = YES;
-    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    self.view.alpha = 0.9;
+    self.view.backgroundColor = MirrorTrackingBackgroundColor();
     [self.view addSubview:self.circleView];
     [self.circleView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
@@ -339,7 +357,6 @@ static CGFloat const kCircleLineWidth = 18;
     }
 
     BOOL canStop = [self canStopAndKeepRecord];
-    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
 
     if (canStop) {
         self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
@@ -485,7 +502,7 @@ static CGFloat const kCircleLineWidth = 18;
 {
     if (!_taskNameLabel) {
         _taskNameLabel = [UILabel new];
-        _taskNameLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _taskNameLabel.textColor = MirrorTrackingPrimaryTextColor();
         _taskNameLabel.font = [UIFont fontWithName:kHintFont size:kTaskNameSize];
         _taskNameLabel.text = self.taskName;
         _taskNameLabel.textAlignment = NSTextAlignmentCenter;
@@ -499,13 +516,18 @@ static CGFloat const kCircleLineWidth = 18;
 {
     if (!_noteButton) {
         _noteButton = [UIButton new];
-        _noteButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _noteButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _noteButton.backgroundColor = MirrorTrackingButtonBackgroundColor();
+        _noteButton.tintColor = MirrorTrackingPrimaryTextColor();
         _noteButton.layer.cornerRadius = 12;
+        _noteButton.clipsToBounds = YES;
+        _noteButton.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.18].CGColor;
+        _noteButton.layer.borderWidth = 1;
         _noteButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentCenter;
         _noteButton.contentVerticalAlignment = UIControlContentVerticalAlignmentCenter;
         _noteButton.imageView.contentMode = UIViewContentModeCenter;
         _noteButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"note"];
+        [_noteButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonBackgroundColor()) forState:UIControlStateNormal];
+        [_noteButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonHighlightedColor()) forState:UIControlStateHighlighted];
         if (@available(iOS 13.0, *)) {
             UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:21 weight:UIImageSymbolWeightRegular];
             UIImage *image = [[UIImage systemImageNamed:@"pencil.and.list.clipboard"] imageWithConfiguration:configuration];
@@ -532,7 +554,7 @@ static CGFloat const kCircleLineWidth = 18;
 {
     if (!_timeIntervalLabel) {
         _timeIntervalLabel = [UILabel new];
-        _timeIntervalLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _timeIntervalLabel.textColor = MirrorTrackingPrimaryTextColor();
         _timeIntervalLabel.font = [UIFont fontWithName:kHintFont size:kIntervalSize];
         _timeIntervalLabel.text = [MirrorLanguage mirror_stringWithKey:@"go"];
         _timeIntervalLabel.textAlignment = NSTextAlignmentCenter;
@@ -547,12 +569,15 @@ static CGFloat const kCircleLineWidth = 18;
     if (!_stopButton) {
         _stopButton = [UIButton new];
         [_stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"give_up"] forState:UIControlStateNormal];
-        _stopButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        [_stopButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeBackground] forState:UIControlStateNormal];
+        _stopButton.backgroundColor = MirrorTrackingButtonBackgroundColor();
+        [_stopButton setTitleColor:MirrorTrackingPrimaryTextColor() forState:UIControlStateNormal];
         _stopButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
-        _stopButton.layer.borderColor = [UIColor mirrorColorNamed:MirrorColorTypeText].CGColor;
+        _stopButton.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.18].CGColor;
         _stopButton.layer.borderWidth = 1;
         _stopButton.layer.cornerRadius = 12;
+        _stopButton.clipsToBounds = YES;
+        [_stopButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonBackgroundColor()) forState:UIControlStateNormal];
+        [_stopButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonHighlightedColor()) forState:UIControlStateHighlighted];
         [_stopButton addTarget:self action:@selector(stopButtonClicked) forControlEvents:UIControlEventTouchUpInside];
     }
     return _stopButton;
