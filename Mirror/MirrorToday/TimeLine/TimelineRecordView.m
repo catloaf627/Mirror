@@ -84,11 +84,10 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     tapRecognizer.delegate = self;
     [self.foregroundView addGestureRecognizer:tapRecognizer];
 
-    UITapGestureRecognizer *doubleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(doubleTapRecordView:)];
-    doubleTapRecognizer.delegate = self;
-    doubleTapRecognizer.numberOfTapsRequired = 2;
-    [self.foregroundView addGestureRecognizer:doubleTapRecognizer];
-    [tapRecognizer requireGestureRecognizerToFail:doubleTapRecognizer];
+    UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressRecordView:)];
+    longPressRecognizer.delegate = self;
+    longPressRecognizer.minimumPressDuration = 0.65;
+    [self.foregroundView addGestureRecognizer:longPressRecognizer];
 
     UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panRecord:)];
     panRecognizer.delegate = self;
@@ -185,9 +184,9 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     [self.delegate timelineRecordViewDidRequestInlineEditing:self];
 }
 
-- (void)doubleTapRecordView:(UITapGestureRecognizer *)recognizer
+- (void)longPressRecordView:(UILongPressGestureRecognizer *)recognizer
 {
-    if (recognizer.state != UIGestureRecognizerStateRecognized) {
+    if (recognizer.state != UIGestureRecognizerStateBegan) {
         return;
     }
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
