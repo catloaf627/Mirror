@@ -921,7 +921,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 {
     if (!_editingDismissTapRecognizer) {
         _editingDismissTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissEditingTasksFromBackgroundTap:)];
-        _editingDismissTapRecognizer.cancelsTouchesInView = NO;
+        _editingDismissTapRecognizer.cancelsTouchesInView = YES;
         _editingDismissTapRecognizer.delegate = self;
         _editingDismissTapRecognizer.enabled = NO;
     }
