@@ -33,6 +33,7 @@
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
+@property (nonatomic, strong) UIButton *cloudButton;
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorTaskModel *> *data;
 // Mark
@@ -85,7 +86,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.cloudButton];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -103,7 +104,7 @@
     // update navibar
     [[MirrorTabsManager sharedInstance] updateTimeTabItemWithTabController:self.tabBarController];
     if (self.tabBarController.selectedIndex == 0) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.cloudButton];
     }
     // reset ui
     self.collectionView = nil;
@@ -131,6 +132,17 @@
 }
 
 #pragma mark - Actions
+
+- (void)showCloudSummary
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    NSNumber *taskCount = [MirrorStorage iCloudTaskCount] ?: @0;
+    NSNumber *recordCount = [MirrorStorage iCloudRecordCount] ?: @0;
+    NSString *message = [NSString stringWithFormat:[MirrorLanguage mirror_stringWithKey:@"icloud_summary_message"], taskCount.stringValue, recordCount.stringValue];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:message preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alertController animated:YES completion:nil];
+}
 
 - (void)showLanguagePicker
 {
@@ -671,6 +683,23 @@
         [_settingsButton addTarget:self action:@selector(showLanguagePicker) forControlEvents:UIControlEventTouchUpInside];
     }
     return _settingsButton;
+}
+
+- (UIButton *)cloudButton
+{
+    if (!_cloudButton) {
+        _cloudButton = [UIButton new];
+        _cloudButton.accessibilityIdentifier = @"MirrorNaviIconUsesCustomConfiguration";
+        UIImage *iconImage = [[UIImage systemImageNamed:@"icloud"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
+        [_cloudButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+        if (@available(iOS 13.0, *)) {
+            UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular];
+            [_cloudButton setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateNormal];
+        }
+        _cloudButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
+        [_cloudButton addTarget:self action:@selector(showCloudSummary) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _cloudButton;
 }
 
 - (NSMutableArray<MirrorTaskModel *> *)data

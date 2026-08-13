@@ -518,6 +518,16 @@ static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwa
     return YES;
 }
 
+// 读取 iCloud 备份里的任务数量；例如设置页显示“云端有 8 个任务”，读取失败时返回 nil。
++ (NSNumber *)iCloudTaskCount
+{
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:&tasks records:nil secondsFromGMT:nil]) {
+        return @(tasks.count);
+    }
+    return nil;
+}
+
 // 读取 iCloud 备份里的记录数量；例如设置页显示“云端有 128 条记录”，读取失败时返回 nil。
 + (NSNumber *)iCloudRecordCount
 {

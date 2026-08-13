@@ -74,6 +74,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (BOOL)importJSONData:(NSData *)data;
 
++ (NSNumber * _Nullable)iCloudTaskCount;
+
 + (NSNumber * _Nullable)iCloudRecordCount;
 
 + (BOOL)importDataFromICloud;
