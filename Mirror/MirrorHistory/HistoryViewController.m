@@ -42,6 +42,7 @@
 @property (nonatomic, strong) UIImageView *leftArrow;
 @property (nonatomic, strong) UIImageView *rightArrow;
 @property (nonatomic, strong) UILabel *dateLabel;
+@property (nonatomic, strong) MASConstraint *dateLabelWidthConstraint;
 @property (nonatomic, strong) LegendView *legendView;
 @property (nonatomic, strong) TaskProgressListView *taskProgressListView;
 @property (nonatomic, strong) PiechartView *piechartView;
@@ -178,21 +179,25 @@
         make.top.mas_equalTo(self.typeSwitch.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo(60*kHeightRatio);
     }];
-    [self.interactionView addSubview:self.dateLabel];
-    [self.dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.centerY.offset(0);
-        make.width.mas_equalTo(2*self.view.frame.size.width/3);
-        make.height.mas_equalTo(40*kHeightRatio);
-    }];
     [self.interactionView addSubview:self.leftArrow];
     [self.leftArrow mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.mas_equalTo(self.dateLabel);
-        make.right.mas_equalTo(self.dateLabel.mas_left).offset(-kLeftRightSpacing);
+        make.height.mas_equalTo(18*kHeightRatio);
+        make.width.mas_equalTo(18*kHeightRatio);
+        make.centerY.mas_equalTo(self.interactionView);
+        make.centerX.mas_equalTo(self.interactionView.mas_left).offset(self.view.frame.size.width/10.0);
     }];
     [self.interactionView addSubview:self.rightArrow];
     [self.rightArrow mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerY.mas_equalTo(self.dateLabel);
-        make.left.mas_equalTo(self.dateLabel.mas_right).offset(kLeftSheetRatio);
+        make.height.mas_equalTo(18*kHeightRatio);
+        make.width.mas_equalTo(18*kHeightRatio);
+        make.centerY.mas_equalTo(self.interactionView);
+        make.centerX.mas_equalTo(self.interactionView.mas_left).offset(9*self.view.frame.size.width/10.0);
+    }];
+    [self.interactionView addSubview:self.dateLabel];
+    [self.dateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.centerY.offset(0);
+        make.left.mas_equalTo(_leftArrow.mas_right);
+        make.right.mas_equalTo(_rightArrow.mas_left);
     }];
     [self.view addSubview:self.legendView];
     [self.legendView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -429,7 +434,9 @@
         _dateLabel = [UILabel new];
         _dateLabel.textAlignment = NSTextAlignmentCenter;
         _dateLabel.text = @"";
-        _dateLabel.font = [UIFont mirrorHintFont];
+        _dateLabel.font = [UIFont mirrorLabelFont];
+        [_dateLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [_dateLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultHigh forAxis:UILayoutConstraintAxisHorizontal];
         _dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText]; // 和nickname的文字颜色保持一致
     }
     return _dateLabel;
