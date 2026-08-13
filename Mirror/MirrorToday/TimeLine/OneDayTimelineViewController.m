@@ -37,6 +37,7 @@
 @property (nonatomic, strong) UIScrollView *timelineScrollView;
 @property (nonatomic, strong) TimelineView *timelineContentView;
 @property (nonatomic, strong) UIView *nowLineView;
+@property (nonatomic, strong) UILabel *nowLineTimeLabel;
 @property (nonatomic, strong) NSTimer *nowLineTimer;
 
 @end
@@ -359,6 +360,7 @@
     self.activeRecordView = nil;
     [self.timelineContentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     self.nowLineView = nil;
+    self.nowLineTimeLabel = nil;
     [self renderHourLines];
     [self renderRecords];
     [self updateNowLine];
@@ -385,8 +387,7 @@
 - (void)updateNowLine
 {
     if (self.hourHeight <= 0 || CGRectGetWidth(self.timelineContentView.bounds) <= 0) {
-        [self.nowLineView removeFromSuperview];
-        self.nowLineView = nil;
+        [self removeNowLine];
         return;
     }
 
@@ -394,20 +395,23 @@
     long dayStart = [self dayStartTimestamp];
     long dayEnd = [self dayEndTimestamp];
     if (now < dayStart || now > dayEnd) {
-        [self.nowLineView removeFromSuperview];
-        self.nowLineView = nil;
+        [self removeNowLine];
         return;
     }
 
     if (!self.nowLineView) {
         self.nowLineView = [UIView new];
-        if (@available(iOS 13.0, *)) {
-            self.nowLineView.backgroundColor = UIColor.systemRedColor;
-        } else {
-            self.nowLineView.backgroundColor = UIColor.redColor;
-        }
+        self.nowLineView.backgroundColor = [self nowLineColor];
         self.nowLineView.userInteractionEnabled = NO;
         [self.timelineContentView addSubview:self.nowLineView];
+    }
+    if (!self.nowLineTimeLabel) {
+        self.nowLineTimeLabel = [UILabel new];
+        self.nowLineTimeLabel.font = [UIFont mirrorMinFont];
+        self.nowLineTimeLabel.textColor = [self nowLineColor];
+        self.nowLineTimeLabel.textAlignment = NSTextAlignmentRight;
+        self.nowLineTimeLabel.userInteractionEnabled = NO;
+        [self.timelineContentView addSubview:self.nowLineTimeLabel];
     }
 
     CGFloat width = CGRectGetWidth(self.timelineContentView.bounds);
@@ -415,8 +419,37 @@
     CGFloat lineWidth = width - lineX - kTimelineRightPadding;
     CGFloat lineY = ((CGFloat)(now - dayStart) / 3600.0) * self.hourHeight;
     CGFloat lineHeight = 1.0;
+    CGFloat labelWidth = kTimelineLeftWidth - 8*kWidthRatio;
+    CGFloat labelHeight = 20;
+    self.nowLineTimeLabel.text = [self shortTimeFromTimestamp:now];
+    self.nowLineTimeLabel.frame = CGRectMake(0, lineY - labelHeight / 2.0, labelWidth, labelHeight);
     self.nowLineView.frame = CGRectMake(lineX, lineY - lineHeight / 2.0, lineWidth, lineHeight);
+    [self.timelineContentView bringSubviewToFront:self.nowLineTimeLabel];
     [self.timelineContentView bringSubviewToFront:self.nowLineView];
+}
+
+- (void)removeNowLine
+{
+    [self.nowLineView removeFromSuperview];
+    self.nowLineView = nil;
+    [self.nowLineTimeLabel removeFromSuperview];
+    self.nowLineTimeLabel = nil;
+}
+
+- (UIColor *)nowLineColor
+{
+    if (@available(iOS 13.0, *)) {
+        return UIColor.systemRedColor;
+    }
+    return UIColor.redColor;
+}
+
+- (NSString *)shortTimeFromTimestamp:(long)timestamp
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"H:mm";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
 }
 
 - (void)renderHourLines
