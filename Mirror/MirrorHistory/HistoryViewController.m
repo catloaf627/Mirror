@@ -237,6 +237,7 @@
     UITapGestureRecognizer *tapRecognizer = [UITapGestureRecognizer new];
     [tapRecognizer addTarget:self action:@selector(tapGestureRecognizerAction:)];
     [self.interactionView addGestureRecognizer:tapRecognizer];
+    [self addPeriodSwipeGestures];
 
 
 }
@@ -256,15 +257,41 @@
 {
     CGPoint touchPoint = [tap locationInView:self.view];
     if (touchPoint.x < self.interactionView.frame.size.width/3) { // 左侧
-        [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-        self.offset = self.offset - 1;
-        [self reloadData];
+        [self movePeriodByOffset:-1];
     } else if (touchPoint.x > 2 * self.interactionView.frame.size.width/3) { // 右侧
-        [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-        self.offset = self.offset + 1;
-        [self reloadData];
+        [self movePeriodByOffset:1];
     }
     
+}
+
+- (void)addPeriodSwipeGestures
+{
+    UISwipeGestureRecognizer *leftSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handlePeriodSwipe:)];
+    leftSwipe.direction = UISwipeGestureRecognizerDirectionLeft;
+    [self.view addGestureRecognizer:leftSwipe];
+
+    UISwipeGestureRecognizer *rightSwipe = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handlePeriodSwipe:)];
+    rightSwipe.direction = UISwipeGestureRecognizerDirectionRight;
+    [self.view addGestureRecognizer:rightSwipe];
+}
+
+- (void)handlePeriodSwipe:(UISwipeGestureRecognizer *)gestureRecognizer
+{
+    if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionLeft) {
+        [self movePeriodByOffset:1];
+    } else if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionRight) {
+        [self movePeriodByOffset:-1];
+    }
+}
+
+- (void)movePeriodByOffset:(NSInteger)offsetDelta
+{
+    if (offsetDelta == 0) {
+        return;
+    }
+    [[[UISelectionFeedbackGenerator alloc] init] selectionChanged];
+    self.offset = self.offset + offsetDelta;
+    [self reloadData];
 }
 
 - (void)spanTypeChanged
