@@ -19,6 +19,7 @@
 #import "MirrorStorage.h"
 #import "MirrorReadModel.h"
 #import "MirrorTool.h"
+#import "MirrorSettings.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 
@@ -56,6 +57,7 @@
         // 设置通知
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchLanguageNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleWeekStartsOnChanged) name:MirrorSwitchWeekStartsOnNotification object:nil]; // datepicker需要监听这个
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchShowIndexNotification object:nil];// 比其他vc多监听一个index通知
         // 数据通知 (直接数据驱动UI，本地数据变动必然导致这里的UI变动)
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorImportDataNotificaiton object:nil];
@@ -207,6 +209,7 @@
     }
 
     self.gridData = [MirrorStorage getGridData];
+    [self applyCalendarSettings];
     [self updateCalendarSelectionForSelectedDate];
     [self.calendarView reloadDecorationsForDateComponents:[self gridDateComponents] animated:NO];
     [self.view addSubview:self.calendarPickerDismissView];
@@ -352,8 +355,9 @@
     UIColor *textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.todayButton.enabled = !isToday;
     self.todayButton.backgroundColor = UIColor.clearColor;
-    [self.todayButton setTitleColor:textColor forState:UIControlStateNormal];
-    [self.todayButton setTitleColor:[textColor colorWithAlphaComponent:0.35] forState:UIControlStateDisabled];
+    UIImage *image = [[UIImage systemImageNamed:[self todayCalendarSymbolName]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.todayButton setImage:image forState:UIControlStateNormal];
+    self.todayButton.tintColor = isToday ? [textColor colorWithAlphaComponent:0.35] : textColor;
 }
 
 - (BOOL)isSelectedDateToday
@@ -364,6 +368,32 @@
 }
 
 #pragma mark - Calendar Picker
+
+- (NSCalendar *)calendarForCurrentSettings
+{
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    calendar.firstWeekday = [MirrorSettings appliedWeekStarsOnMonday] ? 2 : 1;
+    return calendar;
+}
+
+- (void)applyCalendarSettings
+{
+    self.calendarView.calendar = [self calendarForCurrentSettings];
+    self.calendarView.locale = [MirrorTool formatterLocaleForCurrentLanguage];
+}
+
+- (void)handleWeekStartsOnChanged
+{
+    if (!_calendarView) {
+        return;
+    }
+    [self applyCalendarSettings];
+    [self updateCalendarSelectionForSelectedDate];
+    if (self.calendarPickerContainerView.superview) {
+        [self.calendarView reloadDecorationsForDateComponents:[self gridDateComponents] animated:NO];
+    }
+}
 
 - (void)updateCalendarSelectionForSelectedDate
 {
@@ -524,8 +554,8 @@
     if (!_calendarView) {
         _calendarView = [UICalendarView new];
         _calendarView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-        _calendarView.calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
-        _calendarView.calendar.timeZone = [NSTimeZone systemTimeZone];
+        _calendarView.calendar = [self calendarForCurrentSettings];
+        _calendarView.locale = [MirrorTool formatterLocaleForCurrentLanguage];
         _calendarView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _calendarView.delegate = self;
         _calendarView.wantsDateDecorations = YES;
@@ -548,9 +578,8 @@
 {
     if (!_todayButton) {
         _todayButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        _todayButton.titleLabel.font = [UIFont mirrorButtonFont];
         _todayButton.backgroundColor = UIColor.clearColor;
-        [_todayButton setTitle:[MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
+        _todayButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
         [_todayButton addTarget:self action:@selector(goToToday) forControlEvents:UIControlEventTouchUpInside];
     }
     return _todayButton;
@@ -563,7 +592,7 @@
         [_todayButtonContainer addSubview:self.todayButton];
         [self.todayButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.centerY.right.offset(0);
-            make.height.mas_equalTo(24*kHeightRatio);
+            make.height.mas_equalTo(30*kHeightRatio);
             make.width.mas_equalTo([self todayButtonWidth]);
         }];
         _todayButtonContainer.frame = CGRectMake(0, 0, [self todayButtonWidth], 44*kHeightRatio);
@@ -573,8 +602,15 @@
 
 - (CGFloat)todayButtonWidth
 {
-    CGSize titleSize = [[MirrorLanguage mirror_stringWithKey:@"today"] sizeWithAttributes:@{NSFontAttributeName: [UIFont mirrorButtonFont]}];
-    return ceil(titleSize.width) + 24*kWidthRatio;
+    return 32*kWidthRatio;
+}
+
+- (NSString *)todayCalendarSymbolName
+{
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSInteger day = [calendar component:NSCalendarUnitDay fromDate:[NSDate now]];
+    return [NSString stringWithFormat:@"%ld.calendar", (long)day];
 }
 
 @end
