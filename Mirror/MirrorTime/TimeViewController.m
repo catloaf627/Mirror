@@ -29,8 +29,6 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
-static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAnimation";
-
 @interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIDocumentPickerDelegate, UIGestureRecognizerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
@@ -39,7 +37,6 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 @property (nonatomic, strong) NSDate *lastNavigationDebugTapDate;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
-@property (nonatomic, strong) UIButton *editButton;
 // Data source
 @property (nonatomic, strong) NSMutableArray<MirrorTaskModel *> *data;
 // Mark
@@ -94,7 +91,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 {
     [super viewWillAppear:animated];
     [self refreshNavigationButtonColors];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.editButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
 }
 
 - (void)viewWillDisappear:(BOOL)animated
@@ -121,7 +118,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
     [[MirrorTabsManager sharedInstance] updateTimeTabItemWithTabController:self.tabBarController];
     if (self.tabBarController.selectedIndex == 0) {
         [self refreshNavigationButtonColors];
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.editButton];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:nil];
         [self addNavigationDebugGesture];
     }
     // reset ui
@@ -152,23 +149,19 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 
 - (void)refreshNavigationButtonColors
 {
-    UIColor *color = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    self.settingsButton.tintColor = color;
-    self.editButton.tintColor = self.isEditingTasks ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : color;
-    [self updateEditButtonShakeAnimation];
+    self.settingsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
 }
 
 #pragma mark - Actions
 
-- (void)tapEditButton
+- (void)enterEditingTasksIfNeededAnimated:(BOOL)animated
 {
-    self.isEditingTasks = !self.isEditingTasks;
-    self.editButton.selected = self.isEditingTasks;
-    self.editButton.tintColor = self.isEditingTasks ? [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] : [UIColor mirrorColorNamed:MirrorColorTypeText];
-    self.taskReorderLongPressRecognizer.enabled = self.isEditingTasks;
-    self.editingDismissTapRecognizer.enabled = self.isEditingTasks;
-    [self updateEditButtonShakeAnimation];
-    [self updateVisibleTaskCellsForEditingModeAnimated:YES];
+    if (self.isEditingTasks) {
+        return;
+    }
+    self.isEditingTasks = YES;
+    self.editingDismissTapRecognizer.enabled = YES;
+    [self updateVisibleTaskCellsForEditingModeAnimated:animated];
 }
 
 - (void)updateVisibleTaskCellsForEditingModeAnimated:(BOOL)animated
@@ -195,42 +188,9 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
         return;
     }
     self.isEditingTasks = NO;
-    self.editButton.selected = NO;
-    self.editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    self.taskReorderLongPressRecognizer.enabled = NO;
     self.editingDismissTapRecognizer.enabled = NO;
     [self clearReorderSelectedCellAnimated:animated];
-    [self updateEditButtonShakeAnimation];
     [self updateVisibleTaskCellsForEditingModeAnimated:animated];
-}
-
-- (void)updateEditButtonShakeAnimation
-{
-    if (self.isEditingTasks) {
-        [self startEditButtonShakeAnimation];
-    } else {
-        [self stopEditButtonShakeAnimation];
-    }
-}
-
-- (void)startEditButtonShakeAnimation
-{
-    if ([self.editButton.layer animationForKey:kEditButtonShakeAnimationKey]) {
-        return;
-    }
-
-    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.rotation.z"];
-    animation.values = @[@(-0.07), @(0.07), @(-0.055)];
-    animation.duration = 0.12;
-    animation.repeatCount = HUGE_VALF;
-    animation.autoreverses = YES;
-    [self.editButton.layer addAnimation:animation forKey:kEditButtonShakeAnimationKey];
-}
-
-- (void)stopEditButtonShakeAnimation
-{
-    [self.editButton.layer removeAnimationForKey:kEditButtonShakeAnimationKey];
-    self.editButton.transform = CGAffineTransformIdentity;
 }
 
 #pragma mark - UIDocumentPickerDelegate
@@ -419,15 +379,16 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 
 - (void)handleTaskReorderLongPress:(UILongPressGestureRecognizer *)gestureRecognizer
 {
-    if (!self.isEditingTasks) {
-        return;
-    }
-
     CGPoint location = [gestureRecognizer locationInView:self.collectionView];
     switch (gestureRecognizer.state) {
         case UIGestureRecognizerStateBegan: {
             NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:location];
             if (![self canMoveTaskAtIndexPath:indexPath]) {
+                return;
+            }
+            if (!self.isEditingTasks) {
+                [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
+                [self enterEditingTasksIfNeededAnimated:YES];
                 return;
             }
             TimeTrackerTaskCollectionViewCell *cell = (TimeTrackerTaskCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
@@ -438,13 +399,22 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
             break;
         }
         case UIGestureRecognizerStateChanged:
+            if (!self.reorderSelectedCell) {
+                return;
+            }
             [self.collectionView updateInteractiveMovementTargetPosition:location];
             break;
         case UIGestureRecognizerStateEnded:
+            if (!self.reorderSelectedCell) {
+                return;
+            }
             [self clearReorderSelectedCellAnimated:YES];
             [self.collectionView endInteractiveMovement];
             break;
         default:
+            if (!self.reorderSelectedCell) {
+                return;
+            }
             [self clearReorderSelectedCellAnimated:YES];
             [self.collectionView cancelInteractiveMovement];
             break;
@@ -932,8 +902,7 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
 {
     if (!_taskReorderLongPressRecognizer) {
         _taskReorderLongPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleTaskReorderLongPress:)];
-        _taskReorderLongPressRecognizer.minimumPressDuration = 0.25;
-        _taskReorderLongPressRecognizer.enabled = NO;
+        _taskReorderLongPressRecognizer.minimumPressDuration = 0.5;
     }
     return _taskReorderLongPressRecognizer;
 }
@@ -948,20 +917,6 @@ static NSString * const kEditButtonShakeAnimationKey = @"MirrorEditButtonShakeAn
         [_settingsButton addTarget:self action:@selector(showLanguagePicker) forControlEvents:UIControlEventTouchUpInside];
     }
     return _settingsButton;
-}
-
-- (UIButton *)editButton
-{
-    if (!_editButton) {
-        _editButton = [UIButton new];
-        UIImage *normalImage = [[UIImage systemImageNamed:@"applepencil"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        UIImage *selectedImage = [[UIImage systemImageNamed:@"applepencil.and.scribble"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-        [_editButton setImage:normalImage forState:UIControlStateNormal];
-        [_editButton setImage:selectedImage forState:UIControlStateSelected];
-        _editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        [_editButton addTarget:self action:@selector(tapEditButton) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _editButton;
 }
 
 - (NSMutableArray<MirrorTaskModel *> *)data
