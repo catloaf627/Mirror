@@ -393,6 +393,7 @@
 
     self.didHandleDatePan = YES;
     NSInteger dayOffset = translation.x < 0 ? 1 : -1;
+    [self.timelineViewController dismissTransientEditingState];
     [self moveSelectedDateByDayOffset:dayOffset];
 }
 

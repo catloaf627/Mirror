@@ -20,6 +20,7 @@ typedef void (^OneDayTimelineHeaderConfiguration)(UIView *headerView, NSMutableA
 
 - (void)updateDate:(NSDate *)date;
 - (void)reloadData;
+- (void)dismissTransientEditingState;
 
 @end
 

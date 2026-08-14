@@ -145,6 +145,16 @@
     [self renderTimeline];
 }
 
+- (void)dismissTransientEditingState
+{
+    [self.timelineContentView dismissTaskPicker];
+    [self.activeRecordView endInlineEditing];
+    [self.activeRecordView endSelection];
+    self.activeRecordView = nil;
+    [self.editingPeriodAlert dismiss];
+    self.editingPeriodAlert = nil;
+}
+
 #pragma mark - TimelineViewDelegate
 
 - (BOOL)timelineViewShouldBeginAddingRecord:(TimelineView *)timelineView
