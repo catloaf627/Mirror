@@ -101,8 +101,8 @@
     [mirrorDict setValue:ML(@"Long press a task to edit tasks", @"长按任务进入编辑模式", @"Mantén presionada una tarea para editar tareas", @"Appuyez longuement sur une tâche pour modifier les tâches", @"タスクを長押しして編集モードに入る", @"작업을 길게 눌러 편집 모드로 들어가세요") forKey:@"timeVC_hint0"];
     [mirrorDict setValue:ML(@"Long press in edit mode to reorder tasks", @"编辑模式下长按可以调整任务顺序", @"Mantén presionado en modo edición para reordenar tareas", @"Appuyez longuement en mode édition pour réordonner les tâches", @"編集モードで長押ししてタスクを並べ替え", @"편집 모드에서 길게 눌러 작업 순서를 변경하세요") forKey:@"timeVC_hint1"];
     [mirrorDict setValue:ML(@"Up to 8 tasks can be created", @"最多可建立8个任务", @"Se pueden crear hasta 8 tareas", @"Jusqu'à 8 tâches peuvent être créées", @"最大8個のタスクを作成できます", @"최대 8개의 작업을 만들 수 있습니다") forKey:@"timeVC_hint2"];
-    [mirrorDict setValue:ML(@"Tap timeline records to drag", @"轻点时间线记录可拖动", @"Toca registros para arrastrarlos", @"Touchez un enregistrement pour le déplacer", @"タイムライン記録をタップしてドラッグ", @"타임라인 기록을 탭해 드래그") forKey:@"timeVC_hint4"];
-    [mirrorDict setValue:ML(@"Long press timeline records to delete", @"长按时间线记录可删除", @"Mantén registros para eliminarlos", @"Appuyez longuement pour supprimer", @"タイムライン記録を長押しして削除", @"타임라인 기록을 길게 눌러 삭제") forKey:@"timeVC_hint5"];
+    [mirrorDict setValue:ML(@"Tap timeline records to drag", @"轻点时间线记录可拖动", @"Toca registros para arrastrarlos", @"Touchez un enregistrement pour le déplacer", @"タイムライン記録をタップしてドラッグ", @"타임라인 기록을 탭해 드래그") forKey:@"timeVC_hint3"];
+    [mirrorDict setValue:ML(@"Long press timeline records to delete", @"长按时间线记录可删除", @"Mantén registros para eliminarlos", @"Appuyez longuement pour supprimer", @"タイムライン記録を長押しして削除", @"타임라인 기록을 길게 눌러 삭제") forKey:@"timeVC_hint4"];
     
     // All tasks
     [mirrorDict setValue:ML(@"Long press to reorder tasks", @"长按拖动可以编辑顺序", @"Mantén presionado para reordenar tareas", @"Appuyez longuement pour réordonner les tâches", @"長押しでタスクを並べ替え", @"길게 눌러 작업 순서 변경") forKey:@"alltasks_hint0"];
