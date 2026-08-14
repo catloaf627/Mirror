@@ -551,7 +551,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 - (NSDate *)startTime
 {
     NSDate *startTime = [MirrorStorage goingOnTaskStartDate] ?: [NSDate date];
-    startTime = [startTime dateByAddingTimeInterval:-3600]; //gizmo
+//    startTime = [startTime dateByAddingTimeInterval:-3600]; //gizmo
     return startTime;
 }
 
