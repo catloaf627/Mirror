@@ -45,6 +45,7 @@
 		4ADCD2413026B95E00578A81 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4ADCD2233026B92E00578A81 /* SwiftUI.framework */; };
 		4ADCD24E3026B95F00578A81 /* MirrorLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4ADCD23F3026B95E00578A81 /* MirrorLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */; };
+		4ADDCA86302EE270003EE2A3 /* MirrorDebugAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */; };
 		4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171828DF613D008A6A18 /* TimeViewController.m */; };
 		4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */; };
 		4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFB77A128DF4A380064CBCA /* AppDelegate.m */; };
@@ -155,6 +156,8 @@
 		4ADCD2233026B92E00578A81 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		4ADCD23F3026B95E00578A81 /* MirrorLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MirrorLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorLiveActivityManager.swift; sourceTree = "<group>"; };
+		4ADDCA84302EE251003EE2A3 /* MirrorDebugAlert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorDebugAlert.h; sourceTree = "<group>"; };
+		4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorDebugAlert.m; sourceTree = "<group>"; };
 		4AE4171728DF613D008A6A18 /* TimeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeViewController.h; sourceTree = "<group>"; };
 		4AE4171828DF613D008A6A18 /* TimeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimeViewController.m; sourceTree = "<group>"; };
 		4AF5A32E2B9C5F98009A2FB3 /* HintFooter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HintFooter.h; sourceTree = "<group>"; };
@@ -351,10 +354,9 @@
 			children = (
 				4A37369829E3AD8700187280 /* MirrorSettings.h */,
 				4A37369929E3AD8700187280 /* MirrorSettings.m */,
+				4ADDCA80302EE0F8003EE2A3 /* Fakedata_Debug */,
 				4A099FAB29DD0567002683A1 /* Model */,
 				4A099FA329DCFE0B002683A1 /* Task */,
-				4ADCD2183024109400578A81 /* MirrorFakeDataSeeder.h */,
-				4ADCD219302410C600578A81 /* MirrorFakeDataSeeder.m */,
 			);
 			path = MirrorData;
 			sourceTree = "<group>";
@@ -432,6 +434,17 @@
 				4A379B5628E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m */,
 			);
 			path = MirrorTaskAdd;
+			sourceTree = "<group>";
+		};
+		4ADDCA80302EE0F8003EE2A3 /* Fakedata_Debug */ = {
+			isa = PBXGroup;
+			children = (
+				4ADCD2183024109400578A81 /* MirrorFakeDataSeeder.h */,
+				4ADCD219302410C600578A81 /* MirrorFakeDataSeeder.m */,
+				4ADDCA84302EE251003EE2A3 /* MirrorDebugAlert.h */,
+				4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */,
+			);
+			path = Fakedata_Debug;
 			sourceTree = "<group>";
 		};
 		4AE5E88F2A0253A3004228C1 /* View */ = {
@@ -684,6 +697,7 @@
 				4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */,
 				4A37369429E2AEE900187280 /* PiechartView.m in Sources */,
 				4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */,
+				4ADDCA86302EE270003EE2A3 /* MirrorDebugAlert.m in Sources */,
 				4A9FDB27302D1600007707FC /* OneDayTimelineViewController.m in Sources */,
 				4A9FDB24302D1234007707FC /* TimelineBackgroundView.m in Sources */,
 				4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */,

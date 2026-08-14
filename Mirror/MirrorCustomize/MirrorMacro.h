@@ -92,6 +92,8 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 #define RECORDS @"records"
 #define SECONDS @"seconds"
 
+// Debug
+#define is_debug [[NSUserDefaults standardUserDefaults] boolForKey:@"is_debug"]
 
 @interface MirrorMacro : NSObject
 

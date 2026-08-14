@@ -8,7 +8,7 @@
 #import "TimeViewController.h"
 #import "UIColor+MirrorColor.h"
 #import <Masonry/Masonry.h>
-#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#import "MirrorDebugAlert.h"
 #import "TimeTrackerTaskCollectionViewCell.h"
 #import "TimeTrackerAddTaskCollectionViewCell.h"
 #import "MirrorMacro.h"
@@ -17,7 +17,6 @@
 #import "TimeTrackingViewController.h"
 #import "MirrorStorage.h"
 #import "MirrorTool.h"
-#import "MirrorTimeText.h"
 #import "MirrorSettings.h"
 #import "CellAnimation.h"
 #import "MirrorLanguage.h"
@@ -29,7 +28,7 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 
-@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIDocumentPickerDelegate, UIGestureRecognizerDelegate>
+@interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIGestureRecognizerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 @property (nonatomic, strong) UIView *navigationDebugHitView;
@@ -193,38 +192,6 @@
     [self updateVisibleTaskCellsForEditingModeAnimated:animated];
 }
 
-#pragma mark - UIDocumentPickerDelegate
-
-- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls
-{
-    NSURL *url = urls.firstObject;
-    if (!url) {
-        return;
-    }
-
-    BOOL fileUrlAuthorized = [url startAccessingSecurityScopedResource];
-    if (!fileUrlAuthorized) {
-        return;
-    }
-
-    NSFileCoordinator *fileCoordinator = [[NSFileCoordinator alloc] init];
-    NSError *coordinateError = nil;
-    [fileCoordinator coordinateReadingItemAtURL:url options:0 error:&coordinateError byAccessor:^(NSURL *newURL) {
-        NSError *readError = nil;
-        NSData *data = [NSData dataWithContentsOfURL:newURL options:NSDataReadingMappedIfSafe error:&readError];
-        if (readError || ![MirrorStorage importJSONData:data]) {
-            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Invalid JSON Data" message:nil preferredStyle:UIAlertControllerStyleAlert];
-            [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-            [self presentViewController:alertController animated:YES completion:nil];
-            return;
-        }
-
-        [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
-        [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
-    }];
-    [url stopAccessingSecurityScopedResource];
-}
-
 #pragma mark - Actions
 
 - (void)addNavigationDebugGesture
@@ -280,50 +247,7 @@
 
     self.navigationDebugTapCount = 0;
     self.lastNavigationDebugTapDate = nil;
-    [self showJSONImportExportAlert];
-}
-
-- (void)showJSONImportExportAlert
-{
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"JSON Debug"
-                                                                             message:nil
-                                                                      preferredStyle:UIAlertControllerStyleAlert];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"Export JSON" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self exportJSONData];
-    }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"Import JSON" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self showJSONDocumentPicker];
-    }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
-    [self presentViewController:alertController animated:YES completion:nil];
-}
-
-- (void)exportJSONData
-{
-    NSData *data = [MirrorStorage exportJSONData];
-    if (!data) {
-        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"No Data" message:nil preferredStyle:UIAlertControllerStyleAlert];
-        [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-        [self presentViewController:alertController animated:YES completion:nil];
-        return;
-    }
-
-    NSString *filename = [[@"Mirror" stringByAppendingString:[MirrorTimeText getPreciseTimeString]] stringByAppendingString:@".json"];
-    NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingString:filename]];
-    [data writeToURL:url atomically:NO];
-    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:nil];
-    activityViewController.excludedActivityTypes = @[];
-    activityViewController.popoverPresentationController.sourceView = self.navigationDebugHitView ?: self.view;
-    activityViewController.popoverPresentationController.sourceRect = self.navigationDebugHitView ? self.navigationDebugHitView.bounds : CGRectMake(self.view.bounds.size.width / 2, 0, 1, 1);
-    [self presentViewController:activityViewController animated:YES completion:nil];
-}
-
-- (void)showJSONDocumentPicker
-{
-    UIDocumentPickerViewController *documentPicker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeData]];
-    documentPicker.delegate = self;
-    documentPicker.modalPresentationStyle = UIModalPresentationFormSheet;
-    [self presentViewController:documentPicker animated:YES completion:nil];
+    [MirrorDebugAlert presentFromViewController:self];
 }
 
 - (void)showLanguagePicker
