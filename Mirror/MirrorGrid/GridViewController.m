@@ -127,6 +127,9 @@
     self.legendView = nil;
     self.taskProgressListView = nil;
     self.piechartView = nil;
+    self.heatmapButton = nil;
+    self.weekStartsOnButton = nil;
+    self.gridOptionsView = nil;
     // 将vc.view里的所有subviews从父view上移除
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
@@ -255,6 +258,7 @@
     NSString *imageName = [MirrorSettings appliedWeekStarsOnMonday] ? @"1.lane" : @"7.lane";
     UIImage *iconImage = [[UIImage systemImageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.weekStartsOnButton setImage:iconImage forState:UIControlStateNormal];
+    self.weekStartsOnButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
 }
 
 #pragma mark - update data
