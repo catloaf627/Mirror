@@ -1,5 +1,5 @@
 //
-//  RecordsTimelineViewController.h
+//  TaskRecordsViewController.h
 //  Mirror
 //
 
@@ -8,7 +8,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface RecordsTimelineViewController : UIViewController
+@interface TaskRecordsViewController : UIViewController
 
 - (instancetype)initWithData:(MirrorReadModel *)data;
 - (instancetype)initWithData:(MirrorReadModel *)data highlightedRecords:(NSMutableArray<MirrorRecordModel *> *)highlightedRecords;

@@ -18,7 +18,7 @@
 #import "MirrorLanguage.h"
 #import "MirrorSettings.h"
 #import "PiechartView.h"
-#import "RecordsTimelineViewController.h"
+#import "TaskRecordsViewController.h"
 #import "MirrorTaskModel.h"
 #import "MirrorTool.h"
 #import "MirrorStorage.h"
@@ -288,7 +288,7 @@
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
     MirrorReadModel *allData = [[MirrorReadModel alloc] initWithTask:data.taskModel records:allRecords];
-    RecordsTimelineViewController *recordsVC = [[RecordsTimelineViewController alloc] initWithData:allData highlightedRecords:data.records];
+    TaskRecordsViewController *recordsVC = [[TaskRecordsViewController alloc] initWithData:allData highlightedRecords:data.records];
     [self.navigationController pushViewController:recordsVC animated:YES];
 }
 

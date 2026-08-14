@@ -5,7 +5,7 @@
 
 #import "OneDayTimelineViewController.h"
 #import "TimelineRecordView.h"
-#import "TimelineView.h"
+#import "TimelineBackgroundView.h"
 #import "MirrorStorage.h"
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
@@ -21,7 +21,7 @@
 #define kTimelineTinyRecordThresholdSeconds (10 * 60)
 #define kTimelineTextHiddenThresholdSeconds (45 * 60)
 
-@interface OneDayTimelineViewController () <TimelineRecordViewDelegate, TimelineViewDelegate>
+@interface OneDayTimelineViewController () <TimelineRecordViewDelegate, TimelineBackgroundViewDelegate>
 
 @property (nonatomic, strong) NSDate *date;
 @property (nonatomic, strong, nullable) UIView *customHeaderView;
@@ -35,7 +35,7 @@
 @property (nonatomic, weak) TimelineRecordView *activeRecordView;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *oneDayData;
 @property (nonatomic, strong) UIScrollView *timelineScrollView;
-@property (nonatomic, strong) TimelineView *timelineContentView;
+@property (nonatomic, strong) TimelineBackgroundView *timelineContentView;
 @property (nonatomic, strong) UIView *nowLineView;
 @property (nonatomic, strong) UILabel *nowLineTimeLabel;
 @property (nonatomic, strong) NSTimer *nowLineTimer;
@@ -155,9 +155,9 @@
     self.editingPeriodAlert = nil;
 }
 
-#pragma mark - TimelineViewDelegate
+#pragma mark - TimelineBackgroundViewDelegate
 
-- (BOOL)timelineViewShouldBeginAddingRecord:(TimelineView *)timelineView
+- (BOOL)timelineViewShouldBeginAddingRecord:(TimelineBackgroundView *)timelineView
 {
     if (self.activeRecordView) {
         [self.activeRecordView endInlineEditing];
@@ -168,7 +168,7 @@
     return YES;
 }
 
-- (void)timelineViewDidAddRecord:(TimelineView *)timelineView
+- (void)timelineViewDidAddRecord:(TimelineBackgroundView *)timelineView
 {
     [self reloadData];
 }
@@ -540,10 +540,10 @@
     return _timelineScrollView;
 }
 
-- (TimelineView *)timelineContentView
+- (TimelineBackgroundView *)timelineContentView
 {
     if (!_timelineContentView) {
-        _timelineContentView = [TimelineView new];
+        _timelineContentView = [TimelineBackgroundView new];
         _timelineContentView.backgroundColor = self.view.backgroundColor;
     }
     return _timelineContentView;

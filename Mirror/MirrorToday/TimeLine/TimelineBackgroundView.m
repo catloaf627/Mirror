@@ -1,9 +1,9 @@
 //
-//  TimelineView.m
+//  TimelineBackgroundView.m
 //  Mirror
 //
 
-#import "TimelineView.h"
+#import "TimelineBackgroundView.h"
 #import "TimelineRecordView.h"
 #import "MirrorStorage.h"
 #import "MirrorLanguage.h"
@@ -13,7 +13,7 @@
 
 #define kTimelinePickerHorizontalInset (20*kWidthRatio)
 
-@interface TimelineView () <UIGestureRecognizerDelegate>
+@interface TimelineBackgroundView () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, assign) CGFloat hourHeight;
 @property (nonatomic, assign) long dayStartTimestamp;
@@ -23,7 +23,7 @@
 
 @end
 
-@implementation TimelineView
+@implementation TimelineBackgroundView
 
 - (instancetype)initWithFrame:(CGRect)frame
 {

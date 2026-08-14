@@ -1,9 +1,9 @@
 //
-//  RecordsTimelineViewController.m
+//  TaskRecordsViewController.m
 //  Mirror
 //
 
-#import "RecordsTimelineViewController.h"
+#import "TaskRecordsViewController.h"
 #import <Masonry/Masonry.h>
 #import "MirrorNaviManager.h"
 #import "MirrorStorage.h"
@@ -29,7 +29,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     TimelineBatchScrollPositionNearBottom,
 };
 
-@interface RecordsTimelineViewController () <UIEditMenuInteractionDelegate, UIScrollViewDelegate>
+@interface TaskRecordsViewController () <UIEditMenuInteractionDelegate, UIScrollViewDelegate>
 
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, strong) UIView *contentView;
@@ -56,7 +56,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 @end
 
-@implementation RecordsTimelineViewController
+@implementation TaskRecordsViewController
 
 - (instancetype)initWithData:(MirrorReadModel *)data
 {

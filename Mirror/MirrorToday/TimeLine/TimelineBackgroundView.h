@@ -1,25 +1,25 @@
 //
-//  TimelineView.h
+//  TimelineBackgroundView.h
 //  Mirror
 //
 
 #import <UIKit/UIKit.h>
 
-@class TimelineView;
+@class TimelineBackgroundView;
 
 NS_ASSUME_NONNULL_BEGIN
 
-@protocol TimelineViewDelegate <NSObject>
+@protocol TimelineBackgroundViewDelegate <NSObject>
 
 @optional
-- (BOOL)timelineViewShouldBeginAddingRecord:(TimelineView *)timelineView;
-- (void)timelineViewDidAddRecord:(TimelineView *)timelineView;
+- (BOOL)timelineViewShouldBeginAddingRecord:(TimelineBackgroundView *)timelineView;
+- (void)timelineViewDidAddRecord:(TimelineBackgroundView *)timelineView;
 
 @end
 
-@interface TimelineView : UIView
+@interface TimelineBackgroundView : UIView
 
-@property (nonatomic, weak) id<TimelineViewDelegate> delegate;
+@property (nonatomic, weak) id<TimelineBackgroundViewDelegate> delegate;
 @property (nonatomic, weak) UIViewController *presentingViewController;
 @property (nonatomic, assign) CGFloat bottomInset;
 
