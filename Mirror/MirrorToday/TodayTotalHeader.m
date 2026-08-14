@@ -26,6 +26,7 @@
 @property (nonatomic, strong) UIView *todayViewRight;
 @property (nonatomic, strong) UILabel *todayLabel;
 @property (nonatomic, strong) UIButton *datePickerButton;
+@property (nonatomic, strong) UIButton *calendarIconButton;
 @property (nonatomic, strong) UILabel *todayDateLabel;
 @property (nonatomic, strong) PiechartView *pieChart;
 @property (nonatomic, strong) UIButton *crownButton;
@@ -106,6 +107,12 @@
         make.right.offset(-10);
         make.top.mas_equalTo(self.todayLabel.mas_bottom);
         make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30); // left padding 20, right padding 10
+    }];
+    [self.todayViewLeft addSubview:self.calendarIconButton];
+    [self.calendarIconButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.offset(-10);
+        make.top.mas_equalTo(self.datePickerButton.mas_bottom);
+        make.width.height.mas_equalTo(26);
     }];
     [self.todayViewLeft addSubview:self.crownButton];
     [self.crownButton mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -223,10 +230,22 @@
         _datePickerButton.titleLabel.font = [UIFont mirrorTodayFont];
         _datePickerButton.titleLabel.adjustsFontSizeToFitWidth = YES;
         _datePickerButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+        _datePickerButton.contentEdgeInsets = UIEdgeInsetsZero;
         [_datePickerButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
         [_datePickerButton addTarget:self action:@selector(datePickerButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     }
     return _datePickerButton;
+}
+
+- (UIButton *)calendarIconButton
+{
+    if (!_calendarIconButton) {
+        _calendarIconButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        [_calendarIconButton setImage:[UIImage systemImageNamed:@"calendar"] forState:UIControlStateNormal];
+        _calendarIconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        [_calendarIconButton addTarget:self action:@selector(datePickerButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _calendarIconButton;
 }
 
 - (UILabel *)todayDateLabel
@@ -290,12 +309,28 @@
     BOOL isToday = [self isDateToday:date];
     self.todayLabel.hidden = !isToday;
     self.datePickerButton.hidden = isToday;
+    self.todayDateLabel.hidden = !isToday;
+    self.calendarIconButton.hidden = isToday;
     self.todayLabel.text = [MirrorLanguage mirror_stringWithKey:@"today"];
     self.todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:date];
     self.todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
     [self.datePickerButton setTitle:[MirrorTimeText YYYYmmdd:date] forState:UIControlStateNormal];
     [self.datePickerButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
+    self.datePickerButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.datePickerButton.backgroundColor = UIColor.clearColor;
+    self.datePickerButton.layer.borderWidth = 0;
+    self.calendarIconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    [self.crownButton mas_remakeConstraints:^(MASConstraintMaker *make) {
+        if (isToday) {
+            make.centerX.mas_equalTo(self.todayLabel.mas_left);
+            make.centerY.mas_equalTo(self.todayLabel.mas_top);
+        } else {
+            make.centerX.mas_equalTo(self.datePickerButton.mas_left);
+            make.centerY.mas_equalTo(self.datePickerButton.mas_top);
+        }
+        make.width.height.mas_equalTo(25);
+    }];
 }
 
 - (BOOL)isDateToday:(NSDate *)date
