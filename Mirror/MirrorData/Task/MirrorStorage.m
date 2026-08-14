@@ -32,6 +32,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 + (NSDate * _Nullable)p_goingOnTaskStartDate;
 + (NSDate * _Nullable)p_goingOnTaskAccurateStartDate;
 + (NSString *)p_goingOnTaskNote;
++ (NSString *)p_noteByPrefixingTaskName:(NSString *)taskName note:(NSString *)note;
 
 @end
 
@@ -158,6 +159,11 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 // 将一个任务合并到另一个任务；例如把“英语”的所有记录改名为“学习”，再从任务列表删除“英语”。
 + (void)mergeTask:(NSString *)sourceTaskName toTask:(NSString *)targetTaskName
 {
+    [MirrorStorage mergeTask:sourceTaskName toTask:targetTaskName shouldPrefixRecordNotes:NO];
+}
+
++ (void)mergeTask:(NSString *)sourceTaskName toTask:(NSString *)targetTaskName shouldPrefixRecordNotes:(BOOL)shouldPrefixRecordNotes
+{
     if (sourceTaskName.length == 0 || targetTaskName.length == 0 || [sourceTaskName isEqualToString:targetTaskName]) {
         return;
     }
@@ -165,6 +171,9 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
     for (MirrorRecordModel *record in records) {
         if ([record.taskName isEqualToString:sourceTaskName]) {
+            if (shouldPrefixRecordNotes) {
+                record.note = [MirrorStorage p_noteByPrefixingTaskName:sourceTaskName note:record.note];
+            }
             record.taskName = targetTaskName;
         }
     }
@@ -185,6 +194,14 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     
     NSLog(@"Merge task");
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskMergeNotification object:nil userInfo:nil];
+}
+
++ (NSString *)p_noteByPrefixingTaskName:(NSString *)taskName note:(NSString *)note
+{
+    if (note.length == 0) {
+        return taskName;
+    }
+    return [NSString stringWithFormat:@"%@·%@", taskName, note];
 }
 
 // 切换任务隐藏状态；例如把“工作”设为 hidden 后，Grid/History 这类隐藏过滤数据源不再统计它。

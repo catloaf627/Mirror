@@ -41,6 +41,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)mergeTask:(NSString *)sourceTaskName toTask:(NSString *)targetTaskName;
 
++ (void)mergeTask:(NSString *)sourceTaskName toTask:(NSString *)targetTaskName shouldPrefixRecordNotes:(BOOL)shouldPrefixRecordNotes;
+
 + (void)switchHiddenTask:(NSString *)taskName;
 
 + (void)editTask:(NSString *)oldName name:(NSString *)newName;

@@ -8,7 +8,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^TaskPickerCompletion)(MirrorTaskModel *task);
+typedef void (^TaskPickerCompletion)(MirrorTaskModel *task, BOOL shouldPrefixRecordNotes);
 
 @interface TaskPickerViewController : UIViewController
 
