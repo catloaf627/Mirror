@@ -410,8 +410,8 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (@available(iOS 16.0, *)) {
         UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
         [row addInteraction:editMenuInteraction];
-        UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
-        [row addGestureRecognizer:tapRecognizer];
+        UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+        [row addGestureRecognizer:longPressRecognizer];
     }
     
     UIView *topLine = [UIView new];
@@ -513,8 +513,11 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 #pragma mark - Edit Menu
 
-- (void)showEditMenu:(UITapGestureRecognizer *)recognizer
+- (void)showEditMenu:(UILongPressGestureRecognizer *)recognizer
 {
+    if (recognizer.state != UIGestureRecognizerStateBegan) {
+        return;
+    }
     if ([self dismissVisibleRecordEditMenuIfNeeded]) {
         return;
     }
