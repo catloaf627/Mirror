@@ -215,10 +215,13 @@
 {
     if (!_todayLabel) {
         _todayLabel = [UILabel new];
-        _todayLabel.text =[MirrorLanguage mirror_stringWithKey:@"today"];
+        _todayLabel.text = [MirrorLanguage mirror_stringWithKey:@"today"];
         _todayLabel.font = [UIFont mirrorTodayFont];
         _todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _todayLabel.adjustsFontSizeToFitWidth = YES;
+        _todayLabel.textAlignment = NSTextAlignmentRight;
+        _todayLabel.userInteractionEnabled = YES;
+        [_todayLabel addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(datePickerButtonTapped)]];
     }
     return _todayLabel;
 }
@@ -256,6 +259,9 @@
         _todayDateLabel.font = [UIFont mirrorSubtitleFont];
         _todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
         _todayDateLabel.adjustsFontSizeToFitWidth = YES;
+        _todayDateLabel.textAlignment = NSTextAlignmentRight;
+        _todayDateLabel.userInteractionEnabled = YES;
+        [_todayDateLabel addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(datePickerButtonTapped)]];
 
     }
     return _todayDateLabel;
@@ -306,23 +312,28 @@
 - (void)updateDateViews
 {
     NSDate *date = self.date ?: [NSDate now];
-    BOOL isToday = [self isDateToday:date];
-    self.todayLabel.hidden = !isToday;
-    self.datePickerButton.hidden = isToday;
-    self.todayDateLabel.hidden = !isToday;
-    self.calendarIconButton.hidden = isToday;
-    self.todayLabel.text = [MirrorLanguage mirror_stringWithKey:@"today"];
+    NSInteger dayOffset = [self dayOffsetFromTodayForDate:date];
+    BOOL usesRelativeDateLabel = dayOffset >= -1 && dayOffset <= 1;
+
+    self.todayLabel.hidden = !usesRelativeDateLabel;
+    self.datePickerButton.hidden = usesRelativeDateLabel;
+    self.todayDateLabel.hidden = !usesRelativeDateLabel;
+    self.calendarIconButton.hidden = usesRelativeDateLabel;
+
+    self.todayLabel.text = [self relativeDateTitleForDayOffset:dayOffset];
     self.todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:date];
     self.todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
+
     [self.datePickerButton setTitle:[MirrorTimeText YYYYmmdd:date] forState:UIControlStateNormal];
     [self.datePickerButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
     self.datePickerButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.datePickerButton.backgroundColor = UIColor.clearColor;
     self.datePickerButton.layer.borderWidth = 0;
     self.calendarIconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+
     [self.crownButton mas_remakeConstraints:^(MASConstraintMaker *make) {
-        if (isToday) {
+        if (usesRelativeDateLabel) {
             make.centerX.mas_equalTo(self.todayLabel.mas_left);
             make.centerY.mas_equalTo(self.todayLabel.mas_top);
         } else {
@@ -333,11 +344,20 @@
     }];
 }
 
-- (BOOL)isDateToday:(NSDate *)date
+- (NSInteger)dayOffsetFromTodayForDate:(NSDate *)date
 {
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
-    return [gregorian isDate:date inSameDayAsDate:[NSDate now]];
+    NSDate *startOfDate = [gregorian startOfDayForDate:date ?: [NSDate now]];
+    NSDate *startOfToday = [gregorian startOfDayForDate:[NSDate now]];
+    return [gregorian components:NSCalendarUnitDay fromDate:startOfToday toDate:startOfDate options:0].day;
+}
+
+- (NSString *)relativeDateTitleForDayOffset:(NSInteger)dayOffset
+{
+    if (dayOffset == -1) return [MirrorLanguage mirror_stringWithKey:@"yesterday"];
+    if (dayOffset == 1) return [MirrorLanguage mirror_stringWithKey:@"tomorrow"];
+    return [MirrorLanguage mirror_stringWithKey:@"today"];
 }
 
 - (NSArray *)startEndTimeForDate:(NSDate *)date
