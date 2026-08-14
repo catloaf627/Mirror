@@ -25,11 +25,14 @@
 @property (nonatomic, strong) UIView *todayViewLeft;
 @property (nonatomic, strong) UIView *todayViewRight;
 @property (nonatomic, strong) UILabel *todayLabel;
+@property (nonatomic, strong) UIButton *datePickerButton;
 @property (nonatomic, strong) UILabel *todayDateLabel;
 @property (nonatomic, strong) PiechartView *pieChart;
 @property (nonatomic, strong) UIButton *crownButton;
 @property (nonatomic, strong) UILabel *countLabel;
 @property (nonatomic, assign) float pieChartWidth;
+@property (nonatomic, strong) NSDate *date;
+@property (nonatomic, copy) void (^datePickerHandler)(void);
 
 @end
 
@@ -37,23 +40,31 @@
 
 - (void)configWithRecords:(NSMutableArray<MirrorRecordModel *> *)todayRecords
 {
+    [self configWithDate:[NSDate now] records:todayRecords datePickerHandler:nil];
+}
+
+- (void)configWithDate:(NSDate *)date records:(NSMutableArray<MirrorRecordModel *> *)records datePickerHandler:(void (^)(void))datePickerHandler
+{
     long count = 0;
-    for (int i=0; i<todayRecords.count; i++) {
-        MirrorRecordModel *record = todayRecords[i];
+    for (int i=0; i<records.count; i++) {
+        MirrorRecordModel *record = records[i];
         count = count + (record.endTime -  record.startTime);
     }
     self.count = count;
+    self.date = date ?: [NSDate now];
+    self.datePickerHandler = datePickerHandler;
     [self p_setupUI];
 }
 
 - (void)p_setupUI
 {
     if (self.todayViewLeft.superview) {
+        [self updateDateViews];
         self.countLabel.text = self.count ? [[MirrorLanguage mirror_stringWithKey:@"total"] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:self.count]] : @"";
         self.crownButton.hidden = self.count < 8*3600;
-        NSArray *todayStartEndTime = [self todayStartEndTime];
-        long startTime = [todayStartEndTime[0] longValue];
-        long endTime = [todayStartEndTime[1] longValue];
+        NSArray *startEndTime = [self startEndTimeForDate:self.date];
+        long startTime = [startEndTime[0] longValue];
+        long endTime = [startEndTime[1] longValue];
         NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
         [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
         return;
@@ -83,6 +94,12 @@
         make.right.offset(-10);
         make.centerY.offset(-10); // slightly higher than the middle
         make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30); // left padding 20, right padding 10
+    }];
+    [self.todayViewLeft addSubview:self.datePickerButton];
+    [self.datePickerButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.offset(-10);
+        make.centerY.offset(-10);
+        make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30);
     }];
     [self.todayViewLeft addSubview:self.todayDateLabel];
     [self.todayDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -119,9 +136,10 @@
     } else { // 不到8小时，隐藏王冠
         self.crownButton.hidden = YES;
     }
-    NSArray *todayStartEndTime = [self todayStartEndTime];
-    long startTime = [todayStartEndTime[0] longValue];
-    long endTime = [todayStartEndTime[1] longValue];
+    [self updateDateViews];
+    NSArray *startEndTime = [self startEndTimeForDate:self.date];
+    long startTime = [startEndTime[0] longValue];
+    long endTime = [startEndTime[1] longValue];
     NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
     [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
 
@@ -150,6 +168,13 @@
             }];
         }];
     }];
+}
+
+- (void)datePickerButtonTapped
+{
+    if (self.datePickerHandler) {
+        self.datePickerHandler();
+    }
 }
 
 #pragma mark - Getters
@@ -191,11 +216,24 @@
     return _todayLabel;
 }
 
+- (UIButton *)datePickerButton
+{
+    if (!_datePickerButton) {
+        _datePickerButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        _datePickerButton.titleLabel.font = [UIFont mirrorTodayFont];
+        _datePickerButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+        _datePickerButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentRight;
+        [_datePickerButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
+        [_datePickerButton addTarget:self action:@selector(datePickerButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _datePickerButton;
+}
+
 - (UILabel *)todayDateLabel
 {
     if (!_todayDateLabel) {
         _todayDateLabel = [UILabel new];
-        _todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:[NSDate now]];
+        _todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:self.date ?: [NSDate now]];
         _todayDateLabel.font = [UIFont mirrorSubtitleFont];
         _todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
         _todayDateLabel.adjustsFontSizeToFitWidth = YES;
@@ -207,9 +245,9 @@
 - (PiechartView *)pieChart
 {
     if (!_pieChart) {
-        NSArray *todayStartEndTime = [self todayStartEndTime];
-        long startTime = [todayStartEndTime[0] longValue];
-        long endTime = [todayStartEndTime[1] longValue];
+        NSArray *startEndTime = [self startEndTimeForDate:self.date ?: [NSDate now]];
+        long startTime = [startEndTime[0] longValue];
+        long endTime = [startEndTime[1] longValue];
         NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
         _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
     }
@@ -246,11 +284,32 @@
 
 #pragma mark - Privates
 
-- (NSArray *)todayStartEndTime
+- (void)updateDateViews
+{
+    NSDate *date = self.date ?: [NSDate now];
+    BOOL isToday = [self isDateToday:date];
+    self.todayLabel.hidden = !isToday;
+    self.datePickerButton.hidden = isToday;
+    self.todayLabel.text = [MirrorLanguage mirror_stringWithKey:@"today"];
+    self.todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:date];
+    self.todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
+    [self.datePickerButton setTitle:[MirrorTimeText YYYYmmdd:date] forState:UIControlStateNormal];
+    [self.datePickerButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
+}
+
+- (BOOL)isDateToday:(NSDate *)date
 {
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
-    NSDate *startOfDay = [gregorian startOfDayForDate:[NSDate now]];
+    return [gregorian isDate:date inSameDayAsDate:[NSDate now]];
+}
+
+- (NSArray *)startEndTimeForDate:(NSDate *)date
+{
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *startOfDay = [gregorian startOfDayForDate:date ?: [NSDate now]];
     NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:startOfDay options:0];
     long startTime = round([startOfDay timeIntervalSince1970]);
     long endTime = round([startOfNextDay timeIntervalSince1970]);

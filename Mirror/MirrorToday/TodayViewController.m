@@ -13,19 +13,35 @@
 #import "MirrorMacro.h"
 #import "TodayTotalHeader.h"
 #import "OneDayTimelineViewController.h"
-#import "CalendarViewController.h"
+#import "MirrorTimeText.h"
+#import "MirrorLanguage.h"
+#import "UIFont+MirrorFont.h"
+#import "MirrorStorage.h"
+#import "MirrorReadModel.h"
+#import "MirrorTool.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 
-@interface TodayViewController ()
+@interface TodayViewController () <UIGestureRecognizerDelegate, UICalendarViewDelegate, UICalendarSelectionSingleDateDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
+@property (nonatomic, strong) NSDate *selectedDate;
+@property (nonatomic, assign) BOOL didHandleDatePan;
+@property (nonatomic, assign) BOOL isAnimatingDateTransition;
 
 // Navibar
-@property (nonatomic, strong) UIButton *timelineButton;
+@property (nonatomic, strong) UIButton *todayButton;
+@property (nonatomic, strong) UIView *todayButtonContainer;
 
 // UI
 @property (nonatomic, strong) OneDayTimelineViewController *timelineViewController;
+@property (nonatomic, strong) UIView *headerContainerView;
+@property (nonatomic, strong) TodayTotalHeader *todayTotalHeader;
+@property (nonatomic, strong) UIView *calendarPickerDismissView;
+@property (nonatomic, strong) UIView *calendarPickerContainerView;
+@property (nonatomic, strong) UICalendarView *calendarView;
+@property (nonatomic, strong) UICalendarSelectionSingleDate *dateSelection;
+@property (nonatomic, strong) NSDictionary<NSString *, NSMutableArray<MirrorReadModel *> *> *gridData;
 
 @end
 
@@ -64,6 +80,7 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.selectedDate = [NSDate now];
     [self p_setupUI];
     _isLoaded = YES;
 }
@@ -71,7 +88,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.timelineButton];
+    [self updateNavigationItem];
 }
 
 - (void)restartVC
@@ -84,11 +101,19 @@
     [self.timelineViewController.view removeFromSuperview];
     [self.timelineViewController removeFromParentViewController];
     self.timelineViewController = nil;
+    self.headerContainerView = nil;
+    self.todayTotalHeader = nil;
+    self.calendarPickerDismissView = nil;
+    self.calendarPickerContainerView = nil;
+    self.calendarView = nil;
+    self.dateSelection = nil;
+    self.gridData = nil;
+    self.todayButton = nil;
+    self.todayButtonContainer = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
 
-    // 更新navibar
     if (self.tabBarController.selectedIndex == 1) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.timelineButton];
+        [self updateNavigationItem];
     }
     [self p_setupUI];
 }
@@ -100,21 +125,22 @@
      最后发现根本原因是：在整个页面还没有setupUI的时候就被通知reloadData
      */
     if (!_isLoaded) return;
-    [self.timelineViewController updateDate:[NSDate now]];
+    [self updateHeaderStateWithRecords:nil];
+    [self.timelineViewController updateDate:self.selectedDate ?: [NSDate now]];
 }
 
 - (void)p_setupUI
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    [self updateHeaderStateWithRecords:nil];
 
-    TodayTotalHeader *header = [TodayTotalHeader new];
-    header.backgroundColor = self.view.backgroundColor;
-    OneDayTimelineViewController *timelineViewController = [[OneDayTimelineViewController alloc] initWithDate:[NSDate now]
-                                                                                                  headerView:header
+    __weak typeof(self) weakSelf = self;
+    OneDayTimelineViewController *timelineViewController = [[OneDayTimelineViewController alloc] initWithDate:self.selectedDate ?: [NSDate now]
+                                                                                                  headerView:self.headerContainerView
                                                                                                 headerHeight:kTodayHeaderHeight
                                                                                                 headerInsets:UIEdgeInsetsMake(0, kLeftRightSpacing, 0, kLeftRightSpacing)
                                                                                          headerConfiguration:^(UIView *headerView, NSMutableArray<MirrorRecordModel *> *records) {
-        [(TodayTotalHeader *)headerView configWithRecords:records];
+        [weakSelf updateHeaderStateWithRecords:records];
     }];
     self.timelineViewController = timelineViewController;
     [self addChildViewController:timelineViewController];
@@ -125,28 +151,430 @@
         make.bottom.offset(-self.tabBarController.tabBar.frame.size.height);
     }];
     [timelineViewController didMoveToParentViewController:self];
-
+    [self addDateSwipeGestures];
 }
 
 #pragma mark - Actions
 
-- (void)goToCalendar
+- (void)handleDatePan:(UIPanGestureRecognizer *)gestureRecognizer
 {
-    CalendarViewController *calendarVC = [[CalendarViewController alloc] init];
-    [self.navigationController pushViewController:calendarVC animated:YES];
+    if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
+        self.didHandleDatePan = NO;
+        return;
+    }
+    if (gestureRecognizer.state != UIGestureRecognizerStateChanged || self.didHandleDatePan) {
+        return;
+    }
+
+    CGPoint translation = [gestureRecognizer translationInView:self.view];
+    CGPoint velocity = [gestureRecognizer velocityInView:self.view];
+    if (fabs(translation.x) < 40*kWidthRatio && fabs(velocity.x) < 300*kWidthRatio) {
+        return;
+    }
+
+    self.didHandleDatePan = YES;
+    NSInteger dayOffset = translation.x < 0 ? 1 : -1;
+    [self dismissDatePicker];
+    [self.timelineViewController dismissTransientEditingState];
+    [self moveSelectedDateByDayOffset:dayOffset];
+}
+
+- (void)moveSelectedDateByDayOffset:(NSInteger)dayOffset
+{
+    if (dayOffset == 0 || self.isAnimatingDateTransition) {
+        return;
+    }
+
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *date = [calendar dateByAddingUnit:NSCalendarUnitDay value:dayOffset toDate:self.selectedDate ?: [NSDate now] options:0];
+    [self updateSelectedDate:date animatedWithDayOffset:dayOffset];
+    [[[UISelectionFeedbackGenerator alloc] init] selectionChanged];
+}
+
+- (void)goToToday
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [self dismissDatePicker];
+    [self updateSelectedDate:[NSDate now]];
+}
+
+- (void)showDatePicker
+{
+    if (self.calendarPickerContainerView.superview) {
+        [self dismissDatePicker];
+        return;
+    }
+
+    self.gridData = [MirrorStorage getGridData];
+    [self updateCalendarSelectionForSelectedDate];
+    [self.calendarView reloadDecorationsForDateComponents:[self gridDateComponents] animated:NO];
+    [self.view addSubview:self.calendarPickerDismissView];
+    [self.calendarPickerDismissView mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.edges.mas_equalTo(self.view);
+    }];
+    [self.view addSubview:self.calendarPickerContainerView];
+    [self.calendarPickerContainerView mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(self.timelineViewController.view.mas_top).offset(8);
+        make.centerX.mas_equalTo(self.view);
+        make.width.mas_equalTo(MIN(kScreenWidth - 40*kWidthRatio, 340));
+        make.height.mas_equalTo(320);
+    }];
+    self.calendarPickerContainerView.alpha = 0;
+    self.calendarPickerContainerView.transform = CGAffineTransformMakeScale(0.96, 0.96);
+    [UIView animateWithDuration:0.18 animations:^{
+        self.calendarPickerContainerView.alpha = 1;
+        self.calendarPickerContainerView.transform = CGAffineTransformIdentity;
+    }];
+}
+
+- (void)dismissDatePicker
+{
+    if (!self.calendarPickerContainerView.superview) {
+        return;
+    }
+
+    [UIView animateWithDuration:0.16 animations:^{
+        self.calendarPickerContainerView.alpha = 0;
+        self.calendarPickerContainerView.transform = CGAffineTransformMakeScale(0.96, 0.96);
+    } completion:^(BOOL finished) {
+        self.calendarPickerContainerView.transform = CGAffineTransformIdentity;
+        [self.calendarPickerContainerView removeFromSuperview];
+        [self.calendarPickerDismissView removeFromSuperview];
+    }];
+}
+
+- (void)addDateSwipeGestures
+{
+    UIPanGestureRecognizer *datePan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleDatePan:)];
+    datePan.delegate = self;
+    [self.timelineViewController.view addGestureRecognizer:datePan];
+}
+
+#pragma mark - UIGestureRecognizerDelegate
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    if (![gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]) {
+        return YES;
+    }
+
+    CGPoint location = [gestureRecognizer locationInView:self.view];
+    if (location.x <= 24*kWidthRatio) {
+        return NO;
+    }
+
+    UIPanGestureRecognizer *pan = (UIPanGestureRecognizer *)gestureRecognizer;
+    CGPoint velocity = [pan velocityInView:self.view];
+    return fabs(velocity.x) > fabs(velocity.y);
+}
+
+- (void)updateSelectedDate:(NSDate *)date
+{
+    if (!date) {
+        return;
+    }
+    self.selectedDate = date;
+    [self dismissDatePicker];
+    [self updateHeaderStateWithRecords:nil];
+    [self updateNavigationItem];
+    [self.timelineViewController updateDate:date];
+}
+
+- (void)updateSelectedDate:(NSDate *)date animatedWithDayOffset:(NSInteger)dayOffset
+{
+    if (!date || dayOffset == 0) {
+        return;
+    }
+    if (UIAccessibilityIsReduceMotionEnabled()) {
+        [self updateSelectedDate:date];
+        return;
+    }
+
+    UIView *timelineView = self.timelineViewController.view;
+    UIView *snapshotView = [timelineView snapshotViewAfterScreenUpdates:NO];
+    if (!snapshotView) {
+        [self updateSelectedDate:date];
+        return;
+    }
+
+    self.isAnimatingDateTransition = YES;
+    self.view.userInteractionEnabled = NO;
+    snapshotView.frame = timelineView.frame;
+    [self.view addSubview:snapshotView];
+
+    CGFloat width = CGRectGetWidth(timelineView.bounds);
+    CGFloat incomingOffset = dayOffset > 0 ? width : -width;
+    CGFloat outgoingOffset = -incomingOffset;
+    timelineView.transform = CGAffineTransformMakeTranslation(incomingOffset, 0);
+    [self updateSelectedDate:date];
+    [self.view layoutIfNeeded];
+
+    [UIView animateWithDuration:0.28
+                          delay:0
+                        options:UIViewAnimationOptionCurveEaseInOut | UIViewAnimationOptionBeginFromCurrentState
+                     animations:^{
+        snapshotView.transform = CGAffineTransformMakeTranslation(outgoingOffset, 0);
+        timelineView.transform = CGAffineTransformIdentity;
+    } completion:^(BOOL finished) {
+        timelineView.transform = CGAffineTransformIdentity;
+        [snapshotView removeFromSuperview];
+        self.view.userInteractionEnabled = YES;
+        self.isAnimatingDateTransition = NO;
+    }];
+}
+
+#pragma mark - Header
+
+- (void)updateHeaderStateWithRecords:(NSMutableArray<MirrorRecordModel *> *)records
+{
+    self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    self.headerContainerView.backgroundColor = self.view.backgroundColor;
+    self.todayTotalHeader.backgroundColor = self.view.backgroundColor;
+    [self updateTodayButtonState];
+    if (records) {
+        __weak typeof(self) weakSelf = self;
+        [self.todayTotalHeader configWithDate:self.selectedDate ?: [NSDate now] records:records datePickerHandler:^{
+            [weakSelf showDatePicker];
+        }];
+    }
+}
+
+- (void)updateNavigationItem
+{
+    [self updateTodayButtonState];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.todayButtonContainer];
+}
+
+- (void)updateTodayButtonState
+{
+    BOOL isToday = [self isSelectedDateToday];
+    UIColor *textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.todayButton.enabled = !isToday;
+    self.todayButton.backgroundColor = UIColor.clearColor;
+    [self.todayButton setTitleColor:textColor forState:UIControlStateNormal];
+    [self.todayButton setTitleColor:[textColor colorWithAlphaComponent:0.35] forState:UIControlStateDisabled];
+}
+
+- (BOOL)isSelectedDateToday
+{
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    return [calendar isDate:self.selectedDate ?: [NSDate now] inSameDayAsDate:[NSDate now]];
+}
+
+#pragma mark - Calendar Picker
+
+- (void)updateCalendarSelectionForSelectedDate
+{
+    NSDateComponents *components = [self.calendarView.calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay fromDate:self.selectedDate ?: [NSDate now]];
+    [self.calendarView setVisibleDateComponents:components animated:NO];
+    [self.dateSelection setSelectedDate:components animated:NO];
+}
+
+- (NSArray<NSDateComponents *> *)gridDateComponents
+{
+    NSMutableArray<NSDateComponents *> *components = [NSMutableArray new];
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    for (NSString *key in self.gridData.allKeys) {
+        NSDate *date = [formatter dateFromString:key];
+        if (!date) {
+            continue;
+        }
+        [components addObject:[calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay fromDate:date]];
+    }
+    return components;
+}
+
+- (UICalendarViewDecoration *)calendarView:(UICalendarView *)calendarView decorationForDateComponents:(NSDateComponents *)dateComponents API_AVAILABLE(ios(16.0))
+{
+    NSDate *date = dateComponents.date;
+    if (!date) return nil;
+
+    long totalTime = 0;
+    NSMutableArray<NSNumber *> *taskTimes = [NSMutableArray array];
+    NSMutableArray<UIColor *> *taskColors = [NSMutableArray array];
+    [self getTaskTimes:taskTimes taskColors:taskColors totalTime:&totalTime forDate:date];
+    if (totalTime == 0 || taskTimes.count == 0 || taskColors.count == 0) return nil;
+
+    CGFloat barHeight = 6;
+    CGFloat minWidth = barHeight;
+    CGFloat maxWidth = 30;
+    CGFloat hours = totalTime / 3600.0;
+    CGFloat barWidth = minWidth;
+    if (hours >= 8) {
+        barWidth = maxWidth;
+    } else if (hours > 1) {
+        barWidth = minWidth + (maxWidth - minWidth) * ((hours - 1) / 7.0);
+    }
+
+    return [UICalendarViewDecoration decorationWithCustomViewProvider:^UIView * _Nonnull{
+        UIView *barView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, barWidth, barHeight)];
+        barView.layer.cornerRadius = barHeight / 2;
+        barView.clipsToBounds = YES;
+
+        CGFloat currentX = 0;
+        for (NSInteger index = 0; index < taskTimes.count; index++) {
+            CGFloat segmentWidth = index == taskTimes.count - 1 ? barWidth - currentX : barWidth * (taskTimes[index].doubleValue / (CGFloat)totalTime);
+            if (segmentWidth <= 0) {
+                continue;
+            }
+            UIView *segmentView = [[UIView alloc] initWithFrame:CGRectMake(currentX, 0, segmentWidth, barHeight)];
+            segmentView.backgroundColor = taskColors[index];
+            [barView addSubview:segmentView];
+            currentX += segmentWidth;
+        }
+        return barView;
+    }];
+}
+
+- (BOOL)dateSelection:(UICalendarSelectionSingleDate *)selection canSelectDate:(NSDateComponents *)dateComponents API_AVAILABLE(ios(16.0))
+{
+    return dateComponents != nil;
+}
+
+- (void)dateSelection:(UICalendarSelectionSingleDate *)selection didSelectDate:(NSDateComponents *)dateComponents API_AVAILABLE(ios(16.0))
+{
+    NSDate *date = dateComponents.date;
+    if (!date) return;
+    [self updateSelectedDate:date];
+}
+
+- (void)getTaskTimes:(NSMutableArray<NSNumber *> *)taskTimes taskColors:(NSMutableArray<UIColor *> *)taskColors totalTime:(long *)totalTime forDate:(NSDate *)date
+{
+    NSMutableArray<MirrorReadModel *> *data = self.gridData[[self keyFromDate:date]];
+    if (data.count == 0) return;
+
+    for (MirrorReadModel *readModel in data) {
+        long taskTime = [MirrorTool getTotalTimeOfPeriods:readModel.records];
+        if (taskTime > 0) {
+            [taskTimes addObject:@(taskTime)];
+            [taskColors addObject:[UIColor mirrorColorNamed:readModel.taskModel.color]];
+        }
+        *totalTime += taskTime;
+    }
+}
+
+- (NSString *)keyFromDate:(NSDate *)date
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    return [formatter stringFromDate:date];
 }
 
 #pragma mark - Getters
 
-- (UIButton *)timelineButton
+- (UIView *)headerContainerView
 {
-    if (!_timelineButton) {
-        _timelineButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"calendar"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_timelineButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
-        [_timelineButton addTarget:self action:@selector(goToCalendar) forControlEvents:UIControlEventTouchUpInside];
+    if (!_headerContainerView) {
+        _headerContainerView = [UIView new];
+        _headerContainerView.clipsToBounds = YES;
+        [_headerContainerView addSubview:self.todayTotalHeader];
+        [self.todayTotalHeader mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.edges.offset(0);
+        }];
     }
-    return _timelineButton;
+    return _headerContainerView;
+}
+
+- (TodayTotalHeader *)todayTotalHeader
+{
+    if (!_todayTotalHeader) {
+        _todayTotalHeader = [TodayTotalHeader new];
+    }
+    return _todayTotalHeader;
+}
+
+- (UIView *)calendarPickerDismissView
+{
+    if (!_calendarPickerDismissView) {
+        _calendarPickerDismissView = [UIView new];
+        _calendarPickerDismissView.backgroundColor = UIColor.clearColor;
+        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissDatePicker)];
+        [_calendarPickerDismissView addGestureRecognizer:tapGesture];
+    }
+    return _calendarPickerDismissView;
+}
+
+- (UIView *)calendarPickerContainerView
+{
+    if (!_calendarPickerContainerView) {
+        _calendarPickerContainerView = [UIView new];
+        _calendarPickerContainerView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _calendarPickerContainerView.layer.cornerRadius = 8;
+        _calendarPickerContainerView.layer.shadowColor = [UIColor blackColor].CGColor;
+        _calendarPickerContainerView.layer.shadowOpacity = 0.12;
+        _calendarPickerContainerView.layer.shadowRadius = 12;
+        _calendarPickerContainerView.layer.shadowOffset = CGSizeMake(0, 4);
+        [_calendarPickerContainerView addSubview:self.calendarView];
+        [self.calendarView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.edges.insets(UIEdgeInsetsMake(8, 8, 8, 8));
+        }];
+    }
+    return _calendarPickerContainerView;
+}
+
+- (UICalendarView *)calendarView API_AVAILABLE(ios(16.0))
+{
+    if (!_calendarView) {
+        _calendarView = [UICalendarView new];
+        _calendarView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _calendarView.calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+        _calendarView.calendar.timeZone = [NSTimeZone systemTimeZone];
+        _calendarView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _calendarView.delegate = self;
+        _calendarView.wantsDateDecorations = YES;
+        _calendarView.selectionBehavior = self.dateSelection;
+    }
+    return _calendarView;
+}
+
+- (UICalendarSelectionSingleDate *)dateSelection API_AVAILABLE(ios(16.0))
+{
+    if (!_dateSelection) {
+        _dateSelection = [[UICalendarSelectionSingleDate alloc] initWithDelegate:self];
+        NSDateComponents *components = [self.calendarView.calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay fromDate:self.selectedDate ?: [NSDate now]];
+        [_dateSelection setSelectedDate:components animated:NO];
+    }
+    return _dateSelection;
+}
+
+- (UIButton *)todayButton
+{
+    if (!_todayButton) {
+        _todayButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        _todayButton.titleLabel.font = [UIFont mirrorButtonFont];
+        _todayButton.backgroundColor = UIColor.clearColor;
+        [_todayButton setTitle:[MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
+        [_todayButton addTarget:self action:@selector(goToToday) forControlEvents:UIControlEventTouchUpInside];
+    }
+    return _todayButton;
+}
+
+- (UIView *)todayButtonContainer
+{
+    if (!_todayButtonContainer) {
+        _todayButtonContainer = [UIView new];
+        [_todayButtonContainer addSubview:self.todayButton];
+        [self.todayButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.centerY.right.offset(0);
+            make.height.mas_equalTo(24*kHeightRatio);
+            make.width.mas_equalTo([self todayButtonWidth]);
+        }];
+        _todayButtonContainer.frame = CGRectMake(0, 0, [self todayButtonWidth], 44*kHeightRatio);
+    }
+    return _todayButtonContainer;
+}
+
+- (CGFloat)todayButtonWidth
+{
+    CGSize titleSize = [[MirrorLanguage mirror_stringWithKey:@"today"] sizeWithAttributes:@{NSFontAttributeName: [UIFont mirrorButtonFont]}];
+    return ceil(titleSize.width) + 24*kWidthRatio;
 }
 
 @end

@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface TodayTotalHeader : UICollectionViewCell
 
 - (void)configWithRecords:(NSMutableArray<MirrorRecordModel *> *)todayRecords;
+- (void)configWithDate:(NSDate *)date records:(NSMutableArray<MirrorRecordModel *> *)records datePickerHandler:(void (^)(void))datePickerHandler;
 
 @end
 
