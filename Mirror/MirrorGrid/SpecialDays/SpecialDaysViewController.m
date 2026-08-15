@@ -732,39 +732,113 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 {
     UIAlertController *iconAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"special_day_icon"] message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIViewController *contentViewController = [UIViewController new];
-    contentViewController.preferredContentSize = CGSizeMake(248, 248);
-    UIView *iconGridView = [UIView new];
-    [contentViewController.view addSubview:iconGridView];
-    [iconGridView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.center.mas_equalTo(contentViewController.view);
-        make.width.height.mas_equalTo(240);
+    CGFloat pickerWidth = 248;
+    CGFloat pickerHeight = 300;
+    contentViewController.preferredContentSize = CGSizeMake(pickerWidth, pickerHeight);
+    
+    UITextField *searchTextField = [UITextField new];
+    searchTextField.placeholder = @"Search symbols";
+    searchTextField.returnKeyType = UIReturnKeyDone;
+    searchTextField.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
+    searchTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    searchTextField.backgroundColor = [self specialDayAlertControlBackgroundColor];
+    searchTextField.layer.cornerRadius = 8;
+    searchTextField.layer.masksToBounds = YES;
+    searchTextField.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 1)];
+    searchTextField.leftViewMode = UITextFieldViewModeAlways;
+    searchTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
+    [contentViewController.view addSubview:searchTextField];
+    [searchTextField mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.top.mas_equalTo(contentViewController.view);
+        make.width.mas_equalTo(pickerWidth);
+        make.height.mas_equalTo(38);
     }];
 
+    UIScrollView *iconScrollView = [UIScrollView new];
+    iconScrollView.showsVerticalScrollIndicator = YES;
+    [contentViewController.view addSubview:iconScrollView];
+    [iconScrollView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.bottom.mas_equalTo(contentViewController.view);
+        make.width.mas_equalTo(pickerWidth);
+        make.top.mas_equalTo(searchTextField.mas_bottom).offset(10);
+    }];
+
+    UIView *iconGridView = [UIView new];
+    [iconScrollView addSubview:iconGridView];
+    [iconGridView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.mas_equalTo(iconScrollView);
+        make.width.mas_equalTo(pickerWidth);
+    }];
+    
     NSArray<NSString *> *iconOptions = [self specialDayIconOptions];
-    for (NSInteger index = 0; index < iconOptions.count; index++) {
-        NSString *iconName = iconOptions[index];
-        UIButton *iconButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        iconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        iconButton.backgroundColor = [iconName isEqualToString:selectedIconName] ? [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG] : [UIColor clearColor];
-        iconButton.layer.cornerRadius = 4;
-        iconButton.layer.masksToBounds = YES;
-        [iconButton setImage:[UIImage systemImageNamed:iconName] forState:UIControlStateNormal];
-        [iconGridView addSubview:iconButton];
-        if (@available(iOS 14.0, *)) {
-            [iconButton addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
-                if (completion) {
-                    completion(iconName);
-                }
-                [iconAlert dismissViewControllerAnimated:YES completion:nil];
-            }] forControlEvents:UIControlEventTouchUpInside];
+    __block MASConstraint *gridBottomConstraint = nil;
+    __block void (^reloadIcons)(NSString *) = nil;
+    reloadIcons = ^(NSString *query) {
+        [iconGridView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        [gridBottomConstraint uninstall];
+        gridBottomConstraint = nil;
+        
+        NSString *normalizedQuery = query.lowercaseString ?: @"";
+        NSMutableArray<NSString *> *filteredOptions = [NSMutableArray new];
+        for (NSString *iconName in iconOptions) {
+            if (normalizedQuery.length == 0 || [iconName.lowercaseString containsString:normalizedQuery]) {
+                [filteredOptions addObject:iconName];
+            }
         }
-        [iconButton mas_makeConstraints:^(MASConstraintMaker *make) {
-            NSInteger row = index / 10;
-            NSInteger column = index % 10;
-            make.left.mas_equalTo(iconGridView).offset(column * 24);
-            make.top.mas_equalTo(iconGridView).offset(row * 24);
-            make.width.height.mas_equalTo(22);
-        }];
+        
+        NSInteger columns = 8;
+        CGFloat itemSide = 28;
+        CGFloat itemSpacing = (pickerWidth - columns * itemSide) / (columns - 1);
+        for (NSInteger index = 0; index < filteredOptions.count; index++) {
+            NSString *iconName = filteredOptions[index];
+            UIButton *iconButton = [UIButton buttonWithType:UIButtonTypeSystem];
+            iconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+            iconButton.backgroundColor = [iconName isEqualToString:selectedIconName] ? [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG] : [UIColor clearColor];
+            iconButton.layer.cornerRadius = 6;
+            iconButton.layer.masksToBounds = YES;
+            [iconButton setImage:[UIImage systemImageNamed:iconName] forState:UIControlStateNormal];
+            [iconGridView addSubview:iconButton];
+            if (@available(iOS 14.0, *)) {
+                [iconButton addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
+                    if (completion) {
+                        completion(iconName);
+                    }
+                    [iconAlert dismissViewControllerAnimated:YES completion:nil];
+                }] forControlEvents:UIControlEventTouchUpInside];
+            }
+            [iconButton mas_makeConstraints:^(MASConstraintMaker *make) {
+                NSInteger row = index / columns;
+                NSInteger column = index % columns;
+                make.left.mas_equalTo(iconGridView).offset(column * (itemSide + itemSpacing));
+                make.top.mas_equalTo(iconGridView).offset(row * (itemSide + itemSpacing));
+                make.width.height.mas_equalTo(itemSide);
+                if (index == filteredOptions.count - 1) {
+                    gridBottomConstraint = make.bottom.mas_equalTo(iconGridView);
+                }
+            }];
+        }
+        
+        if (filteredOptions.count == 0) {
+            UILabel *emptyLabel = [UILabel new];
+            emptyLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_data"];
+            emptyLabel.textAlignment = NSTextAlignmentCenter;
+            emptyLabel.font = [UIFont mirrorHintFont];
+            emptyLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+            [iconGridView addSubview:emptyLabel];
+            [emptyLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+                make.left.right.top.mas_equalTo(iconGridView);
+                make.height.mas_equalTo(44);
+                gridBottomConstraint = make.bottom.mas_equalTo(iconGridView);
+            }];
+        }
+        [iconGridView layoutIfNeeded];
+    };
+    
+    reloadIcons(nil);
+    if (@available(iOS 14.0, *)) {
+        [searchTextField addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
+            reloadIcons(searchTextField.text);
+        }] forControlEvents:UIControlEventEditingChanged];
     }
 
     [iconAlert setValue:contentViewController forKey:@"contentViewController"];
@@ -778,14 +852,20 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     return @[
         @"star.fill", @"heart.fill", @"pin.fill", @"gift.fill", @"flag.fill", @"bookmark.fill", @"tag.fill", @"bell.fill", @"bolt.fill", @"flame.fill",
         @"sun.max.fill", @"moon.fill", @"cloud.fill", @"snowflake", @"drop.fill", @"leaf.fill", @"camera.fill", @"photo.fill", @"music.note", @"mic.fill",
-        @"film.fill", @"gamecontroller.fill", @"paintbrush.fill", @"pencil", @"book.fill", @"graduationcap.fill", @"briefcase.fill", @"folder.fill", @"doc.fill", @"calendar",
+        @"film.fill", @"tv.fill", @"headphones", @"speaker.wave.2.fill", @"gamecontroller.fill", @"paintbrush.fill", @"pencil", @"highlighter", @"book.fill", @"books.vertical.fill", @"graduationcap.fill", @"briefcase.fill", @"folder.fill", @"doc.fill", @"calendar",
         @"clock.fill", @"alarm.fill", @"timer", @"hourglass", @"map.fill", @"location.fill", @"mappin", @"house.fill", @"building.2.fill", @"car.fill",
-        @"airplane", @"tram.fill", @"bicycle", @"figure.walk", @"figure.run", @"figure.hiking", @"sportscourt.fill", @"soccerball", @"basketball.fill", @"tennisball.fill",
-        @"dumbbell.fill", @"fork.knife", @"cup.and.saucer.fill", @"wineglass.fill", @"birthday.cake.fill", @"cart.fill", @"bag.fill", @"creditcard.fill", @"banknote.fill", @"chart.bar.fill",
+        @"airplane", @"tram.fill", @"bus.fill", @"ferry.fill", @"bicycle", @"scooter", @"figure.walk", @"figure.run", @"figure.hiking", @"figure.pool.swim", @"figure.open.water.swim", @"figure.strengthtraining.traditional", @"figure.yoga", @"sportscourt.fill", @"soccerball", @"basketball.fill", @"football.fill", @"baseball.fill", @"tennisball.fill",
+        @"dumbbell.fill", @"fork.knife", @"takeoutbag.and.cup.and.straw.fill", @"cup.and.saucer.fill", @"mug.fill", @"wineglass.fill", @"birthday.cake.fill", @"balloon.fill", @"cart.fill", @"bag.fill", @"creditcard.fill", @"banknote.fill", @"chart.bar.fill",
         @"chart.pie.fill", @"target", @"trophy.fill", @"medal.fill", @"rosette", @"crown.fill", @"sparkles", @"wand.and.stars", @"person.fill", @"person.2.fill",
         @"person.3.fill", @"figure.2.and.child.holdinghands", @"hands.clap.fill", @"hand.thumbsup.fill", @"face.smiling.fill", @"eye.fill", @"brain.head.profile", @"lightbulb.fill", @"gear", @"wrench.fill",
-        @"hammer.fill", @"scissors", @"stethoscope", @"cross.case.fill", @"pills.fill", @"bed.double.fill", @"shower.fill", @"washer.fill", @"trash.fill", @"shippingbox.fill",
-        @"envelope.fill", @"phone.fill", @"message.fill", @"bubble.left.fill", @"network", @"wifi", @"lock.fill", @"key.fill", @"checkmark.circle.fill", @"exclamationmark.triangle.fill"
+        @"hammer.fill", @"screwdriver.fill", @"paintbrush.pointed.fill", @"scissors", @"stethoscope", @"cross.case.fill", @"pills.fill", @"bandage.fill", @"heart.text.square.fill", @"bed.double.fill", @"shower.fill", @"bathtub.fill", @"washer.fill", @"trash.fill", @"shippingbox.fill",
+        @"envelope.fill", @"phone.fill", @"message.fill", @"bubble.left.fill", @"network", @"wifi", @"antenna.radiowaves.left.and.right", @"globe", @"link", @"lock.fill", @"key.fill", @"checkmark.circle.fill", @"xmark.circle.fill", @"plus.circle.fill", @"minus.circle.fill", @"exclamationmark.triangle.fill",
+        @"cat.fill", @"dog.fill", @"pawprint.fill", @"fish.fill", @"bird.fill", @"ladybug.fill", @"tree.fill", @"carrot.fill", @"fuelpump.fill", @"ev.charger.fill",
+        @"desktopcomputer", @"laptopcomputer", @"iphone", @"ipad", @"applewatch", @"keyboard.fill", @"printer.fill", @"scanner.fill", @"externaldrive.fill", @"server.rack",
+        @"app.fill", @"safari.fill", @"terminal.fill", @"curlybraces", @"chevron.left.forwardslash.chevron.right", @"number", @"m.circle.fill", @"at", @"qrcode", @"barcode",
+        @"rectangle.and.pencil.and.ellipsis", @"list.bullet", @"checklist", @"square.and.arrow.up", @"square.and.arrow.down", @"tray.fill", @"archivebox.fill", @"paperclip", @"link.circle.fill", @"signature",
+        @"lungs.fill", @"brain.fill", @"ear.fill", @"mouth.fill", @"nose.fill", @"eye.circle.fill", @"facemask.fill", @"syringe.fill", @"thermometer.medium", @"waveform.path.ecg",
+        @"house.and.flag.fill", @"storefront.fill", @"building.columns.fill", @"theatermasks.fill", @"popcorn.fill", @"ticket.fill", @"party.popper.fill", @"chandelier.fill", @"door.left.hand.open", @"sofa.fill"
     ];
 }
 
