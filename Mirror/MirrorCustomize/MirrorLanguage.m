@@ -116,7 +116,7 @@
     [mirrorDict setValue:ML(@"Created at ", @"创建于 ", @"Creada el ", @"Créée le ", @"作成日 ", @"생성일 ") forKey:@"created_at"];
     
     // Special days
-    [mirrorDict setValue:ML(@"Days", @"特别日", @"Días", @"Jours", @"日", @"날") forKey:@"special_days"];
+    [mirrorDict setValue:ML(@"Special Days", @"特别日", @"Días especiales", @"Jours spéciaux", @"特別な日", @"특별한 날") forKey:@"special_days"];
     [mirrorDict setValue:ML(@"Add Special Day", @"添加特别日", @"Añadir día especial", @"Ajouter un jour spécial", @"特別な日を追加", @"특별한 날 추가") forKey:@"add_special_day"];
     [mirrorDict setValue:ML(@"Info", @"信息", @"Información", @"Info", @"情報", @"정보") forKey:@"special_day_info"];
     [mirrorDict setValue:ML(@"Icon", @"图标", @"Icono", @"Icône", @"アイコン", @"아이콘") forKey:@"special_day_icon"];
