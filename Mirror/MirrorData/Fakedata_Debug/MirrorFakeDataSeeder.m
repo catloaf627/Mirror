@@ -353,11 +353,11 @@
 + (NSArray<MirrorFakeSpecialDayPlan *> *)fakeSpecialDayPlans
 {
     return @[
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:1 day:8 info:ML(@"got a car", @"提车啦", @"coche nuevo", @"nouvelle voiture", @"車を手に入れた", @"차를 샀어요") icon:@"car.fill" color:MirrorSystemColorTypeMint],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:1 day:8 info:ML(@"got a car", @"提车啦", @"coche nuevo", @"nouvelle voiture", @"車を手に入れた", @"차를 샀어요") icon:@"car.fill" color:MirrorSystemColorTypeGreen],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:2 day:7 info:ML(@"graduated", @"毕业啦", @"graduación", @"diplôme obtenu", @"卒業した", @"졸업했어요") icon:@"graduationcap.fill" color:MirrorSystemColorTypeBlue],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:3 day:22 info:ML(@"got a job", @"找到工作", @"conseguí trabajo", @"nouveau travail", @"仕事が決まった", @"취업했어요") icon:@"briefcase.fill" color:MirrorSystemColorTypeBlue],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"went to Disney", @"去迪士尼", @"fuimos a Disney", @"journée à Disney", @"ディズニーに行った", @"디즈니에 갔어요") icon:@"balloon.fill" color:MirrorSystemColorTypeYellow],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:20 info:ML(@"got cats", @"接猫回家", @"adoptamos gatos", @"chats à la maison", @"猫を迎えた", @"고양이를 데려온 날") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:3 day:22 info:ML(@"got a job", @"找到工作", @"conseguí trabajo", @"nouveau travail", @"仕事が決まった", @"취업했어요") icon:@"briefcase.fill" color:MirrorSystemColorTypeMint],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"got cats", @"接猫回家", @"adoptamos gatos", @"chats à la maison", @"猫を迎えた", @"고양이를 데려온 날") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:15 info:ML(@"learned butterfly", @"会游蝶泳了", @"aprendí mariposa", @"papillon appris", @"バタフライが泳げるようになった", @"접영을 할 수 있게 됐어요") icon:@"figure.pool.swim" color:MirrorSystemColorTypeOrange],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:6 day:27 info:ML(@"my birthday", @"我的生日", @"mi cumpleaños", @"mon anniversaire", @"自分の誕生日", @"내 생일") icon:@"birthday.cake.fill" color:MirrorSystemColorTypeYellow],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:7 day:19 info:ML(@"watched the World Cup", @"看世界杯", @"vimos el Mundial", @"Coupe du monde", @"ワールドカップを見た", @"월드컵 본 날") icon:@"soccerball" color:MirrorSystemColorTypeMint],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"moved into our new home", @"住进新家", @"nuevo hogar", @"nouveau chez-nous", @"新居に引っ越した", @"새집에 입주") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
