@@ -10,6 +10,12 @@
 #import "UIColor+MirrorColor.h"
 #import "MirrorSettings.h"
 
+@interface GridCollectionViewCell ()
+
+@property (nonatomic, strong) UIImageView *specialDayIconView;
+
+@end
+
 @implementation GridCollectionViewCell
 
 + (NSString *)identifier
@@ -17,7 +23,7 @@
     return NSStringFromClass(self.class);
 }
 
-- (void)configWithData:(NSMutableArray<MirrorReadModel *> *)data isSelected:(BOOL)isSelected
+- (void)configWithData:(NSMutableArray<MirrorReadModel *> *)data day:(MirrorDayModel *)day isSelected:(BOOL)isSelected
 {
     _totalTime = 0;
     NSMutableArray<NSNumber *> *taskTimes = [NSMutableArray array];
@@ -55,6 +61,47 @@
         self.layer.borderWidth = 0;
         self.layer.cornerRadius = 2;
     }
+    
+    [self updateSpecialDayIconWithDay:day];
+}
+
+- (void)updateSpecialDayIconWithDay:(MirrorDayModel *)day
+{
+    if (day.icon.length == 0) {
+        self.specialDayIconView.hidden = YES;
+        self.specialDayIconView.image = nil;
+        return;
+    }
+    
+    UIImage *iconImage = [[UIImage systemImageNamed:day.icon] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    if (!iconImage) {
+        iconImage = [[UIImage systemImageNamed:@"star.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    }
+    
+    self.specialDayIconView.hidden = NO;
+    self.specialDayIconView.image = iconImage;
+    self.specialDayIconView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+}
+
+- (UIImageView *)specialDayIconView
+{
+    if (!_specialDayIconView) {
+        _specialDayIconView = [UIImageView new];
+        _specialDayIconView.contentMode = UIViewContentModeScaleAspectFit;
+        _specialDayIconView.hidden = YES;
+        [self.contentView addSubview:_specialDayIconView];
+    }
+    return _specialDayIconView;
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    CGFloat iconSide = MIN(self.contentView.bounds.size.width, self.contentView.bounds.size.height) * 0.64;
+    self.specialDayIconView.frame = CGRectMake((self.contentView.bounds.size.width - iconSide) / 2,
+                                               (self.contentView.bounds.size.height - iconSide) / 2,
+                                               iconSide,
+                                               iconSide);
 }
 
 - (UIColor *)colorByBlendingColor:(UIColor *)fromColor withColor:(UIColor *)toColor progress:(CGFloat)progress

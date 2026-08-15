@@ -15,7 +15,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) long totalTime; // config cell的时候算过一次了，did select cell的时候就不要再算一次了，直接用这里的值
 
 + (NSString *)identifier;
-- (void)configWithData:(NSMutableArray<MirrorReadModel *> *)data isSelected:(BOOL)isSelected;
+- (void)configWithData:(NSMutableArray<MirrorReadModel *> *)data day:(MirrorDayModel * _Nullable)day isSelected:(BOOL)isSelected;
 
 @end
 

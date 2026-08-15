@@ -18,6 +18,8 @@
 #import "UIFont+MirrorFont.h"
 #import "MirrorStorage.h"
 #import "MirrorReadModel.h"
+#import "MirrorDayModel.h"
+#import "SpecialDaysViewController.h"
 #import "MirrorTool.h"
 #import "MirrorSettings.h"
 
@@ -31,6 +33,7 @@
 @property (nonatomic, assign) BOOL isAnimatingDateTransition;
 
 // Navibar
+@property (nonatomic, strong) UIButton *specialDaysButton;
 @property (nonatomic, strong) UIButton *todayButton;
 @property (nonatomic, strong) UIView *todayButtonContainer;
 
@@ -70,6 +73,8 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSpecialDaysButton) name:MirrorDayCreateNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSpecialDaysButton) name:MirrorDayDeleteNotification object:nil];
     }
     return self;
 }
@@ -110,6 +115,7 @@
     self.calendarView = nil;
     self.dateSelection = nil;
     self.gridData = nil;
+    self.specialDaysButton = nil;
     self.todayButton = nil;
     self.todayButtonContainer = nil;
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
@@ -345,8 +351,46 @@
 
 - (void)updateNavigationItem
 {
+    [self updateSpecialDaysButton];
     [self updateTodayButtonState];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.todayButtonContainer];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.specialDaysButton rightButton:self.todayButtonContainer];
+}
+
+- (void)showSpecialDays
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    SpecialDaysViewController *specialDaysVC = [[SpecialDaysViewController alloc] init];
+    [self.navigationController pushViewController:specialDaysVC animated:YES];
+}
+
+- (void)updateSpecialDaysButton
+{
+    NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
+    MirrorDayModel *latestDay = days.lastObject;
+    NSString *iconName = [self specialDaysButtonIconNameFromStoredIconName:latestDay.icon];
+    UIImage *iconImage = [[UIImage systemImageNamed:iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.specialDaysButton setImage:iconImage forState:UIControlStateNormal];
+    self.specialDaysButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+}
+
+- (NSString *)specialDaysButtonIconNameFromStoredIconName:(NSString *)storedIconName
+{
+    if (storedIconName.length == 0) {
+        return @"star";
+    }
+    
+    NSString *outlineIconName = storedIconName;
+    if ([storedIconName hasSuffix:@".fill"]) {
+        outlineIconName = [storedIconName substringToIndex:storedIconName.length - @".fill".length];
+    }
+    
+    if ([UIImage systemImageNamed:outlineIconName]) {
+        return outlineIconName;
+    }
+    if ([UIImage systemImageNamed:storedIconName]) {
+        return storedIconName;
+    }
+    return @"star";
 }
 
 - (void)updateTodayButtonState
@@ -583,6 +627,16 @@
         [_todayButton addTarget:self action:@selector(goToToday) forControlEvents:UIControlEventTouchUpInside];
     }
     return _todayButton;
+}
+
+- (UIButton *)specialDaysButton
+{
+    if (!_specialDaysButton) {
+        _specialDaysButton = [UIButton new];
+        [_specialDaysButton addTarget:self action:@selector(showSpecialDays) forControlEvents:UIControlEventTouchUpInside];
+        [self updateSpecialDaysButton];
+    }
+    return _specialDaysButton;
 }
 
 - (UIView *)todayButtonContainer

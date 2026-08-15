@@ -20,7 +20,6 @@
 #import "TaskProgressListView.h"
 #import "PiechartView.h"
 #import "TaskRecordsViewController.h"
-#import "SpecialDaysViewController.h"
 #import "MirrorTimeText.h"
 #import "MirrorTool.h"
 #import "MirrorTabsManager.h"
@@ -34,13 +33,13 @@
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
-@property (nonatomic, strong) UIButton *specialDaysButton;
 @property (nonatomic, strong) UIButton *heatmapButton;
 @property (nonatomic, strong) UIButton *weekStartsOnButton;
 @property (nonatomic, strong) UIView *gridOptionsView;
 // Data source
 @property (nonatomic, strong) NSMutableArray<NSString *> *keys;
 @property (nonatomic, strong) NSMutableDictionary<NSString*, NSMutableArray<MirrorReadModel *> *> *gridData;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, MirrorDayModel *> *specialDaysByDateKey;
 
 @property (nonatomic, assign) NSInteger selectedCellIndex;
 @property (nonatomic, assign) NSInteger selectedCellIndexesStart;
@@ -105,8 +104,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [self updateSpecialDaysButton];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.specialDaysButton rightButton:self.gridOptionsView];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.gridOptionsView];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -133,7 +131,6 @@
     self.legendView = nil;
     self.taskProgressListView = nil;
     self.piechartView = nil;
-    self.specialDaysButton = nil;
     self.heatmapButton = nil;
     self.weekStartsOnButton = nil;
     self.gridOptionsView = nil;
@@ -141,7 +138,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.specialDaysButton rightButton:self.gridOptionsView];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.gridOptionsView];
     }
     [self p_setupUI];
 }
@@ -149,7 +146,6 @@
 - (void)reloadData
 {
     if (!_isLoaded) return;
-    [self updateSpecialDaysButton];
     [self updateHeatmapButton];
     [self updateWeekStartsOnButton];
     if ([MirrorSettings appliedPieChartRecord]) {
@@ -242,13 +238,6 @@
 
 #pragma mark - Actions
 
-- (void)showSpecialDays
-{
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    SpecialDaysViewController *specialDaysVC = [[SpecialDaysViewController alloc] init];
-    [self.navigationController pushViewController:specialDaysVC animated:YES];
-}
-
 - (void)switchHeatmap
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
@@ -265,37 +254,7 @@
 {
     UIImage *iconImage = [[UIImage systemImageNamed:@"app.translucent"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.heatmapButton setImage:iconImage forState:UIControlStateNormal];
-    self.heatmapButton.tintColor = [UIColor mirrorColorNamed:[MirrorSettings appliedHeatmap] ? MirrorColorTypeTabbarIconTextHightlight : MirrorColorTypeTabbarIconText];
-}
-
-- (void)updateSpecialDaysButton
-{
-    NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
-    MirrorDayModel *latestDay = days.lastObject;
-    NSString *iconName = [self specialDaysButtonIconNameFromStoredIconName:latestDay.icon];
-    UIImage *iconImage = [[UIImage systemImageNamed:iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    [self.specialDaysButton setImage:iconImage forState:UIControlStateNormal];
-    self.specialDaysButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-}
-
-- (NSString *)specialDaysButtonIconNameFromStoredIconName:(NSString *)storedIconName
-{
-    if (storedIconName.length == 0) {
-        return @"star";
-    }
-    
-    NSString *outlineIconName = storedIconName;
-    if ([storedIconName hasSuffix:@".fill"]) {
-        outlineIconName = [storedIconName substringToIndex:storedIconName.length - @".fill".length];
-    }
-    
-    if ([UIImage systemImageNamed:outlineIconName]) {
-        return outlineIconName;
-    }
-    if ([UIImage systemImageNamed:storedIconName]) {
-        return storedIconName;
-    }
-    return @"star";
+    self.heatmapButton.tintColor = [UIColor mirrorColorNamed:[MirrorSettings appliedHeatmap] ? MirrorColorTypeTabbarIconText : MirrorColorTypeTabbarIconTextHightlight];
 }
 
 - (void)updateWeekStartsOnButton
@@ -388,11 +347,22 @@
 - (void)updateGridData
 {
     _gridData = [MirrorStorage getGridData];
+    _specialDaysByDateKey = [NSMutableDictionary<NSString *, MirrorDayModel *> new];
+    for (MirrorDayModel *day in [MirrorStorage retriveMirrorDays]) {
+        if (day.dateStr.length > 0) {
+            _specialDaysByDateKey[day.dateStr] = day;
+        }
+    }
 }
 
 - (NSMutableArray<MirrorReadModel *> *)gridDataForDateKey:(NSString *)dateKey
 {
     return self.gridData[dateKey];
+}
+
+- (MirrorDayModel *)specialDayForDateKey:(NSString *)dateKey
+{
+    return self.specialDaysByDateKey[dateKey];
 }
 
 - (NSMutableArray<MirrorReadModel *> *)chartDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex shouldHideHidden:(BOOL)shouldHideHidden
@@ -644,11 +614,13 @@
 {
     GridCollectionViewCell *cell =[collectionView dequeueReusableCellWithReuseIdentifier:[GridCollectionViewCell identifier] forIndexPath:indexPath];
     if (_selectedCellIndexesStart == -1 || _selectedCellIndexesEnd == -1) { // single select
-        [cell configWithData:[self gridDataForDateKey:self.keys[indexPath.item]] isSelected:indexPath.item==_selectedCellIndex];
+        NSString *dateKey = self.keys[indexPath.item];
+        [cell configWithData:[self gridDataForDateKey:dateKey] day:[self specialDayForDateKey:dateKey] isSelected:indexPath.item==_selectedCellIndex];
     } else { // multi select
         NSInteger start = _selectedCellIndexesStart < _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
         NSInteger end = _selectedCellIndexesStart > _selectedCellIndexesEnd ? _selectedCellIndexesStart : _selectedCellIndexesEnd;
-        [cell configWithData:[self gridDataForDateKey:self.keys[indexPath.item]] isSelected:(indexPath.item<=end && indexPath.item>=start)];
+        NSString *dateKey = self.keys[indexPath.item];
+        [cell configWithData:[self gridDataForDateKey:dateKey] day:[self specialDayForDateKey:dateKey] isSelected:(indexPath.item<=end && indexPath.item>=start)];
     }
     
     return cell;
@@ -766,16 +738,6 @@
     return _collectionView;
 }
 
-- (UIButton *)specialDaysButton
-{
-    if (!_specialDaysButton) {
-        _specialDaysButton = [UIButton new];
-        [_specialDaysButton addTarget:self action:@selector(showSpecialDays) forControlEvents:UIControlEventTouchUpInside];
-        [self updateSpecialDaysButton];
-    }
-    return _specialDaysButton;
-}
-
 - (UIButton *)heatmapButton
 {
     if (!_heatmapButton) {
@@ -801,13 +763,13 @@
     if (!_gridOptionsView) {
         CGFloat itemSize = self.navigationController.navigationBar.frame.size.height;
         _gridOptionsView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, itemSize * 2, itemSize)];
-        [_gridOptionsView addSubview:self.heatmapButton];
-        [self.heatmapButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        [_gridOptionsView addSubview:self.weekStartsOnButton];
+        [self.weekStartsOnButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.left.top.bottom.mas_equalTo(_gridOptionsView);
             make.width.mas_equalTo(itemSize);
         }];
-        [_gridOptionsView addSubview:self.weekStartsOnButton];
-        [self.weekStartsOnButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        [_gridOptionsView addSubview:self.heatmapButton];
+        [self.heatmapButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.right.top.bottom.mas_equalTo(_gridOptionsView);
             make.width.mas_equalTo(itemSize);
         }];
@@ -833,6 +795,14 @@
     return _gridData;
 }
 
+- (NSMutableDictionary<NSString *, MirrorDayModel *> *)specialDaysByDateKey
+{
+    if (!_specialDaysByDateKey) {
+        [self updateGridData];
+    }
+    return _specialDaysByDateKey;
+}
+
 #pragma mark - Helpers
 
 // 获取 grid 展示范围的最小日期：取第一条记录开始时间和今天中更早的日期，再返回它所在周的第一天
@@ -848,7 +818,6 @@
             break;
         }
     }
-    
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
     NSDateComponents *components = [gregorian components:NSCalendarUnitWeekday fromDate:realFirstDate];
@@ -878,6 +847,7 @@
             break;
         }
     }
+    
     if (!lastValidRecord) {
         return [NSDate now];
     }
