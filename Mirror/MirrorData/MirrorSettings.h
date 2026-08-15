@@ -27,8 +27,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)switchWeekStartsOn;
 
 // Pie chart
-+ (BOOL)appliedPieChartData;
-+ (void)switchChartTypeData;
 + (BOOL)appliedPieChartRecord;
 + (void)switchChartTypeRecord;
 
@@ -40,10 +38,6 @@ NS_ASSUME_NONNULL_BEGIN
 // 座右铭
 + (NSString *)userMotto;
 + (void)saveUserMotto:(NSString *)motto;
-
-// Span type: Day, week, month, year
-+ (SpanType)spanType;
-+ (void)changeSpanType:(SpanType)spanType;
 
 @end
 

@@ -10,12 +10,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef NS_ENUM(NSInteger, SpanType) {
-    SpanTypeWeek,
-    SpanTypeMonth,
-    SpanTypeYear,
-};
-
 #define kScreenWidth [UIScreen mainScreen].bounds.size.width
 #define kScreenHeight [UIScreen mainScreen].bounds.size.height
 #define kTodayHeaderHeight [UIScreen mainScreen].bounds.size.height/5
@@ -71,7 +65,6 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 #define MirrorSwitchThemeNotification @"MirrorSwitchThemeNotification"
 #define MirrorSwitchLanguageNotification @"MirrorSwitchLanguageNotification"
 #define MirrorSwitchWeekStartsOnNotification @"MirrorSwitchWeekStartsOnNotification"
-#define MirrorSwitchChartTypeDataNotification @"MirrorSwitchChartTypeDataNotification"
 #define MirrorSwitchChartTypeRecordNotification @"MirrorSwitchChartTypeRecordNotification"
 #define MirrorSwitchShowIndexNotification @"MirrorSwitchShowIndexNotification"
 #define MirrorSwitchShowShadeNotification @"MirrorSwitchShowShadeNotification"

@@ -82,18 +82,6 @@ static NSInteger const kMirrorLanguageChinese = 1;
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchWeekStartsOnNotification object:nil];
 }
 
-+ (BOOL)appliedPieChartData
-{
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredPiechartData"];
-}
-
-+ (void)switchChartTypeData
-{
-    BOOL usesPiechart = [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredPiechartData"];
-    [[NSUserDefaults standardUserDefaults] setBool:!usesPiechart forKey:@"MirrorUserPreferredPiechartData"];
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchChartTypeDataNotification object:nil];
-}
-
 + (BOOL)appliedPieChartRecord
 {
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredPiechartRecord"];
@@ -148,28 +136,6 @@ static NSInteger const kMirrorLanguageChinese = 1;
 + (void)saveUserMotto:(NSString *)motto
 {
     [[NSUserDefaults standardUserDefaults] setObject:motto forKey:@"MirrorUserMotto"];
-}
-
-+ (SpanType)spanType
-{
-    NSNumber *spanType = [[NSUserDefaults standardUserDefaults] objectForKey:@"MirrorUserPreferredSpanType"];
-    if (spanType==nil) {
-        [[NSUserDefaults standardUserDefaults] setInteger:SpanTypeYear forKey:@"MirrorUserPreferredSpanType"];
-        return SpanTypeYear; // 如果用户没有点过，默认展示year
-    }
-    
-    NSInteger value = [spanType integerValue];
-    if (value == SpanTypeWeek || value == SpanTypeMonth || value == SpanTypeYear) {
-        return value;
-    }
-    
-    [[NSUserDefaults standardUserDefaults] setInteger:SpanTypeYear forKey:@"MirrorUserPreferredSpanType"];
-    return SpanTypeYear;
-}
-
-+ (void)changeSpanType:(SpanType)spanType
-{
-    [[NSUserDefaults standardUserDefaults] setInteger:spanType forKey:@"MirrorUserPreferredSpanType"];
 }
 
 @end

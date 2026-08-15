@@ -9,12 +9,10 @@
 
 #import "TimeViewController.h"
 #import "TodayViewController.h"
-#import "HistoryViewController.h"
 #import "GridViewController.h"
 
 #import "UIColor+MirrorColor.h"
 #import "MirrorLanguage.h"
-#import "MirrorSettings.h"
 #import "MirrorMacro.h"
 
 @interface MirrorTabsManager ()
@@ -41,12 +39,11 @@
         TimeViewController *timeTrackerVC = [[TimeViewController alloc]init];
         TodayViewController *todayVC = [[TodayViewController alloc]init];
         GridViewController *gridVC = [[GridViewController alloc] init];
-        HistoryViewController *historyVC = [[HistoryViewController alloc] init];
         //create a tabbar controller
         _controller  = [[UITabBarController alloc] init];
         
-        //add 4 view controllers to tabbar controller
-        [_controller setViewControllers:@[timeTrackerVC, todayVC, gridVC, historyVC]];
+        //add 3 view controllers to tabbar controller
+        [_controller setViewControllers:@[timeTrackerVC, todayVC, gridVC]];
         _controller.selectedIndex = 0;
         _controller.tabBar.barTintColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
         _controller.tabBar.backgroundImage = [UIImage new];
@@ -55,7 +52,6 @@
         [self updateTimeTabItemWithTabController:_controller];
         [self updateTodayTabItemWithTabController:_controller];
         [self updateGridTabItemWithTabController:_controller];
-        [self updateHistoryTabItemWithTabController:_controller];
     }
     return _controller;
 }
@@ -73,17 +69,6 @@
 - (void)updateGridTabItemWithTabController:(UITabBarController *)tabbarController
 {
     [self updateTabbarController:tabbarController index:2 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"record"] imageName:@"square.grid.2x2" selectedImageName:@"square.grid.2x2.fill"];
-}
-
-- (void)updateHistoryTabItemWithTabController:(UITabBarController *)tabbarController
-{
-    BOOL usesPiechart = [MirrorSettings appliedPieChartData];
-    [self updateTabbarController:tabbarController index:3 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"data"] imageName:usesPiechart? @"chart.pie":@"list.bullet" selectedImageName:usesPiechart?@"chart.pie.fill":@"list.bullet"];
-}
-
-- (void)updateSpecialDaysTabItemWithTabController:(UITabBarController *)tabbarController
-{
-    [self updateTabbarController:tabbarController index:3 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"special_days"] imageName:@"star.calendar" selectedImageName:@"star.calendar"];
 }
 
 - (void)updateTabbarController:(UITabBarController *)tabbarController index:(NSInteger)index tabbarItemWithTitle:(NSString *)title imageName:(NSString *)imageName selectedImageName:(NSString *)selectedImageName

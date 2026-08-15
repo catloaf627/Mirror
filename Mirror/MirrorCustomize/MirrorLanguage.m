@@ -30,7 +30,6 @@
     [mirrorDict setValue:ML(@"Yesterday", @"昨天", @"Ayer", @"Hier", @"昨日", @"어제") forKey:@"yesterday"];
     [mirrorDict setValue:ML(@"Tomorrow", @"明天", @"Mañana", @"Demain", @"明日", @"내일") forKey:@"tomorrow"];
     [mirrorDict setValue:ML(@"Calendar", @"日历", @"Calendario", @"Calendrier", @"カレンダー", @"캘린더") forKey:@"calendar"];
-    [mirrorDict setValue:ML(@"Data", @"数据", @"Datos", @"Données", @"データ", @"데이터") forKey:@"data"];
     [mirrorDict setValue:ML(@"Record", @"记录", @"Historial", @"Historique", @"記録", @"기록") forKey:@"record"];
     
     // Settings
@@ -38,7 +37,6 @@
     [mirrorDict setValue:ML(@"Use Chinese", @"使用中文", @"Usar chino", @"Utiliser le chinois", @"中国語を使う", @"중국어 사용") forKey:@"apply_chinese"];
     [mirrorDict setValue:ML(@"Weeks start on Monday", @"周一作为一周的第一天", @"Las semanas empiezan el lunes", @"Les semaines commencent le lundi", @"週の始まりを月曜日にする", @"월요일부터 주 시작") forKey:@"week_starts_on_Monday"];
     [mirrorDict setValue:ML(@"Show record indexes", @"展示记录的序号", @"Mostrar índices de registros", @"Afficher les index des enregistrements", @"記録番号を表示", @"기록 번호 표시") forKey:@"show_record_indexes"];
-    [mirrorDict setValue:ML(@"Piechart on Data", @"数据页使用饼状图", @"Gráfico circular en Datos", @"Camembert dans Données", @"データで円グラフを表示", @"데이터에 원형 차트 표시") forKey:@"show_piechart_on_data"];
     [mirrorDict setValue:ML(@"Piechart on Record", @"记录页使用饼状图", @"Gráfico circular en Registro", @"Camembert dans Historique", @"記録で円グラフを表示", @"기록에 원형 차트 표시") forKey:@"show_piechart_on_record"];
     [mirrorDict setValue:ML(@"Heatmap on Record", @"记录页使用热力图", @"Mapa de calor en Registro", @"Carte thermique dans Historique", @"記録でヒートマップを表示", @"기록에 히트맵 표시") forKey:@"heatmap"];
     [mirrorDict setValue:ML(@"Download from iCloud", @"从 iCloud 下载", @"Descargar desde iCloud", @"Télécharger depuis iCloud", @"iCloudからダウンロード", @"iCloud에서 다운로드") forKey:@"download_from_icloud"];
@@ -124,12 +122,6 @@
     [mirrorDict setValue:ML(@"Icon", @"图标", @"Icono", @"Icône", @"アイコン", @"아이콘") forKey:@"special_day_icon"];
     [mirrorDict setValue:ML(@"No special days", @"暂无特别日", @"Sin días especiales", @"Aucun jour spécial", @"特別な日はありません", @"특별한 날 없음") forKey:@"no_special_days"];
     [mirrorDict setValue:ML(@"Only one special day can be added per day", @"一天只能添加一个特别日", @"Solo se puede añadir un día especial por fecha", @"Un seul jour spécial peut être ajouté par date", @"1日に追加できる特別な日は1つだけです", @"하루에 특별한 날은 하나만 추가할 수 있습니다") forKey:@"special_day_cannot_be_duplicated"];
-    
-    // History type switch
-    [mirrorDict setValue:ML(@"Day", @"日", @"Día", @"Jour", @"日", @"일") forKey:@"segment_day"];
-    [mirrorDict setValue:ML(@"Week", @"周", @"Semana", @"Semaine", @"週", @"주") forKey:@"segment_week"];
-    [mirrorDict setValue:ML(@"Month", @"月", @"Mes", @"Mois", @"月", @"월") forKey:@"segment_month"];
-    [mirrorDict setValue:ML(@"Year", @"年", @"Año", @"Année", @"年", @"년") forKey:@"segment_year"];
     
     // Weekdays
     [mirrorDict setValue:ML(@"Sun", @"周日", @"Dom", @"Dim", @"日", @"일") forKey:@"sunday"];

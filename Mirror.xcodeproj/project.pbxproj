@@ -10,7 +10,6 @@
 		015564E428E1A78E008AB06C /* TimeTrackerTaskCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 015564E328E1A78E008AB06C /* TimeTrackerTaskCollectionViewCell.m */; };
 		4A099FAA29DCFE54002683A1 /* MirrorTaskModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A099FA929DCFE54002683A1 /* MirrorTaskModel.m */; };
 		4A099FAE29DD57AE002683A1 /* MirrorTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A099FAD29DD57AE002683A1 /* MirrorTool.m */; };
-		4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FB29EFE6BD00F13EAE /* HistoryViewController.m */; };
 		4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */; };
 		4A0D410229F13C5300F13EAE /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D410129F13C5300F13EAE /* LegendView.m */; };
 		4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C3A302A452000045430 /* TaskPickerViewController.m */; };
@@ -89,8 +88,6 @@
 		4A099FA929DCFE54002683A1 /* MirrorTaskModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTaskModel.m; sourceTree = "<group>"; };
 		4A099FAC29DD57AE002683A1 /* MirrorTool.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorTool.h; sourceTree = "<group>"; };
 		4A099FAD29DD57AE002683A1 /* MirrorTool.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTool.m; sourceTree = "<group>"; };
-		4A0D40FA29EFE6BD00F13EAE /* HistoryViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HistoryViewController.h; sourceTree = "<group>"; };
-		4A0D40FB29EFE6BD00F13EAE /* HistoryViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HistoryViewController.m; sourceTree = "<group>"; };
 		4A0D40FD29F1269600F13EAE /* TaskProgressListView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskProgressListView.h; sourceTree = "<group>"; };
 		4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskProgressListView.m; sourceTree = "<group>"; };
 		4A0D410029F13C5300F13EAE /* LegendView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegendView.h; sourceTree = "<group>"; };
@@ -265,8 +262,6 @@
 		4A0D40F929EFE28300F13EAE /* MirrorHistory */ = {
 			isa = PBXGroup;
 			children = (
-				4A0D40FA29EFE6BD00F13EAE /* HistoryViewController.h */,
-				4A0D40FB29EFE6BD00F13EAE /* HistoryViewController.m */,
 				4A410A2A29EA5D750007003B /* Legend */,
 				4A410A2B29EA5D800007003B /* Progress */,
 				4A410A2929EA5D650007003B /* PieChart */,
@@ -707,7 +702,6 @@
 				4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */,
 				4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */,
 				4A37369429E2AEE900187280 /* PiechartView.m in Sources */,
-				4A0D40FC29EFE6BD00F13EAE /* HistoryViewController.m in Sources */,
 				4ADDCA86302EE270003EE2A3 /* MirrorDebugAlert.m in Sources */,
 				4A9FDB27302D1600007707FC /* OneDayTimelineViewController.m in Sources */,
 				4A9FDB24302D1234007707FC /* TimelineBackgroundView.m in Sources */,
