@@ -744,8 +744,17 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     [self applyPreferredInterfaceStyleToViewController:iconAlert];
     [self applyPreferredInterfaceStyleToViewController:contentViewController];
     CGFloat pickerWidth = 248;
-    CGFloat pickerHeight = 300;
+    CGFloat pickerHeight = 332;
     contentViewController.preferredContentSize = CGSizeMake(pickerWidth, pickerHeight);
+    
+    UISegmentedControl *categoryPicker = [[UISegmentedControl alloc] initWithItems:@[@"★", @"Life", @"Sport", @"Work", @"More"]];
+    categoryPicker.selectedSegmentIndex = 0;
+    [contentViewController.view addSubview:categoryPicker];
+    [categoryPicker mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.top.mas_equalTo(contentViewController.view);
+        make.width.mas_equalTo(pickerWidth);
+        make.height.mas_equalTo(30);
+    }];
     
     UITextField *searchTextField = [UITextField new];
     searchTextField.placeholder = @"Search symbols";
@@ -760,7 +769,8 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     searchTextField.clearButtonMode = UITextFieldViewModeWhileEditing;
     [contentViewController.view addSubview:searchTextField];
     [searchTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.top.mas_equalTo(contentViewController.view);
+        make.centerX.mas_equalTo(contentViewController.view);
+        make.top.mas_equalTo(categoryPicker.mas_bottom).offset(8);
         make.width.mas_equalTo(pickerWidth);
         make.height.mas_equalTo(38);
     }];
@@ -781,7 +791,8 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         make.width.mas_equalTo(pickerWidth);
     }];
     
-    NSArray<NSString *> *iconOptions = [self specialDayIconOptions];
+    NSArray<NSString *> *iconOptions = [self allSpecialDayIconOptions];
+    __block NSInteger selectedCategoryIndex = 0;
     __block MASConstraint *gridBottomConstraint = nil;
     __block void (^reloadIcons)(NSString *) = nil;
     reloadIcons = ^(NSString *query) {
@@ -791,7 +802,8 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         
         NSString *normalizedQuery = query.lowercaseString ?: @"";
         NSMutableArray<NSString *> *filteredOptions = [NSMutableArray new];
-        for (NSString *iconName in iconOptions) {
+        NSArray<NSString *> *sourceOptions = normalizedQuery.length > 0 ? iconOptions : [self specialDayIconOptionsForCategoryIndex:selectedCategoryIndex allIcons:iconOptions];
+        for (NSString *iconName in sourceOptions) {
             if ((normalizedQuery.length == 0 || [iconName.lowercaseString containsString:normalizedQuery]) && [UIImage systemImageNamed:iconName]) {
                 [filteredOptions addObject:iconName];
             }
@@ -854,6 +866,10 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     
     reloadIcons(nil);
     if (@available(iOS 14.0, *)) {
+        [categoryPicker addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
+            selectedCategoryIndex = categoryPicker.selectedSegmentIndex;
+            reloadIcons(searchTextField.text);
+        }] forControlEvents:UIControlEventValueChanged];
         [searchTextField addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
             reloadIcons(searchTextField.text);
         }] forControlEvents:UIControlEventEditingChanged];
@@ -945,6 +961,64 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         @"pawprint.circle.fill", @"lizard.fill", @"tortoise.fill", @"hare.fill", @"ant.fill", @"fossil.shell.fill", @"camera.filters", @"rainbow", @"cloud.sun.fill", @"cloud.moon.fill",
         @"cloud.rain.fill", @"cloud.snow.fill", @"cloud.bolt.fill", @"wind", @"tornado", @"thermometer.sun.fill", @"aqi.medium", @"water.waves", @"fireplace.fill", @"light.recessed.fill"
     ];
+}
+
+- (NSArray<NSString *> *)allSpecialDayIconOptions
+{
+    NSMutableOrderedSet<NSString *> *iconNames = [NSMutableOrderedSet orderedSet];
+    NSString *symbolsPath = [NSBundle.mainBundle pathForResource:@"SFSymbolNames" ofType:@"plist"];
+    NSArray<NSString *> *bundledSymbols = [NSArray arrayWithContentsOfFile:symbolsPath];
+    if ([bundledSymbols isKindOfClass:NSArray.class]) {
+        for (NSString *symbolName in bundledSymbols) {
+            if ([symbolName isKindOfClass:NSString.class] && symbolName.length > 0) {
+                [iconNames addObject:symbolName];
+            }
+        }
+    }
+    
+    for (NSString *symbolName in [self specialDayIconOptions]) {
+        [iconNames addObject:symbolName];
+    }
+    return iconNames.array;
+}
+
+- (NSArray<NSString *> *)specialDayIconOptionsForCategoryIndex:(NSInteger)categoryIndex allIcons:(NSArray<NSString *> *)allIcons
+{
+    NSArray<NSString *> *keywords = [self iconCategoryKeywordsForIndex:categoryIndex];
+    if (keywords.count == 0) {
+        return [self specialDayIconOptions];
+    }
+    
+    NSMutableArray<NSString *> *icons = [NSMutableArray new];
+    for (NSString *iconName in allIcons) {
+        NSString *lowercaseName = iconName.lowercaseString;
+        for (NSString *keyword in keywords) {
+            if ([lowercaseName containsString:keyword]) {
+                [icons addObject:iconName];
+                break;
+            }
+        }
+        if (icons.count >= 240) {
+            break;
+        }
+    }
+    return icons;
+}
+
+- (NSArray<NSString *> *)iconCategoryKeywordsForIndex:(NSInteger)categoryIndex
+{
+    switch (categoryIndex) {
+        case 1:
+            return @[@"heart", @"star", @"gift", @"cake", @"balloon", @"party", @"house", @"home", @"cat", @"dog", @"paw", @"cup", @"fork", @"wine", @"cart", @"bag", @"bed", @"sofa", @"tree", @"leaf", @"sun", @"moon", @"camera", @"music"];
+        case 2:
+            return @[@"figure", @"sport", @"ball", @"tennis", @"soccer", @"basketball", @"football", @"baseball", @"dumbbell", @"swim", @"run", @"walk", @"hike", @"bike", @"bicycle", @"trophy", @"medal", @"target"];
+        case 3:
+            return @[@"briefcase", @"folder", @"doc", @"book", @"graduation", @"calendar", @"clock", @"chart", @"desktop", @"laptop", @"keyboard", @"terminal", @"curly", @"chevron", @"number", @"server", @"printer", @"scanner"];
+        case 4:
+            return @[@"car", @"bus", @"tram", @"airplane", @"ferry", @"map", @"location", @"mappin", @"globe", @"medical", @"heart", @"cross", @"pill", @"bandage", @"stethoscope", @"brain", @"lungs", @"syringe", @"lock", @"key", @"wifi", @"network"];
+        default:
+            return @[];
+    }
 }
 
 - (void)dismissAddDialog

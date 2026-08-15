@@ -41,6 +41,7 @@
 		4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ACB422D29EEA411005EECC4 /* LeftAnimation.m */; };
 		4AD065A0302FCA1F005A894C /* MirrorDayModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AD0659F302FCA1F005A894C /* MirrorDayModel.m */; };
 		4AD065A3302FCEB7005A894C /* SpecialDaysViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AD065A2302FCEB7005A894C /* SpecialDaysViewController.m */; };
+		4AD065A630301334005A894C /* SFSymbolNames.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4AD065A530301334005A894C /* SFSymbolNames.plist */; };
 		4ADCD21A302410C600578A81 /* MirrorFakeDataSeeder.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADCD219302410C600578A81 /* MirrorFakeDataSeeder.m */; };
 		4ADCD2403026B95E00578A81 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4ADCD2213026B92E00578A81 /* WidgetKit.framework */; };
 		4ADCD2413026B95E00578A81 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4ADCD2233026B92E00578A81 /* SwiftUI.framework */; };
@@ -152,6 +153,7 @@
 		4AD0659F302FCA1F005A894C /* MirrorDayModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorDayModel.m; sourceTree = "<group>"; };
 		4AD065A1302FCE78005A894C /* SpecialDaysViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SpecialDaysViewController.h; sourceTree = "<group>"; };
 		4AD065A2302FCEB7005A894C /* SpecialDaysViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SpecialDaysViewController.m; sourceTree = "<group>"; };
+		4AD065A530301334005A894C /* SFSymbolNames.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = SFSymbolNames.plist; sourceTree = "<group>"; };
 		4ADCD2183024109400578A81 /* MirrorFakeDataSeeder.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorFakeDataSeeder.h; sourceTree = "<group>"; };
 		4ADCD219302410C600578A81 /* MirrorFakeDataSeeder.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorFakeDataSeeder.m; sourceTree = "<group>"; };
 		4ADCD21B3026B05600578A81 /* Mirror.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Mirror.entitlements; sourceTree = "<group>"; };
@@ -429,6 +431,7 @@
 			children = (
 				4AD065A1302FCE78005A894C /* SpecialDaysViewController.h */,
 				4AD065A2302FCEB7005A894C /* SpecialDaysViewController.m */,
+				4AD065A530301334005A894C /* SFSymbolNames.plist */,
 			);
 			path = SpecialDays;
 			sourceTree = "<group>";
@@ -615,6 +618,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4AD065A630301334005A894C /* SFSymbolNames.plist in Resources */,
 				4AFB77AD28DF4A3B0064CBCA /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
