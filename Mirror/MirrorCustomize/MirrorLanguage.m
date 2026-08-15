@@ -70,6 +70,7 @@
     [mirrorDict setValue:ML(@"Delete", @"删除", @"Eliminar", @"Supprimer", @"削除", @"삭제") forKey:@"delete"];
     [mirrorDict setValue:ML(@"Merge", @"合并", @"Fusionar", @"Fusionner", @"結合", @"병합") forKey:@"merge"];
     [mirrorDict setValue:ML(@"Cancel", @"取消", @"Cancelar", @"Annuler", @"キャンセル", @"취소") forKey:@"cancel"];
+    [mirrorDict setValue:ML(@"Add", @"添加", @"Añadir", @"Ajouter", @"追加", @"추가") forKey:@"add"];
     
     // Profile add cell
     [mirrorDict setValue:ML(@"Enter task title", @"输入任务名称", @"Ingresa el título de la tarea", @"Saisir le titre de la tâche", @"タスク名を入力", @"작업 제목 입력") forKey:@"enter_task_title"];
@@ -115,6 +116,14 @@
     [mirrorDict setValue:ML(@"Merge tasks?", @"合并任务？", @"¿Fusionar tareas?", @"Fusionner les tâches ?", @"タスクを結合しますか？", @"작업을 병합할까요?") forKey:@"merge_tasks_?"];
     [mirrorDict setValue:ML(@"This will merge the selected task into another task. This cannot be undone.", @"这会将所选任务合并到另一个任务，且无法撤销。", @"Esto fusionará la tarea seleccionada con otra tarea. No se puede deshacer.", @"Cela fusionnera la tâche sélectionnée avec une autre tâche. Cette action est irréversible.", @"選択したタスクを別のタスクに結合します。元に戻せません。", @"선택한 작업을 다른 작업에 병합하며 되돌릴 수 없습니다.") forKey:@"merge_task_warning"];
     [mirrorDict setValue:ML(@"Created at ", @"创建于 ", @"Creada el ", @"Créée le ", @"作成日 ", @"생성일 ") forKey:@"created_at"];
+    
+    // Special days
+    [mirrorDict setValue:ML(@"Days", @"特别日", @"Días", @"Jours", @"日", @"날") forKey:@"special_days"];
+    [mirrorDict setValue:ML(@"Add Special Day", @"添加特别日", @"Añadir día especial", @"Ajouter un jour spécial", @"特別な日を追加", @"특별한 날 추가") forKey:@"add_special_day"];
+    [mirrorDict setValue:ML(@"Info", @"信息", @"Información", @"Info", @"情報", @"정보") forKey:@"special_day_info"];
+    [mirrorDict setValue:ML(@"Icon", @"图标", @"Icono", @"Icône", @"アイコン", @"아이콘") forKey:@"special_day_icon"];
+    [mirrorDict setValue:ML(@"No special days", @"暂无特别日", @"Sin días especiales", @"Aucun jour spécial", @"特別な日はありません", @"특별한 날 없음") forKey:@"no_special_days"];
+    [mirrorDict setValue:ML(@"Only one special day can be added per day", @"一天只能添加一个特别日", @"Solo se puede añadir un día especial por fecha", @"Un seul jour spécial peut être ajouté par date", @"1日に追加できる特別な日は1つだけです", @"하루에 특별한 날은 하나만 추가할 수 있습니다") forKey:@"special_day_cannot_be_duplicated"];
     
     // History type switch
     [mirrorDict setValue:ML(@"Day", @"日", @"Día", @"Jour", @"日", @"일") forKey:@"segment_day"];

@@ -616,7 +616,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 // 保存完整任务数组，同时保留当前 records 和时区设置；例如只改任务顺序时用这个方法落盘。
 + (void)saveMirrorTasks:(NSMutableArray<MirrorTaskModel *> *)tasks
 {
-    [MirrorStorage replaceAllDataWithTasks:tasks records:[MirrorStorage retriveMirrorRecords] secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:[MirrorStorage retriveMirrorRecords] days:[MirrorStorage retriveMirrorDays] secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
 }
 
 // 从本地 JSON 读取任务数组；例如启动后恢复“阅读/工作/运动”的任务配置，失败时返回空数组。
@@ -624,8 +624,9 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 {
     NSMutableArray<MirrorTaskModel *> *tasks = nil;
     NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSMutableArray<MirrorDayModel *> *days = nil;
     NSNumber *secondsFromGMT = nil;
-    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records secondsFromGMT:&secondsFromGMT]) {
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records days:&days secondsFromGMT:&secondsFromGMT]) {
         return tasks;
     } else {
         return [NSMutableArray new];
@@ -635,7 +636,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 // 保存完整原始记录数组，同时保留当前 tasks 和时区设置；例如删除一条 period 后用它写回 raw records。
 + (void)saveMirrorRecords:(NSMutableArray<MirrorRecordModel *> *)records
 {
-    [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:records secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
+    [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:records days:[MirrorStorage retriveMirrorDays] secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
 }
 
 // 从本地 JSON 读取原始用户记录，并补上 originalIndex；例如跨天 1/1-1/3 的记录在这里仍只是一条。
@@ -643,8 +644,9 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 {
     NSMutableArray<MirrorTaskModel *> *tasks = nil;
     NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSMutableArray<MirrorDayModel *> *days = nil;
     NSNumber *secondsFromGMT = nil;
-    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records secondsFromGMT:&secondsFromGMT]) {
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records days:&days secondsFromGMT:&secondsFromGMT]) {
         for (int i=0; i<records.count; i++) {
             records[i].originalIndex = i;
         }
@@ -654,13 +656,62 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     }
 }
 
++ (NSMutableArray<MirrorDayModel *> *)retriveMirrorDays
+{
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSMutableArray<MirrorDayModel *> *days = nil;
+    NSNumber *secondsFromGMT = nil;
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records days:&days secondsFromGMT:&secondsFromGMT]) {
+        return days;
+    } else {
+        return [NSMutableArray new];
+    }
+}
+
++ (void)saveMirrorDays:(NSMutableArray<MirrorDayModel *> *)days
+{
+    [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:[MirrorStorage retriveMirrorRecords] days:days secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
+}
+
++ (void)createMirrorDay:(MirrorDayModel *)day
+{
+    NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
+    [days addObject:day];
+    [days sortUsingComparator:^NSComparisonResult(MirrorDayModel *day1, MirrorDayModel *day2) {
+        return [day1.dateStr compare:day2.dateStr];
+    }];
+    [MirrorStorage saveMirrorDays:days];
+    NSLog(@"Create day");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorDayCreateNotification object:nil userInfo:nil];
+}
+
++ (void)deleteMirrorDayAtIndex:(NSInteger)index
+{
+    NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
+    [days sortUsingComparator:^NSComparisonResult(MirrorDayModel *day1, MirrorDayModel *day2) {
+        return [day1.dateStr compare:day2.dateStr];
+    }];
+    if (index < 0 || index >= days.count) {
+        return;
+    }
+    
+    [days removeObjectAtIndex:index];
+    [days sortUsingComparator:^NSComparisonResult(MirrorDayModel *day1, MirrorDayModel *day2) {
+        return [day1.dateStr compare:day2.dateStr];
+    }];
+    [MirrorStorage saveMirrorDays:days];
+    NSLog(@"Delete day");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorDayDeleteNotification object:nil userInfo:nil];
+}
+
 // 保存新的时区偏移元数据，不修改任何用户原始时间戳；例如从北京改到纽约，只更新 JSON 里的 seconds，调用方负责通知 UI 刷新。
 + (void)saveSecondsFromGMT:(NSNumber *)secondFromGMT
 {
     if ([[MirrorStorage retriveSecondsFromGMT] isEqualToNumber:secondFromGMT]) {
         return;
     }
-    [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:[MirrorStorage retriveMirrorRecords] secondsFromGMT:secondFromGMT];
+    [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:[MirrorStorage retriveMirrorRecords] days:[MirrorStorage retriveMirrorDays] secondsFromGMT:secondFromGMT];
 }
 
 // 读取保存数据时使用的时区偏移；例如 JSON 里 SECONDS=-28800 就返回 -28800，旧数据缺失时用系统当前时区。
@@ -668,8 +719,9 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 {
     NSMutableArray<MirrorTaskModel *> *tasks = nil;
     NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSMutableArray<MirrorDayModel *> *days = nil;
     NSNumber *secondFromGMT = nil;
-    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records secondsFromGMT:&secondFromGMT]) {
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records days:&days secondsFromGMT:&secondFromGMT]) {
         return secondFromGMT;
     } else {
         return @([NSTimeZone systemTimeZone].secondsFromGMT);
@@ -679,14 +731,14 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 // 导出当前完整数据为 JSON；例如设置页导出文件时，会包含 tasks、raw records 和 secondsFromGMT。
 + (NSData *)exportJSONData
 {
-    return [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:[MirrorStorage retriveMirrorTasks] records:[MirrorStorage retriveMirrorRecords] secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]] options:NSJSONWritingPrettyPrinted error:nil];
+    return [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:[MirrorStorage retriveMirrorTasks] records:[MirrorStorage retriveMirrorRecords] days:[MirrorStorage retriveMirrorDays] secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]] options:NSJSONWritingPrettyPrinted error:nil];
 }
 
 // 只校验外部 JSON 是否能导入，不写入；例如用户选中文件后先检查字段类型是否完整。
 + (BOOL)canImportJSONData:(NSData *)data
 {
     NSDictionary *jsonDictionary = [MirrorStorage jsonDictionaryFromData:data];
-    return [MirrorStorage parseJSONDictionary:jsonDictionary tasks:nil records:nil secondsFromGMT:nil];
+    return [MirrorStorage parseJSONDictionary:jsonDictionary tasks:nil records:nil days:nil secondsFromGMT:nil];
 }
 
 // 从外部 JSON 覆盖导入全部数据；例如导入备份文件成功后，本地 tasks/records/时区都会替换。
@@ -694,12 +746,13 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 {
     NSMutableArray<MirrorTaskModel *> *tasks = nil;
     NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSMutableArray<MirrorDayModel *> *days = nil;
     NSNumber *secondsFromGMT = nil;
     NSDictionary *jsonDictionary = [MirrorStorage jsonDictionaryFromData:data];
-    if (![MirrorStorage parseJSONDictionary:jsonDictionary tasks:&tasks records:&records secondsFromGMT:&secondsFromGMT]) {
+    if (![MirrorStorage parseJSONDictionary:jsonDictionary tasks:&tasks records:&records days:&days secondsFromGMT:&secondsFromGMT]) {
         return NO;
     }
-    [MirrorStorage replaceAllDataWithTasks:tasks records:records secondsFromGMT:secondsFromGMT];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days secondsFromGMT:secondsFromGMT];
     return YES;
 }
 
@@ -707,7 +760,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 + (NSNumber *)iCloudTaskCount
 {
     NSMutableArray<MirrorTaskModel *> *tasks = nil;
-    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:&tasks records:nil secondsFromGMT:nil]) {
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:&tasks records:nil days:nil secondsFromGMT:nil]) {
         return @(tasks.count);
     }
     return nil;
@@ -717,7 +770,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 + (NSNumber *)iCloudRecordCount
 {
     NSMutableArray<MirrorRecordModel *> *records = nil;
-    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:nil records:&records secondsFromGMT:nil]) {
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:nil records:&records days:nil secondsFromGMT:nil]) {
         return @(records.count);
     }
     return nil;
@@ -728,19 +781,25 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 {
     NSMutableArray<MirrorTaskModel *> *tasks = nil;
     NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSMutableArray<MirrorDayModel *> *days = nil;
     NSNumber *secondsFromGMT = nil;
-    if (![MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:&tasks records:&records secondsFromGMT:&secondsFromGMT]) {
+    if (![MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:&tasks records:&records days:&days secondsFromGMT:&secondsFromGMT]) {
         return NO;
     }
     
-    [MirrorStorage replaceAllDataWithTasks:tasks records:records secondsFromGMT:secondsFromGMT];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days secondsFromGMT:secondsFromGMT];
     return YES;
 }
 
 // 用传入的 tasks、raw records、时区重写整份数据；例如删除任务后把新数组写入本地缓存并异步同步 iCloud。
 + (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records secondsFromGMT:(NSNumber *)secondsFromGMT
 {
-    NSData *data = [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:tasks records:records secondsFromGMT:secondsFromGMT] options:NSJSONWritingPrettyPrinted error:nil];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:[MirrorStorage retriveMirrorDays] secondsFromGMT:secondsFromGMT];
+}
+
++ (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days secondsFromGMT:(NSNumber *)secondsFromGMT
+{
+    NSData *data = [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:tasks records:records days:days secondsFromGMT:secondsFromGMT] options:NSJSONWritingPrettyPrinted error:nil];
     if (!data) return;
     
     [data writeToFile:[MirrorStorage jsonFilePath] atomically:YES];
@@ -828,8 +887,8 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     return jsonObject;
 }
 
-// 把模型数组编码成持久化字典；例如 task 写 task_name/color，record 写 start_time/end_time，最终组成 version/tasks/records/seconds。
-+ (NSDictionary *)jsonDictionaryWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records secondsFromGMT:(NSNumber *)secondsFromGMT
+// 把模型数组编码成持久化字典；例如 task 写 task_name/color，record 写 start_time/end_time，最终组成 version/tasks/records/days/seconds。
++ (NSDictionary *)jsonDictionaryWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days secondsFromGMT:(NSNumber *)secondsFromGMT
 {
     NSMutableArray *jsonTasks = [NSMutableArray new];
     for (MirrorTaskModel *task in tasks) {
@@ -851,23 +910,38 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
         }];
     }
 
+    NSMutableArray *jsonDays = [NSMutableArray new];
+    for (MirrorDayModel *day in days) {
+        [jsonDays addObject:@{
+            @"date_str": day.dateStr ?: @"",
+            @"info": day.info ?: @"",
+            @"icon": day.icon ?: @"",
+            @"color": day.color ?: @"systemBlue"
+        }];
+    }
+
     return @{
         @"version": @1,
         TASKS: jsonTasks,
         RECORDS: jsonRecords,
+        DAYS: jsonDays,
         SECONDS: secondsFromGMT ?: @([NSTimeZone systemTimeZone].secondsFromGMT)
     };
 }
 
 // 严格解析持久化字典为模型；例如缺少 task_name 或 start_time 类型不是 NSNumber 时返回 NO，避免导入坏数据。
-+ (BOOL)parseJSONDictionary:(NSDictionary *)jsonDictionary tasks:(NSMutableArray<MirrorTaskModel *> **)tasks records:(NSMutableArray<MirrorRecordModel *> **)records secondsFromGMT:(NSNumber **)secondsFromGMT
++ (BOOL)parseJSONDictionary:(NSDictionary *)jsonDictionary tasks:(NSMutableArray<MirrorTaskModel *> **)tasks records:(NSMutableArray<MirrorRecordModel *> **)records days:(NSMutableArray<MirrorDayModel *> **)days secondsFromGMT:(NSNumber **)secondsFromGMT
 {
     if (![jsonDictionary isKindOfClass:NSDictionary.class]) return NO;
 
     NSArray *jsonTasks = jsonDictionary[TASKS];
     NSArray *jsonRecords = jsonDictionary[RECORDS];
+    NSArray *jsonDays = jsonDictionary[DAYS];
     NSNumber *jsonSecondsFromGMT = jsonDictionary[SECONDS];
     if (![jsonTasks isKindOfClass:NSArray.class] || ![jsonRecords isKindOfClass:NSArray.class] || ![jsonSecondsFromGMT isKindOfClass:NSNumber.class]) {
+        return NO;
+    }
+    if (jsonDays != nil && ![jsonDays isKindOfClass:NSArray.class]) {
         return NO;
     }
 
@@ -903,8 +977,26 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
         [parsedRecords addObject:record];
     }
 
+    NSMutableArray<MirrorDayModel *> *parsedDays = [NSMutableArray new];
+    for (NSDictionary *jsonDay in jsonDays ?: @[]) {
+        if (![jsonDay isKindOfClass:NSDictionary.class]) return NO;
+        NSString *dateStr = jsonDay[@"date_str"];
+        NSString *info = jsonDay[@"info"];
+        NSString *icon = jsonDay[@"icon"];
+        NSString *color = jsonDay[@"color"];
+        if (![dateStr isKindOfClass:NSString.class] || ![info isKindOfClass:NSString.class] || ![icon isKindOfClass:NSString.class]) {
+            return NO;
+        }
+        if (color != nil && ![color isKindOfClass:NSString.class]) {
+            return NO;
+        }
+        MirrorDayModel *day = [[MirrorDayModel alloc] initWithDateStr:dateStr info:info icon:icon color:color ?: @"systemBlue"];
+        [parsedDays addObject:day];
+    }
+
     if (tasks) *tasks = parsedTasks;
     if (records) *records = parsedRecords;
+    if (days) *days = parsedDays;
     if (secondsFromGMT) *secondsFromGMT = jsonSecondsFromGMT;
     return YES;
 }

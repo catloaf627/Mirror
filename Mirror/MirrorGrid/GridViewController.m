@@ -13,12 +13,14 @@
 #import "MirrorMacro.h"
 #import "MirrorLanguage.h"
 #import "MirrorTaskModel.h"
+#import "MirrorDayModel.h"
 #import "MirrorStorage.h"
 #import "MirrorSettings.h"
 #import "LegendView.h"
 #import "TaskProgressListView.h"
 #import "PiechartView.h"
 #import "TaskRecordsViewController.h"
+#import "SpecialDaysViewController.h"
 #import "MirrorTimeText.h"
 #import "MirrorTool.h"
 #import "MirrorTabsManager.h"
@@ -32,6 +34,7 @@
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
+@property (nonatomic, strong) UIButton *specialDaysButton;
 @property (nonatomic, strong) UIButton *heatmapButton;
 @property (nonatomic, strong) UIButton *weekStartsOnButton;
 @property (nonatomic, strong) UIView *gridOptionsView;
@@ -82,6 +85,8 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorDayCreateNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorDayDeleteNotification object:nil];
     }
     return self;
 }
@@ -100,7 +105,8 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.gridOptionsView];
+    [self updateSpecialDaysButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.specialDaysButton rightButton:self.gridOptionsView];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -127,6 +133,7 @@
     self.legendView = nil;
     self.taskProgressListView = nil;
     self.piechartView = nil;
+    self.specialDaysButton = nil;
     self.heatmapButton = nil;
     self.weekStartsOnButton = nil;
     self.gridOptionsView = nil;
@@ -134,7 +141,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.gridOptionsView];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.specialDaysButton rightButton:self.gridOptionsView];
     }
     [self p_setupUI];
 }
@@ -142,6 +149,7 @@
 - (void)reloadData
 {
     if (!_isLoaded) return;
+    [self updateSpecialDaysButton];
     [self updateHeatmapButton];
     [self updateWeekStartsOnButton];
     if ([MirrorSettings appliedPieChartRecord]) {
@@ -234,6 +242,13 @@
 
 #pragma mark - Actions
 
+- (void)showSpecialDays
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    SpecialDaysViewController *specialDaysVC = [[SpecialDaysViewController alloc] init];
+    [self.navigationController pushViewController:specialDaysVC animated:YES];
+}
+
 - (void)switchHeatmap
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
@@ -251,6 +266,36 @@
     UIImage *iconImage = [[UIImage systemImageNamed:@"app.translucent"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.heatmapButton setImage:iconImage forState:UIControlStateNormal];
     self.heatmapButton.tintColor = [UIColor mirrorColorNamed:[MirrorSettings appliedHeatmap] ? MirrorColorTypeTabbarIconTextHightlight : MirrorColorTypeTabbarIconText];
+}
+
+- (void)updateSpecialDaysButton
+{
+    NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
+    MirrorDayModel *latestDay = days.lastObject;
+    NSString *iconName = [self specialDaysButtonIconNameFromStoredIconName:latestDay.icon];
+    UIImage *iconImage = [[UIImage systemImageNamed:iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.specialDaysButton setImage:iconImage forState:UIControlStateNormal];
+    self.specialDaysButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+}
+
+- (NSString *)specialDaysButtonIconNameFromStoredIconName:(NSString *)storedIconName
+{
+    if (storedIconName.length == 0) {
+        return @"star";
+    }
+    
+    NSString *outlineIconName = storedIconName;
+    if ([storedIconName hasSuffix:@".fill"]) {
+        outlineIconName = [storedIconName substringToIndex:storedIconName.length - @".fill".length];
+    }
+    
+    if ([UIImage systemImageNamed:outlineIconName]) {
+        return outlineIconName;
+    }
+    if ([UIImage systemImageNamed:storedIconName]) {
+        return storedIconName;
+    }
+    return @"star";
 }
 
 - (void)updateWeekStartsOnButton
@@ -719,6 +764,16 @@
         [_collectionView registerClass:[GridCollectionViewCell class] forCellWithReuseIdentifier:[GridCollectionViewCell identifier]];
     }
     return _collectionView;
+}
+
+- (UIButton *)specialDaysButton
+{
+    if (!_specialDaysButton) {
+        _specialDaysButton = [UIButton new];
+        [_specialDaysButton addTarget:self action:@selector(showSpecialDays) forControlEvents:UIControlEventTouchUpInside];
+        [self updateSpecialDaysButton];
+    }
+    return _specialDaysButton;
 }
 
 - (UIButton *)heatmapButton

@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "MirrorReadModel.h"
+#import "MirrorDayModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -80,6 +81,14 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (NSMutableArray<MirrorRecordModel *> *)retriveMirrorRecords;
 
++ (NSMutableArray<MirrorDayModel *> *)retriveMirrorDays;
+
++ (void)saveMirrorDays:(NSMutableArray<MirrorDayModel *> *)days;
+
++ (void)createMirrorDay:(MirrorDayModel *)day;
+
++ (void)deleteMirrorDayAtIndex:(NSInteger)index;
+
 + (NSNumber *)retriveSecondsFromGMT;
 
 + (void)saveSecondsFromGMT:(NSNumber *)secondFromGMT;
@@ -97,6 +106,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 + (BOOL)importDataFromICloud;
 
 + (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records secondsFromGMT:(NSNumber *)secondsFromGMT;
+
++ (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days secondsFromGMT:(NSNumber *)secondsFromGMT;
 
 /*
  取出一个taskmodel

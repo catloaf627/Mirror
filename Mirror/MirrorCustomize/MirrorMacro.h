@@ -86,10 +86,13 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 #define MirrorTaskStopNotification @"MirrorTaskStopNotification"
 #define MirrorPeriodDeleteNotification @"MirrorPeriodDeleteNotification"
 #define MirrorPeriodEditNotification @"MirrorPeriodEditNotification"
+#define MirrorDayCreateNotification @"MirrorDayCreateNotification"
+#define MirrorDayDeleteNotification @"MirrorDayDeleteNotification"
 
 // 数据
 #define TASKS @"tasks"
 #define RECORDS @"records"
+#define DAYS @"days"
 #define SECONDS @"seconds"
 
 // Debug

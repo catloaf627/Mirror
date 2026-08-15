@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)updateTodayTabItemWithTabController:(UITabBarController *)tabbarController;
 - (void)updateGridTabItemWithTabController:(UITabBarController *)tabbarController;
 - (void)updateHistoryTabItemWithTabController:(UITabBarController *)tabbarController;
+- (void)updateSpecialDaysTabItemWithTabController:(UITabBarController *)tabbarController;
 
 @end
 

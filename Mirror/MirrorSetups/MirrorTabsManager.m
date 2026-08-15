@@ -81,6 +81,11 @@
     [self updateTabbarController:tabbarController index:3 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"data"] imageName:usesPiechart? @"chart.pie":@"list.bullet" selectedImageName:usesPiechart?@"chart.pie.fill":@"list.bullet"];
 }
 
+- (void)updateSpecialDaysTabItemWithTabController:(UITabBarController *)tabbarController
+{
+    [self updateTabbarController:tabbarController index:3 tabbarItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"special_days"] imageName:@"star.calendar" selectedImageName:@"star.calendar"];
+}
+
 - (void)updateTabbarController:(UITabBarController *)tabbarController index:(NSInteger)index tabbarItemWithTitle:(NSString *)title imageName:(NSString *)imageName selectedImageName:(NSString *)selectedImageName
 {
     if (index < 0 || index >= tabbarController.viewControllers.count) {
