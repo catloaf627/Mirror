@@ -14,9 +14,12 @@
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
 #import "PeriodEditAlertController.h"
+#import <math.h>
 
 static CGFloat const kHorizontalPadding = 20;
-static CGFloat const kDotSize = 10;
+static CGFloat const kDotMinSize = 8;
+static CGFloat const kDotMaxSize = 16;
+static NSTimeInterval const kDotMaxDuration = 8 * 60 * 60;
 static CGFloat const kRowMinHeight = 72;
 static NSInteger const kTimelineBatchSize = 50;
 static CGFloat const kTimelineLoadThreshold = 48;
@@ -399,12 +402,22 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     }
 }
 
+// Scale the timeline dot by duration, using a capped logarithmic curve to keep long records understated.
+- (CGFloat)dotSizeForRecord:(MirrorRecordModel *)record
+{
+    NSTimeInterval duration = MAX((NSTimeInterval)(record.endTime - record.startTime), 0);
+    NSTimeInterval cappedDuration = MIN(duration, kDotMaxDuration);
+    CGFloat durationRatio = log1p(cappedDuration / 3600.0) / log1p(kDotMaxDuration / 3600.0);
+    return kDotMinSize + (kDotMaxSize - kDotMinSize) * durationRatio;
+}
+
 - (UIView *)timelineRowWithRecord:(MirrorRecordModel *)record isFirst:(BOOL)isFirst isLast:(BOOL)isLast isHighlighted:(BOOL)isHighlighted
 {
     UIView *row = [UIView new];
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
     UIColor *pulseColor = [UIColor mirrorColorPulsed:task.color];
     UIColor *taskColor = [UIColor mirrorColorNamed:task.color];
+    CGFloat dotSize = [self dotSizeForRecord:record];
     row.backgroundColor = isHighlighted ? [pulseColor colorWithAlphaComponent:0.12] : [UIColor clearColor];
     row.tag = record.originalIndex;
     if (@available(iOS 16.0, *)) {
@@ -422,7 +435,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         make.centerX.mas_equalTo(row.mas_left).offset(kHorizontalPadding + kTimelineX);
         make.top.mas_equalTo(row);
         make.width.mas_equalTo(2);
-        make.bottom.mas_equalTo(row.mas_centerY).offset(-kDotSize / 2);
+        make.bottom.mas_equalTo(row.mas_centerY).offset(-dotSize / 2);
     }];
     
     UIView *bottomLine = [UIView new];
@@ -431,7 +444,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     [row addSubview:bottomLine];
     [bottomLine mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.mas_equalTo(topLine);
-        make.top.mas_equalTo(row.mas_centerY).offset(kDotSize / 2);
+        make.top.mas_equalTo(row.mas_centerY).offset(dotSize / 2);
         make.width.mas_equalTo(2);
         make.bottom.mas_equalTo(row);
     }];
@@ -440,12 +453,12 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     dot.backgroundColor = taskColor;
     dot.layer.borderColor = pulseColor.CGColor;
     dot.layer.borderWidth = 2;
-    dot.layer.cornerRadius = kDotSize / 2;
+    dot.layer.cornerRadius = dotSize / 2;
     [row addSubview:dot];
     [dot mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.mas_equalTo(topLine);
         make.centerY.mas_equalTo(row);
-        make.width.height.mas_equalTo(kDotSize);
+        make.width.height.mas_equalTo(dotSize);
     }];
     
     UILabel *leftDateLabel = [UILabel new];
