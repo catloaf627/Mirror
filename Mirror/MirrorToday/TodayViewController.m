@@ -377,9 +377,8 @@
         iconName = [self specialDaysButtonFilledIconNameFromStoredIconName:selectedDay.icon];
         tintColor = [UIColor mirrorSystemColorNamed:selectedDay.color];
     } else {
-        // 当前日期不是 special day：用最后一个 special day 的 icon 去掉 .fill，并使用默认颜色。
-        MirrorDayModel *latestDay = days.lastObject;
-        iconName = [self specialDaysButtonIconNameFromStoredIconName:latestDay.icon];
+        // 当前日期不是 special day：使用默认图标和默认颜色。
+        iconName = @"star";
         tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     }
     UIImage *iconImage = [[UIImage systemImageNamed:iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
