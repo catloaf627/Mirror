@@ -8,6 +8,7 @@
 #import "MirrorMacro.h"
 #import "MirrorStorage.h"
 #import "MirrorTimeText.h"
+#import "MirrorFakeDataSeeder.h"
 
 @interface MirrorDebugAlert () <UIDocumentPickerDelegate>
 
@@ -76,6 +77,10 @@
     }]];
     [alertController addAction:[UIAlertAction actionWithTitle:@"Import JSON" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self showJSONDocumentPicker];
+    }]];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"Seed Fake Data" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [MirrorFakeDataSeeder seedFakeData];
+        [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
     }]];
     [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
     [viewController presentViewController:alertController animated:YES completion:nil];

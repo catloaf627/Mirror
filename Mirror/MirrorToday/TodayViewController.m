@@ -476,6 +476,14 @@
 {
     self.calendarView.calendar = [self calendarForCurrentSettings];
     self.calendarView.locale = [MirrorTool formatterLocaleForCurrentLanguage];
+    self.calendarPickerContainerView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    self.calendarView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    self.calendarView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    if (@available(iOS 13.0, *)) {
+        UIUserInterfaceStyle style = [MirrorSettings appliedDarkMode] ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+        self.calendarPickerContainerView.overrideUserInterfaceStyle = style;
+        self.calendarView.overrideUserInterfaceStyle = style;
+    }
 }
 
 - (void)handleWeekStartsOnChanged
@@ -685,6 +693,9 @@
         _calendarView.calendar = [self calendarForCurrentSettings];
         _calendarView.locale = [MirrorTool formatterLocaleForCurrentLanguage];
         _calendarView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        if (@available(iOS 13.0, *)) {
+            _calendarView.overrideUserInterfaceStyle = [MirrorSettings appliedDarkMode] ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+        }
         _calendarView.delegate = self;
         _calendarView.wantsDateDecorations = YES;
         _calendarView.selectionBehavior = self.dateSelection;

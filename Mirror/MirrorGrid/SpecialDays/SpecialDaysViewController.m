@@ -13,6 +13,7 @@
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
+#import "MirrorSettings.h"
 
 static CGFloat const kSpecialDaysPadding = 20;
 static CGFloat const kSpecialDaysRowHeight = 58;
@@ -165,6 +166,9 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
 @property (nonatomic, copy) NSString *focusDateStr;
 @property (nonatomic, assign) BOOL didFocusInitialDate;
+@property (nonatomic, weak) UIAlertController *iconPickerAlert;
+@property (nonatomic, weak) UITextField *iconPickerSearchTextField;
+@property (nonatomic, copy) void (^iconPickerReloadHandler)(NSString *query);
 
 @end
 
@@ -258,6 +262,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     self.emptyLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_special_days"];
     self.emptyLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     self.emptyLabel.hidden = self.days.count > 0;
+    [self refreshIconPickerIfNeeded];
     [self rebuildTimeline];
 }
 
@@ -564,7 +569,11 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         datePicker.tintColor = [UIColor mirrorSystemColorNamed:color];
     }]] forKey:@"contentViewController"];
 
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        self.iconPickerAlert = nil;
+        self.iconPickerSearchTextField = nil;
+        self.iconPickerReloadHandler = nil;
+    }];
     UIAlertAction *addAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"add"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSString *dateStr = [self.dateFormatter stringFromDate:datePicker.date];
         NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
@@ -732,6 +741,8 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 {
     UIAlertController *iconAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"special_day_icon"] message:nil preferredStyle:UIAlertControllerStyleAlert];
     UIViewController *contentViewController = [UIViewController new];
+    [self applyPreferredInterfaceStyleToViewController:iconAlert];
+    [self applyPreferredInterfaceStyleToViewController:contentViewController];
     CGFloat pickerWidth = 248;
     CGFloat pickerHeight = 300;
     contentViewController.preferredContentSize = CGSizeMake(pickerWidth, pickerHeight);
@@ -781,9 +792,13 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         NSString *normalizedQuery = query.lowercaseString ?: @"";
         NSMutableArray<NSString *> *filteredOptions = [NSMutableArray new];
         for (NSString *iconName in iconOptions) {
-            if (normalizedQuery.length == 0 || [iconName.lowercaseString containsString:normalizedQuery]) {
+            if ((normalizedQuery.length == 0 || [iconName.lowercaseString containsString:normalizedQuery]) && [UIImage systemImageNamed:iconName]) {
                 [filteredOptions addObject:iconName];
             }
+        }
+        NSString *trimmedQuery = [query stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] ?: @"";
+        if (trimmedQuery.length > 0 && [UIImage systemImageNamed:trimmedQuery] && ![filteredOptions containsObject:trimmedQuery]) {
+            [filteredOptions insertObject:trimmedQuery atIndex:0];
         }
         
         NSInteger columns = 8;
@@ -800,11 +815,14 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
             [iconGridView addSubview:iconButton];
             if (@available(iOS 14.0, *)) {
                 [iconButton addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
-                    if (completion) {
-                        completion(iconName);
-                    }
-                    [iconAlert dismissViewControllerAnimated:YES completion:nil];
-                }] forControlEvents:UIControlEventTouchUpInside];
+                if (completion) {
+                    completion(iconName);
+                }
+                self.iconPickerAlert = nil;
+                self.iconPickerSearchTextField = nil;
+                self.iconPickerReloadHandler = nil;
+                [iconAlert dismissViewControllerAnimated:YES completion:nil];
+            }] forControlEvents:UIControlEventTouchUpInside];
             }
             [iconButton mas_makeConstraints:^(MASConstraintMaker *make) {
                 NSInteger row = index / columns;
@@ -844,7 +862,39 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     [iconAlert setValue:contentViewController forKey:@"contentViewController"];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
     [iconAlert addAction:cancelAction];
+    self.iconPickerAlert = iconAlert;
+    self.iconPickerSearchTextField = searchTextField;
+    self.iconPickerReloadHandler = reloadIcons;
     [addAlert presentViewController:iconAlert animated:YES completion:nil];
+}
+
+- (void)refreshIconPickerIfNeeded
+{
+    UIAlertController *iconAlert = self.iconPickerAlert;
+    if (!iconAlert) {
+        return;
+    }
+    
+    [self applyPreferredInterfaceStyleToViewController:iconAlert];
+    UIViewController *contentViewController = [iconAlert valueForKey:@"contentViewController"];
+    [self applyPreferredInterfaceStyleToViewController:contentViewController];
+    self.iconPickerSearchTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.iconPickerSearchTextField.backgroundColor = [self specialDayAlertControlBackgroundColor];
+    if (self.iconPickerReloadHandler) {
+        self.iconPickerReloadHandler(self.iconPickerSearchTextField.text);
+    }
+}
+
+- (void)applyPreferredInterfaceStyleToViewController:(UIViewController *)viewController
+{
+    if (!viewController) {
+        return;
+    }
+    if (@available(iOS 13.0, *)) {
+        viewController.overrideUserInterfaceStyle = [MirrorSettings appliedDarkMode] ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+        viewController.view.overrideUserInterfaceStyle = viewController.overrideUserInterfaceStyle;
+    }
+    viewController.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
 }
 
 - (NSArray<NSString *> *)specialDayIconOptions
@@ -865,7 +915,35 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         @"app.fill", @"safari.fill", @"terminal.fill", @"curlybraces", @"chevron.left.forwardslash.chevron.right", @"number", @"m.circle.fill", @"at", @"qrcode", @"barcode",
         @"rectangle.and.pencil.and.ellipsis", @"list.bullet", @"checklist", @"square.and.arrow.up", @"square.and.arrow.down", @"tray.fill", @"archivebox.fill", @"paperclip", @"link.circle.fill", @"signature",
         @"lungs.fill", @"brain.fill", @"ear.fill", @"mouth.fill", @"nose.fill", @"eye.circle.fill", @"facemask.fill", @"syringe.fill", @"thermometer.medium", @"waveform.path.ecg",
-        @"house.and.flag.fill", @"storefront.fill", @"building.columns.fill", @"theatermasks.fill", @"popcorn.fill", @"ticket.fill", @"party.popper.fill", @"chandelier.fill", @"door.left.hand.open", @"sofa.fill"
+        @"house.and.flag.fill", @"storefront.fill", @"building.columns.fill", @"theatermasks.fill", @"popcorn.fill", @"ticket.fill", @"party.popper.fill", @"chandelier.fill", @"door.left.hand.open", @"sofa.fill",
+        @"star", @"heart", @"pin", @"gift", @"flag", @"bookmark", @"tag", @"bell", @"bolt", @"flame",
+        @"sun.max", @"moon", @"cloud", @"drop", @"leaf", @"camera", @"photo", @"mic", @"film", @"tv",
+        @"gamecontroller", @"paintbrush", @"book", @"graduationcap", @"briefcase", @"folder", @"doc", @"clock", @"alarm", @"map",
+        @"location", @"house", @"building.2", @"car", @"tram", @"bus", @"ferry", @"sportscourt", @"basketball", @"football",
+        @"baseball", @"tennisball", @"dumbbell", @"cup.and.saucer", @"mug", @"wineglass", @"birthday.cake", @"balloon", @"cart", @"bag",
+        @"creditcard", @"banknote", @"chart.bar", @"chart.pie", @"trophy", @"medal", @"crown", @"person", @"person.2", @"person.3",
+        @"hands.clap", @"hand.thumbsup", @"face.smiling", @"eye", @"lightbulb", @"wrench", @"hammer", @"screwdriver", @"cross.case", @"pills",
+        @"bandage", @"bed.double", @"shower", @"bathtub", @"washer", @"trash", @"shippingbox", @"envelope", @"phone", @"message",
+        @"bubble.left", @"lock", @"key", @"checkmark.circle", @"xmark.circle", @"plus.circle", @"minus.circle", @"exclamationmark.triangle", @"cat", @"dog",
+        @"pawprint", @"fish", @"bird", @"ladybug", @"tree", @"carrot", @"fuelpump", @"desktopcomputer", @"keyboard", @"printer",
+        @"scanner", @"externaldrive", @"app", @"safari", @"terminal", @"link.circle", @"lungs", @"brain", @"ear", @"mouth",
+        @"nose", @"facemask", @"syringe", @"house.and.flag", @"storefront", @"building.columns", @"theatermasks", @"popcorn", @"ticket", @"party.popper",
+        @"sofa", @"bed.double.circle.fill", @"fork.knife.circle.fill", @"fork.knife.circle", @"cup.and.saucer", @"figure.dance", @"figure.mind.and.body", @"figure.skiing.downhill", @"figure.snowboarding", @"figure.surfing",
+        @"figure.tennis", @"figure.badminton", @"figure.basketball", @"figure.soccer", @"figure.socialdance", @"figure.climbing", @"figure.cooldown", @"figure.core.training", @"figure.cross.training", @"figure.flexibility",
+        @"figure.golf", @"figure.outdoor.cycle", @"figure.roll", @"figure.rower", @"figure.stairs", @"figure.step.training", @"figure.strengthtraining.functional", @"figure.volleyball", @"figure.water.fitness", @"figure.wave",
+        @"figure.kickboxing", @"figure.boxing", @"figure.archery", @"figure.baseball", @"figure.fishing", @"figure.equestrian.sports", @"figure.gymnastics", @"figure.jumprope", @"figure.martial.arts", @"figure.play",
+        @"figure.skating", @"figure.hockey", @"figure.rugby", @"figure.softball", @"figure.table.tennis", @"figure.taichi", @"figure.track.and.field", @"figure.wrestling", @"shoeprints.fill", @"shoe.fill",
+        @"bubbles.and.sparkles.fill", @"wand.and.rays", @"paintpalette.fill", @"paintpalette", @"camera.aperture", @"video.fill", @"video", @"record.circle", @"play.circle.fill", @"pause.circle.fill",
+        @"stop.circle.fill", @"backward.fill", @"forward.fill", @"shuffle", @"repeat", @"guitars.fill", @"pianokeys", @"beats.headphones", @"hifispeaker.fill", @"radio.fill",
+        @"newspaper.fill", @"magazine.fill", @"menucard.fill", @"text.book.closed.fill", @"character.book.closed.fill", @"bookmark.circle.fill", @"graduationcap.circle.fill", @"studentdesk", @"backpack.fill", @"case.fill",
+        @"calendar.badge.plus", @"calendar.badge.minus", @"calendar.badge.clock", @"calendar.circle.fill", @"clock.badge.checkmark.fill", @"timer.circle.fill", @"stopwatch.fill", @"hourglass.circle.fill", @"hourglass.bottomhalf.filled", @"hourglass.tophalf.filled",
+        @"map.circle.fill", @"mappin.circle.fill", @"location.circle.fill", @"location.north.fill", @"safari", @"compass.drawing", @"signpost.right.fill", @"road.lanes", @"car.side.fill", @"car.front.waves.up.fill",
+        @"car.rear.fill", @"steeringwheel", @"bicycle.circle.fill", @"scooter.circle.fill", @"airplane.departure", @"airplane.arrival", @"fuelpump.circle.fill", @"ev.charger.circle.fill", @"parkingsign.circle.fill", @"sailboat.fill",
+        @"mountain.2.fill", @"beach.umbrella.fill", @"tent.fill", @"tree.circle.fill", @"laurel.leading", @"laurel.trailing", @"camera.macro", @"binoculars.fill", @"globe.americas.fill", @"globe.europe.africa.fill",
+        @"globe.asia.australia.fill", @"network.badge.shield.half.filled", @"wifi.circle.fill", @"antenna.radiowaves.left.and.right.circle.fill", @"dot.radiowaves.left.and.right", @"personalhotspot", @"lock.shield.fill", @"key.horizontal.fill", @"person.badge.key.fill", @"checkmark.shield.fill",
+        @"heart.circle.fill", @"heart.text.square", @"cross.circle.fill", @"staroflife.fill", @"medical.thermometer.fill", @"ivfluid.bag.fill", @"cross.vial.fill", @"microbe.fill", @"allergens.fill", @"pill.circle.fill",
+        @"pawprint.circle.fill", @"lizard.fill", @"tortoise.fill", @"hare.fill", @"ant.fill", @"fossil.shell.fill", @"camera.filters", @"rainbow", @"cloud.sun.fill", @"cloud.moon.fill",
+        @"cloud.rain.fill", @"cloud.snow.fill", @"cloud.bolt.fill", @"wind", @"tornado", @"thermometer.sun.fill", @"aqi.medium", @"water.waves", @"fireplace.fill", @"light.recessed.fill"
     ];
 }
 

@@ -76,34 +76,17 @@
 + (void)seedFakeData
 {
     NSArray<MirrorFakeTaskPlan *> *plans = [self fakeTaskPlans];
-    NSSet<NSString *> *fakeTaskNames = [self allLocalizedFakeTaskNames];
-
-    NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
-    NSMutableArray<MirrorTaskModel *> *filteredTasks = [NSMutableArray new];
-    for (MirrorTaskModel *task in tasks) {
-        if (![fakeTaskNames containsObject:task.taskName]) {
-            [filteredTasks addObject:task];
-        }
-    }
-
     NSDate *endDate = [self startOfToday];
     NSDate *startDate = [self dateByAddingYears:-1 toDate:endDate];
 
+    NSMutableArray<MirrorTaskModel *> *fakeTasks = [NSMutableArray new];
     for (MirrorFakeTaskPlan *plan in plans) {
         MirrorTaskModel *task = [[MirrorTaskModel alloc] initWithTitle:plan.name
                                                            createdTime:(long)[startDate timeIntervalSince1970]
                                                              colorType:plan.color
                                                               isHidden:NO
                                                              isAddTask:NO];
-        [filteredTasks addObject:task];
-    }
-
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    NSMutableArray<MirrorRecordModel *> *filteredRecords = [NSMutableArray new];
-    for (MirrorRecordModel *record in records) {
-        if (![fakeTaskNames containsObject:record.taskName]) {
-            [filteredRecords addObject:record];
-        }
+        [fakeTasks addObject:task];
     }
 
     NSMutableArray<MirrorRecordModel *> *fakeRecords = [NSMutableArray new];
@@ -128,33 +111,10 @@
         if (first.startTime > second.startTime) return NSOrderedDescending;
         return NSOrderedSame;
     }];
-    [filteredRecords addObjectsFromArray:fakeRecords];
-    [filteredRecords sortUsingComparator:^NSComparisonResult(MirrorRecordModel *first, MirrorRecordModel *second) {
-        if (first.startTime < second.startTime) return NSOrderedAscending;
-        if (first.startTime > second.startTime) return NSOrderedDescending;
-        return NSOrderedSame;
-    }];
 
     NSMutableArray<MirrorDayModel *> *fakeDays = [self fakeSpecialDaysFromStartDate:startDate endDate:endDate];
-    NSMutableSet<NSString *> *fakeDayDateKeys = [NSMutableSet new];
-    for (MirrorDayModel *day in fakeDays) {
-        if (day.dateStr.length > 0) {
-            [fakeDayDateKeys addObject:day.dateStr];
-        }
-    }
-    
-    NSMutableArray<MirrorDayModel *> *filteredDays = [NSMutableArray new];
-    for (MirrorDayModel *day in [MirrorStorage retriveMirrorDays]) {
-        if (![fakeDayDateKeys containsObject:day.dateStr]) {
-            [filteredDays addObject:day];
-        }
-    }
-    [filteredDays addObjectsFromArray:fakeDays];
-    [filteredDays sortUsingComparator:^NSComparisonResult(MirrorDayModel *first, MirrorDayModel *second) {
-        return [first.dateStr compare:second.dateStr];
-    }];
 
-    [self saveTasks:filteredTasks records:filteredRecords days:filteredDays];
+    [self saveTasks:fakeTasks records:fakeRecords days:fakeDays];
     NSLog(@"Seeded fake Mirror data: %lu tasks, %lu records, %lu days", (unsigned long)plans.count, (unsigned long)fakeRecords.count, (unsigned long)fakeDays.count);
 }
 
@@ -360,7 +320,7 @@
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:15 info:ML(@"learned butterfly", @"会游蝶泳了", @"aprendí mariposa", @"papillon appris", @"バタフライが泳げるようになった", @"접영을 할 수 있게 됐어요") icon:@"figure.pool.swim" color:MirrorSystemColorTypeOrange],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:6 day:27 info:ML(@"my birthday", @"我的生日", @"mi cumpleaños", @"mon anniversaire", @"自分の誕生日", @"내 생일") icon:@"birthday.cake.fill" color:MirrorSystemColorTypeYellow],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:7 day:19 info:ML(@"watched the World Cup", @"看世界杯", @"vimos el Mundial", @"Coupe du monde", @"ワールドカップを見た", @"월드컵 본 날") icon:@"soccerball" color:MirrorSystemColorTypeMint],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"moved into our new home", @"住进新家", @"nuevo hogar", @"nouveau chez-nous", @"新居に引っ越した", @"새집에 입주") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"moved to a new home", @"搬新家", @"mudanza a una casa nueva", @"déménagement", @"新居へ引っ越し", @"새집으로 이사") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:9 day:13 info:ML(@"squatted 2x bodyweight", @"深蹲两倍体重！", @"sentadilla con 2x peso corporal", @"squat à 2x le poids du corps", @"体重の2倍でスクワット", @"체중 2배 스쿼트!") icon:@"dumbbell.fill" color:MirrorSystemColorTypeOrange],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:10 day:28 info:ML(@"won the 3.0 tennis tournament", @"网球比赛3.0冠军", @"campeón del torneo de tenis 3.0", @"champion du tournoi de tennis 3.0", @"テニス大会3.0優勝", @"테니스 대회 3.0 우승") icon:@"medal.fill" color:MirrorSystemColorTypePurple],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:11 day:11 info:ML(@"got married", @"结婚啦", @"nos casamos", @"mariage", @"結婚した", @"결혼했어요") icon:@"heart.fill" color:MirrorSystemColorTypeRed],
