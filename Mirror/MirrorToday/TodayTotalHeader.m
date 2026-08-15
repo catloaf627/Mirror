@@ -350,7 +350,8 @@
 
 - (void)updateCrownButton
 {
-    self.crownButton.hidden = self.count < 8 * 60 * 60;
+    BOOL isToday = [self dayOffsetFromTodayForDate:self.date ?: [NSDate now]] == 0;
+    self.crownButton.hidden = !isToday || self.count < 8 * 60 * 60;
     self.crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4);
     self.crownButton.tintColor = [UIColor systemYellowColor];
     [self.crownButton setImage:[[UIImage systemImageNamed:@"crown.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
