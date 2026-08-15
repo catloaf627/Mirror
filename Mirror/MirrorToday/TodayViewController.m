@@ -448,11 +448,14 @@
 {
     BOOL isToday = [self isSelectedDateToday];
     UIColor *textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    UIColor *buttonColor = isToday ? [textColor colorWithAlphaComponent:0.35] : textColor;
+    UIImage *image = [[UIImage systemImageNamed:[self todayCalendarSymbolName]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     self.todayButton.enabled = !isToday;
     self.todayButton.backgroundColor = UIColor.clearColor;
-    UIImage *image = [[UIImage systemImageNamed:[self todayCalendarSymbolName]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    self.todayButton.tintColor = buttonColor;
+    [self.todayButton setTitleColor:buttonColor forState:UIControlStateNormal];
     [self.todayButton setImage:image forState:UIControlStateNormal];
-    self.todayButton.tintColor = isToday ? [textColor colorWithAlphaComponent:0.35] : textColor;
+    [self.todayButton setTitle:image ? nil : [MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
 }
 
 - (BOOL)isSelectedDateToday
@@ -719,6 +722,9 @@
         _todayButton = [UIButton buttonWithType:UIButtonTypeSystem];
         _todayButton.backgroundColor = UIColor.clearColor;
         _todayButton.imageView.contentMode = UIViewContentModeScaleAspectFit;
+        _todayButton.titleLabel.font = [UIFont mirrorHintFont];
+        _todayButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+        _todayButton.titleLabel.minimumScaleFactor = 0.75;
         [_todayButton addTarget:self action:@selector(goToToday) forControlEvents:UIControlEventTouchUpInside];
     }
     return _todayButton;
@@ -741,7 +747,9 @@
 
 - (CGFloat)todayButtonWidth
 {
-    return 32*kWidthRatio;
+    NSString *todayText = [MirrorLanguage mirror_stringWithKey:@"today"];
+    CGFloat textWidth = [todayText sizeWithAttributes:@{NSFontAttributeName: [UIFont mirrorHintFont]}].width;
+    return MAX(32*kWidthRatio, ceil(textWidth) + 8*kWidthRatio);
 }
 
 - (CGFloat)calendarPickerHeight

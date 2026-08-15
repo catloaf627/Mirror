@@ -252,9 +252,11 @@
 
 - (void)updateHeatmapButton
 {
-    UIImage *iconImage = [[UIImage systemImageNamed:@"app.translucent"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    NSString *imageName = [MirrorSettings appliedHeatmap] ? @"paintpalette" : @"paintpalette.fill";
+    UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightRegular];
+    UIImage *iconImage = [[UIImage systemImageNamed:imageName withConfiguration:configuration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.heatmapButton setImage:iconImage forState:UIControlStateNormal];
-    self.heatmapButton.tintColor = [UIColor mirrorColorNamed:[MirrorSettings appliedHeatmap] ? MirrorColorTypeTabbarIconText : MirrorColorTypeTabbarIconTextHightlight];
+    self.heatmapButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
 }
 
 - (void)updateWeekStartsOnButton
