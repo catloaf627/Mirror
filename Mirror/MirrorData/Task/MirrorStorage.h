@@ -103,6 +103,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (NSNumber * _Nullable)iCloudRecordCount;
 
++ (NSNumber * _Nullable)iCloudDayCount;
+
 + (BOOL)importDataFromICloud;
 
 + (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records secondsFromGMT:(NSNumber *)secondsFromGMT;

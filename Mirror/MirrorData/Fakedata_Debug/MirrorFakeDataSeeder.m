@@ -6,6 +6,7 @@
 #import "MirrorFakeDataSeeder.h"
 #import "MirrorTaskModel.h"
 #import "MirrorRecordModel.h"
+#import "MirrorDayModel.h"
 #import "MirrorStorage.h"
 #import "MirrorLanguage.h"
 #import "MirrorSettings.h"
@@ -35,6 +36,35 @@
         _color = color;
         _createdHour = createdHour;
         _createdMinute = createdMinute;
+    }
+    return self;
+}
+
+@end
+
+@interface MirrorFakeSpecialDayPlan : NSObject
+
+@property (nonatomic, assign) NSInteger month;
+@property (nonatomic, assign) NSInteger day;
+@property (nonatomic, copy) NSArray<NSString *> *info;
+@property (nonatomic, copy) NSString *icon;
+@property (nonatomic, assign) MirrorSystemColorType color;
+
+- (instancetype)initWithMonth:(NSInteger)month day:(NSInteger)day info:(NSArray<NSString *> *)info icon:(NSString *)icon color:(MirrorSystemColorType)color;
+
+@end
+
+@implementation MirrorFakeSpecialDayPlan
+
+- (instancetype)initWithMonth:(NSInteger)month day:(NSInteger)day info:(NSArray<NSString *> *)info icon:(NSString *)icon color:(MirrorSystemColorType)color
+{
+    self = [super init];
+    if (self) {
+        _month = month;
+        _day = day;
+        _info = [info copy];
+        _icon = [icon copy];
+        _color = color;
     }
     return self;
 }
@@ -105,8 +135,27 @@
         return NSOrderedSame;
     }];
 
-    [self saveTasks:filteredTasks records:filteredRecords];
-    NSLog(@"Seeded fake Mirror data: %lu tasks, %lu records", (unsigned long)plans.count, (unsigned long)fakeRecords.count);
+    NSMutableArray<MirrorDayModel *> *fakeDays = [self fakeSpecialDaysFromStartDate:startDate endDate:endDate];
+    NSMutableSet<NSString *> *fakeDayDateKeys = [NSMutableSet new];
+    for (MirrorDayModel *day in fakeDays) {
+        if (day.dateStr.length > 0) {
+            [fakeDayDateKeys addObject:day.dateStr];
+        }
+    }
+    
+    NSMutableArray<MirrorDayModel *> *filteredDays = [NSMutableArray new];
+    for (MirrorDayModel *day in [MirrorStorage retriveMirrorDays]) {
+        if (![fakeDayDateKeys containsObject:day.dateStr]) {
+            [filteredDays addObject:day];
+        }
+    }
+    [filteredDays addObjectsFromArray:fakeDays];
+    [filteredDays sortUsingComparator:^NSComparisonResult(MirrorDayModel *first, MirrorDayModel *second) {
+        return [first.dateStr compare:second.dateStr];
+    }];
+
+    [self saveTasks:filteredTasks records:filteredRecords days:filteredDays];
+    NSLog(@"Seeded fake Mirror data: %lu tasks, %lu records, %lu days", (unsigned long)plans.count, (unsigned long)fakeRecords.count, (unsigned long)fakeDays.count);
 }
 
 + (NSArray<MirrorFakeTaskPlan *> *)fakeTaskPlans
@@ -299,6 +348,72 @@
         @"Cook": ML(@"Cook", @"做饭", @"Cocinar", @"Cuisiner", @"料理", @"요리")
     };
     return taskNames[englishName] ?: ML(englishName, englishName, englishName, englishName, englishName, englishName);
+}
+
++ (NSArray<MirrorFakeSpecialDayPlan *> *)fakeSpecialDayPlans
+{
+    return @[
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:1 day:8 info:ML(@"got a car", @"提车啦", @"coche nuevo", @"nouvelle voiture", @"車を手に入れた", @"차를 샀어요") icon:@"car.fill" color:MirrorSystemColorTypeMint],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:2 day:7 info:ML(@"graduated", @"毕业啦", @"graduación", @"diplôme obtenu", @"卒業した", @"졸업했어요") icon:@"graduationcap.fill" color:MirrorSystemColorTypeBlue],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:3 day:22 info:ML(@"got a job", @"找到工作", @"conseguí trabajo", @"nouveau travail", @"仕事が決まった", @"취업했어요") icon:@"briefcase.fill" color:MirrorSystemColorTypeBlue],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"went to Disney", @"去迪士尼", @"fuimos a Disney", @"journée à Disney", @"ディズニーに行った", @"디즈니에 갔어요") icon:@"balloon.fill" color:MirrorSystemColorTypeYellow],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:20 info:ML(@"got cats", @"接猫回家", @"adoptamos gatos", @"chats à la maison", @"猫を迎えた", @"고양이를 데려온 날") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:6 day:27 info:ML(@"my birthday", @"我的生日", @"mi cumpleaños", @"mon anniversaire", @"自分の誕生日", @"내 생일") icon:@"birthday.cake.fill" color:MirrorSystemColorTypeYellow],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:7 day:19 info:ML(@"watched the World Cup", @"看世界杯", @"vimos el Mundial", @"Coupe du monde", @"ワールドカップを見た", @"월드컵 본 날") icon:@"soccerball" color:MirrorSystemColorTypeMint],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"moved into our new home", @"住进新家", @"nuevo hogar", @"nouveau chez-nous", @"新居に引っ越した", @"새집에 입주") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:9 day:13 info:ML(@"squatted 2x bodyweight", @"深蹲两倍体重！", @"sentadilla con 2x peso corporal", @"squat à 2x le poids du corps", @"体重の2倍でスクワット", @"체중 2배 스쿼트!") icon:@"dumbbell.fill" color:MirrorSystemColorTypeOrange],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:10 day:28 info:ML(@"won the 3.0 tennis tournament", @"网球比赛3.0冠军", @"campeón del torneo de tenis 3.0", @"champion du tournoi de tennis 3.0", @"テニス大会3.0優勝", @"테니스 대회 3.0 우승") icon:@"medal.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:11 day:11 info:ML(@"got married", @"结婚啦", @"nos casamos", @"mariage", @"結婚した", @"결혼했어요") icon:@"heart.fill" color:MirrorSystemColorTypeRed],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:12 day:12 info:ML(@"launched my own website", @"创建了自己的网站", @"creé mi sitio web", @"créé mon site web", @"自分のサイトを作った", @"내 웹사이트를 만들었어요") icon:@"globe" color:MirrorSystemColorTypeOrange]
+    ];
+}
+
++ (NSMutableArray<MirrorDayModel *> *)fakeSpecialDaysFromStartDate:(NSDate *)startDate endDate:(NSDate *)endDate
+{
+    NSMutableArray<MirrorDayModel *> *days = [NSMutableArray new];
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSDateComponents *startComponents = [calendar components:NSCalendarUnitYear fromDate:startDate];
+    NSDateComponents *endComponents = [calendar components:NSCalendarUnitYear fromDate:endDate];
+    NSString *todayKey = [self dateKeyFromDate:endDate];
+    
+    for (NSInteger year = startComponents.year; year <= endComponents.year; year++) {
+        for (MirrorFakeSpecialDayPlan *plan in [self fakeSpecialDayPlans]) {
+            NSDate *date = [self dateWithYear:year month:plan.month day:plan.day hour:0 minute:0];
+            if (!date || [date compare:startDate] == NSOrderedAscending || [date compare:endDate] == NSOrderedDescending) {
+                continue;
+            }
+            
+            NSString *dateKey = [self dateKeyFromDate:date];
+            if ([dateKey isEqualToString:todayKey]) {
+                continue;
+            }
+            
+            NSString *info = [self localizedValue:plan.info
+                                      languageKey:[MirrorSettings preferredLanguageKey]
+                                        fallback:plan.info.firstObject];
+            MirrorDayModel *day = [[MirrorDayModel alloc] initWithDateStr:dateKey
+                                                                      info:info
+                                                                      icon:plan.icon
+                                                                     color:plan.color];
+            [days addObject:day];
+        }
+    }
+    
+    NSArray<NSString *> *todayInfo = ML(@"downloaded Mirror.ly", @"下载了 Mirror.ly", @"descargué Mirror.ly", @"Mirror.ly téléchargé", @"Mirror.lyをダウンロード", @"Mirror.ly 다운로드");
+    NSString *localizedTodayInfo = [self localizedValue:todayInfo
+                                           languageKey:[MirrorSettings preferredLanguageKey]
+                                             fallback:todayInfo.firstObject];
+    MirrorDayModel *today = [[MirrorDayModel alloc] initWithDateStr:todayKey
+                                                               info:localizedTodayInfo
+                                                               icon:@"m.circle.fill"
+                                                              color:MirrorSystemColorTypeGray];
+    [days addObject:today];
+    
+    [days sortUsingComparator:^NSComparisonResult(MirrorDayModel *first, MirrorDayModel *second) {
+        return [first.dateStr compare:second.dateStr];
+    }];
+    return days;
 }
 
 + (NSString *)gymNoteForWorkoutIndex:(NSInteger)workoutIndex dayIndex:(NSInteger)dayIndex
@@ -559,9 +674,17 @@
     return [calendar dateFromComponents:components];
 }
 
-+ (void)saveTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records
++ (NSString *)dateKeyFromDate:(NSDate *)date
 {
-    [MirrorStorage replaceAllDataWithTasks:tasks records:records secondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    return [formatter stringFromDate:date];
+}
+
++ (void)saveTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days
+{
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days secondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
 }
 
 @end

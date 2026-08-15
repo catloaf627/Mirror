@@ -776,6 +776,16 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     return nil;
 }
 
+// 读取 iCloud 备份里的特别日数量；例如首次启动时判断云端是否只有 special days。
++ (NSNumber *)iCloudDayCount
+{
+    NSMutableArray<MirrorDayModel *> *days = nil;
+    if ([MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:nil records:nil days:&days secondsFromGMT:nil]) {
+        return @(days.count);
+    }
+    return nil;
+}
+
 // 从 iCloud 备份覆盖导入全部数据；例如用户点“从 iCloud 下载”后替换本地 JSON。
 + (BOOL)importDataFromICloud
 {

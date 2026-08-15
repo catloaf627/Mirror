@@ -21,6 +21,7 @@
 @property (nonatomic, assign) BOOL didStartInitialICloudCheck;
 @property (nonatomic, strong) NSNumber *initialICloudTaskCount;
 @property (nonatomic, strong) NSNumber *initialICloudRecordCount;
+@property (nonatomic, strong) NSNumber *initialICloudDayCount;
 @property (nonatomic, assign) BOOL isShowingInitialLanguageAlert;
 
 @end
@@ -58,7 +59,7 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
     if ([defaults boolForKey:kMirrorInitialDataPromptShownKey]) {
         return;
     }
-    if ([MirrorStorage retriveMirrorTasks].count > 0 || [MirrorStorage retriveMirrorRecords].count > 0) {
+    if ([MirrorStorage retriveMirrorTasks].count > 0 || [MirrorStorage retriveMirrorRecords].count > 0 || [MirrorStorage retriveMirrorDays].count > 0) {
         [defaults setBool:YES forKey:kMirrorInitialDataPromptShownKey];
         return;
     }
@@ -67,12 +68,12 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
         [self showInitialLanguageAlert];
         return;
     }
-    if (!self.initialICloudTaskCount && !self.initialICloudRecordCount) {
+    if (!self.initialICloudTaskCount && !self.initialICloudRecordCount && !self.initialICloudDayCount) {
         return;
     }
     
     [defaults setBool:YES forKey:kMirrorInitialDataPromptShownKey];
-    if (self.initialICloudTaskCount.integerValue > 0 || self.initialICloudRecordCount.integerValue > 0) {
+    if (self.initialICloudTaskCount.integerValue > 0 || self.initialICloudRecordCount.integerValue > 0 || self.initialICloudDayCount.integerValue > 0) {
         [self showInitialICloudImportAlert];
     } else {
         [self showNoICloudDataGeneratedExampleDataAlert];
@@ -88,9 +89,11 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_UTILITY, 0), ^{
         NSNumber *taskCount = [MirrorStorage iCloudTaskCount];
         NSNumber *recordCount = [MirrorStorage iCloudRecordCount];
+        NSNumber *dayCount = [MirrorStorage iCloudDayCount];
         dispatch_async(dispatch_get_main_queue(), ^{
             self.initialICloudTaskCount = taskCount ?: @0;
             self.initialICloudRecordCount = recordCount ?: @0;
+            self.initialICloudDayCount = dayCount ?: @0;
             [self showInitialDataPromptIfNeeded];
         });
     });
@@ -120,7 +123,7 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
 
 - (void)showInitialICloudImportAlert
 {
-    NSString *message = [NSString stringWithFormat:[MirrorLanguage mirror_stringWithKey:@"icloud_summary_message"], self.initialICloudTaskCount, self.initialICloudRecordCount];
+    NSString *message = [NSString stringWithFormat:[MirrorLanguage mirror_stringWithKey:@"icloud_summary_message"], self.initialICloudTaskCount, self.initialICloudRecordCount, self.initialICloudDayCount];
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
                                                                              message:message
                                                                       preferredStyle:UIAlertControllerStyleAlert];
