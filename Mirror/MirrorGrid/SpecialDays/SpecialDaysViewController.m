@@ -163,6 +163,8 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 @property (nonatomic, strong) MASConstraint *dialogCenterYConstraint;
 @property (nonatomic, strong) NSMutableArray<MirrorDayModel *> *days;
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
+@property (nonatomic, copy) NSString *focusDateStr;
+@property (nonatomic, assign) BOOL didFocusInitialDate;
 
 @end
 
@@ -184,6 +186,15 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     return self;
 }
 
+- (instancetype)initWithFocusDateStr:(NSString *)focusDateStr
+{
+    self = [self init];
+    if (self) {
+        _focusDateStr = [focusDateStr copy];
+    }
+    return self;
+}
+
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -201,6 +212,12 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 {
     [super viewWillAppear:animated];
     [self updateNavigationItemIfNeeded];
+}
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    [self focusInitialDateIfNeeded];
 }
 
 - (void)setupUI
@@ -249,7 +266,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     if (self.navigationController.topViewController != self) {
         return;
     }
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.addButton];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"special_days"] leftButton:nil rightButton:self.addButton];
 }
 
 - (void)rebuildTimeline
@@ -282,6 +299,88 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         } else {
             make.bottom.mas_equalTo(self.scrollView);
         }
+    }];
+}
+
+- (void)focusInitialDateIfNeeded
+{
+    if (self.didFocusInitialDate || self.focusDateStr.length == 0 || self.days.count == 0) {
+        return;
+    }
+    self.didFocusInitialDate = YES;
+    
+    NSInteger focusIndex = [self indexOfSpecialDayWithDateStr:self.focusDateStr];
+    if (focusIndex == NSNotFound) {
+        return;
+    }
+    
+    [self.view layoutIfNeeded];
+    UIView *focusRow = [self rowViewForIndex:focusIndex];
+    if (!focusRow) {
+        return;
+    }
+    
+    CGFloat visibleHeight = CGRectGetHeight(self.scrollView.bounds);
+    UIEdgeInsets adjustedInset = UIEdgeInsetsZero;
+    if (@available(iOS 11.0, *)) {
+        adjustedInset = self.scrollView.adjustedContentInset;
+    } else {
+        adjustedInset = self.scrollView.contentInset;
+    }
+    
+    CGFloat minOffsetY = -adjustedInset.top;
+    CGFloat maxOffsetY = MAX(minOffsetY, self.scrollView.contentSize.height - visibleHeight + adjustedInset.bottom);
+    CGFloat targetOffsetY = CGRectGetMidY(focusRow.frame) - visibleHeight / 2.0;
+    targetOffsetY = MIN(MAX(targetOffsetY, minOffsetY), maxOffsetY);
+    [self.scrollView setContentOffset:CGPointMake(0, targetOffsetY) animated:YES];
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.32 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        [self highlightRow:focusRow withDay:self.days[focusIndex]];
+    });
+}
+
+- (NSInteger)indexOfSpecialDayWithDateStr:(NSString *)dateStr
+{
+    for (NSInteger index = 0; index < self.days.count; index++) {
+        MirrorDayModel *day = self.days[index];
+        if ([day.dateStr isEqualToString:dateStr]) {
+            return index;
+        }
+    }
+    return NSNotFound;
+}
+
+- (UIView *)rowViewForIndex:(NSInteger)index
+{
+    for (UIView *row in self.contentView.subviews) {
+        if (row.tag == index) {
+            return row;
+        }
+    }
+    return nil;
+}
+
+- (void)highlightRow:(UIView *)row withDay:(MirrorDayModel *)day
+{
+    UIColor *highlightColor = [[self systemColorNamed:day.color] colorWithAlphaComponent:0.16];
+    row.layer.cornerRadius = 8;
+    row.layer.masksToBounds = YES;
+    row.backgroundColor = UIColor.clearColor;
+    [UIView animateKeyframesWithDuration:0.7 delay:0 options:UIViewKeyframeAnimationOptionAllowUserInteraction animations:^{
+        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.18 animations:^{
+            row.backgroundColor = highlightColor;
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.18 relativeDuration:0.18 animations:^{
+            row.backgroundColor = UIColor.clearColor;
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.5 relativeDuration:0.18 animations:^{
+            row.backgroundColor = highlightColor;
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.68 relativeDuration:0.32 animations:^{
+            row.backgroundColor = UIColor.clearColor;
+        }];
+    } completion:^(BOOL finished) {
+        row.backgroundColor = UIColor.clearColor;
     }];
 }
 
@@ -420,16 +519,17 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 {
     [self.view endEditing:YES];
 
+    __block NSString *selectedColor = [self randomSpecialDayColor];
+    
     UIDatePicker *datePicker = [UIDatePicker new];
     datePicker.datePickerMode = UIDatePickerModeDate;
     datePicker.locale = [NSLocale localeWithLocaleIdentifier:[MirrorLanguage mirror_stringWithKey:@"locale_Identifier"]];
-    datePicker.tintColor = [self systemColorNamed:@"systemBlue"];
+    datePicker.tintColor = [self systemColorNamed:selectedColor];
     if (@available(iOS 13.4, *)) {
         datePicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
     }
 
     __block NSString *selectedIconName = @"star.fill";
-    __block NSString *selectedColor = @"systemBlue";
     UIButton *iconPickerButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [iconPickerButton setImage:[UIImage systemImageNamed:selectedIconName] forState:UIControlStateNormal];
     iconPickerButton.tintColor = [self systemColorNamed:selectedColor];
@@ -609,6 +709,15 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     return @[@"systemRed", @"systemOrange", @"systemYellow", @"systemGreen", @"systemMint", @"systemBlue", @"systemPurple", @"systemGray"];
 }
 
+- (NSString *)randomSpecialDayColor
+{
+    NSArray<NSString *> *colorOptions = [self specialDayColorOptions];
+    if (colorOptions.count == 0) {
+        return @"systemBlue";
+    }
+    return colorOptions[arc4random_uniform((uint32_t)colorOptions.count)];
+}
+
 - (UIColor *)systemColorNamed:(NSString *)colorName
 {
     if ([colorName isEqualToString:@"systemRed"]) return [UIColor systemRedColor];
@@ -742,7 +851,8 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     
     MirrorDayModel *day = [[MirrorDayModel alloc] initWithDateStr:dateStr
                                                              info:self.dialogView.infoTextField.text ?: @""
-                                                             icon:[self selectedIcon]];
+                                                             icon:[self selectedIcon]
+                                                            color:[self randomSpecialDayColor]];
     [MirrorStorage createMirrorDay:day];
     [self dismissAddDialog];
 }

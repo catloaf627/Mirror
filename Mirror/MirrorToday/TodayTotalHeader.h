@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)configWithRecords:(NSMutableArray<MirrorRecordModel *> *)todayRecords;
 - (void)configWithDate:(NSDate *)date records:(NSMutableArray<MirrorRecordModel *> *)records datePickerHandler:(void (^)(void))datePickerHandler;
+- (void)configWithDate:(NSDate *)date records:(NSMutableArray<MirrorRecordModel *> *)records datePickerHandler:(void (^)(void))datePickerHandler specialDayTapHandler:(void (^)(void))specialDayTapHandler;
 
 @end
 

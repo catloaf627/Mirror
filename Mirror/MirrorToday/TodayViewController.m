@@ -73,8 +73,8 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSpecialDaysButton) name:MirrorDayCreateNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSpecialDaysButton) name:MirrorDayDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayCreateNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayDeleteNotification object:nil];
     }
     return self;
 }
@@ -135,6 +135,12 @@
     if (!_isLoaded) return;
     [self updateHeaderStateWithRecords:nil];
     [self.timelineViewController updateDate:self.selectedDate ?: [NSDate now]];
+}
+
+- (void)handleSpecialDaysChanged
+{
+    [self updateSpecialDaysButton];
+    [self reloadData];
 }
 
 - (void)p_setupUI
@@ -345,6 +351,8 @@
         __weak typeof(self) weakSelf = self;
         [self.todayTotalHeader configWithDate:self.selectedDate ?: [NSDate now] records:records datePickerHandler:^{
             [weakSelf showDatePicker];
+        } specialDayTapHandler:^{
+            [weakSelf showSpecialDays];
         }];
     }
 }
@@ -359,8 +367,30 @@
 - (void)showSpecialDays
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    SpecialDaysViewController *specialDaysVC = [[SpecialDaysViewController alloc] init];
+    SpecialDaysViewController *specialDaysVC = [[SpecialDaysViewController alloc] initWithFocusDateStr:[self keyFromDate:self.selectedDate ?: [NSDate now]]];
     [self.navigationController pushViewController:specialDaysVC animated:YES];
+}
+
+- (void)flashSpecialDaysButtonTwice
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    self.specialDaysButton.alpha = 1;
+    [UIView animateKeyframesWithDuration:0.56 delay:0 options:UIViewKeyframeAnimationOptionAllowUserInteraction animations:^{
+        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.18 animations:^{
+            self.specialDaysButton.alpha = 0.25;
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.18 relativeDuration:0.18 animations:^{
+            self.specialDaysButton.alpha = 1;
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.5 relativeDuration:0.18 animations:^{
+            self.specialDaysButton.alpha = 0.25;
+        }];
+        [UIView addKeyframeWithRelativeStartTime:0.68 relativeDuration:0.32 animations:^{
+            self.specialDaysButton.alpha = 1;
+        }];
+    } completion:^(BOOL finished) {
+        self.specialDaysButton.alpha = 1;
+    }];
 }
 
 - (void)updateSpecialDaysButton
