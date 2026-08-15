@@ -73,8 +73,8 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayCreateNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSpecialDaysButton) name:MirrorDayCreateNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSpecialDaysButton) name:MirrorDayDeleteNotification object:nil];
     }
     return self;
 }
@@ -135,12 +135,6 @@
     if (!_isLoaded) return;
     [self updateHeaderStateWithRecords:nil];
     [self.timelineViewController updateDate:self.selectedDate ?: [NSDate now]];
-}
-
-- (void)handleSpecialDaysChanged
-{
-    [self updateSpecialDaysButton];
-    [self reloadData];
 }
 
 - (void)p_setupUI
@@ -351,8 +345,6 @@
         __weak typeof(self) weakSelf = self;
         [self.todayTotalHeader configWithDate:self.selectedDate ?: [NSDate now] records:records datePickerHandler:^{
             [weakSelf showDatePicker];
-        } specialDayTapHandler:^{
-            [weakSelf showSpecialDays];
         }];
     }
 }
@@ -371,36 +363,43 @@
     [self.navigationController pushViewController:specialDaysVC animated:YES];
 }
 
-- (void)flashSpecialDaysButtonTwice
-{
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    self.specialDaysButton.alpha = 1;
-    [UIView animateKeyframesWithDuration:0.56 delay:0 options:UIViewKeyframeAnimationOptionAllowUserInteraction animations:^{
-        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.18 animations:^{
-            self.specialDaysButton.alpha = 0.25;
-        }];
-        [UIView addKeyframeWithRelativeStartTime:0.18 relativeDuration:0.18 animations:^{
-            self.specialDaysButton.alpha = 1;
-        }];
-        [UIView addKeyframeWithRelativeStartTime:0.5 relativeDuration:0.18 animations:^{
-            self.specialDaysButton.alpha = 0.25;
-        }];
-        [UIView addKeyframeWithRelativeStartTime:0.68 relativeDuration:0.32 animations:^{
-            self.specialDaysButton.alpha = 1;
-        }];
-    } completion:^(BOOL finished) {
-        self.specialDaysButton.alpha = 1;
-    }];
-}
-
 - (void)updateSpecialDaysButton
 {
     NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
-    MirrorDayModel *latestDay = days.lastObject;
-    NSString *iconName = [self specialDaysButtonIconNameFromStoredIconName:latestDay.icon];
+    MirrorDayModel *selectedDay = [self specialDayFromDays:days dateStr:[self keyFromDate:self.selectedDate ?: [NSDate now]]];
+    NSString *iconName = nil;
+    UIColor *tintColor = nil;
+    if (selectedDay) {
+        // 当前日期是 special day：用当天保存的 icon 和颜色，保留 .fill。
+        iconName = [self specialDaysButtonFilledIconNameFromStoredIconName:selectedDay.icon];
+        tintColor = [UIColor mirrorSystemColorNamed:selectedDay.color];
+    } else {
+        // 当前日期不是 special day：用最后一个 special day 的 icon 去掉 .fill，并使用默认颜色。
+        MirrorDayModel *latestDay = days.lastObject;
+        iconName = [self specialDaysButtonIconNameFromStoredIconName:latestDay.icon];
+        tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    }
     UIImage *iconImage = [[UIImage systemImageNamed:iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.specialDaysButton setImage:iconImage forState:UIControlStateNormal];
-    self.specialDaysButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.specialDaysButton.tintColor = tintColor;
+}
+
+- (MirrorDayModel *)specialDayFromDays:(NSArray<MirrorDayModel *> *)days dateStr:(NSString *)dateStr
+{
+    for (MirrorDayModel *day in days) {
+        if ([day.dateStr isEqualToString:dateStr]) {
+            return day;
+        }
+    }
+    return nil;
+}
+
+- (NSString *)specialDaysButtonFilledIconNameFromStoredIconName:(NSString *)storedIconName
+{
+    if (storedIconName.length > 0 && [UIImage systemImageNamed:storedIconName]) {
+        return storedIconName;
+    }
+    return @"star.fill";
 }
 
 - (NSString *)specialDaysButtonIconNameFromStoredIconName:(NSString *)storedIconName
@@ -573,6 +572,16 @@
 
 #pragma mark - Getters
 
+- (UIButton *)specialDaysButton
+{
+    if (!_specialDaysButton) {
+        _specialDaysButton = [UIButton new];
+        [_specialDaysButton addTarget:self action:@selector(showSpecialDays) forControlEvents:UIControlEventTouchUpInside];
+        [self updateSpecialDaysButton];
+    }
+    return _specialDaysButton;
+}
+
 - (UIView *)headerContainerView
 {
     if (!_headerContainerView) {
@@ -657,16 +666,6 @@
         [_todayButton addTarget:self action:@selector(goToToday) forControlEvents:UIControlEventTouchUpInside];
     }
     return _todayButton;
-}
-
-- (UIButton *)specialDaysButton
-{
-    if (!_specialDaysButton) {
-        _specialDaysButton = [UIButton new];
-        [_specialDaysButton addTarget:self action:@selector(showSpecialDays) forControlEvents:UIControlEventTouchUpInside];
-        [self updateSpecialDaysButton];
-    }
-    return _specialDaysButton;
 }
 
 - (UIView *)todayButtonContainer

@@ -7,7 +7,6 @@
 
 #import "TodayTotalHeader.h"
 #import "MirrorTaskModel.h"
-#import "MirrorDayModel.h"
 #import "MirrorStorage.h"
 #import <Masonry/Masonry.h>
 #import "MirrorLanguage.h"
@@ -34,9 +33,7 @@
 @property (nonatomic, strong) UILabel *countLabel;
 @property (nonatomic, assign) float pieChartWidth;
 @property (nonatomic, strong) NSDate *date;
-@property (nonatomic, strong) MirrorDayModel *specialDay;
 @property (nonatomic, copy) void (^datePickerHandler)(void);
-@property (nonatomic, copy) void (^specialDayTapHandler)(void);
 
 @end
 
@@ -44,15 +41,10 @@
 
 - (void)configWithRecords:(NSMutableArray<MirrorRecordModel *> *)todayRecords
 {
-    [self configWithDate:[NSDate now] records:todayRecords datePickerHandler:nil specialDayTapHandler:nil];
+    [self configWithDate:[NSDate now] records:todayRecords datePickerHandler:nil];
 }
 
 - (void)configWithDate:(NSDate *)date records:(NSMutableArray<MirrorRecordModel *> *)records datePickerHandler:(void (^)(void))datePickerHandler
-{
-    [self configWithDate:date records:records datePickerHandler:datePickerHandler specialDayTapHandler:nil];
-}
-
-- (void)configWithDate:(NSDate *)date records:(NSMutableArray<MirrorRecordModel *> *)records datePickerHandler:(void (^)(void))datePickerHandler specialDayTapHandler:(void (^)(void))specialDayTapHandler
 {
     long count = 0;
     for (int i=0; i<records.count; i++) {
@@ -61,9 +53,7 @@
     }
     self.count = count;
     self.date = date ?: [NSDate now];
-    self.specialDay = [self specialDayForDate:self.date];
     self.datePickerHandler = datePickerHandler;
-    self.specialDayTapHandler = specialDayTapHandler;
     [self p_setupUI];
 }
 
@@ -72,7 +62,7 @@
     if (self.todayViewLeft.superview) {
         [self updateDateViews];
         self.countLabel.text = self.count ? [[MirrorLanguage mirror_stringWithKey:@"total"] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:self.count]] : @"";
-        [self updateSpecialDayDecorationViews];
+        [self updateCrownButton];
         NSArray *startEndTime = [self startEndTimeForDate:self.date];
         long startTime = [startEndTime[0] longValue];
         long endTime = [startEndTime[1] longValue];
@@ -150,7 +140,7 @@
     }];
     
     [self updateDateViews];
-    [self updateSpecialDayDecorationViews];
+    [self updateCrownButton];
     NSArray *startEndTime = [self startEndTimeForDate:self.date];
     long startTime = [startEndTime[0] longValue];
     long endTime = [startEndTime[1] longValue];
@@ -164,57 +154,25 @@
 
 - (void)crownAnimation
 {
-    if (self.specialDayTapHandler) {
-        self.specialDayTapHandler();
-    }
-}
-
-- (void)updateSpecialDayDecorationViews
-{
-    MirrorDayModel *specialDay = self.specialDay;
-    UIImage *calendarImage = [[UIImage systemImageNamed:@"calendar"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    if (specialDay.icon.length == 0) {
-        self.crownButton.hidden = YES;
-        [self.crownButton setImage:nil forState:UIControlStateNormal];
-        [self.calendarIconButton setImage:calendarImage forState:UIControlStateNormal];
-        self.calendarIconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        return;
-    }
-    
-    UIImage *iconImage = [self specialDayIconImage];
-    UIColor *iconColor = [UIColor mirrorSystemColorNamed:specialDay.color];
-    if ([self usesRelativeDateLabel]) {
-        self.crownButton.hidden = NO;
-        self.crownButton.transform = CGAffineTransformIdentity;
-        [self.crownButton setImage:iconImage forState:UIControlStateNormal];
-        self.crownButton.tintColor = iconColor;
-        [self.calendarIconButton setImage:calendarImage forState:UIControlStateNormal];
-        self.calendarIconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    } else {
-        self.crownButton.hidden = YES;
-        [self.crownButton setImage:nil forState:UIControlStateNormal];
-        [self.calendarIconButton setImage:iconImage forState:UIControlStateNormal];
-        self.calendarIconButton.tintColor = iconColor;
-    }
-}
-
-- (MirrorDayModel *)specialDayForDate:(NSDate *)date
-{
-    NSString *dateKey = [self dateKeyFromDate:date ?: [NSDate now]];
-    for (MirrorDayModel *day in [MirrorStorage retriveMirrorDays]) {
-        if ([day.dateStr isEqualToString:dateKey]) {
-            return day;
-        }
-    }
-    return nil;
-}
-
-- (NSString *)dateKeyFromDate:(NSDate *)date
-{
-    NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateFormat = @"yyyy-MM-dd";
-    formatter.timeZone = [NSTimeZone systemTimeZone];
-    return [formatter stringFromDate:date];
+    __weak typeof(self) weakSelf = self;
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy] impactOccurred];
+    [UIView animateKeyframesWithDuration:0.1 delay:0 options:UIViewKeyframeAnimationOptionAllowUserInteraction animations:^{
+        weakSelf.crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4-0.2);
+    } completion:^(BOOL finished) {
+        [UIView animateKeyframesWithDuration:0.1 delay:0 options:UIViewKeyframeAnimationOptionAllowUserInteraction animations:^{
+            weakSelf.crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4+0.2);
+        } completion:^(BOOL finished) {
+            [UIView animateKeyframesWithDuration:0.1 delay:0 options:UIViewKeyframeAnimationOptionAllowUserInteraction animations:^{
+                weakSelf.crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4-0.2);
+            } completion:^(BOOL finished) {
+                [UIView animateKeyframesWithDuration:0.1 delay:0 options:UIViewKeyframeAnimationOptionAllowUserInteraction animations:^{
+                    weakSelf.crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4+0.2);
+                } completion:^(BOOL finished) {
+                    weakSelf.crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4);
+                }];
+            }];
+        }];
+    }];
 }
 
 - (void)datePickerButtonTapped
@@ -226,12 +184,6 @@
 
 - (void)calendarIconButtonTapped
 {
-    if (self.specialDay.icon.length > 0 && ![self usesRelativeDateLabel]) {
-        if (self.specialDayTapHandler) {
-            self.specialDayTapHandler();
-        }
-        return;
-    }
     [self datePickerButtonTapped];
 }
 
@@ -336,8 +288,10 @@
 {
     if (!_crownButton) {
         _crownButton = [UIButton new];
-        _crownButton.transform = CGAffineTransformIdentity;
+        _crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4);
         _crownButton.hidden = YES;
+        _crownButton.tintColor = [UIColor systemYellowColor];
+        [_crownButton setImage:[[UIImage systemImageNamed:@"crown.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
         [_crownButton addTarget:self action:@selector(crownAnimation) forControlEvents:UIControlEventTouchUpInside];
     }
     return _crownButton;
@@ -380,6 +334,8 @@
     self.datePickerButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.datePickerButton.backgroundColor = UIColor.clearColor;
     self.datePickerButton.layer.borderWidth = 0;
+    [self.calendarIconButton setImage:[[UIImage systemImageNamed:@"calendar"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+    self.calendarIconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     [self.crownButton mas_remakeConstraints:^(MASConstraintMaker *make) {
         if (usesRelativeDateLabel) {
             make.centerX.mas_equalTo(self.todayLabel.mas_left);
@@ -392,20 +348,12 @@
     }];
 }
 
-- (BOOL)usesRelativeDateLabel
+- (void)updateCrownButton
 {
-    NSDate *date = self.date ?: [NSDate now];
-    NSInteger dayOffset = [self dayOffsetFromTodayForDate:date];
-    return dayOffset >= -1 && dayOffset <= 1;
-}
-
-- (UIImage *)specialDayIconImage
-{
-    UIImage *iconImage = [[UIImage systemImageNamed:self.specialDay.icon] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    if (!iconImage) {
-        iconImage = [[UIImage systemImageNamed:@"star.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    }
-    return iconImage;
+    self.crownButton.hidden = self.count < 8 * 60 * 60;
+    self.crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4);
+    self.crownButton.tintColor = [UIColor systemYellowColor];
+    [self.crownButton setImage:[[UIImage systemImageNamed:@"crown.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
 }
 
 - (NSInteger)dayOffsetFromTodayForDate:(NSDate *)date
