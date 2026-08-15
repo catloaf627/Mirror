@@ -259,19 +259,6 @@
 			path = Model;
 			sourceTree = "<group>";
 		};
-		4A0D40F929EFE28300F13EAE /* MirrorHistory */ = {
-			isa = PBXGroup;
-			children = (
-				4A410A2A29EA5D750007003B /* Legend */,
-				4A410A2B29EA5D800007003B /* Progress */,
-				4A410A2929EA5D650007003B /* PieChart */,
-				4AFBD19E30295561006A6350 /* TaskDetails */,
-				4AD065A1302FCE78005A894C /* SpecialDaysViewController.h */,
-				4AD065A2302FCEB7005A894C /* SpecialDaysViewController.m */,
-			);
-			path = MirrorHistory;
-			sourceTree = "<group>";
-		};
 		4A1F8C57302C008A00045430 /* Docs */ = {
 			isa = PBXGroup;
 			children = (
@@ -406,6 +393,7 @@
 				4A9FDB23302D1234007707FC /* TimelineBackgroundView.m */,
 				4A9FDB25302D15A7007707FC /* OneDayTimelineViewController.h */,
 				4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */,
+				4A410A2929EA5D650007003B /* PieChart */,
 			);
 			path = TimeLine;
 			sourceTree = "<group>";
@@ -417,6 +405,10 @@
 				4A3DC92F2A0106F600679C11 /* GridViewController.m */,
 				4A3DC9312A0109DA00679C11 /* GridCollectionViewCell.h */,
 				4A3DC9322A0109DA00679C11 /* GridCollectionViewCell.m */,
+				4A410A2A29EA5D750007003B /* Legend */,
+				4A410A2B29EA5D800007003B /* Progress */,
+				4AFBD19E30295561006A6350 /* TaskDetails */,
+				4AD065A4302FEB3E005A894C /* SpecialDays */,
 			);
 			path = MirrorGrid;
 			sourceTree = "<group>";
@@ -430,6 +422,15 @@
 				4A88212829F6035E009E422C /* CellAnimation.m */,
 			);
 			path = Animations;
+			sourceTree = "<group>";
+		};
+		4AD065A4302FEB3E005A894C /* SpecialDays */ = {
+			isa = PBXGroup;
+			children = (
+				4AD065A1302FCE78005A894C /* SpecialDaysViewController.h */,
+				4AD065A2302FCEB7005A894C /* SpecialDaysViewController.m */,
+			);
+			path = SpecialDays;
 			sourceTree = "<group>";
 		};
 		4ADDC5BF28E6FB3D006F02DE /* MirrorTaskAdd */ = {
@@ -494,7 +495,6 @@
 				4A379B3B28E0370400785CAE /* MirrorTime */,
 				4A379B3C28E0371700785CAE /* MirrorToday */,
 				4ABE8D6D2A05C54900569A1C /* MirrorGrid */,
-				4A0D40F929EFE28300F13EAE /* MirrorHistory */,
 			);
 			path = Mirror;
 			sourceTree = "<group>";
