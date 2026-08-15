@@ -67,7 +67,8 @@
         long startTime = [startEndTime[0] longValue];
         long endTime = [startEndTime[1] longValue];
         NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
-        [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
+        self.pieChart.showsOnlyPercentageText = YES;
+        [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:YES];
         return;
     }
 
@@ -148,7 +149,8 @@
     long startTime = [startEndTime[0] longValue];
     long endTime = [startEndTime[1] longValue];
     NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
-    [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
+    self.pieChart.showsOnlyPercentageText = YES;
+    [self.pieChart updateWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:YES];
 
 }
 
@@ -274,7 +276,8 @@
         long startTime = [startEndTime[0] longValue];
         long endTime = [startEndTime[1] longValue];
         NSMutableArray<MirrorReadModel *> *todayRecordsSortByTasks = [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:NO];
-        _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:NO];
+        _pieChart = [[PiechartView alloc] initWithData:todayRecordsSortByTasks width:self.pieChartWidth enableInteractive:YES];
+        _pieChart.showsOnlyPercentageText = YES;
     }
     return _pieChart;
 }

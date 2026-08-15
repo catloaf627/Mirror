@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) MirrorColorType colorType;
 @property (nonatomic, assign) CGFloat radius;
 @property (nonatomic, assign) BOOL selected;
+@property (nonatomic, assign) BOOL showsOnlyPercentageText;
 @property (nonatomic, strong) NSString *text;
 @property (nonatomic, assign) NSInteger tag;
 @property (nonatomic, strong) CATextLayer *textLayer;

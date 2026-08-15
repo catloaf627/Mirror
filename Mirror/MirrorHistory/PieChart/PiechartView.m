@@ -73,8 +73,8 @@
 
     for (int i=0; i<percentages.count; i++) {
         percentages[i] = totalTime ? @([percentages[i] doubleValue]/(double)totalTime) : @0;
-        NSString *percentageText =  [NSString stringWithFormat:@"(%1.f%%)", [percentages[i] floatValue]  * 100];
-        texts[i] = [texts[i] stringByAppendingString: percentageText];
+        NSString *percentageText = [NSString stringWithFormat:@"%1.f%%", [percentages[i] floatValue]  * 100];
+        texts[i] = self.showsOnlyPercentageText ? percentageText : [texts[i] stringByAppendingFormat:@"(%@)", percentageText];
     }
     for (int i=0; i<percentages.count; i++) {
         CGFloat percentage = [percentages[i] floatValue];
@@ -90,6 +90,7 @@
         sliceLayer.colorType = [colors[i] intValue];
         sliceLayer.text = texts[i];
         sliceLayer.tag = i;
+        sliceLayer.showsOnlyPercentageText = self.showsOnlyPercentageText;
         [sliceLayer create];
         [self.layer addSublayer:sliceLayer];
         [self.sliceLayerArray addObject:sliceLayer];
