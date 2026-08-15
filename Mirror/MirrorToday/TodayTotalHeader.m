@@ -182,7 +182,7 @@
     }
     
     UIImage *iconImage = [self specialDayIconImage];
-    UIColor *iconColor = [self systemColorNamed:specialDay.color];
+    UIColor *iconColor = [UIColor mirrorSystemColorNamed:specialDay.color];
     if ([self usesRelativeDateLabel]) {
         self.crownButton.hidden = NO;
         self.crownButton.transform = CGAffineTransformIdentity;
@@ -215,23 +215,6 @@
     formatter.dateFormat = @"yyyy-MM-dd";
     formatter.timeZone = [NSTimeZone systemTimeZone];
     return [formatter stringFromDate:date];
-}
-
-- (UIColor *)systemColorNamed:(NSString *)colorName
-{
-    if ([colorName isEqualToString:@"systemRed"]) return [UIColor systemRedColor];
-    if ([colorName isEqualToString:@"systemOrange"]) return [UIColor systemOrangeColor];
-    if ([colorName isEqualToString:@"systemYellow"]) return [UIColor systemYellowColor];
-    if ([colorName isEqualToString:@"systemGreen"]) return [UIColor systemGreenColor];
-    if ([colorName isEqualToString:@"systemMint"]) {
-        if (@available(iOS 15.0, *)) {
-            return [UIColor systemMintColor];
-        }
-        return [UIColor systemTealColor];
-    }
-    if ([colorName isEqualToString:@"systemPurple"]) return [UIColor systemPurpleColor];
-    if ([colorName isEqualToString:@"systemGray"]) return [UIColor systemGrayColor];
-    return [UIColor systemBlueColor];
 }
 
 - (void)datePickerButtonTapped

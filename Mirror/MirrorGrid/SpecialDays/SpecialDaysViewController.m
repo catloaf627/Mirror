@@ -362,7 +362,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 
 - (void)highlightRow:(UIView *)row withDay:(MirrorDayModel *)day
 {
-    UIColor *highlightColor = [[self systemColorNamed:day.color] colorWithAlphaComponent:0.16];
+    UIColor *highlightColor = [[UIColor mirrorSystemColorNamed:day.color] colorWithAlphaComponent:0.16];
     row.layer.cornerRadius = 8;
     row.layer.masksToBounds = YES;
     row.backgroundColor = UIColor.clearColor;
@@ -391,7 +391,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         UIContextMenuInteraction *menuInteraction = [[UIContextMenuInteraction alloc] initWithDelegate:self];
         [row addInteraction:menuInteraction];
     }
-    UIColor *dayColor = [self systemColorNamed:day.color];
+    UIColor *dayColor = [UIColor mirrorSystemColorNamed:day.color];
     UIColor *lineColor = [dayColor colorWithAlphaComponent:0.38];
     
     UIView *topLine = [UIView new];
@@ -519,12 +519,12 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 {
     [self.view endEditing:YES];
 
-    __block NSString *selectedColor = [self randomSpecialDayColor];
+    __block MirrorSystemColorType selectedColor = [self randomSpecialDayColor];
     
     UIDatePicker *datePicker = [UIDatePicker new];
     datePicker.datePickerMode = UIDatePickerModeDate;
     datePicker.locale = [NSLocale localeWithLocaleIdentifier:[MirrorLanguage mirror_stringWithKey:@"locale_Identifier"]];
-    datePicker.tintColor = [self systemColorNamed:selectedColor];
+    datePicker.tintColor = [UIColor mirrorSystemColorNamed:selectedColor];
     if (@available(iOS 13.4, *)) {
         datePicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
     }
@@ -532,7 +532,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     __block NSString *selectedIconName = @"star.fill";
     UIButton *iconPickerButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [iconPickerButton setImage:[UIImage systemImageNamed:selectedIconName] forState:UIControlStateNormal];
-    iconPickerButton.tintColor = [self systemColorNamed:selectedColor];
+    iconPickerButton.tintColor = [UIColor mirrorSystemColorNamed:selectedColor];
     iconPickerButton.titleLabel.font = [UIFont mirrorButtonFont];
     iconPickerButton.backgroundColor = [self specialDayAlertControlBackgroundColor];
     iconPickerButton.layer.cornerRadius = 8;
@@ -558,10 +558,10 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
             }];
         }] forControlEvents:UIControlEventTouchUpInside];
     }
-    [addAlert setValue:[self specialDayContentViewControllerWithDatePicker:datePicker infoTextField:infoTextField iconPickerButton:iconPickerButton colorPickerView:[self colorPickerViewWithSelectedColor:selectedColor selectionHandler:^(NSString *color) {
+    [addAlert setValue:[self specialDayContentViewControllerWithDatePicker:datePicker infoTextField:infoTextField iconPickerButton:iconPickerButton colorPickerView:[self colorPickerViewWithSelectedColor:selectedColor selectionHandler:^(MirrorSystemColorType color) {
         selectedColor = color;
-        iconPickerButton.tintColor = [self systemColorNamed:color];
-        datePicker.tintColor = [self systemColorNamed:color];
+        iconPickerButton.tintColor = [UIColor mirrorSystemColorNamed:color];
+        datePicker.tintColor = [UIColor mirrorSystemColorNamed:color];
     }]] forKey:@"contentViewController"];
 
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil];
@@ -654,7 +654,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     return [UIColor colorWithWhite:0.92 alpha:1];
 }
 
-- (UIView *)colorPickerViewWithSelectedColor:(NSString *)selectedColor selectionHandler:(void (^)(NSString *colorName))selectionHandler
+- (UIView *)colorPickerViewWithSelectedColor:(MirrorSystemColorType)selectedColor selectionHandler:(void (^)(MirrorSystemColorType colorType))selectionHandler
 {
     UIStackView *colorStackView = [UIStackView new];
     colorStackView.axis = UILayoutConstraintAxisHorizontal;
@@ -664,8 +664,9 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 
     NSMutableArray<UIButton *> *colorButtons = [NSMutableArray new];
     NSMutableArray<UIView *> *colorFillViews = [NSMutableArray new];
-    for (NSString *colorName in [self specialDayColorOptions]) {
-        UIColor *systemColor = [self systemColorNamed:colorName];
+    for (NSNumber *colorNumber in [self specialDayColorOptions]) {
+        MirrorSystemColorType colorType = colorNumber.integerValue;
+        UIColor *systemColor = [UIColor mirrorSystemColorNamed:colorType];
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         button.backgroundColor = [UIColor clearColor];
         button.layer.cornerRadius = 12;
@@ -674,7 +675,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         
         UIView *fillView = [UIView new];
         fillView.userInteractionEnabled = NO;
-        fillView.hidden = ![colorName isEqualToString:selectedColor];
+        fillView.hidden = colorType != selectedColor;
         fillView.backgroundColor = systemColor;
         fillView.layer.cornerRadius = 9;
         fillView.layer.masksToBounds = YES;
@@ -692,7 +693,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
                     colorFillViews[index].hidden = colorButtons[index] != button;
                 }
                 if (selectionHandler) {
-                    selectionHandler(colorName);
+                    selectionHandler(colorType);
                 }
             }] forControlEvents:UIControlEventTouchUpInside];
         }
@@ -704,35 +705,27 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     return colorStackView;
 }
 
-- (NSArray<NSString *> *)specialDayColorOptions
+- (NSArray<NSNumber *> *)specialDayColorOptions
 {
-    return @[@"systemRed", @"systemOrange", @"systemYellow", @"systemGreen", @"systemMint", @"systemBlue", @"systemPurple", @"systemGray"];
+    return @[
+        @(MirrorSystemColorTypeRed),
+        @(MirrorSystemColorTypeOrange),
+        @(MirrorSystemColorTypeYellow),
+        @(MirrorSystemColorTypeGreen),
+        @(MirrorSystemColorTypeMint),
+        @(MirrorSystemColorTypeBlue),
+        @(MirrorSystemColorTypePurple),
+        @(MirrorSystemColorTypeGray)
+    ];
 }
 
-- (NSString *)randomSpecialDayColor
+- (MirrorSystemColorType)randomSpecialDayColor
 {
-    NSArray<NSString *> *colorOptions = [self specialDayColorOptions];
+    NSArray<NSNumber *> *colorOptions = [self specialDayColorOptions];
     if (colorOptions.count == 0) {
-        return @"systemBlue";
+        return MirrorSystemColorTypeBlue;
     }
-    return colorOptions[arc4random_uniform((uint32_t)colorOptions.count)];
-}
-
-- (UIColor *)systemColorNamed:(NSString *)colorName
-{
-    if ([colorName isEqualToString:@"systemRed"]) return [UIColor systemRedColor];
-    if ([colorName isEqualToString:@"systemOrange"]) return [UIColor systemOrangeColor];
-    if ([colorName isEqualToString:@"systemYellow"]) return [UIColor systemYellowColor];
-    if ([colorName isEqualToString:@"systemGreen"]) return [UIColor systemGreenColor];
-    if ([colorName isEqualToString:@"systemMint"]) {
-        if (@available(iOS 15.0, *)) {
-            return [UIColor systemMintColor];
-        }
-        return [UIColor systemTealColor];
-    }
-    if ([colorName isEqualToString:@"systemPurple"]) return [UIColor systemPurpleColor];
-    if ([colorName isEqualToString:@"systemGray"]) return [UIColor systemGrayColor];
-    return [UIColor systemBlueColor];
+    return colorOptions[arc4random_uniform((uint32_t)colorOptions.count)].integerValue;
 }
 
 - (void)presentIconPickerFromAlert:(UIAlertController *)addAlert selectedIconName:(NSString *)selectedIconName completion:(void (^)(NSString *iconName))completion

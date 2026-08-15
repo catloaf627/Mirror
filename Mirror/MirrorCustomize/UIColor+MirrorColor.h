@@ -45,10 +45,22 @@ typedef NS_ENUM(NSInteger, MirrorColorType) {
     MirrorColorTypeAddTaskCellPlus,          // add task cell的加号颜色
 };
 
+typedef NS_ENUM(NSInteger, MirrorSystemColorType) {
+    MirrorSystemColorTypeRed,
+    MirrorSystemColorTypeOrange,
+    MirrorSystemColorTypeYellow,
+    MirrorSystemColorTypeGreen,
+    MirrorSystemColorTypeMint,
+    MirrorSystemColorTypeBlue,
+    MirrorSystemColorTypePurple,
+    MirrorSystemColorTypeGray,
+};
+
 @interface UIColor (MirrorColor)
 
 + (UIColor *)mirrorColorNamed:(MirrorColorType)colorType;
 + (UIColor *)mirrorColorPulsed:(MirrorColorType)colorType;
++ (UIColor *)mirrorSystemColorNamed:(MirrorSystemColorType)colorType;
 
 @end
 

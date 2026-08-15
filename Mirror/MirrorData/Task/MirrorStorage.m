@@ -916,7 +916,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
             @"date_str": day.dateStr ?: @"",
             @"info": day.info ?: @"",
             @"icon": day.icon ?: @"",
-            @"color": day.color ?: @"systemBlue"
+            @"color": @(day.color)
         }];
     }
 
@@ -983,14 +983,14 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
         NSString *dateStr = jsonDay[@"date_str"];
         NSString *info = jsonDay[@"info"];
         NSString *icon = jsonDay[@"icon"];
-        NSString *color = jsonDay[@"color"];
+        NSNumber *color = jsonDay[@"color"];
         if (![dateStr isKindOfClass:NSString.class] || ![info isKindOfClass:NSString.class] || ![icon isKindOfClass:NSString.class]) {
             return NO;
         }
-        if (color != nil && ![color isKindOfClass:NSString.class]) {
+        if (![color isKindOfClass:NSNumber.class]) {
             return NO;
         }
-        MirrorDayModel *day = [[MirrorDayModel alloc] initWithDateStr:dateStr info:info icon:icon color:color ?: @"systemBlue"];
+        MirrorDayModel *day = [[MirrorDayModel alloc] initWithDateStr:dateStr info:info icon:icon color:[color integerValue]];
         [parsedDays addObject:day];
     }
 

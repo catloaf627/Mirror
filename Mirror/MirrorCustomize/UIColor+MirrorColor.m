@@ -67,6 +67,31 @@
     }
 }
 
++ (UIColor *)mirrorSystemColorNamed:(MirrorSystemColorType)colorType
+{
+    switch (colorType) {
+        case MirrorSystemColorTypeRed:
+            return [UIColor systemRedColor];
+        case MirrorSystemColorTypeOrange:
+            return [UIColor systemOrangeColor];
+        case MirrorSystemColorTypeYellow:
+            return [UIColor systemYellowColor];
+        case MirrorSystemColorTypeGreen:
+            return [UIColor systemGreenColor];
+        case MirrorSystemColorTypeMint:
+            if (@available(iOS 15.0, *)) {
+                return [UIColor systemMintColor];
+            }
+            return [UIColor systemTealColor];
+        case MirrorSystemColorTypeBlue:
+            return [UIColor systemBlueColor];
+        case MirrorSystemColorTypePurple:
+            return [UIColor systemPurpleColor];
+        case MirrorSystemColorTypeGray:
+            return [UIColor systemGrayColor];
+    }
+}
+
 // Only 8 colors can be pulsed.
 
 + (UIColor *)mirrorColorPulsed:(MirrorColorType)colorType
