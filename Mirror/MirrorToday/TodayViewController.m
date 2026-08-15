@@ -46,6 +46,7 @@
 @property (nonatomic, strong) UICalendarView *calendarView;
 @property (nonatomic, strong) UICalendarSelectionSingleDate *dateSelection;
 @property (nonatomic, strong) NSDictionary<NSString *, NSMutableArray<MirrorReadModel *> *> *gridData;
+@property (nonatomic, strong) NSDictionary<NSString *, MirrorDayModel *> *specialDaysByDateKey;
 
 @end
 
@@ -73,8 +74,8 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSpecialDaysButton) name:MirrorDayCreateNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(updateSpecialDaysButton) name:MirrorDayDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayCreateNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayDeleteNotification object:nil];
     }
     return self;
 }
@@ -115,6 +116,7 @@
     self.calendarView = nil;
     self.dateSelection = nil;
     self.gridData = nil;
+    self.specialDaysByDateKey = nil;
     self.specialDaysButton = nil;
     self.todayButton = nil;
     self.todayButtonContainer = nil;
@@ -215,9 +217,10 @@
     }
 
     self.gridData = [MirrorStorage getGridData];
+    [self reloadSpecialDaysByDateKey];
     [self applyCalendarSettings];
     [self updateCalendarSelectionForSelectedDate];
-    [self.calendarView reloadDecorationsForDateComponents:[self gridDateComponents] animated:NO];
+    [self.calendarView reloadDecorationsForDateComponents:[self calendarDecorationDateComponents] animated:NO];
     [self.view addSubview:self.calendarPickerDismissView];
     [self.calendarPickerDismissView mas_remakeConstraints:^(MASConstraintMaker *make) {
         make.edges.mas_equalTo(self.view);
@@ -227,7 +230,7 @@
         make.top.mas_equalTo(self.timelineViewController.view.mas_top).offset(8);
         make.centerX.mas_equalTo(self.view);
         make.width.mas_equalTo(MIN(kScreenWidth - 40*kWidthRatio, 340));
-        make.height.mas_equalTo(320);
+        make.height.mas_equalTo([self calendarPickerHeight]);
     }];
     self.calendarPickerContainerView.alpha = 0;
     self.calendarPickerContainerView.transform = CGAffineTransformMakeScale(0.96, 0.96);
@@ -384,6 +387,26 @@
     self.specialDaysButton.tintColor = tintColor;
 }
 
+- (void)handleSpecialDaysChanged
+{
+    [self reloadSpecialDaysByDateKey];
+    [self updateSpecialDaysButton];
+    if (self.calendarPickerContainerView.superview) {
+        [self.calendarView reloadDecorationsForDateComponents:[self calendarDecorationDateComponents] animated:NO];
+    }
+}
+
+- (void)reloadSpecialDaysByDateKey
+{
+    NSMutableDictionary<NSString *, MirrorDayModel *> *daysByDateKey = [NSMutableDictionary new];
+    for (MirrorDayModel *day in [MirrorStorage retriveMirrorDays]) {
+        if (day.dateStr.length > 0) {
+            daysByDateKey[day.dateStr] = day;
+        }
+    }
+    self.specialDaysByDateKey = daysByDateKey;
+}
+
 - (MirrorDayModel *)specialDayFromDays:(NSArray<MirrorDayModel *> *)days dateStr:(NSString *)dateStr
 {
     for (MirrorDayModel *day in days) {
@@ -464,7 +487,7 @@
     [self applyCalendarSettings];
     [self updateCalendarSelectionForSelectedDate];
     if (self.calendarPickerContainerView.superview) {
-        [self.calendarView reloadDecorationsForDateComponents:[self gridDateComponents] animated:NO];
+        [self.calendarView reloadDecorationsForDateComponents:[self calendarDecorationDateComponents] animated:NO];
     }
 }
 
@@ -477,13 +500,25 @@
 
 - (NSArray<NSDateComponents *> *)gridDateComponents
 {
+    return [self dateComponentsForDateKeys:self.gridData.allKeys];
+}
+
+- (NSArray<NSDateComponents *> *)calendarDecorationDateComponents
+{
+    NSMutableSet<NSString *> *dateKeys = [NSMutableSet setWithArray:self.gridData.allKeys ?: @[]];
+    [dateKeys addObjectsFromArray:self.specialDaysByDateKey.allKeys ?: @[]];
+    return [self dateComponentsForDateKeys:dateKeys.allObjects];
+}
+
+- (NSArray<NSDateComponents *> *)dateComponentsForDateKeys:(NSArray<NSString *> *)dateKeys
+{
     NSMutableArray<NSDateComponents *> *components = [NSMutableArray new];
     NSDateFormatter *formatter = [NSDateFormatter new];
     formatter.dateFormat = @"yyyy-MM-dd";
     formatter.timeZone = [NSTimeZone systemTimeZone];
     NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
     calendar.timeZone = [NSTimeZone systemTimeZone];
-    for (NSString *key in self.gridData.allKeys) {
+    for (NSString *key in dateKeys) {
         NSDate *date = [formatter dateFromString:key];
         if (!date) {
             continue;
@@ -498,11 +533,22 @@
     NSDate *date = dateComponents.date;
     if (!date) return nil;
 
+    MirrorDayModel *specialDay = self.specialDaysByDateKey[[self keyFromDate:date]];
     long totalTime = 0;
     NSMutableArray<NSNumber *> *taskTimes = [NSMutableArray array];
     NSMutableArray<UIColor *> *taskColors = [NSMutableArray array];
     [self getTaskTimes:taskTimes taskColors:taskColors totalTime:&totalTime forDate:date];
-    if (totalTime == 0 || taskTimes.count == 0 || taskColors.count == 0) return nil;
+    BOOL hasTaskDecoration = totalTime > 0 && taskTimes.count > 0 && taskColors.count > 0;
+    if (specialDay) {
+        return [UICalendarViewDecoration decorationWithCustomViewProvider:^UIView * _Nonnull{
+            CGFloat markerSide = 8;
+            UIView *markerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, markerSide, markerSide)];
+            markerView.layer.cornerRadius = markerSide / 2;
+            markerView.backgroundColor = [UIColor mirrorSystemColorNamed:specialDay.color];
+            return markerView;
+        }];
+    }
+    if (!hasTaskDecoration) return nil;
 
     CGFloat barHeight = 6;
     CGFloat minWidth = barHeight;
@@ -686,6 +732,14 @@
 - (CGFloat)todayButtonWidth
 {
     return 32*kWidthRatio;
+}
+
+- (CGFloat)calendarPickerHeight
+{
+    CGFloat top = CGRectGetMinY(self.timelineViewController.view.frame) + 8;
+    CGFloat bottomPadding = self.tabBarController.tabBar.frame.size.height + MirrorBottomSafeAreaHeight() + 12;
+    CGFloat availableHeight = kScreenHeight - top - bottomPadding;
+    return MAX(320, MIN(380, availableHeight));
 }
 
 - (NSString *)todayCalendarSymbolName
