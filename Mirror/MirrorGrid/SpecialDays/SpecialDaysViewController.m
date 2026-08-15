@@ -547,7 +547,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     infoTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"special_day_info"];
     infoTextField.textAlignment = NSTextAlignmentCenter;
     infoTextField.returnKeyType = UIReturnKeyDone;
-    infoTextField.font = [UIFont mirrorHintFont_Card];
+    infoTextField.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     infoTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     infoTextField.backgroundColor = [self specialDayAlertControlBackgroundColor];
     infoTextField.layer.cornerRadius = 8;
@@ -621,35 +621,36 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 - (UIViewController *)specialDayContentViewControllerWithDatePicker:(UIDatePicker *)datePicker infoTextField:(UITextField *)infoTextField iconPickerButton:(UIButton *)iconPickerButton colorPickerView:(UIView *)colorPickerView
 {
     UIViewController *contentViewController = [UIViewController new];
-    contentViewController.preferredContentSize = CGSizeMake(248, 122);
+    contentViewController.preferredContentSize = CGSizeMake(248, 132);
 
     [contentViewController.view addSubview:datePicker];
     [contentViewController.view addSubview:iconPickerButton];
     [contentViewController.view addSubview:infoTextField];
     [contentViewController.view addSubview:colorPickerView];
     
+    [colorPickerView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.mas_equalTo(contentViewController.view);
+        make.top.mas_equalTo(contentViewController.view);
+        make.height.mas_equalTo(26);
+    }];
+
     [datePicker mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.top.mas_equalTo(contentViewController.view);
+        make.centerX.mas_equalTo(contentViewController.view);
+        make.top.mas_equalTo(colorPickerView.mas_bottom).offset(12);
         make.height.mas_equalTo(34);
     }];
 
     [iconPickerButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(contentViewController.view);
         make.top.mas_equalTo(datePicker.mas_bottom).offset(12);
-        make.width.height.mas_equalTo(36);
+        make.width.height.mas_equalTo(40);
     }];
     
     [infoTextField mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(iconPickerButton.mas_right).offset(10);
         make.right.mas_equalTo(contentViewController.view);
         make.centerY.mas_equalTo(iconPickerButton);
-        make.height.mas_equalTo(36);
-    }];
-
-    [colorPickerView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.mas_equalTo(contentViewController.view);
-        make.top.mas_equalTo(infoTextField.mas_bottom).offset(12);
-        make.height.mas_equalTo(26);
+        make.height.mas_equalTo(40);
     }];
 
     return contentViewController;
@@ -744,14 +745,24 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     [self applyPreferredInterfaceStyleToViewController:iconAlert];
     [self applyPreferredInterfaceStyleToViewController:contentViewController];
     CGFloat pickerWidth = 248;
-    CGFloat pickerHeight = 332;
+    CGFloat pickerHeight = 368;
     contentViewController.preferredContentSize = CGSizeMake(pickerWidth, pickerHeight);
     
-    UISegmentedControl *categoryPicker = [[UISegmentedControl alloc] initWithItems:@[@"★", @"Life", @"Sport", @"Work", @"More"]];
-    categoryPicker.selectedSegmentIndex = 0;
-    [contentViewController.view addSubview:categoryPicker];
-    [categoryPicker mas_makeConstraints:^(MASConstraintMaker *make) {
+    UISegmentedControl *primaryCategoryPicker = [[UISegmentedControl alloc] initWithItems:@[@"★", @"Love", @"Home", @"Food", @"Trip"]];
+    primaryCategoryPicker.selectedSegmentIndex = 0;
+    [contentViewController.view addSubview:primaryCategoryPicker];
+    [primaryCategoryPicker mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.top.mas_equalTo(contentViewController.view);
+        make.width.mas_equalTo(pickerWidth);
+        make.height.mas_equalTo(30);
+    }];
+
+    UISegmentedControl *secondaryCategoryPicker = [[UISegmentedControl alloc] initWithItems:@[@"Sport", @"Work", @"Tech", @"Health", @"More"]];
+    secondaryCategoryPicker.selectedSegmentIndex = UISegmentedControlNoSegment;
+    [contentViewController.view addSubview:secondaryCategoryPicker];
+    [secondaryCategoryPicker mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.mas_equalTo(contentViewController.view);
+        make.top.mas_equalTo(primaryCategoryPicker.mas_bottom).offset(6);
         make.width.mas_equalTo(pickerWidth);
         make.height.mas_equalTo(30);
     }];
@@ -770,7 +781,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     [contentViewController.view addSubview:searchTextField];
     [searchTextField mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.mas_equalTo(contentViewController.view);
-        make.top.mas_equalTo(categoryPicker.mas_bottom).offset(8);
+        make.top.mas_equalTo(secondaryCategoryPicker.mas_bottom).offset(8);
         make.width.mas_equalTo(pickerWidth);
         make.height.mas_equalTo(38);
     }];
@@ -803,9 +814,13 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         NSString *normalizedQuery = query.lowercaseString ?: @"";
         NSMutableArray<NSString *> *filteredOptions = [NSMutableArray new];
         NSArray<NSString *> *sourceOptions = normalizedQuery.length > 0 ? iconOptions : [self specialDayIconOptionsForCategoryIndex:selectedCategoryIndex allIcons:iconOptions];
+        NSInteger maxIconCount = 180;
         for (NSString *iconName in sourceOptions) {
             if ((normalizedQuery.length == 0 || [iconName.lowercaseString containsString:normalizedQuery]) && [UIImage systemImageNamed:iconName]) {
                 [filteredOptions addObject:iconName];
+            }
+            if (filteredOptions.count >= maxIconCount) {
+                break;
             }
         }
         NSString *trimmedQuery = [query stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] ?: @"";
@@ -866,8 +881,14 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     
     reloadIcons(nil);
     if (@available(iOS 14.0, *)) {
-        [categoryPicker addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
-            selectedCategoryIndex = categoryPicker.selectedSegmentIndex;
+        [primaryCategoryPicker addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
+            selectedCategoryIndex = primaryCategoryPicker.selectedSegmentIndex;
+            secondaryCategoryPicker.selectedSegmentIndex = UISegmentedControlNoSegment;
+            reloadIcons(searchTextField.text);
+        }] forControlEvents:UIControlEventValueChanged];
+        [secondaryCategoryPicker addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
+            selectedCategoryIndex = secondaryCategoryPicker.selectedSegmentIndex + 5;
+            primaryCategoryPicker.selectedSegmentIndex = UISegmentedControlNoSegment;
             reloadIcons(searchTextField.text);
         }] forControlEvents:UIControlEventValueChanged];
         [searchTextField addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
@@ -1009,13 +1030,23 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 {
     switch (categoryIndex) {
         case 1:
-            return @[@"heart", @"star", @"gift", @"cake", @"balloon", @"party", @"house", @"home", @"cat", @"dog", @"paw", @"cup", @"fork", @"wine", @"cart", @"bag", @"bed", @"sofa", @"tree", @"leaf", @"sun", @"moon", @"camera", @"music"];
+            return @[@"heart", @"sparkle", @"gift", @"balloon", @"party", @"cake", @"crown", @"rosette", @"person", @"hand", @"face", @"star"];
         case 2:
-            return @[@"figure", @"sport", @"ball", @"tennis", @"soccer", @"basketball", @"football", @"baseball", @"dumbbell", @"swim", @"run", @"walk", @"hike", @"bike", @"bicycle", @"trophy", @"medal", @"target"];
+            return @[@"house", @"home", @"sofa", @"bed", @"bath", @"shower", @"washer", @"lamp", @"light", @"door", @"chandelier", @"building", @"storefront"];
         case 3:
-            return @[@"briefcase", @"folder", @"doc", @"book", @"graduation", @"calendar", @"clock", @"chart", @"desktop", @"laptop", @"keyboard", @"terminal", @"curly", @"chevron", @"number", @"server", @"printer", @"scanner"];
+            return @[@"fork", @"knife", @"cup", @"mug", @"wine", @"takeout", @"menucard", @"cart", @"bag", @"birthday", @"cake", @"popcorn", @"carrot"];
         case 4:
-            return @[@"car", @"bus", @"tram", @"airplane", @"ferry", @"map", @"location", @"mappin", @"globe", @"medical", @"heart", @"cross", @"pill", @"bandage", @"stethoscope", @"brain", @"lungs", @"syringe", @"lock", @"key", @"wifi", @"network"];
+            return @[@"car", @"bus", @"tram", @"airplane", @"ferry", @"bicycle", @"scooter", @"map", @"location", @"mappin", @"globe", @"compass", @"signpost", @"road", @"sailboat"];
+        case 5:
+            return @[@"figure", @"sport", @"ball", @"tennis", @"soccer", @"basketball", @"football", @"baseball", @"dumbbell", @"swim", @"run", @"walk", @"hike", @"bike", @"bicycle", @"trophy", @"medal", @"target"];
+        case 6:
+            return @[@"briefcase", @"folder", @"doc", @"book", @"graduation", @"calendar", @"clock", @"chart", @"student", @"backpack", @"case", @"newspaper", @"magazine"];
+        case 7:
+            return @[@"desktop", @"laptop", @"keyboard", @"terminal", @"curly", @"chevron", @"number", @"server", @"printer", @"scanner", @"app", @"safari", @"network", @"wifi", @"qrcode", @"barcode"];
+        case 8:
+            return @[@"medical", @"heart", @"cross", @"pill", @"bandage", @"stethoscope", @"brain", @"lungs", @"syringe", @"thermometer", @"waveform", @"allergen", @"microbe", @"facemask"];
+        case 9:
+            return @[@"sun", @"moon", @"cloud", @"snow", @"rain", @"wind", @"tree", @"leaf", @"paw", @"cat", @"dog", @"fish", @"bird", @"camera", @"music", @"paint", @"game", @"lock", @"key", @"gear", @"wrench", @"hammer", @"trash", @"shipping"];
         default:
             return @[];
     }
