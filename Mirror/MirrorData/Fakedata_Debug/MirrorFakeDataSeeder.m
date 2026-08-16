@@ -475,19 +475,20 @@
 + (NSString *)cookNoteForDurationMinutes:(NSInteger)durationMinutes dayIndex:(NSInteger)dayIndex
 {
     // 做饭每次都有 note，根据做饭时长分成快手菜、正常晚饭、复杂菜三档，再从对应菜名里随机选择。
+    // 不是直接翻译，而是文化对应
     NSArray<NSArray<NSString *> *> *quickNotes = @[
-        ML(@"tomato omelette", @"番茄炒蛋", @"tortilla de patata", @"omelette aux fines herbes", @"親子丼", @"김치볶음밥", @"Tomatenomelett", @"омлет с помидорами"),
-        ML(@"garlic shrimp pasta", @"蒜香虾仁意面", @"pasta con gambas al ajillo", @"pâtes aux crevettes à l'ail", @"明太子パスタ", @"새우 오일 파스타", @"Pasta mit Knoblauchgarnelen", @"паста с чесночными креветками"),
-        ML(@"miso salmon bowl", @"味噌三文鱼饭", @"bowl de salmón", @"bol de saumon miso", @"鮭の味噌焼き丼", @"연어 덮밥", @"Miso-Lachs-Bowl", @"боул с лососем мисо")
+        ML(@"omelette", @"番茄炒蛋", @"tortilla de patata", @"omelette aux fines herbes", @"親子丼", @"김치볶음밥", @"Abendbrot", @"бутерброд"),
+        ML(@"scrambled eggs", @"蒜香虾仁意面", @"pasta con gambas al ajillo", @"pâtes aux crevettes à l'ail", @"明太子パスタ", @"새우 오일 파스타", @"Rührei", @"яичница"),
+        ML(@"pasta salad", @"味噌三文鱼饭", @"bowl de salmón", @"bol de saumon miso", @"鮭の味噌焼き丼", @"연어 덮밥", @"Nudelsalat", @"гречка с грибами")
     ];
     NSArray<NSArray<NSString *> *> *regularNotes = @[
         ML(@"chicken curry", @"咖喱鸡", @"pollo al curry", @"poulet au curry", @"チキンカレー", @"치킨 카레", @"Hähnchencurry", @"курица карри"),
-        ML(@"braised pork ribs", @"红烧排骨", @"costillas guisadas", @"travers de porc mijotés", @"豚の角煮", @"돼지갈비찜", @"geschmorte Schweinerippchen", @"тушеные свиные ребрышки"),
-        ML(@"mapo tofu", @"麻婆豆腐", @"albóndigas con salsa brava", @"hachis parmentier", @"麻婆豆腐", @"마파두부", @"Mapo-Tofu", @"мапо тофу"),
-        ML(@"beef noodle soup", @"牛肉面", @"cocido ligero", @"pot-au-feu", @"肉うどん", @"소고기국밥", @"Rindfleisch-Nudelsuppe", @"суп с говядиной и лапшой")
+        ML(@"roast chicken", @"红烧排骨", @"costillas guisadas", @"travers de porc mijotés", @"豚の角煮", @"돼지갈비찜", @"Schweinebraten", @"котлеты с пюре"),
+        ML(@"spaghetti bolognese", @"麻婆豆腐", @"albóndigas con salsa brava", @"hachis parmentier", @"麻婆豆腐", @"마파두부", @"Käsespätzle", @"пельмени"),
+        ML(@"beef stew", @"牛肉面", @"cocido ligero", @"pot-au-feu", @"肉うどん", @"소고기국밥", @"Rindergulasch", @"борщ")
     ];
     NSArray<NSArray<NSString *> *> *slowNotes = @[
-        ML(@"kung pao shrimp", @"宫保虾球", @"paella de marisco", @"boeuf bourguignon", @"ビーフシチュー", @"갈비찜", @"Kung-Pao-Garnelen", @"креветки гунбао"),
+        ML(@"Sunday roast", @"宫保虾球", @"paella de marisco", @"boeuf bourguignon", @"ビーフシチュー", @"갈비찜", @"Sauerbraten", @"бефстроганов"),
         ML(@"stuffed roast chicken", @"香草烤鸡", @"pollo relleno al horno", @"poulet rôti farci", @"ローストチキン", @"통닭구이", @"gefülltes Brathähnchen", @"фаршированная запеченная курица"),
         ML(@"seafood risotto", @"海鲜烩饭", @"arroz caldoso de marisco", @"risotto aux fruits de mer", @"海鮮リゾット", @"해산물 리조또", @"Meeresfrüchte-Risotto", @"ризотто с морепродуктами")
     ];
