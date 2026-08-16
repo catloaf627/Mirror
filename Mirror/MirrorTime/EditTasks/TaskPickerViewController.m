@@ -9,7 +9,7 @@
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
 
-static CGFloat const kTaskPickerBackdropAlpha = 0.5;
+static CGFloat const kTaskPickerBackdropAlpha = 0.82;
 static CGFloat const kTaskPickerShadowOpacity = 0.25;
 static CGFloat const kTaskPickerShadowRadius = 10;
 static CGFloat const kTaskPickerShadowYOffset = 4;
@@ -19,7 +19,7 @@ static CGFloat const kTaskPickerDotSize = 16;
 static CGFloat const kTaskPickerNotePrefixCheckboxSize = 18;
 static CGFloat const kTaskPickerHorizontalPadding = 12;
 static CGFloat const kTaskPickerRowSpacing = 8;
-static CGFloat const kTaskPickerNotePrefixSpacing = 10;
+static CGFloat const kTaskPickerNotePrefixSpacing = 18;
 static CGFloat const kTaskPickerNotePrefixLabelSpacing = 6;
 static CGFloat const kTaskPickerCornerRadius = 12;
 static CGFloat const kTaskPickerTitleSpacing = 12;
