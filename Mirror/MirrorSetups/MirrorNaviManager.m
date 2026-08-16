@@ -19,7 +19,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 
 @property (nonatomic, strong) UINavigationController *controller;
 
-@property (nonatomic, strong) UIButton *leftButton;
+@property (nonatomic, strong) UIView *leftButton;
 @property (nonatomic, strong) UIView *rightButton;
 @property (nonatomic, strong) UILabel *titleLabel;
 
@@ -47,7 +47,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     return _controller;
 }
 
-- (void)updateNaviItemWithTitle:(NSString *)title leftButton:(nullable UIButton *)leftButton rightButton:(nullable UIView *)rightButton
+- (void)updateNaviItemWithTitle:(NSString *)title leftButton:(nullable UIView *)leftButton rightButton:(nullable UIView *)rightButton
 {
     // 抹干净画布 重新开始
     [self.titleLabel removeFromSuperview];
@@ -77,7 +77,8 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
         [self.leftButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.left.offset(kCollectionViewPadding);
             make.centerY.offset(0);
-            make.width.height.mas_equalTo(_controller.navigationBar.frame.size.height);
+            make.height.mas_equalTo(_controller.navigationBar.frame.size.height);
+            make.width.mas_equalTo(MAX(_controller.navigationBar.frame.size.height, self.leftButton.frame.size.width));
         }];
     }
     if (rightButton) {
@@ -126,11 +127,10 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     return _titleLabel;
 }
 
-- (UIButton *)leftButton
+- (UIView *)leftButton
 {
     if (!_leftButton) {
-        _leftButton = [UIButton new];
-        _leftButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _leftButton = [UIView new];
     }
     return _leftButton;
 }

@@ -107,7 +107,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.hideTasksButton rightButton:self.gridOptionsView];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.gridOptionsView rightButton:self.hideTasksButton];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -142,7 +142,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.hideTasksButton rightButton:self.gridOptionsView];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.gridOptionsView rightButton:self.hideTasksButton];
     }
     [self p_setupUI];
 }
@@ -824,13 +824,13 @@
     if (!_gridOptionsView) {
         CGFloat itemSize = self.navigationController.navigationBar.frame.size.height;
         _gridOptionsView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, itemSize * 2, itemSize)];
-        [_gridOptionsView addSubview:self.weekStartsOnButton];
-        [self.weekStartsOnButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        [_gridOptionsView addSubview:self.heatmapButton];
+        [self.heatmapButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.left.top.bottom.mas_equalTo(_gridOptionsView);
             make.width.mas_equalTo(itemSize);
         }];
-        [_gridOptionsView addSubview:self.heatmapButton];
-        [self.heatmapButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        [_gridOptionsView addSubview:self.weekStartsOnButton];
+        [self.weekStartsOnButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.right.top.bottom.mas_equalTo(_gridOptionsView);
             make.width.mas_equalTo(itemSize);
         }];

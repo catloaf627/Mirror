@@ -12,6 +12,7 @@
 		4A099FAE29DD57AE002683A1 /* MirrorTool.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A099FAD29DD57AE002683A1 /* MirrorTool.m */; };
 		4A0D40FF29F1269700F13EAE /* TaskProgressListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */; };
 		4A0D410229F13C5300F13EAE /* LegendView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D410129F13C5300F13EAE /* LegendView.m */; };
+		4A0E001D3032505A00EFB7A0 /* MirrorSupportManualAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0E001C3032505A00EFB7A0 /* MirrorSupportManualAlert.m */; };
 		4A1D1F8E3031490600AACB20 /* MirrorToast.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1D1F8D3031490600AACB20 /* MirrorToast.m */; };
 		4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C3A302A452000045430 /* TaskPickerViewController.m */; };
 		4A1F8C5B302C16A200045430 /* PeriodEditAlertController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C5A302C16A200045430 /* PeriodEditAlertController.m */; };
@@ -94,6 +95,8 @@
 		4A0D40FE29F1269600F13EAE /* TaskProgressListView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskProgressListView.m; sourceTree = "<group>"; };
 		4A0D410029F13C5300F13EAE /* LegendView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LegendView.h; sourceTree = "<group>"; };
 		4A0D410129F13C5300F13EAE /* LegendView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LegendView.m; sourceTree = "<group>"; };
+		4A0E001B3032504000EFB7A0 /* MirrorSupportManualAlert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorSupportManualAlert.h; sourceTree = "<group>"; };
+		4A0E001C3032505A00EFB7A0 /* MirrorSupportManualAlert.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorSupportManualAlert.m; sourceTree = "<group>"; };
 		4A1D1F8C303148EB00AACB20 /* MirrorToast.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorToast.h; sourceTree = "<group>"; };
 		4A1D1F8D3031490600AACB20 /* MirrorToast.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorToast.m; sourceTree = "<group>"; };
 		4A1F8C39302A450200045430 /* TaskPickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskPickerViewController.h; sourceTree = "<group>"; };
@@ -344,6 +347,8 @@
 				4A379B5328E31BD200785CAE /* MirrorMacro.m */,
 				4A1D1F8C303148EB00AACB20 /* MirrorToast.h */,
 				4A1D1F8D3031490600AACB20 /* MirrorToast.m */,
+				4A0E001B3032504000EFB7A0 /* MirrorSupportManualAlert.h */,
+				4A0E001C3032505A00EFB7A0 /* MirrorSupportManualAlert.m */,
 			);
 			path = MirrorCustomize;
 			sourceTree = "<group>";
@@ -724,6 +729,7 @@
 				4AFBD1A13029558E006A6350 /* TaskRecordsViewController.m in Sources */,
 				4AD065A0302FCA1F005A894C /* MirrorDayModel.m in Sources */,
 				4A3DC9332A0109DA00679C11 /* GridCollectionViewCell.m in Sources */,
+				4A0E001D3032505A00EFB7A0 /* MirrorSupportManualAlert.m in Sources */,
 				4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */,
 				015564E428E1A78E008AB06C /* TimeTrackerTaskCollectionViewCell.m in Sources */,
 				4A1D1F8E3031490600AACB20 /* MirrorToast.m in Sources */,
