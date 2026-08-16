@@ -548,13 +548,18 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     return [NSDate now]; // 当前时间
 }
 
-- (NSDate *)startTime
+- (NSDate *)displayStartDate
 {
-    NSDate *startTime = [MirrorStorage goingOnTaskStartDate] ?: [NSDate date];
+    NSDate *startTime = self.accurateStartDate ?: [NSDate date];
     if (is_debug) {
         startTime = [startTime dateByAddingTimeInterval:-3600];
     }
     return startTime;
+}
+
+- (NSDate *)startTime
+{
+    return [MirrorStorage goingOnTaskStartDate] ?: [NSDate date];
 }
 
 - (NSDate *)accurateStartDate
@@ -567,7 +572,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 
 - (NSTimeInterval)timeInterval
 {
-    return [self.nowTime timeIntervalSinceDate:self.startTime];
+    return [self.nowTime timeIntervalSinceDate:self.displayStartDate];
 }
 
 - (NSTimeInterval)accurateTimeInterval

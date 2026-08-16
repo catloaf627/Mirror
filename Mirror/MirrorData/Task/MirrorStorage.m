@@ -84,7 +84,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 + (void)resumeGoingOnLiveActivityIfNeeded
 {
     NSString *taskName = [MirrorStorage isGoingOnTask];
-    NSDate *startDate = [MirrorStorage goingOnTaskStartDate];
+    NSDate *startDate = [MirrorStorage goingOnTaskAccurateStartDate];
     if (taskName.length == 0 || startDate == nil) {
         return;
     }
@@ -334,8 +334,7 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 {
     [MirrorStorage p_saveGoingOnTask:taskName at:accurateDate];
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
-    NSDate *date = [self dateWithoutSeconds:accurateDate];
-    [MirrorStorage p_startLiveActivityWithTaskName:taskName startDate:date colorType:task.color];
+    [MirrorStorage p_startLiveActivityWithTaskName:taskName startDate:accurateDate colorType:task.color];
     NSLog(@"Start at %@", [MirrorTool timeFromDate:accurateDate printTimeStamp:NO]);
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStartNotification object:nil userInfo:nil];
 }
