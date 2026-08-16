@@ -24,6 +24,7 @@
 #import "MirrorTool.h"
 #import "MirrorTabsManager.h"
 #import "UIFont+MirrorFont.h"
+#import "MirrorToast.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kCellWidth (25*kWidthRatio)
@@ -601,6 +602,19 @@
     _selectedCellIndex = indexPath.item; // 选择
     [self updateCharts];
     [collectionView reloadData];
+    [self showSpecialDayToastIfNeededAtIndex:indexPath.item];
+}
+
+- (void)showSpecialDayToastIfNeededAtIndex:(NSInteger)index
+{
+    if (index < 0 || index >= self.keys.count) {
+        return;
+    }
+    MirrorDayModel *day = [self specialDayForDateKey:self.keys[index]];
+    if (day.icon.length == 0 || day.info.length == 0) {
+        return;
+    }
+    [MirrorToast showWithText:day.info inView:self.view];
 }
 
 - (NSInteger)numberOfSectionsInCollectionView:(UICollectionView *)collectionView
