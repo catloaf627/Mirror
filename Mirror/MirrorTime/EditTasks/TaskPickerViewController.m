@@ -248,7 +248,7 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
 {
     if (!_notePrefixLabel) {
         _notePrefixLabel = [UILabel new];
-        _notePrefixLabel.text = [NSString stringWithFormat:@"merge with prefix '%@'", self.sourceTaskName];
+        _notePrefixLabel.text = [MirrorLanguage mirror_stringWithKey:@"merge_with_prefix" with1Placeholder:self.sourceTaskName];
         _notePrefixLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
         _notePrefixLabel.font = [UIFont mirrorHintFont_Card];
         _notePrefixLabel.numberOfLines = 1;

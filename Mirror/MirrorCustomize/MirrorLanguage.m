@@ -131,6 +131,7 @@
 
     // Time
     [mirrorDict setValue:ML(@"Merge %@ to", @"将 %@ 合并到", @"Fusionar %@ con", @"Fusionner %@ avec", @"%@ の結合先", @"%@ 병합 대상", @"%@ zusammenführen mit", @"Объединить %@ с") forKey:@"merge_task_to"];
+    [mirrorDict setValue:ML(@"merge with prefix '%@'", @"合并时添加前缀“%@”", @"fusionar con prefijo «%@»", @"fusionner avec le préfixe « %@ »", @"「%@」を接頭辞として結合", @"'%@' 접두어로 병합", @"mit Präfix „%@“ zusammenführen", @"объединить с префиксом «%@»") forKey:@"merge_with_prefix"];
     [mirrorDict setValue:ML(@"%@h ", @"%@时", @"%@ h ", @"%@ h ", @"%@時間", @"%@시간", @"%@ Std. ", @"%@ ч ") forKey:@"h"];
     [mirrorDict setValue:ML(@"%@m ", @"%@分", @"%@ min ", @"%@ min ", @"%@分", @"%@분", @"%@ Min. ", @"%@ мин ") forKey:@"m"];
     [mirrorDict setValue:ML(@"%@s", @"%@秒", @"%@ s", @"%@ s", @"%@秒", @"%@초", @"%@ Sek.", @"%@ с") forKey:@"s"];
