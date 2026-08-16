@@ -13,6 +13,7 @@
 #define kTimelineRecordResizeHandleHeight (24*kWidthRatio)
 #define kTimelineRecordResizeHandleSideWidth (120*kWidthRatio)
 #define kTimelineRecordHandleSize (10*kWidthRatio)
+#define kTimelineRecordResizeTouchOutset (14*kWidthRatio)
 #define kTimelineRecordEditAnimationKey @"TimelineRecordEditAnimation"
 
 typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
@@ -27,6 +28,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 @property (nonatomic, assign) NSInteger periodIndex;
 @property (nonatomic, assign) BOOL isInlineEditing;
 @property (nonatomic, assign) BOOL isSelected;
+@property (nonatomic, assign) BOOL allowsMoveDrag;
 @property (nonatomic, assign) TimelineRecordDragMode dragMode;
 @property (nonatomic, assign) long originalStartTimestamp;
 @property (nonatomic, assign) long originalEndTimestamp;
@@ -41,6 +43,9 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIView *startHandleView;
 @property (nonatomic, strong) UIView *endHandleView;
+@property (nonatomic, strong) UIView *debugStartRangeView;
+@property (nonatomic, strong) UIView *debugEndRangeView;
+@property (nonatomic, strong) UIView *debugMoveRangeView;
 @property (nonatomic, strong) UIColor *recordPulseColor;
 @property (nonatomic, strong) UIEditMenuInteraction *editMenuInteraction API_AVAILABLE(ios(16.0));
 
@@ -91,7 +96,18 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
     UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panRecord:)];
     panRecognizer.delegate = self;
-    [self.foregroundView addGestureRecognizer:panRecognizer];
+    [self addGestureRecognizer:panRecognizer];
+}
+
+- (BOOL)pointInside:(CGPoint)point withEvent:(UIEvent *)event
+{
+    if (!self.isInlineEditing) {
+        return [super pointInside:point withEvent:event];
+    }
+    if (self.allowsMoveDrag) {
+        return CGRectContainsPoint(CGRectInset(self.bounds, -kTimelineRecordResizeTouchOutset, -kTimelineRecordResizeTouchOutset), point);
+    }
+    return CGRectContainsPoint(self.bounds, point) || CGRectContainsPoint([self startResizeTouchRect], point) || CGRectContainsPoint([self endResizeTouchRect], point);
 }
 
 - (UIView *)handleView
@@ -141,6 +157,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     [super layoutSubviews];
     [self layoutTitleLabel];
     [self layoutHandles];
+    [self updateDebugRangeViews];
 }
 
 - (void)layoutTitleLabel
@@ -172,6 +189,25 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
                                           handleSize);
 }
 
+- (CGRect)startResizeTouchRect
+{
+    return [self resizeTouchRectCenteredAtPoint:self.startHandleView.center];
+}
+
+- (CGRect)endResizeTouchRect
+{
+    return [self resizeTouchRectCenteredAtPoint:self.endHandleView.center];
+}
+
+- (CGRect)resizeTouchRectCenteredAtPoint:(CGPoint)center
+{
+    CGFloat sideLength = MAX(44.0, kTimelineRecordHandleSize + 2*kTimelineRecordResizeTouchOutset);
+    return CGRectMake(center.x - sideLength / 2.0,
+                      center.y - sideLength / 2.0,
+                      sideLength,
+                      sideLength);
+}
+
 - (void)tapRecordView:(UITapGestureRecognizer *)recognizer
 {
     if (self.isInlineEditing) {
@@ -190,11 +226,14 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         return;
     }
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
-    [self endInlineEditing];
     if ([self.delegate respondsToSelector:@selector(timelineRecordViewDidRequestMenuDismissal:)]) {
         [self.delegate timelineRecordViewDidRequestMenuDismissal:self];
     }
-    [self beginSelectionShowsHandles:NO animated:YES];
+    if ([self.delegate respondsToSelector:@selector(timelineRecordViewDidRequestMoveEditing:)]) {
+        [self.delegate timelineRecordViewDidRequestMoveEditing:self];
+    } else {
+        [self beginSelectionShowsHandles:NO animated:YES];
+    }
     if (@available(iOS 16.0, *)) {
         CGPoint point = [recognizer locationInView:self.foregroundView];
         UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
@@ -210,12 +249,21 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
     if (recognizer.state == UIGestureRecognizerStateBegan) {
         self.dragMode = [self dragModeForLocation:[recognizer locationInView:self.foregroundView]];
+        if (self.dragMode == TimelineRecordDragModeNone) {
+            return;
+        }
         self.originalTop = CGRectGetMinY(self.frame);
         self.originalHeight = CGRectGetHeight(self.frame);
         [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     } else if (recognizer.state == UIGestureRecognizerStateChanged) {
+        if (self.dragMode == TimelineRecordDragModeNone) {
+            return;
+        }
         [self updateFrameWithTranslation:[recognizer translationInView:self.superview].y];
     } else if (recognizer.state == UIGestureRecognizerStateEnded) {
+        if (self.dragMode == TimelineRecordDragModeNone) {
+            return;
+        }
         [self commitDrag];
     } else if (recognizer.state == UIGestureRecognizerStateCancelled || recognizer.state == UIGestureRecognizerStateFailed) {
         [self cancelDrag];
@@ -224,18 +272,13 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
 - (TimelineRecordDragMode)dragModeForLocation:(CGPoint)location
 {
-    CGFloat width = CGRectGetWidth(self.foregroundView.bounds);
-    CGFloat height = CGRectGetHeight(self.foregroundView.bounds);
-    CGFloat sideWidth = MIN(kTimelineRecordResizeHandleSideWidth, width * 0.55);
-    BOOL hitsStartHandleArea = location.y <= kTimelineRecordResizeHandleHeight && location.x <= sideWidth;
-    BOOL hitsEndHandleArea = location.y >= height - kTimelineRecordResizeHandleHeight && location.x >= width - sideWidth;
-    if (hitsStartHandleArea) {
+    if (CGRectContainsPoint([self startResizeTouchRect], location)) {
         return TimelineRecordDragModeStart;
     }
-    if (hitsEndHandleArea) {
+    if (CGRectContainsPoint([self endResizeTouchRect], location)) {
         return TimelineRecordDragModeEnd;
     }
-    return TimelineRecordDragModeMove;
+    return self.allowsMoveDrag ? TimelineRecordDragModeMove : TimelineRecordDragModeNone;
 }
 
 - (void)beginInlineEditingWithMinimumTimestamp:(long)minimumTimestamp
@@ -244,7 +287,43 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
                              dayStartTimestamp:(long)dayStartTimestamp
                                dayEndTimestamp:(long)dayEndTimestamp
 {
+    [self beginEditingWithMinimumTimestamp:minimumTimestamp
+                          maximumTimestamp:maximumTimestamp
+                                hourHeight:hourHeight
+                         dayStartTimestamp:dayStartTimestamp
+                           dayEndTimestamp:dayEndTimestamp
+                              showsHandles:YES
+                            allowsMoveDrag:NO
+                                  animated:NO];
+}
+
+- (void)beginMoveEditingWithMinimumTimestamp:(long)minimumTimestamp
+                            maximumTimestamp:(long)maximumTimestamp
+                                  hourHeight:(CGFloat)hourHeight
+                           dayStartTimestamp:(long)dayStartTimestamp
+                             dayEndTimestamp:(long)dayEndTimestamp
+{
+    [self beginEditingWithMinimumTimestamp:minimumTimestamp
+                          maximumTimestamp:maximumTimestamp
+                                hourHeight:hourHeight
+                         dayStartTimestamp:dayStartTimestamp
+                           dayEndTimestamp:dayEndTimestamp
+                              showsHandles:NO
+                            allowsMoveDrag:YES
+                                  animated:YES];
+}
+
+- (void)beginEditingWithMinimumTimestamp:(long)minimumTimestamp
+                        maximumTimestamp:(long)maximumTimestamp
+                              hourHeight:(CGFloat)hourHeight
+                       dayStartTimestamp:(long)dayStartTimestamp
+                         dayEndTimestamp:(long)dayEndTimestamp
+                            showsHandles:(BOOL)showsHandles
+                          allowsMoveDrag:(BOOL)allowsMoveDrag
+                                animated:(BOOL)animated
+{
     self.isInlineEditing = YES;
+    self.allowsMoveDrag = allowsMoveDrag;
     self.minimumTimestamp = minimumTimestamp;
     self.maximumTimestamp = maximumTimestamp;
     self.hourHeight = hourHeight;
@@ -252,7 +331,8 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     self.dayEndTimestamp = dayEndTimestamp;
     self.originalTop = CGRectGetMinY(self.frame);
     self.originalHeight = CGRectGetHeight(self.frame);
-    [self beginSelectionShowsHandles:YES animated:NO];
+    [self beginSelectionShowsHandles:showsHandles animated:animated];
+    [self updateDebugRangeViews];
     [self.delegate timelineRecordView:self didChangeScrollEnabled:NO];
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
 }
@@ -263,6 +343,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         return;
     }
     self.isInlineEditing = NO;
+    self.allowsMoveDrag = NO;
     self.dragMode = TimelineRecordDragModeNone;
     [self endSelection];
     [self.delegate timelineRecordView:self didChangeScrollEnabled:YES];
@@ -271,6 +352,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 - (void)endSelection
 {
     self.isSelected = NO;
+    [self removeDebugRangeViews];
     [self removeEditingAnimation];
     self.layer.borderWidth = 0;
     self.layer.borderColor = nil;
@@ -317,6 +399,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         frame.size.height = self.originalHeight;
     }
     self.frame = frame;
+    [self updateDebugRangeViews];
 }
 
 - (void)commitDrag
@@ -375,6 +458,72 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 {
     self.startHandleView.hidden = hidden;
     self.endHandleView.hidden = hidden;
+}
+
+- (void)updateDebugRangeViews
+{
+    if (!is_debug || !self.isInlineEditing) {
+        [self removeDebugRangeViews];
+        return;
+    }
+
+    [self ensureDebugRangeViews];
+    CGFloat outset = kTimelineRecordResizeTouchOutset;
+
+    if (self.allowsMoveDrag) {
+        self.debugMoveRangeView.hidden = NO;
+        self.debugStartRangeView.hidden = YES;
+        self.debugEndRangeView.hidden = YES;
+        self.debugMoveRangeView.frame = CGRectInset(self.foregroundView.frame, -outset, -outset);
+        [self sendSubviewToBack:self.debugMoveRangeView];
+        return;
+    }
+
+    self.debugStartRangeView.hidden = NO;
+    self.debugEndRangeView.hidden = NO;
+    self.debugMoveRangeView.hidden = YES;
+    self.debugStartRangeView.frame = [self startResizeTouchRect];
+    self.debugEndRangeView.frame = [self endResizeTouchRect];
+    [self sendSubviewToBack:self.debugStartRangeView];
+    [self sendSubviewToBack:self.debugEndRangeView];
+}
+
+- (void)ensureDebugRangeViews
+{
+    if (!self.debugStartRangeView) {
+        self.debugStartRangeView = [self debugRangeViewWithColor:[UIColor systemBlueColor]];
+        [self addSubview:self.debugStartRangeView];
+    }
+    if (!self.debugEndRangeView) {
+        self.debugEndRangeView = [self debugRangeViewWithColor:[UIColor systemOrangeColor]];
+        [self addSubview:self.debugEndRangeView];
+    }
+    if (!self.debugMoveRangeView) {
+        self.debugMoveRangeView = [self debugRangeViewWithColor:[UIColor systemGreenColor]];
+        [self addSubview:self.debugMoveRangeView];
+    }
+    [self sendSubviewToBack:self.debugStartRangeView];
+    [self sendSubviewToBack:self.debugEndRangeView];
+    [self sendSubviewToBack:self.debugMoveRangeView];
+}
+
+- (UIView *)debugRangeViewWithColor:(UIColor *)color
+{
+    UIView *view = [UIView new];
+    view.userInteractionEnabled = NO;
+    view.backgroundColor = [color colorWithAlphaComponent:0.45];
+    view.layer.cornerRadius = 2;
+    return view;
+}
+
+- (void)removeDebugRangeViews
+{
+    [self.debugStartRangeView removeFromSuperview];
+    self.debugStartRangeView = nil;
+    [self.debugEndRangeView removeFromSuperview];
+    self.debugEndRangeView = nil;
+    [self.debugMoveRangeView removeFromSuperview];
+    self.debugMoveRangeView = nil;
 }
 
 - (void)updateSelectionColors

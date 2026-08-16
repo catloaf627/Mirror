@@ -258,6 +258,16 @@
 
 - (void)timelineRecordViewDidRequestInlineEditing:(TimelineRecordView *)recordView
 {
+    [self beginEditingRecordView:recordView allowsMoveDrag:NO];
+}
+
+- (void)timelineRecordViewDidRequestMoveEditing:(TimelineRecordView *)recordView
+{
+    [self beginEditingRecordView:recordView allowsMoveDrag:YES];
+}
+
+- (void)beginEditingRecordView:(TimelineRecordView *)recordView allowsMoveDrag:(BOOL)allowsMoveDrag
+{
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
     NSInteger periodIndex = recordView.periodIndex;
     if (periodIndex < 0 || periodIndex >= records.count) {
@@ -276,11 +286,19 @@
 
     self.activeRecordView = recordView;
     [self.timelineContentView bringSubviewToFront:recordView];
-    [recordView beginInlineEditingWithMinimumTimestamp:minimumTimestamp
-                                      maximumTimestamp:maximumTimestamp
-                                            hourHeight:self.hourHeight
-                                     dayStartTimestamp:[self dayStartTimestamp]
-                                       dayEndTimestamp:[self dayEndTimestamp]];
+    if (allowsMoveDrag) {
+        [recordView beginMoveEditingWithMinimumTimestamp:minimumTimestamp
+                                        maximumTimestamp:maximumTimestamp
+                                              hourHeight:self.hourHeight
+                                       dayStartTimestamp:[self dayStartTimestamp]
+                                         dayEndTimestamp:[self dayEndTimestamp]];
+    } else {
+        [recordView beginInlineEditingWithMinimumTimestamp:minimumTimestamp
+                                          maximumTimestamp:maximumTimestamp
+                                                hourHeight:self.hourHeight
+                                         dayStartTimestamp:[self dayStartTimestamp]
+                                           dayEndTimestamp:[self dayEndTimestamp]];
+    }
 }
 
 - (void)timelineRecordView:(TimelineRecordView *)recordView didChangeScrollEnabled:(BOOL)enabled
@@ -306,7 +324,7 @@
 {
     NSInteger periodIndex = recordView.periodIndex;
     [MirrorStorage editPeriodStartTime:startTimestamp endTime:endTimestamp periodIndex:periodIndex];
-    [self reloadDataKeepingInlineEditingForPeriodIndex:periodIndex];
+    [self reloadDataKeepingMoveEditingForPeriodIndex:periodIndex];
 }
 
 #pragma mark - Timeline
@@ -343,10 +361,16 @@
 - (void)reloadDataKeepingInlineEditingForPeriodIndex:(NSInteger)periodIndex
 {
     [self reloadData];
-    [self restoreInlineEditingForPeriodIndex:periodIndex];
+    [self restoreEditingForPeriodIndex:periodIndex allowsMoveDrag:NO];
 }
 
-- (void)restoreInlineEditingForPeriodIndex:(NSInteger)periodIndex
+- (void)reloadDataKeepingMoveEditingForPeriodIndex:(NSInteger)periodIndex
+{
+    [self reloadData];
+    [self restoreEditingForPeriodIndex:periodIndex allowsMoveDrag:YES];
+}
+
+- (void)restoreEditingForPeriodIndex:(NSInteger)periodIndex allowsMoveDrag:(BOOL)allowsMoveDrag
 {
     for (UIView *subview in self.timelineContentView.subviews) {
         if (![subview isKindOfClass:TimelineRecordView.class]) {
@@ -354,7 +378,7 @@
         }
         TimelineRecordView *recordView = (TimelineRecordView *)subview;
         if (recordView.periodIndex == periodIndex) {
-            [self timelineRecordViewDidRequestInlineEditing:recordView];
+            [self beginEditingRecordView:recordView allowsMoveDrag:allowsMoveDrag];
             return;
         }
     }

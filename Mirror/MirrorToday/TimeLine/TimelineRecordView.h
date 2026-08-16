@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @optional
 - (void)timelineRecordViewDidRequestMenuDismissal:(TimelineRecordView *)recordView;
+- (void)timelineRecordViewDidRequestMoveEditing:(TimelineRecordView *)recordView;
 - (UIMenu *)menuForTimelineRecordView:(TimelineRecordView *)recordView API_AVAILABLE(ios(16.0));
 
 @end
@@ -38,6 +39,12 @@ NS_ASSUME_NONNULL_BEGIN
                                     hourHeight:(CGFloat)hourHeight
                              dayStartTimestamp:(long)dayStartTimestamp
                                dayEndTimestamp:(long)dayEndTimestamp;
+
+- (void)beginMoveEditingWithMinimumTimestamp:(long)minimumTimestamp
+                            maximumTimestamp:(long)maximumTimestamp
+                                  hourHeight:(CGFloat)hourHeight
+                           dayStartTimestamp:(long)dayStartTimestamp
+                             dayEndTimestamp:(long)dayEndTimestamp;
 
 - (void)endInlineEditing;
 - (void)endSelection;
