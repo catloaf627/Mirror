@@ -148,7 +148,22 @@
 
 - (void)refreshNavigationButtonColors
 {
+    [self updateSettingsButtonIcon];
     self.settingsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+}
+
+- (void)updateSettingsButtonIcon
+{
+    UIImage *iconImage = [[UIImage systemImageNamed:[self languageGlobeIconName]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [_settingsButton setImage:iconImage ?: [[UIImage systemImageNamed:@"globe"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+}
+
+- (NSString *)languageGlobeIconName
+{
+    NSInteger languageKey = [MirrorSettings preferredLanguageKey];
+    if (languageKey == 1 || languageKey == 4 || languageKey == 5) return @"globe.asia.australia";
+    if (languageKey == 3) return @"globe.europe.africa";
+    return @"globe.americas";
 }
 
 #pragma mark - Actions
@@ -829,8 +844,7 @@
 {
     if (!_settingsButton) {
         _settingsButton = [UIButton new];
-        UIImage *iconImage = [[UIImage systemImageNamed:@"a.square"] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];
-        [_settingsButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+        [self updateSettingsButtonIcon];
         _settingsButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
         [_settingsButton addTarget:self action:@selector(showLanguagePicker) forControlEvents:UIControlEventTouchUpInside];
     }
