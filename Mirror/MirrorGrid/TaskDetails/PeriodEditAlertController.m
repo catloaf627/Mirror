@@ -7,19 +7,26 @@
 #import <Masonry/Masonry.h>
 #import "MirrorLanguage.h"
 #import "UIColor+MirrorColor.h"
-#import "UIFont+MirrorFont.h"
 #import "MirrorMacro.h"
 #import "MirrorStorage.h"
 
-@interface PeriodEditAlertController () <UIGestureRecognizerDelegate>
+@interface PeriodEditAlertController ()
 
 @property (nonatomic, weak) UIViewController *presentingViewController;
 @property (nonatomic, strong) UIAlertController *alertController;
-@property (nonatomic, strong) UISegmentedControl *taskSegmentedControl;
+@property (nonatomic, strong) UIView *taskNamePickerView;
+@property (nonatomic, strong) UILabel *taskNameLabel;
+@property (nonatomic, strong) UILabel *startLabel;
+@property (nonatomic, strong) UILabel *endLabel;
+@property (nonatomic, strong) UILabel *noteLabel;
+@property (nonatomic, strong) UIButton *previousTaskButton;
+@property (nonatomic, strong) UIButton *nextTaskButton;
+@property (nonatomic, strong) UIAlertAction *cancelAction;
+@property (nonatomic, strong) UIAlertAction *doneAction;
+@property (nonatomic, assign) NSInteger selectedTaskIndex;
 @property (nonatomic, strong) UIDatePicker *startDatePicker;
 @property (nonatomic, strong) UIDatePicker *endDatePicker;
 @property (nonatomic, strong) UITextField *noteTextField;
-@property (nonatomic, strong) UITapGestureRecognizer *dismissTapRecognizer;
 @property (nonatomic, copy) PeriodEditAlertRecordChanged recordChanged;
 @property (nonatomic, strong) MirrorRecordModel *editingRecord;
 @property (nonatomic, strong) NSArray<MirrorTaskModel *> *tasks;
@@ -61,27 +68,26 @@
 
 - (BOOL)isPresented
 {
-    return self.dismissTapRecognizer != nil;
+    return self.alertController != nil;
 }
 
 - (void)presentFromViewController:(UIViewController *)viewController
 {
     self.presentingViewController = viewController;
     
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:@"\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil message:@"\n\n\n\n\n\n\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
     self.alertController = alertController;
     [self configureContentInAlertController:alertController];
+    [self configureActionsInAlertController:alertController];
     
-    __weak typeof(self) weakSelf = self;
-    [viewController presentViewController:alertController animated:YES completion:^{
-        [weakSelf addDismissTapRecognizer];
-    }];
+    [viewController presentViewController:alertController animated:YES completion:nil];
 }
 
 - (void)configureContentInAlertController:(UIAlertController *)alertController
 {
-    UISegmentedControl *taskSegmentedControl = [self taskSegmentedControl];
+    UIView *taskNamePickerView = [self taskNamePickerView];
     UILabel *startLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"starts_at"]];
+    self.startLabel = startLabel;
     UIDatePicker *startDatePicker = [self timePickerWithTimestamp:self.startTimestamp];
     startDatePicker.minimumDate = self.minimumTimestamp ? [NSDate dateWithTimeIntervalSince1970:self.minimumTimestamp.longValue] : nil;
     startDatePicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:self.endTimestamp - kMinSeconds];
@@ -89,6 +95,7 @@
     self.startDatePicker = startDatePicker;
 
     UILabel *endLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"ends_at"]];
+    self.endLabel = endLabel;
     UIDatePicker *endDatePicker = [self timePickerWithTimestamp:self.endTimestamp];
     endDatePicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:self.startTimestamp + kMinSeconds];
     endDatePicker.maximumDate = self.maximumTimestamp ? [NSDate dateWithTimeIntervalSince1970:self.maximumTimestamp.longValue] : nil;
@@ -96,10 +103,11 @@
     self.endDatePicker = endDatePicker;
 
     UILabel *noteLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"note"]];
+    self.noteLabel = noteLabel;
     UITextField *noteTextField = [UITextField new];
     noteTextField.text = self.note;
     noteTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"note"];
-    noteTextField.font = [UIFont mirrorHintFont];
+    noteTextField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
     noteTextField.textColor = self.accentColor;
     noteTextField.tintColor = self.accentColor;
     noteTextField.borderStyle = UITextBorderStyleRoundedRect;
@@ -109,7 +117,7 @@
     self.noteTextField = noteTextField;
     
     UIView *contentView = alertController.view;
-    [contentView addSubview:taskSegmentedControl];
+    [contentView addSubview:taskNamePickerView];
     [contentView addSubview:startLabel];
     [contentView addSubview:startDatePicker];
     [contentView addSubview:endLabel];
@@ -121,7 +129,7 @@
     CGFloat rightInset = -24;
     CGFloat labelWidth = 88;
     CGFloat rowHeight = 34;
-    [taskSegmentedControl mas_makeConstraints:^(MASConstraintMaker *make) {
+    [taskNamePickerView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(20);
         make.left.offset(leftInset);
         make.right.offset(rightInset);
@@ -129,7 +137,7 @@
     }];
     [startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(leftInset);
-        make.top.mas_equalTo(taskSegmentedControl.mas_bottom).offset(8);
+        make.top.mas_equalTo(taskNamePickerView.mas_bottom).offset(8);
         make.width.mas_equalTo(labelWidth);
         make.height.mas_equalTo(rowHeight);
     }];
@@ -155,6 +163,25 @@
         make.left.right.height.mas_equalTo(startDatePicker);
         make.centerY.mas_equalTo(noteLabel);
     }];
+    [noteTextField mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.bottom.lessThanOrEqualTo(contentView).offset(-56);
+    }];
+}
+
+- (void)configureActionsInAlertController:(UIAlertController *)alertController
+{
+    __weak typeof(self) weakSelf = self;
+    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        [weakSelf cancel];
+    }];
+    UIAlertAction *doneAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"done"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [weakSelf dismiss];
+    }];
+    self.cancelAction = cancelAction;
+    self.doneAction = doneAction;
+    [alertController addAction:cancelAction];
+    [alertController addAction:doneAction];
+    [self updateAccentColorAppearance];
 }
 
 - (UIDatePicker *)timePickerWithTimestamp:(long)timestamp
@@ -170,62 +197,145 @@
     return datePicker;
 }
 
-- (UISegmentedControl *)taskSegmentedControl
+- (UIView *)taskNamePickerView
 {
-    UISegmentedControl *segmentedControl = [[UISegmentedControl alloc] initWithItems:@[]];
-    segmentedControl.selectedSegmentTintColor = self.accentColor;
-    [segmentedControl setTitleTextAttributes:@{
-        NSFontAttributeName: [UIFont mirrorMinFont],
-        NSForegroundColorAttributeName: [UIColor mirrorColorNamed:MirrorColorTypeText]
-    } forState:UIControlStateNormal];
-    [segmentedControl setTitleTextAttributes:@{
-        NSFontAttributeName: [UIFont mirrorMinFont],
-        NSForegroundColorAttributeName: UIColor.whiteColor
-    } forState:UIControlStateSelected];
+    UIView *pickerView = [UIView new];
+    UIButton *previousButton = [self taskArrowButtonWithSystemImageName:@"chevron.left" fallbackTitle:@"<" action:@selector(previousTaskButtonTapped:)];
+    UIButton *nextButton = [self taskArrowButtonWithSystemImageName:@"chevron.right" fallbackTitle:@">" action:@selector(nextTaskButtonTapped:)];
+    UILabel *taskNameLabel = [UILabel new];
+    taskNameLabel.text = self.editingRecord.taskName;
+    taskNameLabel.textColor = self.accentColor;
+    taskNameLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
+    taskNameLabel.textAlignment = NSTextAlignmentCenter;
+    taskNameLabel.adjustsFontSizeToFitWidth = YES;
+    taskNameLabel.minimumScaleFactor = 0.6;
+    
+    [pickerView addSubview:previousButton];
+    [pickerView addSubview:taskNameLabel];
+    [pickerView addSubview:nextButton];
+    
+    CGFloat buttonSize = 30;
+    [previousButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.top.bottom.offset(0);
+        make.width.mas_equalTo(buttonSize);
+    }];
+    [nextButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.top.bottom.offset(0);
+        make.width.mas_equalTo(buttonSize);
+    }];
+    [taskNameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(previousButton.mas_right).offset(8);
+        make.right.mas_equalTo(nextButton.mas_left).offset(-8);
+        make.top.bottom.offset(0);
+    }];
+    
+    self.selectedTaskIndex = [self indexOfTaskName:self.editingRecord.taskName];
+    self.taskNamePickerView = pickerView;
+    self.taskNameLabel = taskNameLabel;
+    self.previousTaskButton = previousButton;
+    self.nextTaskButton = nextButton;
+    [self updateTaskArrowButtonsEnabled];
+    return pickerView;
+}
 
-    NSInteger selectedIndex = UISegmentedControlNoSegment;
-    for (NSInteger index = 0; index < self.tasks.count; index++) {
-        NSString *taskName = self.tasks[index].taskName ?: @"";
-        [segmentedControl insertSegmentWithTitle:taskName atIndex:index animated:NO];
-        if ([taskName isEqualToString:self.editingRecord.taskName]) {
-            selectedIndex = index;
-        }
+- (UIButton *)taskArrowButtonWithSystemImageName:(NSString *)systemImageName fallbackTitle:(NSString *)fallbackTitle action:(SEL)action
+{
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+    button.tintColor = self.accentColor;
+    if (@available(iOS 13.0, *)) {
+        [button setImage:[UIImage systemImageNamed:systemImageName] forState:UIControlStateNormal];
+    } else {
+        [button setTitle:fallbackTitle forState:UIControlStateNormal];
+        button.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
     }
-    segmentedControl.selectedSegmentIndex = selectedIndex;
-    [segmentedControl addTarget:self action:@selector(taskSegmentedControlValueChanged:) forControlEvents:UIControlEventValueChanged];
-    self.taskSegmentedControl = segmentedControl;
-    return segmentedControl;
+    [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
+    return button;
 }
 
 - (UILabel *)pickerLabelWithText:(NSString *)text
 {
     UILabel *label = [UILabel new];
     label.text = text;
-    label.font = [UIFont mirrorHintFont];
-    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    label.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
+    label.textColor = self.accentColor;
     label.adjustsFontSizeToFitWidth = YES;
     return label;
 }
 
-- (void)taskSegmentedControlValueChanged:(UISegmentedControl *)segmentedControl
+- (void)previousTaskButtonTapped:(UIButton *)button
 {
-    NSInteger selectedIndex = segmentedControl.selectedSegmentIndex;
-    if (selectedIndex < 0 || selectedIndex >= self.tasks.count) {
+    [self selectTaskAtIndex:self.selectedTaskIndex - 1];
+}
+
+- (void)nextTaskButtonTapped:(UIButton *)button
+{
+    [self selectTaskAtIndex:self.selectedTaskIndex + 1];
+}
+
+- (void)selectTaskAtIndex:(NSInteger)index
+{
+    NSInteger taskCount = (NSInteger)self.tasks.count;
+    if (taskCount == 0) {
         return;
     }
-    NSString *taskName = self.tasks[selectedIndex].taskName ?: @"";
-    if (taskName.length == 0 || [taskName isEqualToString:self.editingRecord.taskName]) {
+    NSInteger wrappedIndex = index % taskCount;
+    if (wrappedIndex < 0) {
+        wrappedIndex += taskCount;
+    }
+    NSString *taskName = self.tasks[wrappedIndex].taskName ?: @"";
+    if (taskName.length == 0) {
+        return;
+    }
+    self.selectedTaskIndex = wrappedIndex;
+    if ([taskName isEqualToString:self.editingRecord.taskName]) {
         return;
     }
     self.editingRecord.taskName = taskName;
     MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:taskName];
     MirrorColorType colorType = taskModel ? taskModel.color : MirrorColorTypeCellGray;
     self.accentColor = [UIColor mirrorColorPulsed:colorType];
-    segmentedControl.selectedSegmentTintColor = self.accentColor;
+    self.taskNameLabel.text = taskName;
+    [self updateAccentColorAppearance];
+}
+
+- (void)updateAccentColorAppearance
+{
+    self.alertController.view.tintColor = self.accentColor;
+    self.taskNameLabel.textColor = self.accentColor;
+    self.startLabel.textColor = self.accentColor;
+    self.endLabel.textColor = self.accentColor;
+    self.noteLabel.textColor = self.accentColor;
+    self.previousTaskButton.tintColor = self.accentColor;
+    self.nextTaskButton.tintColor = self.accentColor;
     self.startDatePicker.tintColor = self.accentColor;
     self.endDatePicker.tintColor = self.accentColor;
     self.noteTextField.textColor = self.accentColor;
     self.noteTextField.tintColor = self.accentColor;
+    self.noteTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:[MirrorLanguage mirror_stringWithKey:@"note"] attributes:@{
+        NSForegroundColorAttributeName: self.accentColor,
+        NSFontAttributeName: [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline]
+    }];
+    [self.cancelAction setValue:self.accentColor forKey:@"titleTextColor"];
+    [self.doneAction setValue:self.accentColor forKey:@"titleTextColor"];
+}
+
+- (NSInteger)indexOfTaskName:(NSString *)taskName
+{
+    for (NSInteger index = 0; index < self.tasks.count; index++) {
+        if ([self.tasks[index].taskName isEqualToString:taskName]) {
+            return index;
+        }
+    }
+    return self.tasks.count > 0 ? 0 : NSNotFound;
+}
+
+- (void)updateTaskArrowButtonsEnabled
+{
+    BOOL canSwitchTask = self.tasks.count > 1;
+    self.previousTaskButton.enabled = canSwitchTask;
+    self.nextTaskButton.enabled = canSwitchTask;
+    self.previousTaskButton.alpha = canSwitchTask ? 1.0 : 0.35;
+    self.nextTaskButton.alpha = canSwitchTask ? 1.0 : 0.35;
 }
 
 - (void)startDatePickerValueChanged:(UIDatePicker *)datePicker
@@ -252,39 +362,40 @@
     self.startDatePicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:self.endTimestamp - kMinSeconds];
 }
 
-- (void)addDismissTapRecognizer
-{
-    if (self.dismissTapRecognizer != nil) {
-        return;
-    }
-    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissTapRecognized:)];
-    tapRecognizer.cancelsTouchesInView = NO;
-    tapRecognizer.delegate = self;
-    self.dismissTapRecognizer = tapRecognizer;
-    [self.presentingViewController.view.window addGestureRecognizer:tapRecognizer];
-}
-
-- (void)dismissTapRecognized:(UITapGestureRecognizer *)tapRecognizer
-{
-    if (tapRecognizer.state != UIGestureRecognizerStateEnded) {
-        return;
-    }
-    [self dismiss];
-}
-
 - (void)dismiss
+{
+    [self closeAlertSavingChanges:YES];
+}
+
+- (void)cancel
+{
+    [self closeAlertSavingChanges:NO];
+}
+
+- (void)closeAlertSavingChanges:(BOOL)shouldSaveChanges
 {
     UIAlertController *alertController = self.alertController;
     if (alertController == nil) {
-        [self removeDismissTapRecognizer];
         return;
     }
     
-    self.editingRecord.note = self.noteTextField.text ?: @"";
-    MirrorRecordModel *editedRecord = self.editingRecord;
-    PeriodEditAlertRecordChanged recordChanged = self.recordChanged;
-    [self removeDismissTapRecognizer];
-    self.taskSegmentedControl = nil;
+    MirrorRecordModel *editedRecord = nil;
+    PeriodEditAlertRecordChanged recordChanged = nil;
+    if (shouldSaveChanges) {
+        self.editingRecord.note = self.noteTextField.text ?: @"";
+        editedRecord = self.editingRecord;
+        recordChanged = self.recordChanged;
+    }
+    
+    self.taskNamePickerView = nil;
+    self.taskNameLabel = nil;
+    self.startLabel = nil;
+    self.endLabel = nil;
+    self.noteLabel = nil;
+    self.previousTaskButton = nil;
+    self.nextTaskButton = nil;
+    self.cancelAction = nil;
+    self.doneAction = nil;
     self.startDatePicker = nil;
     self.endDatePicker = nil;
     self.noteTextField = nil;
@@ -301,76 +412,6 @@
     if (textField.text.length > 200) {
         textField.text = [textField.text substringToIndex:200];
     }
-}
-
-- (void)removeDismissTapRecognizer
-{
-    [self.presentingViewController.view.window removeGestureRecognizer:self.dismissTapRecognizer];
-    self.dismissTapRecognizer = nil;
-}
-
-- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
-{
-    if (gestureRecognizer != self.dismissTapRecognizer) {
-        return YES;
-    }
-    return [self shouldDismissForTouch:touch];
-}
-
-- (BOOL)shouldDismissForTouch:(UITouch *)touch
-{
-    UIView *alertView = self.alertController.view;
-    UIWindow *window = touch.window ?: self.presentingViewController.view.window;
-    if (alertView == nil || window == nil) {
-        return NO;
-    }
-    
-    CGPoint windowPoint = [touch locationInView:window];
-    if ([self point:windowPoint inView:alertView window:window]) {
-        return NO;
-    }
-    if ([self point:windowPoint isInsideInteractivePickerFromTouchedView:touch.view window:window]) {
-        return NO;
-    }
-    return YES;
-}
-
-- (BOOL)point:(CGPoint)point isInsideInteractivePickerFromTouchedView:(UIView *)touchedView window:(UIWindow *)window
-{
-    UIView *currentView = touchedView;
-    while (currentView != nil) {
-        NSString *className = NSStringFromClass([currentView class]);
-        BOOL isPickerView = [className containsString:@"DatePicker"] ||
-                            [className containsString:@"Calendar"] ||
-                            [className containsString:@"TimePicker"] ||
-                            [self isPopoverContentView:currentView className:className window:window];
-        if (isPickerView && [self point:point inView:currentView window:window]) {
-            return YES;
-        }
-        currentView = currentView.superview;
-    }
-    return NO;
-}
-
-- (BOOL)isPopoverContentView:(UIView *)view className:(NSString *)className window:(UIWindow *)window
-{
-    if (![className containsString:@"Popover"]) {
-        return NO;
-    }
-    CGRect rect = [view convertRect:view.bounds toView:window];
-    return CGRectGetWidth(rect) < CGRectGetWidth(window.bounds) * 0.9 &&
-           CGRectGetHeight(rect) < CGRectGetHeight(window.bounds) * 0.9;
-}
-
-- (BOOL)point:(CGPoint)point inView:(UIView *)view window:(UIWindow *)window
-{
-    CGRect rect = [view convertRect:view.bounds toView:window];
-    return CGRectContainsPoint(rect, point);
-}
-
-- (void)dealloc
-{
-    [self removeDismissTapRecognizer];
 }
 
 @end
