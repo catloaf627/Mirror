@@ -190,6 +190,7 @@
     datePicker.datePickerMode = UIDatePickerModeDateAndTime;
     datePicker.minuteInterval = 5;
     datePicker.date = [NSDate dateWithTimeIntervalSince1970:timestamp];
+    datePicker.locale = [NSLocale localeWithLocaleIdentifier:[MirrorLanguage mirror_stringWithKey:@"locale_Identifier"]];
     datePicker.tintColor = self.accentColor;
     if (@available(iOS 13.4, *)) {
         datePicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
