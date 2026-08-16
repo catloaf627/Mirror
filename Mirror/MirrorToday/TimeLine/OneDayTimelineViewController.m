@@ -225,33 +225,17 @@
     PeriodEditAlertController *alert = [[PeriodEditAlertController alloc] initWithRecord:record
                                                                          minimumTimestamp:minimumTimestamp
                                                                          maximumTimestamp:maximumTimestamp
-                                                                             valueChanged:^(BOOL isStartTime, long timestamp) {
-        [weakSelf rangeAxisValueChangedIsStartTime:isStartTime timestamp:timestamp];
-    } dismissed:^(NSString *note) {
-        [weakSelf saveEditingNote:note periodIndex:periodIndex];
+                                                                            recordChanged:^(MirrorRecordModel *editedRecord) {
+        [weakSelf saveEditingRecord:editedRecord periodIndex:periodIndex];
         weakSelf.editingPeriodAlert = nil;
     }];
     self.editingPeriodAlert = alert;
     [alert presentFromViewController:self];
 }
 
-- (void)saveEditingNote:(NSString *)note periodIndex:(NSInteger)periodIndex
+- (void)saveEditingRecord:(MirrorRecordModel *)record periodIndex:(NSInteger)periodIndex
 {
-    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
-    if (periodIndex < 0 || periodIndex >= records.count) {
-        return;
-    }
-
-    NSString *newNote = note ?: @"";
-    NSString *oldNote = records[periodIndex].note ?: @"";
-    if (![newNote isEqualToString:oldNote]) {
-        [MirrorStorage editPeriodNote:newNote periodIndex:periodIndex];
-    }
-}
-
-- (void)rangeAxisValueChangedIsStartTime:(BOOL)isStartTime timestamp:(long)timestamp
-{
-    [MirrorStorage editPeriodIsStartTime:isStartTime to:timestamp periodIndex:self.editingPeriodIndex];
+    [MirrorStorage editPeriodWithRecord:record periodIndex:periodIndex];
 }
 
 #pragma mark - TimelineRecordViewDelegate

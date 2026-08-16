@@ -15,13 +15,14 @@
 
 @property (nonatomic, weak) UIViewController *presentingViewController;
 @property (nonatomic, strong) UIAlertController *alertController;
+@property (nonatomic, strong) UISegmentedControl *taskSegmentedControl;
 @property (nonatomic, strong) UIDatePicker *startDatePicker;
 @property (nonatomic, strong) UIDatePicker *endDatePicker;
 @property (nonatomic, strong) UITextField *noteTextField;
 @property (nonatomic, strong) UITapGestureRecognizer *dismissTapRecognizer;
-@property (nonatomic, copy) PeriodEditAlertTimeValueChanged valueChanged;
-@property (nonatomic, copy) PeriodEditAlertDismissed dismissed;
-@property (nonatomic, copy) NSString *title;
+@property (nonatomic, copy) PeriodEditAlertRecordChanged recordChanged;
+@property (nonatomic, strong) MirrorRecordModel *editingRecord;
+@property (nonatomic, strong) NSArray<MirrorTaskModel *> *tasks;
 @property (nonatomic, strong) UIColor *accentColor;
 @property (nonatomic, strong, nullable) NSNumber *minimumTimestamp;
 @property (nonatomic, strong, nullable) NSNumber *maximumTimestamp;
@@ -36,22 +37,24 @@
 - (instancetype)initWithRecord:(MirrorRecordModel *)record
                minimumTimestamp:(NSNumber * _Nullable)minimumTimestamp
                maximumTimestamp:(NSNumber * _Nullable)maximumTimestamp
-                   valueChanged:(PeriodEditAlertTimeValueChanged)valueChanged
-                      dismissed:(PeriodEditAlertDismissed)dismissed
+                  recordChanged:(PeriodEditAlertRecordChanged)recordChanged
 {
     self = [super init];
     if (self) {
         MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:record.taskName];
         MirrorColorType colorType = taskModel ? taskModel.color : MirrorColorTypeCellGray;
-        _title = [record.taskName copy];
+        MirrorRecordModel *editingRecord = [[MirrorRecordModel alloc] initWithTitle:record.taskName ?: @"" startTime:record.startTime endTime:record.endTime];
+        editingRecord.originalIndex = record.originalIndex;
+        editingRecord.note = record.note ?: @"";
+        _editingRecord = editingRecord;
+        _tasks = [[MirrorStorage retriveMirrorTasks] copy];
         _accentColor = [UIColor mirrorColorPulsed:colorType];
         _minimumTimestamp = minimumTimestamp;
         _maximumTimestamp = maximumTimestamp;
         _startTimestamp = record.startTime;
         _endTimestamp = record.endTime;
         _note = [record.note copy] ?: @"";
-        _valueChanged = [valueChanged copy];
-        _dismissed = [dismissed copy];
+        _recordChanged = [recordChanged copy];
     }
     return self;
 }
@@ -77,7 +80,7 @@
 
 - (void)configureContentInAlertController:(UIAlertController *)alertController
 {
-    UILabel *titleLabel = [self titleLabelWithText:self.title];
+    UISegmentedControl *taskSegmentedControl = [self taskSegmentedControl];
     UILabel *startLabel = [self pickerLabelWithText:[MirrorLanguage mirror_stringWithKey:@"starts_at"]];
     UIDatePicker *startDatePicker = [self timePickerWithTimestamp:self.startTimestamp];
     startDatePicker.minimumDate = self.minimumTimestamp ? [NSDate dateWithTimeIntervalSince1970:self.minimumTimestamp.longValue] : nil;
@@ -106,7 +109,7 @@
     self.noteTextField = noteTextField;
     
     UIView *contentView = alertController.view;
-    [contentView addSubview:titleLabel];
+    [contentView addSubview:taskSegmentedControl];
     [contentView addSubview:startLabel];
     [contentView addSubview:startDatePicker];
     [contentView addSubview:endLabel];
@@ -118,15 +121,15 @@
     CGFloat rightInset = -24;
     CGFloat labelWidth = 88;
     CGFloat rowHeight = 34;
-    [titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    [taskSegmentedControl mas_makeConstraints:^(MASConstraintMaker *make) {
         make.top.offset(20);
         make.left.offset(leftInset);
         make.right.offset(rightInset);
-        make.height.mas_equalTo(26);
+        make.height.mas_equalTo(30);
     }];
     [startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(leftInset);
-        make.top.mas_equalTo(titleLabel.mas_bottom).offset(8);
+        make.top.mas_equalTo(taskSegmentedControl.mas_bottom).offset(8);
         make.width.mas_equalTo(labelWidth);
         make.height.mas_equalTo(rowHeight);
     }];
@@ -167,15 +170,31 @@
     return datePicker;
 }
 
-- (UILabel *)titleLabelWithText:(NSString *)text
+- (UISegmentedControl *)taskSegmentedControl
 {
-    UILabel *label = [UILabel new];
-    label.text = text;
-    label.font = [UIFont mirrorTitleFont];
-    label.textColor = self.accentColor;
-    label.textAlignment = NSTextAlignmentCenter;
-    label.adjustsFontSizeToFitWidth = YES;
-    return label;
+    UISegmentedControl *segmentedControl = [[UISegmentedControl alloc] initWithItems:@[]];
+    segmentedControl.selectedSegmentTintColor = self.accentColor;
+    [segmentedControl setTitleTextAttributes:@{
+        NSFontAttributeName: [UIFont mirrorMinFont],
+        NSForegroundColorAttributeName: [UIColor mirrorColorNamed:MirrorColorTypeText]
+    } forState:UIControlStateNormal];
+    [segmentedControl setTitleTextAttributes:@{
+        NSFontAttributeName: [UIFont mirrorMinFont],
+        NSForegroundColorAttributeName: UIColor.whiteColor
+    } forState:UIControlStateSelected];
+
+    NSInteger selectedIndex = UISegmentedControlNoSegment;
+    for (NSInteger index = 0; index < self.tasks.count; index++) {
+        NSString *taskName = self.tasks[index].taskName ?: @"";
+        [segmentedControl insertSegmentWithTitle:taskName atIndex:index animated:NO];
+        if ([taskName isEqualToString:self.editingRecord.taskName]) {
+            selectedIndex = index;
+        }
+    }
+    segmentedControl.selectedSegmentIndex = selectedIndex;
+    [segmentedControl addTarget:self action:@selector(taskSegmentedControlValueChanged:) forControlEvents:UIControlEventValueChanged];
+    self.taskSegmentedControl = segmentedControl;
+    return segmentedControl;
 }
 
 - (UILabel *)pickerLabelWithText:(NSString *)text
@@ -183,9 +202,30 @@
     UILabel *label = [UILabel new];
     label.text = text;
     label.font = [UIFont mirrorHintFont];
-    label.textColor = self.accentColor;
+    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     label.adjustsFontSizeToFitWidth = YES;
     return label;
+}
+
+- (void)taskSegmentedControlValueChanged:(UISegmentedControl *)segmentedControl
+{
+    NSInteger selectedIndex = segmentedControl.selectedSegmentIndex;
+    if (selectedIndex < 0 || selectedIndex >= self.tasks.count) {
+        return;
+    }
+    NSString *taskName = self.tasks[selectedIndex].taskName ?: @"";
+    if (taskName.length == 0 || [taskName isEqualToString:self.editingRecord.taskName]) {
+        return;
+    }
+    self.editingRecord.taskName = taskName;
+    MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:taskName];
+    MirrorColorType colorType = taskModel ? taskModel.color : MirrorColorTypeCellGray;
+    self.accentColor = [UIColor mirrorColorPulsed:colorType];
+    segmentedControl.selectedSegmentTintColor = self.accentColor;
+    self.startDatePicker.tintColor = self.accentColor;
+    self.endDatePicker.tintColor = self.accentColor;
+    self.noteTextField.textColor = self.accentColor;
+    self.noteTextField.tintColor = self.accentColor;
 }
 
 - (void)startDatePickerValueChanged:(UIDatePicker *)datePicker
@@ -196,10 +236,8 @@
     }
     timestamp = MIN(timestamp, self.endTimestamp - kMinSeconds);
     self.startTimestamp = timestamp;
+    self.editingRecord.startTime = timestamp;
     self.endDatePicker.minimumDate = [NSDate dateWithTimeIntervalSince1970:self.startTimestamp + kMinSeconds];
-    if (self.valueChanged) {
-        self.valueChanged(YES, timestamp);
-    }
 }
 
 - (void)endDatePickerValueChanged:(UIDatePicker *)datePicker
@@ -210,10 +248,8 @@
         timestamp = MIN(timestamp, self.maximumTimestamp.longValue);
     }
     self.endTimestamp = timestamp;
+    self.editingRecord.endTime = timestamp;
     self.startDatePicker.maximumDate = [NSDate dateWithTimeIntervalSince1970:self.endTimestamp - kMinSeconds];
-    if (self.valueChanged) {
-        self.valueChanged(NO, timestamp);
-    }
 }
 
 - (void)addDismissTapRecognizer
@@ -244,16 +280,18 @@
         return;
     }
     
-    NSString *note = self.noteTextField.text ?: @"";
-    PeriodEditAlertDismissed dismissed = self.dismissed;
+    self.editingRecord.note = self.noteTextField.text ?: @"";
+    MirrorRecordModel *editedRecord = self.editingRecord;
+    PeriodEditAlertRecordChanged recordChanged = self.recordChanged;
     [self removeDismissTapRecognizer];
+    self.taskSegmentedControl = nil;
     self.startDatePicker = nil;
     self.endDatePicker = nil;
     self.noteTextField = nil;
     self.alertController = nil;
     [alertController dismissViewControllerAnimated:YES completion:^{
-        if (dismissed) {
-            dismissed(note);
+        if (recordChanged) {
+            recordChanged(editedRecord);
         }
     }];
 }

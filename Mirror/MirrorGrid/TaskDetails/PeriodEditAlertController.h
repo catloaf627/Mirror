@@ -8,8 +8,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void (^PeriodEditAlertTimeValueChanged)(BOOL isStartTime, long timestamp);
-typedef void (^PeriodEditAlertDismissed)(NSString *note);
+typedef void (^PeriodEditAlertRecordChanged)(MirrorRecordModel *record);
 
 @interface PeriodEditAlertController : NSObject
 
@@ -18,8 +17,7 @@ typedef void (^PeriodEditAlertDismissed)(NSString *note);
 - (instancetype)initWithRecord:(MirrorRecordModel *)record
                minimumTimestamp:(NSNumber * _Nullable)minimumTimestamp
                maximumTimestamp:(NSNumber * _Nullable)maximumTimestamp
-                   valueChanged:(PeriodEditAlertTimeValueChanged)valueChanged
-                      dismissed:(PeriodEditAlertDismissed)dismissed;
+                  recordChanged:(PeriodEditAlertRecordChanged)recordChanged;
 
 - (void)presentFromViewController:(UIViewController *)viewController;
 - (void)dismiss;

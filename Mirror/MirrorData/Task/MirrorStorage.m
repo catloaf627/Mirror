@@ -599,6 +599,29 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
 }
 
+// 修改某条原始记录的完整内容；例如编辑弹窗关闭时一次写回任务、起止时间和备注。
++ (void)editPeriodWithRecord:(MirrorRecordModel *)record periodIndex:(NSInteger)index
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (index < 0 || index >= records.count || record.taskName.length == 0) return;
+    if (record.endTime - record.startTime < kMinSeconds) return;
+    MirrorRecordModel *oldRecord = records[index];
+    NSString *oldNote = oldRecord.note ?: @"";
+    NSString *newNote = record.note ?: @"";
+    BOOL hasChanges = ![oldRecord.taskName isEqualToString:record.taskName] ||
+                      oldRecord.startTime != record.startTime ||
+                      oldRecord.endTime != record.endTime ||
+                      ![oldNote isEqualToString:newNote];
+    if (!hasChanges) return;
+    oldRecord.taskName = record.taskName;
+    oldRecord.startTime = record.startTime;
+    oldRecord.endTime = record.endTime;
+    oldRecord.note = newNote;
+    [MirrorStorage saveMirrorRecords:records];
+    NSLog(@"Period is edited");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
+}
+
 // 修改某条原始记录的备注；例如给 records[2] 写入一段用户备注，最多保留 200 个字符。
 + (void)editPeriodNote:(NSString *)note periodIndex:(NSInteger)index
 {
