@@ -300,9 +300,12 @@
 
 - (void)updateWeekStartsOnButton
 {
-    NSString *imageName = [MirrorSettings appliedWeekStarsOnMonday] ? @"1.lane" : @"7.lane";
+    BOOL appliedWeekStarsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
+    NSString *imageName = appliedWeekStarsOnMonday ? @"1.lane" : @"7.lane";
     UIImage *iconImage = [[UIImage systemImageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.weekStartsOnButton setImage:iconImage forState:UIControlStateNormal];
+    [self.weekStartsOnButton setTitle:iconImage ? nil : (appliedWeekStarsOnMonday ? @"1" : @"7") forState:UIControlStateNormal];
+    self.weekStartsOnButton.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];
     self.weekStartsOnButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
 }
 
