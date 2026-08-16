@@ -449,14 +449,13 @@
 {
     BOOL isToday = [self isSelectedDateToday];
     UIColor *textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    UIColor *buttonColor = isToday ? [textColor colorWithAlphaComponent:0.35] : textColor;
-    UIImage *image = [[UIImage systemImageNamed:[self todayCalendarSymbolName]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    UIColor *buttonColor = isToday ? [textColor colorWithAlphaComponent:0] : textColor;
     self.todayButton.enabled = !isToday;
     self.todayButton.backgroundColor = UIColor.clearColor;
     self.todayButton.tintColor = buttonColor;
     [self.todayButton setTitleColor:buttonColor forState:UIControlStateNormal];
-    [self.todayButton setImage:image forState:UIControlStateNormal];
-    [self.todayButton setTitle:image ? nil : [MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
+    [self.todayButton setImage:nil forState:UIControlStateNormal];
+    [self.todayButton setTitle:[MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
 }
 
 - (BOOL)isSelectedDateToday
@@ -759,14 +758,6 @@
     CGFloat bottomPadding = self.tabBarController.tabBar.frame.size.height + MirrorBottomSafeAreaHeight() + 12;
     CGFloat availableHeight = kScreenHeight - top - bottomPadding;
     return MAX(320, MIN(380, availableHeight));
-}
-
-- (NSString *)todayCalendarSymbolName
-{
-    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
-    calendar.timeZone = [NSTimeZone systemTimeZone];
-    NSInteger day = [calendar component:NSCalendarUnitDay fromDate:[NSDate now]];
-    return [NSString stringWithFormat:@"%ld.calendar", (long)day];
 }
 
 @end
