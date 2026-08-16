@@ -46,6 +46,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)switchHiddenTask:(NSString *)taskName;
 
++ (void)setAllTasksHidden:(BOOL)isHidden;
+
 + (void)editTask:(NSString *)oldName name:(NSString *)newName;
 
 + (void)editTask:(NSString *)taskName color:(MirrorColorType)color;

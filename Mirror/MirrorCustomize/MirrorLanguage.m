@@ -87,6 +87,8 @@
     [mirrorDict setValue:ML(@"Only one special day can be added per day", @"一天只能添加一个特别日", @"Solo se puede añadir un día especial por fecha", @"Un seul jour spécial peut être ajouté par date", @"1日に追加できる特別な日は1つだけです", @"하루에 특별한 날은 하나만 추가할 수 있습니다", @"Pro Datum kann nur ein besonderer Tag hinzugefügt werden", @"На одну дату можно добавить только один особый день") forKey:@"special_day_cannot_be_duplicated"];
     
     // Grid
+    [mirrorDict setValue:ML(@"All tasks hidden", @"所有任务已隐藏", @"Todas las tareas ocultas", @"Toutes les tâches sont masquées", @"すべてのタスクを非表示", @"모든 작업 숨김", @"Alle Aufgaben ausgeblendet", @"Все задачи скрыты") forKey:@"grid_toast_all_tasks_hidden"];
+    [mirrorDict setValue:ML(@"All tasks visible", @"所有任务已显示", @"Todas las tareas visibles", @"Toutes les tâches sont visibles", @"すべてのタスクを表示", @"모든 작업 표시", @"Alle Aufgaben sichtbar", @"Все задачи видны") forKey:@"grid_toast_all_tasks_visible"];
     [mirrorDict setValue:ML(@"Heatmap on", @"热力图已开启", @"Mapa de calor activado", @"Carte thermique activée", @"ヒートマップをオン", @"히트맵 켜짐", @"Heatmap aktiviert", @"Тепловая карта включена") forKey:@"grid_toast_heatmap_on"];
     [mirrorDict setValue:ML(@"Heatmap off", @"热力图已关闭", @"Mapa de calor desactivado", @"Carte thermique désactivée", @"ヒートマップをオフ", @"히트맵 꺼짐", @"Heatmap deaktiviert", @"Тепловая карта выключена") forKey:@"grid_toast_heatmap_off"];
     [mirrorDict setValue:ML(@"Weeks start on Monday", @"每周从周一开始", @"Las semanas empiezan el lunes", @"Les semaines commencent le lundi", @"週は月曜始まり", @"주는 월요일부터 시작", @"Wochen beginnen am Montag", @"Неделя начинается в понедельник") forKey:@"grid_toast_week_starts_monday"];

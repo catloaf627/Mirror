@@ -34,6 +34,7 @@
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
+@property (nonatomic, strong) UIButton *hideTasksButton;
 @property (nonatomic, strong) UIButton *heatmapButton;
 @property (nonatomic, strong) UIButton *weekStartsOnButton;
 @property (nonatomic, strong) UIView *gridOptionsView;
@@ -106,7 +107,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.gridOptionsView];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.hideTasksButton rightButton:self.gridOptionsView];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -133,6 +134,7 @@
     self.legendView = nil;
     self.taskProgressListView = nil;
     self.piechartView = nil;
+    self.hideTasksButton = nil;
     self.heatmapButton = nil;
     self.weekStartsOnButton = nil;
     self.gridOptionsView = nil;
@@ -140,7 +142,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:nil rightButton:self.gridOptionsView];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.hideTasksButton rightButton:self.gridOptionsView];
     }
     [self p_setupUI];
 }
@@ -148,6 +150,7 @@
 - (void)reloadData
 {
     if (!_isLoaded) return;
+    [self updateHideTasksButton];
     [self updateHeatmapButton];
     [self updateWeekStartsOnButton];
     if ([MirrorSettings appliedPieChartRecord]) {
@@ -240,6 +243,16 @@
 
 #pragma mark - Actions
 
+- (void)switchAllTasksHidden
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    BOOL shouldHideAllTasks = ![self areAllTasksHidden];
+    [MirrorStorage setAllTasksHidden:shouldHideAllTasks];
+    [self updateHideTasksButton];
+    NSString *toastKey = shouldHideAllTasks ? @"grid_toast_all_tasks_hidden" : @"grid_toast_all_tasks_visible";
+    [self showGridOptionToastWithKey:toastKey];
+}
+
 - (void)switchHeatmap
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
@@ -259,6 +272,18 @@
 - (void)showGridOptionToastWithKey:(NSString *)key
 {
     [MirrorToast showWithText:[MirrorLanguage mirror_stringWithKey:key] inView:self.view];
+}
+
+- (void)updateHideTasksButton
+{
+    BOOL allTasksHidden = [self areAllTasksHidden];
+    NSString *imageName = allTasksHidden ? @"square" : @"checkmark.square";
+    UIImage *iconImage = [[UIImage systemImageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.hideTasksButton setImage:iconImage forState:UIControlStateNormal];
+    self.hideTasksButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
+    BOOL hasTasks = [MirrorStorage retriveMirrorTasks].count > 0;
+    self.hideTasksButton.enabled = hasTasks;
+    self.hideTasksButton.alpha = hasTasks ? 1.0 : 0.35;
 }
 
 - (void)updateHeatmapButton
@@ -764,6 +789,16 @@
     return _collectionView;
 }
 
+- (UIButton *)hideTasksButton
+{
+    if (!_hideTasksButton) {
+        _hideTasksButton = [UIButton new];
+        [_hideTasksButton addTarget:self action:@selector(switchAllTasksHidden) forControlEvents:UIControlEventTouchUpInside];
+        [self updateHideTasksButton];
+    }
+    return _hideTasksButton;
+}
+
 - (UIButton *)heatmapButton
 {
     if (!_heatmapButton) {
@@ -830,6 +865,20 @@
 }
 
 #pragma mark - Helpers
+
+- (BOOL)areAllTasksHidden
+{
+    NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
+    if (tasks.count == 0) {
+        return NO;
+    }
+    for (MirrorTaskModel *task in tasks) {
+        if (!task.isHidden) {
+            return NO;
+        }
+    }
+    return YES;
+}
 
 // 获取 grid 展示范围的最小日期：取第一条记录开始时间和今天中更早的日期，再返回它所在周的第一天
 - (NSDate *)getMinDateForGrid
