@@ -613,7 +613,14 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
         if (@available(iOS 13.0, *)) {
             UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:21 weight:UIImageSymbolWeightRegular];
             UIImage *image = [[UIImage systemImageNamed:@"pencil.and.list.clipboard"] imageWithConfiguration:configuration];
+            if (!image) {
+                image = [[UIImage systemImageNamed:@"pencil"] imageWithConfiguration:configuration];
+            }
             [_noteButton setImage:image forState:UIControlStateNormal];
+        }
+        if (!_noteButton.currentImage) {
+            [_noteButton setTitle:[MirrorLanguage mirror_stringWithKey:@"note"] forState:UIControlStateNormal];
+            _noteButton.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightRegular];
         }
         [_noteButton addTarget:self action:@selector(noteButtonClicked) forControlEvents:UIControlEventTouchUpInside];
     }
