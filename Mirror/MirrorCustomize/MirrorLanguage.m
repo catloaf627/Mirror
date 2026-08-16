@@ -68,6 +68,7 @@
     [mirrorDict setValue:ML(@"Delete", @"删除", @"Eliminar", @"Supprimer", @"削除", @"삭제") forKey:@"delete"];
     [mirrorDict setValue:ML(@"Merge", @"合并", @"Fusionar", @"Fusionner", @"結合", @"병합") forKey:@"merge"];
     [mirrorDict setValue:ML(@"Cancel", @"取消", @"Cancelar", @"Annuler", @"キャンセル", @"취소") forKey:@"cancel"];
+    [mirrorDict setValue:ML(@"Done", @"完成", @"Listo", @"Terminé", @"完了", @"완료") forKey:@"done"];
     [mirrorDict setValue:ML(@"Add", @"添加", @"Añadir", @"Ajouter", @"追加", @"추가") forKey:@"add"];
     
     // Profile add cell

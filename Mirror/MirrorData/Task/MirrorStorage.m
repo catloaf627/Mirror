@@ -686,6 +686,25 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorDayCreateNotification object:nil userInfo:nil];
 }
 
++ (void)editMirrorDay:(MirrorDayModel *)day atIndex:(NSInteger)index
+{
+    NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
+    [days sortUsingComparator:^NSComparisonResult(MirrorDayModel *day1, MirrorDayModel *day2) {
+        return [day1.dateStr compare:day2.dateStr];
+    }];
+    if (index < 0 || index >= days.count) {
+        return;
+    }
+    
+    days[index] = day;
+    [days sortUsingComparator:^NSComparisonResult(MirrorDayModel *day1, MirrorDayModel *day2) {
+        return [day1.dateStr compare:day2.dateStr];
+    }];
+    [MirrorStorage saveMirrorDays:days];
+    NSLog(@"Edit day");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorDayEditNotification object:nil userInfo:nil];
+}
+
 + (void)deleteMirrorDayAtIndex:(NSInteger)index
 {
     NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];

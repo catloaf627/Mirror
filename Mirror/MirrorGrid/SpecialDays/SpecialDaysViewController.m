@@ -153,7 +153,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 
 @end
 
-@interface SpecialDaysViewController () <UITextFieldDelegate, UIContextMenuInteractionDelegate>
+@interface SpecialDaysViewController () <UITextFieldDelegate, UIEditMenuInteractionDelegate>
 
 @property (nonatomic, strong) UIButton *addButton;
 @property (nonatomic, strong) UIScrollView *scrollView;
@@ -169,6 +169,10 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 @property (nonatomic, weak) UIAlertController *iconPickerAlert;
 @property (nonatomic, weak) UITextField *iconPickerSearchTextField;
 @property (nonatomic, copy) void (^iconPickerReloadHandler)(NSString *query);
+@property (nonatomic, assign) NSInteger selectedDayIndex;
+@property (nonatomic, assign) BOOL isSpecialDayEditMenuVisible;
+@property (nonatomic, assign) BOOL shouldSuppressNextSpecialDayEditMenu;
+@property (nonatomic, weak) UIEditMenuInteraction *visibleSpecialDayEditMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
 
@@ -184,6 +188,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorImportDataNotificaiton object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorDayCreateNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorDayDeleteNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorDayEditNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
     }
@@ -392,9 +397,11 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 - (UIView *)timelineRowWithDay:(MirrorDayModel *)day isFirst:(BOOL)isFirst isLast:(BOOL)isLast
 {
     UIView *row = [UIView new];
-    if (@available(iOS 13.0, *)) {
-        UIContextMenuInteraction *menuInteraction = [[UIContextMenuInteraction alloc] initWithDelegate:self];
-        [row addInteraction:menuInteraction];
+    if (@available(iOS 16.0, *)) {
+        UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
+        [row addInteraction:editMenuInteraction];
+        UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showSpecialDayEditMenu:)];
+        [row addGestureRecognizer:longPressRecognizer];
     }
     UIColor *dayColor = [UIColor mirrorSystemColorNamed:day.color];
     UIColor *lineColor = [dayColor colorWithAlphaComponent:0.38];
@@ -490,25 +497,117 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     return (long)[date timeIntervalSince1970];
 }
 
-#pragma mark - Context Menu
+#pragma mark - Edit Menu
 
-- (UIContextMenuConfiguration *)contextMenuInteraction:(UIContextMenuInteraction *)interaction configurationForMenuAtLocation:(CGPoint)location API_AVAILABLE(ios(13.0))
+- (void)showSpecialDayEditMenu:(UILongPressGestureRecognizer *)recognizer
 {
-    NSInteger dayIndex = interaction.view.tag;
+    if (recognizer.state != UIGestureRecognizerStateBegan) {
+        return;
+    }
+    if ([self dismissVisibleSpecialDayEditMenuIfNeeded]) {
+        return;
+    }
+    if (self.shouldSuppressNextSpecialDayEditMenu) {
+        self.shouldSuppressNextSpecialDayEditMenu = NO;
+        return;
+    }
+    
+    UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+    [feedback impactOccurred];
+    
+    UIView *view = recognizer.view;
+    self.selectedDayIndex = view.tag;
+    [self shakeSelectedRow:view];
+    
+    if (@available(iOS 16.0, *)) {
+        UIEditMenuInteraction *editMenuInteraction = nil;
+        for (id<UIInteraction> interaction in view.interactions) {
+            if ([interaction isKindOfClass:[UIEditMenuInteraction class]]) {
+                editMenuInteraction = (UIEditMenuInteraction *)interaction;
+                break;
+            }
+        }
+        if (!editMenuInteraction) {
+            return;
+        }
+        
+        CGPoint point = [recognizer locationInView:view];
+        UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
+        [editMenuInteraction presentEditMenuWithConfiguration:configuration];
+    }
+}
+
+- (void)shakeSelectedRow:(UIView *)row
+{
+    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    animation.values = @[@0, @(-4 * kWidthRatio), @(4 * kWidthRatio), @(-2 * kWidthRatio), @(2 * kWidthRatio), @0];
+    animation.duration = 0.18;
+    [row.layer addAnimation:animation forKey:@"selectedRowShake"];
+}
+
+- (UIMenu *)specialDayMenuForIndex:(NSInteger)dayIndex
+{
     if (dayIndex < 0 || dayIndex >= self.days.count) {
         return nil;
     }
     
-    return [UIContextMenuConfiguration configurationWithIdentifier:nil previewProvider:nil actionProvider:^UIMenu * _Nullable(NSArray<UIMenuElement *> * _Nonnull suggestedActions) {
-        UIAction *deleteAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"]
-                                                     image:[UIImage systemImageNamed:@"trash"]
-                                                identifier:nil
-                                                   handler:^(__kindof UIAction * _Nonnull action) {
-            [self deleteSpecialDayAtIndex:dayIndex];
-        }];
-        deleteAction.attributes = UIMenuElementAttributesDestructive;
-        return [UIMenu menuWithTitle:@"" children:@[deleteAction]];
+    UIAction *editAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        [self editSpecialDayAtIndex:dayIndex];
     }];
+    UIAction *deleteAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        [self deleteSpecialDayAtIndex:dayIndex];
+    }];
+    deleteAction.attributes = UIMenuElementAttributesDestructive;
+    return [UIMenu menuWithTitle:@"" children:@[editAction, deleteAction]];
+}
+
+- (UIMenu *)editMenuInteraction:(UIEditMenuInteraction *)interaction menuForConfiguration:(UIEditMenuConfiguration *)configuration suggestedActions:(NSArray<UIMenuElement *> *)suggestedActions API_AVAILABLE(ios(16.0))
+{
+    return [self specialDayMenuForIndex:self.selectedDayIndex];
+}
+
+- (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willPresentMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
+{
+    self.isSpecialDayEditMenuVisible = YES;
+    self.visibleSpecialDayEditMenuInteraction = interaction;
+}
+
+- (void)editMenuInteraction:(UIEditMenuInteraction *)interaction willDismissMenuForConfiguration:(UIEditMenuConfiguration *)configuration animator:(id<UIEditMenuInteractionAnimating>)animator API_AVAILABLE(ios(16.0))
+{
+    if (interaction == self.visibleSpecialDayEditMenuInteraction) {
+        self.isSpecialDayEditMenuVisible = NO;
+        self.visibleSpecialDayEditMenuInteraction = nil;
+        self.shouldSuppressNextSpecialDayEditMenu = YES;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            if (!self.isSpecialDayEditMenuVisible) {
+                self.shouldSuppressNextSpecialDayEditMenu = NO;
+            }
+        });
+    }
+}
+
+- (BOOL)dismissVisibleSpecialDayEditMenuIfNeeded
+{
+    if (!self.isSpecialDayEditMenuVisible) {
+        return NO;
+    }
+    if (@available(iOS 16.0, *)) {
+        [self.visibleSpecialDayEditMenuInteraction dismissMenu];
+    }
+    self.isSpecialDayEditMenuVisible = NO;
+    self.visibleSpecialDayEditMenuInteraction = nil;
+    self.shouldSuppressNextSpecialDayEditMenu = NO;
+    return YES;
+}
+
+- (void)editSpecialDayAtIndex:(NSInteger)index
+{
+    if (index < 0 || index >= self.days.count) {
+        return;
+    }
+    
+    [self showSpecialDayDialogWithEditingIndex:index day:self.days[index]];
 }
 
 - (void)deleteSpecialDayAtIndex:(NSInteger)index
@@ -522,19 +621,29 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 
 - (void)showAddDialog
 {
+    [self showSpecialDayDialogWithEditingIndex:NSNotFound day:nil];
+}
+
+- (void)showSpecialDayDialogWithEditingIndex:(NSInteger)editingIndex day:(MirrorDayModel *)editingDay
+{
     [self.view endEditing:YES];
 
-    __block MirrorSystemColorType selectedColor = [self randomSpecialDayColor];
+    BOOL isEditing = editingIndex != NSNotFound && editingDay != nil;
+    __block MirrorSystemColorType selectedColor = isEditing ? editingDay.color : [self randomSpecialDayColor];
     
     UIDatePicker *datePicker = [UIDatePicker new];
     datePicker.datePickerMode = UIDatePickerModeDate;
     datePicker.locale = [NSLocale localeWithLocaleIdentifier:[MirrorLanguage mirror_stringWithKey:@"locale_Identifier"]];
     datePicker.tintColor = [UIColor mirrorSystemColorNamed:selectedColor];
+    NSDate *editingDate = isEditing ? [self.dateFormatter dateFromString:editingDay.dateStr] : nil;
+    if (editingDate) {
+        datePicker.date = editingDate;
+    }
     if (@available(iOS 13.4, *)) {
         datePicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
     }
 
-    __block NSString *selectedIconName = @"star.fill";
+    __block NSString *selectedIconName = isEditing && editingDay.icon.length > 0 ? editingDay.icon : @"star.fill";
     UIButton *iconPickerButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [iconPickerButton setImage:[UIImage systemImageNamed:selectedIconName] forState:UIControlStateNormal];
     iconPickerButton.tintColor = [UIColor mirrorSystemColorNamed:selectedColor];
@@ -553,8 +662,9 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     infoTextField.layer.cornerRadius = 8;
     infoTextField.layer.masksToBounds = YES;
     infoTextField.delegate = self;
+    infoTextField.text = isEditing ? editingDay.info : nil;
 
-    UIAlertController *addAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"add_special_day"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    UIAlertController *addAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:isEditing ? @"edit" : @"add_special_day"] message:nil preferredStyle:UIAlertControllerStyleAlert];
     if (@available(iOS 14.0, *)) {
         [iconPickerButton addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
             [self presentIconPickerFromAlert:addAlert selectedIconName:selectedIconName completion:^(NSString *iconName) {
@@ -574,10 +684,11 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         self.iconPickerSearchTextField = nil;
         self.iconPickerReloadHandler = nil;
     }];
-    UIAlertAction *addAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"add"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    UIAlertAction *saveAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:isEditing ? @"done" : @"add"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSString *dateStr = [self.dateFormatter stringFromDate:datePicker.date];
         NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
-        if ([self specialDayExistsForDateStr:dateStr inDays:days]) {
+        [self sortSpecialDays:days];
+        if ([self specialDayExistsForDateStr:dateStr inDays:days excludingIndex:isEditing ? editingIndex : NSNotFound]) {
             [self showSpecialDayErrorWithTitleKey:@"special_day_cannot_be_duplicated"];
             return;
         }
@@ -586,16 +697,29 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
                                                                  info:infoTextField.text ?: @""
                                                                  icon:selectedIconName
                                                                 color:selectedColor];
-        [MirrorStorage createMirrorDay:day];
+        if (isEditing) {
+            [MirrorStorage editMirrorDay:day atIndex:editingIndex];
+        } else {
+            [MirrorStorage createMirrorDay:day];
+        }
     }];
     [addAlert addAction:cancelAction];
-    [addAlert addAction:addAction];
+    [addAlert addAction:saveAction];
     [self presentViewController:addAlert animated:YES completion:nil];
 }
 
 - (BOOL)specialDayExistsForDateStr:(NSString *)dateStr inDays:(NSArray<MirrorDayModel *> *)days
 {
-    for (MirrorDayModel *day in days) {
+    return [self specialDayExistsForDateStr:dateStr inDays:days excludingIndex:NSNotFound];
+}
+
+- (BOOL)specialDayExistsForDateStr:(NSString *)dateStr inDays:(NSArray<MirrorDayModel *> *)days excludingIndex:(NSInteger)excludedIndex
+{
+    for (NSInteger index = 0; index < days.count; index++) {
+        if (index == excludedIndex) {
+            continue;
+        }
+        MirrorDayModel *day = days[index];
         if ([day.dateStr isEqualToString:dateStr]) {
             return YES;
         }

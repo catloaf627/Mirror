@@ -87,6 +87,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)createMirrorDay:(MirrorDayModel *)day;
 
++ (void)editMirrorDay:(MirrorDayModel *)day atIndex:(NSInteger)index;
+
 + (void)deleteMirrorDayAtIndex:(NSInteger)index;
 
 + (NSNumber *)retriveSecondsFromGMT;
