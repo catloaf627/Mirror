@@ -21,6 +21,7 @@ static CGFloat const kSpecialDaysTimelineIconSize = 26;
 static CGFloat const kSpecialDaysDialogPadding = 16;
 static CGFloat const kSpecialDaysDialogCornerRadius = 12;
 static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
+static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 
 #define kSpecialDaysTimelineX (kScreenWidth * 0.33)
 
@@ -431,7 +432,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
     iconButton.userInteractionEnabled = NO;
     iconButton.tintColor = dayColor;
     iconButton.backgroundColor = [UIColor clearColor];
-    [iconButton setImage:[UIImage systemImageNamed:day.icon.length > 0 ? day.icon : @"star.fill"] forState:UIControlStateNormal];
+    [iconButton setImage:[UIImage systemImageNamed:day.icon] forState:UIControlStateNormal];
     [row addSubview:iconButton];
     [iconButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.mas_equalTo(topLine);
@@ -642,7 +643,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         datePicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
     }
 
-    __block NSString *selectedIconName = isEditing && editingDay.icon.length > 0 ? editingDay.icon : @"star.fill";
+    __block NSString *selectedIconName = isEditing && editingDay.icon.length > 0 ? editingDay.icon : kSpecialDayFallbackIconName;
     UIButton *iconPickerButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [iconPickerButton setImage:[UIImage systemImageNamed:selectedIconName] forState:UIControlStateNormal];
     iconPickerButton.tintColor = [UIColor mirrorSystemColorNamed:selectedColor];
@@ -668,7 +669,7 @@ static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
         [iconPickerButton addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
             [self presentIconPickerFromAlert:addAlert selectedIconName:selectedIconName completion:^(NSString *iconName) {
                 selectedIconName = iconName;
-                [iconPickerButton setImage:[UIImage systemImageNamed:iconName] forState:UIControlStateNormal];
+                [iconPickerButton setImage:[UIImage systemImageNamed:selectedIconName] forState:UIControlStateNormal];
             }];
         }] forControlEvents:UIControlEventTouchUpInside];
     }
