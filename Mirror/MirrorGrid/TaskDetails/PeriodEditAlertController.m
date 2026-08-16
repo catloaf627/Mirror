@@ -30,6 +30,7 @@
 @property (nonatomic, copy) PeriodEditAlertRecordChanged recordChanged;
 @property (nonatomic, strong) MirrorRecordModel *editingRecord;
 @property (nonatomic, strong) NSArray<MirrorTaskModel *> *tasks;
+@property (nonatomic, assign) MirrorColorType taskColorType;
 @property (nonatomic, strong) UIColor *accentColor;
 @property (nonatomic, strong, nullable) NSNumber *minimumTimestamp;
 @property (nonatomic, strong, nullable) NSNumber *maximumTimestamp;
@@ -55,6 +56,7 @@
         editingRecord.note = record.note ?: @"";
         _editingRecord = editingRecord;
         _tasks = [[MirrorStorage retriveMirrorTasks] copy];
+        _taskColorType = colorType;
         _accentColor = [UIColor mirrorColorPulsed:colorType];
         _minimumTimestamp = minimumTimestamp;
         _maximumTimestamp = maximumTimestamp;
@@ -62,8 +64,14 @@
         _endTimestamp = record.endTime;
         _note = [record.note copy] ?: @"";
         _recordChanged = [recordChanged copy];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(themeChanged:) name:MirrorSwitchThemeNotification object:nil];
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (BOOL)isPresented
@@ -106,7 +114,6 @@
     self.noteLabel = noteLabel;
     UITextField *noteTextField = [UITextField new];
     noteTextField.text = self.note;
-    noteTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"note"];
     noteTextField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
     noteTextField.textColor = self.accentColor;
     noteTextField.tintColor = self.accentColor;
@@ -294,8 +301,15 @@
     self.editingRecord.taskName = taskName;
     MirrorTaskModel *taskModel = [MirrorStorage getTaskModelFromDB:taskName];
     MirrorColorType colorType = taskModel ? taskModel.color : MirrorColorTypeCellGray;
+    self.taskColorType = colorType;
     self.accentColor = [UIColor mirrorColorPulsed:colorType];
     self.taskNameLabel.text = taskName;
+    [self updateAccentColorAppearance];
+}
+
+- (void)themeChanged:(NSNotification *)notification
+{
+    self.accentColor = [UIColor mirrorColorPulsed:self.taskColorType];
     [self updateAccentColorAppearance];
 }
 
@@ -312,12 +326,18 @@
     self.endDatePicker.tintColor = self.accentColor;
     self.noteTextField.textColor = self.accentColor;
     self.noteTextField.tintColor = self.accentColor;
-    self.noteTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:[MirrorLanguage mirror_stringWithKey:@"note"] attributes:@{
-        NSForegroundColorAttributeName: self.accentColor,
-        NSFontAttributeName: [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline]
-    }];
+    [self updateNotePlaceholderAppearance];
     [self.cancelAction setValue:self.accentColor forKey:@"titleTextColor"];
     [self.doneAction setValue:self.accentColor forKey:@"titleTextColor"];
+}
+
+- (void)updateNotePlaceholderAppearance
+{
+    UIColor *taskColor = [UIColor mirrorColorNamed:self.taskColorType];
+    self.noteTextField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:[MirrorLanguage mirror_stringWithKey:@"note"] attributes:@{
+        NSForegroundColorAttributeName: taskColor,
+        NSFontAttributeName: [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline]
+    }];
 }
 
 - (NSInteger)indexOfTaskName:(NSString *)taskName
