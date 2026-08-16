@@ -9,8 +9,6 @@
 #import "UIColor+MirrorColor.h"
 
 static NSString * const kMirrorPreferredLanguageKey = @"MirrorUserPreferredLanguage";
-static NSInteger const kMirrorLanguageEnglish = 0;
-static NSInteger const kMirrorLanguageChinese = 1;
 
 @implementation MirrorSettings
 
@@ -31,7 +29,7 @@ static NSInteger const kMirrorLanguageChinese = 1;
 
 + (BOOL)appliedChinese
 {
-    return [MirrorSettings preferredLanguageKey] == kMirrorLanguageChinese;
+    return [MirrorSettings preferredLanguageKey] == MirrorLanguageKeySimplifiedChinese;
 }
 
 + (BOOL)hasPreferredLanguage
@@ -39,29 +37,29 @@ static NSInteger const kMirrorLanguageChinese = 1;
     return [[NSUserDefaults standardUserDefaults] objectForKey:kMirrorPreferredLanguageKey] != nil;
 }
 
-+ (NSInteger)preferredLanguageKey
++ (MirrorLanguageKey)preferredLanguageKey
 {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     id languageKey = [defaults objectForKey:kMirrorPreferredLanguageKey];
     if ([languageKey respondsToSelector:@selector(integerValue)]) {
         NSInteger value = [languageKey integerValue];
-        if (value >= 0 && value <= 6) return value;
+        if (value >= MirrorLanguageKeyEnglish && value <= MirrorLanguageKeyRussian) return (MirrorLanguageKey)value;
     }
 
     if ([defaults boolForKey:@"MirrorUserPreferredChinese"]) {
-        [defaults setInteger:kMirrorLanguageChinese forKey:kMirrorPreferredLanguageKey];
-        return kMirrorLanguageChinese;
+        [defaults setInteger:MirrorLanguageKeySimplifiedChinese forKey:kMirrorPreferredLanguageKey];
+        return MirrorLanguageKeySimplifiedChinese;
     }
-    return kMirrorLanguageEnglish;
+    return MirrorLanguageKeyEnglish;
 }
 
-+ (void)changeLanguageWithKey:(NSInteger)languageKey
++ (void)changeLanguageWithKey:(MirrorLanguageKey)languageKey
 {
-    if (languageKey < 0 || languageKey > 6) return;
+    if (languageKey < MirrorLanguageKeyEnglish || languageKey > MirrorLanguageKeyRussian) return;
     BOOL languageChanged = [MirrorSettings preferredLanguageKey] != languageKey;
     
     [[NSUserDefaults standardUserDefaults] setInteger:languageKey forKey:kMirrorPreferredLanguageKey];
-    [[NSUserDefaults standardUserDefaults] setBool:languageKey == kMirrorLanguageChinese forKey:@"MirrorUserPreferredChinese"];
+    [[NSUserDefaults standardUserDefaults] setBool:languageKey == MirrorLanguageKeySimplifiedChinese forKey:@"MirrorUserPreferredChinese"];
     if (languageChanged) {
         [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchLanguageNotification object:nil];
     }

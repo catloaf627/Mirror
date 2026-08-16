@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "MirrorMacro.h"
+#import "MirrorLanguage.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -19,8 +20,8 @@ NS_ASSUME_NONNULL_BEGIN
 // Language
 + (BOOL)appliedChinese;
 + (BOOL)hasPreferredLanguage;
-+ (NSInteger)preferredLanguageKey;
-+ (void)changeLanguageWithKey:(NSInteger)languageKey;
++ (MirrorLanguageKey)preferredLanguageKey;
++ (void)changeLanguageWithKey:(MirrorLanguageKey)languageKey;
 
 // Week starts on
 + (BOOL)appliedWeekStarsOnMonday;

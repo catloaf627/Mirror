@@ -160,9 +160,13 @@
 
 - (NSString *)languageGlobeIconName
 {
-    NSInteger languageKey = [MirrorSettings preferredLanguageKey];
-    if (languageKey == 1 || languageKey == 4 || languageKey == 5) return @"globe.asia.australia";
-    if (languageKey == 3 || languageKey == 6) return @"globe.europe.africa";
+    MirrorLanguageKey languageKey = [MirrorSettings preferredLanguageKey];
+    if (languageKey == MirrorLanguageKeySimplifiedChinese ||
+        languageKey == MirrorLanguageKeyJapanese ||
+        languageKey == MirrorLanguageKeyKorean) return @"globe.asia.australia";
+    if (languageKey == MirrorLanguageKeyFrench ||
+        languageKey == MirrorLanguageKeyGerman ||
+        languageKey == MirrorLanguageKeyRussian) return @"globe.europe.africa";
     return @"globe.americas";
 }
 
@@ -268,15 +272,26 @@
 - (void)showLanguagePicker
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    NSArray<NSString *> *languageNames = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어", @"Deutsch"];
-    NSInteger preferredLanguageKey = [MirrorSettings preferredLanguageKey];
+    NSArray<NSNumber *> *languageKeys = @[
+        @(MirrorLanguageKeyEnglish),
+        @(MirrorLanguageKeySimplifiedChinese),
+        @(MirrorLanguageKeySpanish),
+        @(MirrorLanguageKeyFrench),
+        @(MirrorLanguageKeyJapanese),
+        @(MirrorLanguageKeyKorean),
+        @(MirrorLanguageKeyGerman),
+        @(MirrorLanguageKeyRussian)
+    ];
+    NSArray<NSString *> *languageNames = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어", @"Deutsch", @"Русский"];
+    MirrorLanguageKey preferredLanguageKey = [MirrorSettings preferredLanguageKey];
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
                                                                              message:nil
                                                                       preferredStyle:UIAlertControllerStyleActionSheet];
     [languageNames enumerateObjectsUsingBlock:^(NSString *languageName, NSUInteger index, BOOL *stop) {
-        NSString *title = index == preferredLanguageKey ? [languageName stringByAppendingString:@" ✓"] : languageName;
+        MirrorLanguageKey languageKey = languageKeys[index].integerValue;
+        NSString *title = languageKey == preferredLanguageKey ? [languageName stringByAppendingString:@" ✓"] : languageName;
         [alertController addAction:[UIAlertAction actionWithTitle:title style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-            [MirrorSettings changeLanguageWithKey:index];
+            [MirrorSettings changeLanguageWithKey:languageKey];
         }]];
     }];
     [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleCancel handler:nil]];

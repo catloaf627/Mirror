@@ -13,7 +13,7 @@
 #import "UIColor+MirrorColor.h"
 #import "MirrorMacro.h"
 
-#define ML(en, zh, es, fr, ja, ko) @[en, zh, es, fr, ja, ko]
+#define ML(en, zh, es, fr, ja, ko, de, ru) @[en, zh, es, fr, ja, ko, de, ru]
 
 @interface MirrorFakeTaskPlan : NSObject
 
@@ -300,31 +300,31 @@
 + (NSArray<NSString *> *)localizedSampleTaskNamesForEnglishName:(NSString *)englishName
 {
     NSDictionary<NSString *, NSArray<NSString *> *> *taskNames = @{
-        @"Gym": ML(@"Gym", @"健身", @"Gimnasio", @"Sport", @"ジム", @"운동"),
-        @"Tennis": ML(@"Tennis", @"网球", @"Tenis", @"Tennis", @"テニス", @"테니스"),
-        @"Code": ML(@"Code", @"编程", @"Programar", @"Coder", @"コーディング", @"코딩"),
-        @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Natation", @"水泳", @"수영"),
-        @"Read": ML(@"Read", @"阅读", @"Leer", @"Lire", @"読書", @"독서"),
-        @"Cook": ML(@"Cook", @"做饭", @"Cocinar", @"Cuisiner", @"料理", @"요리")
+        @"Gym": ML(@"Gym", @"健身", @"Gimnasio", @"Sport", @"ジム", @"운동", @"Fitness", @"Тренировка"),
+        @"Tennis": ML(@"Tennis", @"网球", @"Tenis", @"Tennis", @"テニス", @"테니스", @"Tennis", @"Теннис"),
+        @"Code": ML(@"Code", @"编程", @"Programar", @"Coder", @"コーディング", @"코딩", @"Programmieren", @"Код"),
+        @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Natation", @"水泳", @"수영", @"Schwimmen", @"Плавание"),
+        @"Read": ML(@"Read", @"阅读", @"Leer", @"Lire", @"読書", @"독서", @"Lesen", @"Чтение"),
+        @"Cook": ML(@"Cook", @"做饭", @"Cocinar", @"Cuisiner", @"料理", @"요리", @"Kochen", @"Готовка")
     };
-    return taskNames[englishName] ?: ML(englishName, englishName, englishName, englishName, englishName, englishName);
+    return taskNames[englishName] ?: ML(englishName, englishName, englishName, englishName, englishName, englishName, englishName, englishName);
 }
 
 + (NSArray<MirrorFakeSpecialDayPlan *> *)fakeSpecialDayPlans
 {
     return @[
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:1 day:8 info:ML(@"got a car", @"提车啦", @"coche nuevo", @"nouvelle voiture", @"車を手に入れた", @"차를 샀어요") icon:@"car.fill" color:MirrorSystemColorTypeGreen],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:2 day:7 info:ML(@"graduated", @"毕业啦", @"graduación", @"diplôme obtenu", @"卒業した", @"졸업했어요") icon:@"graduationcap.fill" color:MirrorSystemColorTypeBlue],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:3 day:22 info:ML(@"got a job", @"找到工作", @"conseguí trabajo", @"nouveau travail", @"仕事が決まった", @"취업했어요") icon:@"briefcase.fill" color:MirrorSystemColorTypeMint],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"got cats", @"接猫回家", @"adoptamos gatos", @"chats à la maison", @"猫を迎えた", @"고양이를 데려온 날") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:15 info:ML(@"learned butterfly", @"会游蝶泳了", @"aprendí mariposa", @"papillon appris", @"バタフライが泳げるようになった", @"접영을 할 수 있게 됐어요") icon:@"figure.pool.swim" color:MirrorSystemColorTypeOrange],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:6 day:27 info:ML(@"my birthday", @"我的生日", @"mi cumpleaños", @"mon anniversaire", @"自分の誕生日", @"내 생일") icon:@"birthday.cake.fill" color:MirrorSystemColorTypeYellow],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:7 day:19 info:ML(@"watched the World Cup", @"看世界杯", @"vimos el Mundial", @"Coupe du monde", @"ワールドカップを見た", @"월드컵 본 날") icon:@"soccerball" color:MirrorSystemColorTypeMint],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"moved to a new home", @"搬新家", @"mudanza a una casa nueva", @"déménagement", @"新居へ引っ越し", @"새집으로 이사") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:9 day:13 info:ML(@"got abs", @"练出腹肌！", @"conseguí abdominales", @"abdos dessinés", @"腹筋が割れた", @"복근 만들기 성공!") icon:@"dumbbell.fill" color:MirrorSystemColorTypeOrange],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:10 day:28 info:ML(@"won the 3.0 tennis tournament", @"网球比赛3.0冠军", @"campeón del torneo de tenis 3.0", @"champion du tournoi de tennis 3.0", @"テニス大会3.0優勝", @"테니스 대회 3.0 우승") icon:@"medal.fill" color:MirrorSystemColorTypePurple],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:11 day:11 info:ML(@"got married", @"结婚啦", @"nos casamos", @"mariage", @"結婚した", @"결혼했어요") icon:@"heart.fill" color:MirrorSystemColorTypeRed],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:12 day:12 info:ML(@"launched my own website", @"创建了自己的网站", @"creé mi sitio web", @"créé mon site web", @"自分のサイトを作った", @"내 웹사이트를 만들었어요") icon:@"globe" color:MirrorSystemColorTypeOrange]
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:1 day:8 info:ML(@"got a car", @"提车啦", @"coche nuevo", @"nouvelle voiture", @"車を手に入れた", @"차를 샀어요", @"Auto bekommen", @"купил машину") icon:@"car.fill" color:MirrorSystemColorTypeGreen],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:2 day:7 info:ML(@"graduated", @"毕业啦", @"graduación", @"diplôme obtenu", @"卒業した", @"졸업했어요", @"Abschluss gemacht", @"выпуск") icon:@"graduationcap.fill" color:MirrorSystemColorTypeBlue],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:3 day:22 info:ML(@"got a job", @"找到工作", @"conseguí trabajo", @"nouveau travail", @"仕事が決まった", @"취업했어요", @"Job bekommen", @"нашел работу") icon:@"briefcase.fill" color:MirrorSystemColorTypeMint],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"got cats", @"接猫回家", @"adoptamos gatos", @"chats à la maison", @"猫を迎えた", @"고양이를 데려온 날", @"Katzen adoptiert", @"got cats") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:15 info:ML(@"learned butterfly", @"会游蝶泳了", @"aprendí mariposa", @"papillon appris", @"バタフライが泳げるようになった", @"접영을 할 수 있게 됐어요", @"Schmetterling gelernt", @"learned butterfly") icon:@"figure.pool.swim" color:MirrorSystemColorTypeOrange],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:6 day:27 info:ML(@"my birthday", @"我的生日", @"mi cumpleaños", @"mon anniversaire", @"自分の誕生日", @"내 생일", @"mein Geburtstag", @"мой день рождения") icon:@"birthday.cake.fill" color:MirrorSystemColorTypeYellow],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:7 day:19 info:ML(@"watched the World Cup", @"看世界杯", @"vimos el Mundial", @"Coupe du monde", @"ワールドカップを見た", @"월드컵 본 날", @"die WM geschaut", @"watched the World Cup") icon:@"soccerball" color:MirrorSystemColorTypeMint],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"moved to a new home", @"搬新家", @"mudanza a una casa nueva", @"déménagement", @"新居へ引っ越し", @"새집으로 이사", @"in ein neues Zuhause gezogen", @"moved to a new home") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:9 day:13 info:ML(@"got abs", @"练出腹肌！", @"conseguí abdominales", @"abdos dessinés", @"腹筋が割れた", @"복근 만들기 성공!", @"Bauchmuskeln bekommen!", @"got abs") icon:@"dumbbell.fill" color:MirrorSystemColorTypeOrange],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:10 day:28 info:ML(@"won the 3.0 tennis tournament", @"网球比赛3.0冠军", @"campeón del torneo de tenis 3.0", @"champion du tournoi de tennis 3.0", @"テニス大会3.0優勝", @"테니스 대회 3.0 우승", @"das 3.0-Tennisturnier gewonnen", @"won the 3.0 tennis tournament") icon:@"medal.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:11 day:11 info:ML(@"got married", @"结婚啦", @"nos casamos", @"mariage", @"結婚した", @"결혼했어요", @"geheiratet", @"got married") icon:@"heart.fill" color:MirrorSystemColorTypeRed],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:12 day:12 info:ML(@"launched my own website", @"创建了自己的网站", @"creé mi sitio web", @"créé mon site web", @"自分のサイトを作った", @"내 웹사이트를 만들었어요", @"meine eigene Website gestartet", @"launched my own website") icon:@"globe" color:MirrorSystemColorTypeOrange]
     ];
 }
 
@@ -360,7 +360,7 @@
         }
     }
     
-    NSArray<NSString *> *todayInfo = ML(@"downloaded Mirror.ly", @"下载了 Mirror.ly", @"descargué Mirror.ly", @"Mirror.ly téléchargé", @"Mirror.lyをダウンロード", @"Mirror.ly 다운로드");
+    NSArray<NSString *> *todayInfo = ML(@"downloaded Mirror.ly", @"下载了 Mirror.ly", @"descargué Mirror.ly", @"Mirror.ly téléchargé", @"Mirror.lyをダウンロード", @"Mirror.ly 다운로드", @"Mirror.ly heruntergeladen", @"скачал Mirror.ly");
     NSString *localizedTodayInfo = [self localizedValue:todayInfo
                                            languageKey:[MirrorSettings preferredLanguageKey]
                                              fallback:todayInfo.firstObject];
@@ -380,9 +380,9 @@
 {
     // 健身每次都有 note，按练背日、练腿日、练肩日循环；小概率追加状态很好/状态不好。
     NSArray<NSArray<NSString *> *> *workoutNotes = @[
-        ML(@"back day", @"练背日", @"día de espalda", @"jour dos", @"背中の日", @"등 운동일"),
-        ML(@"leg day", @"练腿日", @"día de pierna", @"jour jambes", @"脚の日", @"하체 운동일"),
-        ML(@"shoulder day", @"练肩日", @"día de hombros", @"jour épaules", @"肩の日", @"어깨 운동일")
+        ML(@"back day", @"练背日", @"día de espalda", @"jour dos", @"背中の日", @"등 운동일", @"Rückentag", @"back day"),
+        ML(@"leg day", @"练腿日", @"día de pierna", @"jour jambes", @"脚の日", @"하체 운동일", @"Beintag", @"leg day"),
+        ML(@"shoulder day", @"练肩日", @"día de hombros", @"jour épaules", @"肩の日", @"어깨 운동일", @"Schultertag", @"shoulder day")
     ];
     NSArray<NSString *> *baseNote = workoutNotes[workoutIndex % workoutNotes.count];
     NSString *note = [self localizedValue:baseNote
@@ -390,14 +390,14 @@
                                 fallback:baseNote.firstObject];
     NSInteger statusRoll = [self randomPercentForDayIndex:dayIndex salt:83];
     if (statusRoll < 15) {
-        NSArray<NSString *> *goodStatus = ML(@"feeling great", @"状态很好", @"muy buenas sensaciones", @"très bonnes sensations", @"調子がとても良い", @"컨디션 좋음");
+        NSArray<NSString *> *goodStatus = ML(@"feeling great", @"状态很好", @"muy buenas sensaciones", @"très bonnes sensations", @"調子がとても良い", @"컨디션 좋음", @"fühle mich großartig", @"feeling great");
         NSString *status = [self localizedValue:goodStatus
                                     languageKey:[MirrorSettings preferredLanguageKey]
                                       fallback:goodStatus.firstObject];
         return [note stringByAppendingFormat:@" · %@", status];
     }
     if (statusRoll < 30) {
-        NSArray<NSString *> *badStatus = ML(@"low energy", @"状态不好", @"poca energía", @"petite forme", @"調子が悪い", @"컨디션 안 좋음");
+        NSArray<NSString *> *badStatus = ML(@"low energy", @"状态不好", @"poca energía", @"petite forme", @"調子が悪い", @"컨디션 안 좋음", @"wenig Energie", @"low energy");
         NSString *status = [self localizedValue:badStatus
                                     languageKey:[MirrorSettings preferredLanguageKey]
                                       fallback:badStatus.firstObject];
@@ -414,19 +414,19 @@
     }
 
     NSArray<NSArray<NSString *> *> *progressNotes = @[
-        ML(@"forehand and backhand basics", @"练习正反手", @"derecha y revés básicos", @"bases coup droit et revers", @"フォアとバックの基礎", @"포핸드와 백핸드 기본"),
-        ML(@"footwork and split step", @"脚步和分腿垫步", @"pies y split step", @"jeu de jambes et split step", @"フットワークとスプリットステップ", @"풋워크와 스플릿 스텝"),
-        ML(@"serve toss and rhythm", @"发球抛球和节奏", @"lanzamiento y ritmo del saque", @"lancer et rythme au service", @"サーブのトスとリズム", @"서브 토스와 리듬"),
-        ML(@"cross-court rally", @"斜线对拉", @"peloteo cruzado", @"diagonales", @"クロスラリー", @"크로스 랠리"),
-        ML(@"backhand slice", @"反手切削", @"revés cortado", @"revers slicé", @"バックハンドスライス", @"백핸드 슬라이스"),
-        ML(@"net volleys", @"网前截击", @"voleas en la red", @"volées au filet", @"ネットボレー", @"네트 발리"),
-        ML(@"approach shot", @"随球上网", @"golpe de aproximación", @"montée au filet", @"アプローチショット", @"어프로치 샷"),
-        ML(@"second-serve topspin", @"二发上旋", @"segundo saque con topspin", @"deuxième service lifté", @"セカンドサーブのトップスピン", @"세컨 서브 탑스핀"),
-        ML(@"down-the-line shots", @"直线变线", @"golpes paralelos", @"long de ligne", @"ストレートへの展開", @"다운더라인 전환"),
-        ML(@"overheads and lobs", @"高压和挑高球", @"remates y globos", @"smashs et lobs", @"スマッシュとロブ", @"오버헤드와 로브"),
-        ML(@"return practice", @"接发球", @"restos", @"retours de service", @"リターン練習", @"리턴 연습"),
-        ML(@"point patterns", @"得分套路", @"patrones de punto", @"schémas de points", @"ポイントパターン", @"득점 패턴"),
-        ML(@"match play", @"实战局", @"juego de partido", @"jeu en match", @"実戦形式", @"실전 게임")
+        ML(@"forehand and backhand basics", @"练习正反手", @"derecha y revés básicos", @"bases coup droit et revers", @"フォアとバックの基礎", @"포핸드와 백핸드 기본", @"Grundlagen von Vorhand und Rückhand", @"forehand and backhand basics"),
+        ML(@"footwork and split step", @"脚步和分腿垫步", @"pies y split step", @"jeu de jambes et split step", @"フットワークとスプリットステップ", @"풋워크와 스플릿 스텝", @"Beinarbeit und Split Step", @"footwork and split step"),
+        ML(@"serve toss and rhythm", @"发球抛球和节奏", @"lanzamiento y ritmo del saque", @"lancer et rythme au service", @"サーブのトスとリズム", @"서브 토스와 리듬", @"Aufwurftechnik und Rhythmus beim Aufschlag", @"serve toss and rhythm"),
+        ML(@"cross-court rally", @"斜线对拉", @"peloteo cruzado", @"diagonales", @"クロスラリー", @"크로스 랠리", @"Crosscourt-Rallye", @"cross-court rally"),
+        ML(@"backhand slice", @"反手切削", @"revés cortado", @"revers slicé", @"バックハンドスライス", @"백핸드 슬라이스", @"Rückhand-Slice", @"backhand slice"),
+        ML(@"net volleys", @"网前截击", @"voleas en la red", @"volées au filet", @"ネットボレー", @"네트 발리", @"Volleys am Netz", @"net volleys"),
+        ML(@"approach shot", @"随球上网", @"golpe de aproximación", @"montée au filet", @"アプローチショット", @"어프로치 샷", @"Angriffsschlag", @"approach shot"),
+        ML(@"second-serve topspin", @"二发上旋", @"segundo saque con topspin", @"deuxième service lifté", @"セカンドサーブのトップスピン", @"세컨 서브 탑스핀", @"Topspin beim zweiten Aufschlag", @"second-serve topspin"),
+        ML(@"down-the-line shots", @"直线变线", @"golpes paralelos", @"long de ligne", @"ストレートへの展開", @"다운더라인 전환", @"Longline-Schläge", @"down-the-line shots"),
+        ML(@"overheads and lobs", @"高压和挑高球", @"remates y globos", @"smashs et lobs", @"スマッシュとロブ", @"오버헤드와 로브", @"Überkopfbälle und Lobs", @"overheads and lobs"),
+        ML(@"return practice", @"接发球", @"restos", @"retours de service", @"リターン練習", @"리턴 연습", @"Return-Training", @"return practice"),
+        ML(@"point patterns", @"得分套路", @"patrones de punto", @"schémas de points", @"ポイントパターン", @"득점 패턴", @"Punktmuster", @"point patterns"),
+        ML(@"match play", @"实战局", @"juego de partido", @"jeu en match", @"実戦形式", @"실전 게임", @"Matchpraxis", @"match play")
     ];
     NSArray<NSString *> *note = progressNotes[monthIndex % progressNotes.count];
     NSString *localizedNote = [self localizedValue:note
@@ -434,14 +434,14 @@
                                          fallback:note.firstObject];
     NSInteger statusRoll = [self randomPercentForDayIndex:dayIndex salt:97];
     if (statusRoll < 15) {
-        NSArray<NSString *> *goodStatus = ML(@"feeling great", @"状态很好", @"muy buenas sensaciones", @"très bonnes sensations", @"調子がとても良い", @"컨디션 좋음");
+        NSArray<NSString *> *goodStatus = ML(@"feeling great", @"状态很好", @"muy buenas sensaciones", @"très bonnes sensations", @"調子がとても良い", @"컨디션 좋음", @"fühle mich großartig", @"feeling great");
         NSString *status = [self localizedValue:goodStatus
                                     languageKey:[MirrorSettings preferredLanguageKey]
                                       fallback:goodStatus.firstObject];
         return [localizedNote stringByAppendingFormat:@" · %@", status];
     }
     if (statusRoll < 30) {
-        NSArray<NSString *> *badStatus = ML(@"low energy", @"状态不好", @"poca energía", @"petite forme", @"調子が悪い", @"컨디션 안 좋음");
+        NSArray<NSString *> *badStatus = ML(@"low energy", @"状态不好", @"poca energía", @"petite forme", @"調子が悪い", @"컨디션 안 좋음", @"wenig Energie", @"low energy");
         NSString *status = [self localizedValue:badStatus
                                     languageKey:[MirrorSettings preferredLanguageKey]
                                       fallback:badStatus.firstObject];
@@ -454,16 +454,16 @@
 {
     // 编程每次都有 note，从 10 种算法类型里按日期随机选择。
     NSArray<NSArray<NSString *> *> *notes = @[
-        ML(@"binary tree", @"二叉树", @"árbol binario", @"arbre binaire", @"二分木", @"이진 트리"),
-        ML(@"dynamic programming", @"动态规划", @"programación dinámica", @"programmation dynamique", @"動的計画法", @"동적 계획법"),
-        ML(@"graph search", @"图搜索", @"búsqueda en grafos", @"recherche de graphe", @"グラフ探索", @"그래프 탐색"),
-        ML(@"backtracking", @"回溯", @"backtracking", @"retour sur trace", @"バックトラッキング", @"백트래킹"),
-        ML(@"sliding window", @"滑动窗口", @"ventana deslizante", @"fenêtre glissante", @"スライディングウィンドウ", @"슬라이딩 윈도우"),
-        ML(@"two pointers", @"双指针", @"dos punteros", @"deux pointeurs", @"二ポインタ", @"투 포인터"),
-        ML(@"heap and priority queue", @"堆和优先队列", @"heap y cola de prioridad", @"tas et file de priorité", @"ヒープと優先度付きキュー", @"힙과 우선순위 큐"),
-        ML(@"greedy algorithm", @"贪心算法", @"algoritmo voraz", @"algorithme glouton", @"貪欲法", @"그리디 알고리즘"),
-        ML(@"prefix sum", @"前缀和", @"suma prefija", @"somme préfixe", @"累積和", @"누적합"),
-        ML(@"union find", @"并查集", @"union find", @"union-find", @"Union-Find", @"유니온 파인드")
+        ML(@"binary tree", @"二叉树", @"árbol binario", @"arbre binaire", @"二分木", @"이진 트리", @"Binärbaum", @"binary tree"),
+        ML(@"dynamic programming", @"动态规划", @"programación dinámica", @"programmation dynamique", @"動的計画法", @"동적 계획법", @"Dynamische Programmierung", @"dynamic programming"),
+        ML(@"graph search", @"图搜索", @"búsqueda en grafos", @"recherche de graphe", @"グラフ探索", @"그래프 탐색", @"Graphsuche", @"graph search"),
+        ML(@"backtracking", @"回溯", @"backtracking", @"retour sur trace", @"バックトラッキング", @"백트래킹", @"Backtracking", @"backtracking"),
+        ML(@"sliding window", @"滑动窗口", @"ventana deslizante", @"fenêtre glissante", @"スライディングウィンドウ", @"슬라이딩 윈도우", @"Sliding Window", @"sliding window"),
+        ML(@"two pointers", @"双指针", @"dos punteros", @"deux pointeurs", @"二ポインタ", @"투 포인터", @"Zwei Zeiger", @"two pointers"),
+        ML(@"heap and priority queue", @"堆和优先队列", @"heap y cola de prioridad", @"tas et file de priorité", @"ヒープと優先度付きキュー", @"힙과 우선순위 큐", @"Heap und Prioritätswarteschlange", @"heap and priority queue"),
+        ML(@"greedy algorithm", @"贪心算法", @"algoritmo voraz", @"algorithme glouton", @"貪欲法", @"그리디 알고리즘", @"Greedy-Algorithmus", @"greedy algorithm"),
+        ML(@"prefix sum", @"前缀和", @"suma prefija", @"somme préfixe", @"累積和", @"누적합", @"Präfixsumme", @"prefix sum"),
+        ML(@"union find", @"并查集", @"union find", @"union-find", @"Union-Find", @"유니온 파인드", @"Union-Find", @"union find")
     ];
     NSInteger noteIndex = [self randomValueForDayIndex:dayIndex salt:107 modulo:997] % notes.count;
     NSArray<NSString *> *note = notes[noteIndex];
@@ -476,20 +476,20 @@
 {
     // 做饭每次都有 note，根据做饭时长分成快手菜、正常晚饭、复杂菜三档，再从对应菜名里随机选择。
     NSArray<NSArray<NSString *> *> *quickNotes = @[
-        ML(@"tomato omelette", @"番茄炒蛋", @"tortilla de patata", @"omelette aux fines herbes", @"親子丼", @"김치볶음밥"),
-        ML(@"garlic shrimp pasta", @"蒜香虾仁意面", @"pasta con gambas al ajillo", @"pâtes aux crevettes à l'ail", @"明太子パスタ", @"새우 오일 파스타"),
-        ML(@"miso salmon bowl", @"味噌三文鱼饭", @"bowl de salmón", @"bol de saumon miso", @"鮭の味噌焼き丼", @"연어 덮밥")
+        ML(@"tomato omelette", @"番茄炒蛋", @"tortilla de patata", @"omelette aux fines herbes", @"親子丼", @"김치볶음밥", @"Tomatenomelett", @"tomato omelette"),
+        ML(@"garlic shrimp pasta", @"蒜香虾仁意面", @"pasta con gambas al ajillo", @"pâtes aux crevettes à l'ail", @"明太子パスタ", @"새우 오일 파스타", @"Pasta mit Knoblauchgarnelen", @"garlic shrimp pasta"),
+        ML(@"miso salmon bowl", @"味噌三文鱼饭", @"bowl de salmón", @"bol de saumon miso", @"鮭の味噌焼き丼", @"연어 덮밥", @"Miso-Lachs-Bowl", @"miso salmon bowl")
     ];
     NSArray<NSArray<NSString *> *> *regularNotes = @[
-        ML(@"chicken curry", @"咖喱鸡", @"pollo al curry", @"poulet au curry", @"チキンカレー", @"치킨 카레"),
-        ML(@"braised pork ribs", @"红烧排骨", @"costillas guisadas", @"travers de porc mijotés", @"豚の角煮", @"돼지갈비찜"),
-        ML(@"mapo tofu", @"麻婆豆腐", @"albóndigas con salsa brava", @"hachis parmentier", @"麻婆豆腐", @"마파두부"),
-        ML(@"beef noodle soup", @"牛肉面", @"cocido ligero", @"pot-au-feu", @"肉うどん", @"소고기국밥")
+        ML(@"chicken curry", @"咖喱鸡", @"pollo al curry", @"poulet au curry", @"チキンカレー", @"치킨 카레", @"Hähnchencurry", @"chicken curry"),
+        ML(@"braised pork ribs", @"红烧排骨", @"costillas guisadas", @"travers de porc mijotés", @"豚の角煮", @"돼지갈비찜", @"geschmorte Schweinerippchen", @"braised pork ribs"),
+        ML(@"mapo tofu", @"麻婆豆腐", @"albóndigas con salsa brava", @"hachis parmentier", @"麻婆豆腐", @"마파두부", @"Mapo-Tofu", @"mapo tofu"),
+        ML(@"beef noodle soup", @"牛肉面", @"cocido ligero", @"pot-au-feu", @"肉うどん", @"소고기국밥", @"Rindfleisch-Nudelsuppe", @"beef noodle soup")
     ];
     NSArray<NSArray<NSString *> *> *slowNotes = @[
-        ML(@"kung pao shrimp", @"宫保虾球", @"paella de marisco", @"boeuf bourguignon", @"ビーフシチュー", @"갈비찜"),
-        ML(@"stuffed roast chicken", @"香草烤鸡", @"pollo relleno al horno", @"poulet rôti farci", @"ローストチキン", @"통닭구이"),
-        ML(@"seafood risotto", @"海鲜烩饭", @"arroz caldoso de marisco", @"risotto aux fruits de mer", @"海鮮リゾット", @"해산물 리조또")
+        ML(@"kung pao shrimp", @"宫保虾球", @"paella de marisco", @"boeuf bourguignon", @"ビーフシチュー", @"갈비찜", @"Kung-Pao-Garnelen", @"kung pao shrimp"),
+        ML(@"stuffed roast chicken", @"香草烤鸡", @"pollo relleno al horno", @"poulet rôti farci", @"ローストチキン", @"통닭구이", @"gefülltes Brathähnchen", @"stuffed roast chicken"),
+        ML(@"seafood risotto", @"海鲜烩饭", @"arroz caldoso de marisco", @"risotto aux fruits de mer", @"海鮮リゾット", @"해산물 리조또", @"Meeresfrüchte-Risotto", @"seafood risotto")
     ];
 
     NSArray<NSArray<NSString *> *> *notes = quickNotes;
@@ -513,16 +513,16 @@
 {
     // 阅读书单按顺序推进；每本书配置一个预计读完所需总分钟数。
     return @[
-        @{@"title": ML(@"Anna Karenina", @"安娜卡列尼娜", @"Anna Karénina", @"Anna Karénine", @"アンナ・カレーニナ", @"안나 카레니나"), @"minutes": @(40 * 60)},
-        @{@"title": ML(@"War and Peace", @"战争与和平", @"Guerra y paz", @"Guerre et Paix", @"戦争と平和", @"전쟁과 평화"), @"minutes": @(55 * 60)},
-        @{@"title": ML(@"Les Miserables", @"悲惨世界", @"Los miserables", @"Les Misérables", @"レ・ミゼラブル", @"레 미제라블"), @"minutes": @(48 * 60)},
-        @{@"title": ML(@"The Brothers Karamazov", @"卡拉马佐夫兄弟", @"Los hermanos Karamázov", @"Les Frères Karamazov", @"カラマーゾフの兄弟", @"카라마조프가의 형제들"), @"minutes": @(34 * 60)},
-        @{@"title": ML(@"One Hundred Years of Solitude", @"百年孤独", @"Cien años de soledad", @"Cent ans de solitude", @"百年の孤独", @"백년의 고독"), @"minutes": @(18 * 60)},
-        @{@"title": ML(@"Pride and Prejudice", @"傲慢与偏见", @"Orgullo y prejuicio", @"Orgueil et Préjugés", @"高慢と偏見", @"오만과 편견"), @"minutes": @(12 * 60)},
-        @{@"title": ML(@"Crime and Punishment", @"罪与罚", @"Crimen y castigo", @"Crime et Châtiment", @"罪と罰", @"죄와 벌"), @"minutes": @(22 * 60)},
-        @{@"title": ML(@"Don Quixote", @"堂吉诃德", @"Don Quijote", @"Don Quichotte", @"ドン・キホーテ", @"돈키호테"), @"minutes": @(45 * 60)},
-        @{@"title": ML(@"The Count of Monte Cristo", @"基督山伯爵", @"El conde de Montecristo", @"Le Comte de Monte-Cristo", @"モンテ・クリスト伯", @"몬테크리스토 백작"), @"minutes": @(42 * 60)},
-        @{@"title": ML(@"Madame Bovary", @"包法利夫人", @"Madame Bovary", @"Madame Bovary", @"ボヴァリー夫人", @"마담 보바리"), @"minutes": @(10 * 60)}
+        @{@"title": ML(@"Anna Karenina", @"安娜卡列尼娜", @"Anna Karénina", @"Anna Karénine", @"アンナ・カレーニナ", @"안나 카레니나", @"Anna Karenina", @"Anna Karenina"), @"minutes": @(40 * 60)},
+        @{@"title": ML(@"War and Peace", @"战争与和平", @"Guerra y paz", @"Guerre et Paix", @"戦争と平和", @"전쟁과 평화", @"Krieg und Frieden", @"War and Peace"), @"minutes": @(55 * 60)},
+        @{@"title": ML(@"Les Miserables", @"悲惨世界", @"Los miserables", @"Les Misérables", @"レ・ミゼラブル", @"레 미제라블", @"Die Elenden", @"Les Miserables"), @"minutes": @(48 * 60)},
+        @{@"title": ML(@"The Brothers Karamazov", @"卡拉马佐夫兄弟", @"Los hermanos Karamázov", @"Les Frères Karamazov", @"カラマーゾフの兄弟", @"카라마조프가의 형제들", @"Die Brüder Karamasow", @"The Brothers Karamazov"), @"minutes": @(34 * 60)},
+        @{@"title": ML(@"One Hundred Years of Solitude", @"百年孤独", @"Cien años de soledad", @"Cent ans de solitude", @"百年の孤独", @"백년의 고독", @"Hundert Jahre Einsamkeit", @"One Hundred Years of Solitude"), @"minutes": @(18 * 60)},
+        @{@"title": ML(@"Pride and Prejudice", @"傲慢与偏见", @"Orgullo y prejuicio", @"Orgueil et Préjugés", @"高慢と偏見", @"오만과 편견", @"Stolz und Vorurteil", @"Pride and Prejudice"), @"minutes": @(12 * 60)},
+        @{@"title": ML(@"Crime and Punishment", @"罪与罚", @"Crimen y castigo", @"Crime et Châtiment", @"罪と罰", @"죄와 벌", @"Schuld und Sühne", @"Crime and Punishment"), @"minutes": @(22 * 60)},
+        @{@"title": ML(@"Don Quixote", @"堂吉诃德", @"Don Quijote", @"Don Quichotte", @"ドン・キホーテ", @"돈키호테", @"Don Quijote", @"Don Quixote"), @"minutes": @(45 * 60)},
+        @{@"title": ML(@"The Count of Monte Cristo", @"基督山伯爵", @"El conde de Montecristo", @"Le Comte de Monte-Cristo", @"モンテ・クリスト伯", @"몬테크리스토 백작", @"Der Graf von Monte Christo", @"The Count of Monte Cristo"), @"minutes": @(42 * 60)},
+        @{@"title": ML(@"Madame Bovary", @"包法利夫人", @"Madame Bovary", @"Madame Bovary", @"ボヴァリー夫人", @"마담 보바리", @"Madame Bovary", @"Madame Bovary"), @"minutes": @(10 * 60)}
     ];
 }
 
@@ -567,8 +567,8 @@
     }
 
     NSArray<NSArray<NSString *> *> *notes = @[
-        ML(@"1000m freestyle", @"自由泳1000米", @"1000 m libre", @"1000 m nage libre", @"自由形1000m", @"자유형 1000m"),
-        ML(@"butterfly", @"蝶泳", @"mariposa", @"papillon", @"バタフライ", @"접영")
+        ML(@"1000m freestyle", @"自由泳1000米", @"1000 m libre", @"1000 m nage libre", @"自由形1000m", @"자유형 1000m", @"1000 m Freistil", @"1000 м вольным стилем"),
+        ML(@"butterfly", @"蝶泳", @"mariposa", @"papillon", @"バタフライ", @"접영", @"Schmetterling", @"баттерфляй")
     ];
     NSInteger noteIndex = [self randomValueForDayIndex:dayIndex salt:103 modulo:97] % notes.count;
     NSArray<NSString *> *note = notes[noteIndex];
@@ -577,13 +577,10 @@
                       fallback:note.firstObject];
 }
 
-+ (NSString *)localizedValue:(NSArray<NSString *> *)translations languageKey:(NSInteger)languageKey fallback:(NSString *)fallback
++ (NSString *)localizedValue:(NSArray<NSString *> *)translations languageKey:(MirrorLanguageKey)languageKey fallback:(NSString *)fallback
 {
     if (![translations isKindOfClass:NSArray.class] || translations.count == 0) {
         return fallback;
-    }
-    if (languageKey == 6) {
-        return [MirrorLanguage mirror_germanStringForEnglish:translations.firstObject];
     }
     if (languageKey >= 0 && languageKey < translations.count) {
         return translations[languageKey];
