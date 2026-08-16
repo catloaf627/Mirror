@@ -288,10 +288,13 @@
 
 - (void)updateHeatmapButton
 {
-    NSString *imageName = [MirrorSettings appliedHeatmap] ? @"paintpalette" : @"paintpalette.fill";
+    BOOL appliedHeatmap = [MirrorSettings appliedHeatmap];
+    NSString *imageName = appliedHeatmap ? @"paintpalette" : @"paintpalette.fill";
     UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightRegular];
     UIImage *iconImage = [[UIImage systemImageNamed:imageName withConfiguration:configuration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.heatmapButton setImage:iconImage forState:UIControlStateNormal];
+    [self.heatmapButton setTitle:iconImage ? nil : (appliedHeatmap ? @"ON" : @"OFF") forState:UIControlStateNormal];
+    self.heatmapButton.titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
     self.heatmapButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
 }
 
