@@ -438,7 +438,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
         self.circleView.isCountingDown = YES;
         self.circleView.startAngle = -M_PI_2;
         self.circleView.progress = countdown / kMinSeconds;
-        [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"give_up"] forState:UIControlStateNormal];
+        [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] forState:UIControlStateNormal];
     }
 
     [self.circleView setNeedsDisplay];
@@ -647,7 +647,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 {
     if (!_stopButton) {
         _stopButton = [UIButton new];
-        [_stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"give_up"] forState:UIControlStateNormal];
+        [_stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] forState:UIControlStateNormal];
         _stopButton.backgroundColor = MirrorTrackingButtonBackgroundColor();
         [_stopButton setTitleColor:MirrorTrackingPrimaryTextColor() forState:UIControlStateNormal];
         _stopButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];

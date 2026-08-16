@@ -58,7 +58,6 @@
     
     // Full screen
     [mirrorDict setValue:ML(@"Go!", @"开始!", @"¡Vamos!", @"C'est parti !", @"開始!", @"시작!", @"Los!", @"Начать!") forKey:@"go"];
-    [mirrorDict setValue:ML(@"Give up", @"放弃", @"Rendirse", @"Abandonner", @"あきらめる", @"포기", @"Aufgeben", @"Сдаться") forKey:@"give_up"];
     [mirrorDict setValue:ML(@"Stop", @"结束", @"Finalizar", @"Terminer", @"終了", @"종료", @"Stopp", @"Стоп") forKey:@"stop"];
 
     // Delete period
