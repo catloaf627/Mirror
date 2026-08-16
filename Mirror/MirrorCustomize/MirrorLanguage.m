@@ -54,7 +54,7 @@
     [mirrorDict setValue:ML(@"Create", @"创建", @"Crear", @"Créer", @"作成", @"생성", @"Erstellen", @"Создать") forKey:@"create"];
     [mirrorDict setValue:ML(@"Name field cannot be empty", @"任务名不能为空", @"El nombre no puede estar vacío", @"Le nom ne peut pas être vide", @"名前は空にできません", @"이름은 비워둘 수 없습니다", @"Der Name darf nicht leer sein", @"Название не может быть пустым") forKey:@"name_field_cannot_be_empty"];
     [mirrorDict setValue:ML(@"Gotcha", @"知道啦", @"Entendido", @"Compris", @"了解", @"알겠어요", @"Verstanden", @"Понятно") forKey:@"gotcha"];
-    [mirrorDict setValue:ML(@"Task cannot be duplicated", @"任务不可重复", @"La tarea no puede duplicarse", @"La tâche ne peut pas être dupliquée", @"タスクは重複できません", @"작업은 중복될 수 없습니다", @"Aufgabe darf nicht doppelt sein", @"Задача не должна повторяться") forKey:@"task_cannot_be_duplicated"];
+    [mirrorDict setValue:ML(@"Task cannot be duplicated", @"任务名不可重复", @"La tarea no puede duplicarse", @"La tâche ne peut pas être dupliquée", @"タスクは重複できません", @"작업은 중복될 수 없습니다", @"Aufgabe darf nicht doppelt sein", @"Задача не должна повторяться") forKey:@"task_cannot_be_duplicated"];
     
     // Full screen
     [mirrorDict setValue:ML(@"Go!", @"开始!", @"¡Vamos!", @"C'est parti !", @"開始!", @"시작!", @"Los!", @"Начать!") forKey:@"go"];
