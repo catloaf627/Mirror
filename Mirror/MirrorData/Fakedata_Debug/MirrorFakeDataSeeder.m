@@ -582,6 +582,9 @@
     if (![translations isKindOfClass:NSArray.class] || translations.count == 0) {
         return fallback;
     }
+    if (languageKey == 6) {
+        return [MirrorLanguage mirror_germanStringForEnglish:translations.firstObject];
+    }
     if (languageKey >= 0 && languageKey < translations.count) {
         return translations[languageKey];
     }

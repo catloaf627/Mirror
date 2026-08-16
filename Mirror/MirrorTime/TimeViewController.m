@@ -162,7 +162,7 @@
 {
     NSInteger languageKey = [MirrorSettings preferredLanguageKey];
     if (languageKey == 1 || languageKey == 4 || languageKey == 5) return @"globe.asia.australia";
-    if (languageKey == 3) return @"globe.europe.africa";
+    if (languageKey == 3 || languageKey == 6) return @"globe.europe.africa";
     return @"globe.americas";
 }
 
@@ -268,7 +268,7 @@
 - (void)showLanguagePicker
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
-    NSArray<NSString *> *languageNames = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어"];
+    NSArray<NSString *> *languageNames = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어", @"Deutsch"];
     NSInteger preferredLanguageKey = [MirrorSettings preferredLanguageKey];
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
                                                                              message:nil

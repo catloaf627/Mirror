@@ -45,7 +45,7 @@ static NSInteger const kMirrorLanguageChinese = 1;
     id languageKey = [defaults objectForKey:kMirrorPreferredLanguageKey];
     if ([languageKey respondsToSelector:@selector(integerValue)]) {
         NSInteger value = [languageKey integerValue];
-        if (value >= 0 && value <= 5) return value;
+        if (value >= 0 && value <= 6) return value;
     }
 
     if ([defaults boolForKey:@"MirrorUserPreferredChinese"]) {
@@ -57,7 +57,7 @@ static NSInteger const kMirrorLanguageChinese = 1;
 
 + (void)changeLanguageWithKey:(NSInteger)languageKey
 {
-    if (languageKey < 0 || languageKey > 5) return;
+    if (languageKey < 0 || languageKey > 6) return;
     BOOL languageChanged = [MirrorSettings preferredLanguageKey] != languageKey;
     
     [[NSUserDefaults standardUserDefaults] setInteger:languageKey forKey:kMirrorPreferredLanguageKey];
