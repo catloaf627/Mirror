@@ -76,11 +76,20 @@
     if (index < 0 || index >= tabbarController.viewControllers.count) {
         return;
     }
+    UIImage *normalSymbol = [UIImage systemImageNamed:imageName];
+    // doc.plaintext 在旧系统取不到时，用 calendar 避免 tab 图标空白
+    if (!normalSymbol && [imageName isEqualToString:@"doc.plaintext"]) {
+        normalSymbol = [UIImage systemImageNamed:@"calendar"];
+    }
+    UIImage *selectedSymbol = [UIImage systemImageNamed:selectedImageName];
+    if (!selectedSymbol && [selectedImageName isEqualToString:@"doc.plaintext.fill"]) {
+        selectedSymbol = [UIImage systemImageNamed:@"calendar"];
+    }
     // 默认图片
-    UIImage *image = [[UIImage systemImageNamed:imageName] imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconText]];
+    UIImage *image = [normalSymbol imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconText]];
     UIImage *imageWithRightColor = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]; //这一行的作用是让image使用image本身的颜色，而不是系统颜色
     // 选中图片
-    UIImage *selectedImage = [[UIImage systemImageNamed:selectedImageName] imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight]];
+    UIImage *selectedImage = [selectedSymbol imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight]];
     UIImage *selectedImageWithRightColor = [selectedImage imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal];//这一行的作用是让image使用image本身的颜色，而不是系统颜色
     // 设置图片
     UITabBarItem *item = [[UITabBarItem alloc] initWithTitle:title image:imageWithRightColor selectedImage:selectedImageWithRightColor];
