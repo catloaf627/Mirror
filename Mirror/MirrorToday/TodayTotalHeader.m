@@ -91,29 +91,29 @@
     }];
     
     // LEFT
-    [self.todayViewLeft addSubview:self.todayLabel];
-    [self.todayLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.todayViewLeft addSubview:self.calendarIconButton];
+    [self.calendarIconButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.offset(-10);
         make.centerY.offset(-10); // slightly higher than the middle
-        make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30); // left padding 20, right padding 10
+        make.width.height.mas_equalTo(26);
+    }];
+    [self.todayViewLeft addSubview:self.todayLabel];
+    [self.todayLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.right.mas_equalTo(self.calendarIconButton.mas_left).offset(-6);
+        make.centerY.mas_equalTo(self.calendarIconButton);
+        make.width.mas_lessThanOrEqualTo(viewWidth/5*3-62); // left padding 20, icon 26, gap 6, right padding 10
     }];
     [self.todayViewLeft addSubview:self.datePickerButton];
     [self.datePickerButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.offset(-10);
-        make.centerY.offset(-10);
-        make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30);
+        make.right.mas_equalTo(self.calendarIconButton.mas_left).offset(-6);
+        make.centerY.mas_equalTo(self.calendarIconButton);
+        make.width.mas_lessThanOrEqualTo(viewWidth/5*3-62);
     }];
     [self.todayViewLeft addSubview:self.todayDateLabel];
     [self.todayDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.offset(-10);
         make.top.mas_equalTo(self.todayLabel.mas_bottom);
         make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30); // left padding 20, right padding 10
-    }];
-    [self.todayViewLeft addSubview:self.calendarIconButton];
-    [self.calendarIconButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.offset(-10);
-        make.top.mas_equalTo(self.datePickerButton.mas_bottom);
-        make.width.height.mas_equalTo(26);
     }];
     [self.todayViewLeft addSubview:self.crownButton];
     [self.crownButton mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -322,7 +322,7 @@
     self.todayLabel.hidden = !usesRelativeDateLabel;
     self.datePickerButton.hidden = usesRelativeDateLabel;
     self.todayDateLabel.hidden = !usesRelativeDateLabel;
-    self.calendarIconButton.hidden = usesRelativeDateLabel;
+    self.calendarIconButton.hidden = NO;
 
     self.todayLabel.text = [self relativeDateTitleForDayOffset:dayOffset];
     self.todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];

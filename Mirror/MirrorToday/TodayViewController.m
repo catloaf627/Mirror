@@ -379,7 +379,7 @@
         tintColor = [UIColor mirrorSystemColorNamed:selectedDay.color];
     } else {
         // 当前日期不是 special day：使用默认图标和默认颜色。
-        iconName = @"star.square";
+        iconName = @"sparkles";
         tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     }
     UIImage *iconImage = [[UIImage systemImageNamed:iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
@@ -428,7 +428,7 @@
 - (NSString *)specialDaysButtonIconNameFromStoredIconName:(NSString *)storedIconName
 {
     if (storedIconName.length == 0) {
-        return @"star.square";
+        return @"sparkles";
     }
     
     NSString *outlineIconName = storedIconName;
@@ -442,7 +442,7 @@
     if ([UIImage systemImageNamed:storedIconName]) {
         return storedIconName;
     }
-    return @"star.square";
+    return @"sparkles";
 }
 
 - (void)updateTodayButtonState
