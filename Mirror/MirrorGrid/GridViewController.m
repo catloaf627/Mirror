@@ -244,12 +244,21 @@
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     [MirrorSettings switchHeatmap];
+    NSString *toastKey = [MirrorSettings appliedHeatmap] ? @"grid_toast_heatmap_on" : @"grid_toast_heatmap_off";
+    [self showGridOptionToastWithKey:toastKey];
 }
 
 - (void)switchWeekStartsOn
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     [MirrorSettings switchWeekStartsOn];
+    NSString *toastKey = [MirrorSettings appliedWeekStarsOnMonday] ? @"grid_toast_week_starts_monday" : @"grid_toast_week_starts_sunday";
+    [self showGridOptionToastWithKey:toastKey];
+}
+
+- (void)showGridOptionToastWithKey:(NSString *)key
+{
+    [MirrorToast showWithText:[MirrorLanguage mirror_stringWithKey:key] inView:self.view];
 }
 
 - (void)updateHeatmapButton
