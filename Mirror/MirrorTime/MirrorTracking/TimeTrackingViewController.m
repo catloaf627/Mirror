@@ -186,8 +186,6 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     CGFloat startCapCenterY = center.y + radius * startUnitY;
     CGFloat startTangentX = -sin(startAngle);
     CGFloat startTangentY = cos(startAngle);
-    CGFloat startCapTipX = startCapCenterX - capRadius * startTangentX;
-    CGFloat startCapTipY = startCapCenterY - capRadius * startTangentY;
     CGFloat endAngle = startAngle + sweepAngle;
     CGFloat endUnitX = cos(endAngle);
     CGFloat endUnitY = sin(endAngle);

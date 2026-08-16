@@ -425,26 +425,6 @@
     return @"star.fill";
 }
 
-- (NSString *)specialDaysButtonIconNameFromStoredIconName:(NSString *)storedIconName
-{
-    if (storedIconName.length == 0) {
-        return @"sparkles";
-    }
-    
-    NSString *outlineIconName = storedIconName;
-    if ([storedIconName hasSuffix:@".fill"]) {
-        outlineIconName = [storedIconName substringToIndex:storedIconName.length - @".fill".length];
-    }
-    
-    if ([UIImage systemImageNamed:outlineIconName]) {
-        return outlineIconName;
-    }
-    if ([UIImage systemImageNamed:storedIconName]) {
-        return storedIconName;
-    }
-    return @"sparkles";
-}
-
 - (void)updateTodayButtonState
 {
     BOOL isToday = [self isSelectedDateToday];

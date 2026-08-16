@@ -18,7 +18,6 @@
 static CGFloat const kSpecialDaysPadding = 20;
 static CGFloat const kSpecialDaysRowHeight = 58;
 static CGFloat const kSpecialDaysTimelineIconSize = 26;
-static CGFloat const kSpecialDaysDialogWidth = 280;
 static CGFloat const kSpecialDaysDialogPadding = 16;
 static CGFloat const kSpecialDaysDialogCornerRadius = 12;
 static CGFloat const kSpecialDaysBackdropAlpha = 0.45;

@@ -130,22 +130,6 @@
     ];
 }
 
-+ (NSSet<NSString *> *)allLocalizedFakeTaskNames
-{
-    NSMutableSet<NSString *> *taskNames = [NSMutableSet new];
-    for (NSString *englishName in [self fakeTaskEnglishNames]) {
-        for (NSString *localizedName in [self localizedSampleTaskNamesForEnglishName:englishName]) {
-            [taskNames addObject:localizedName];
-        }
-    }
-    return taskNames;
-}
-
-+ (NSArray<NSString *> *)fakeTaskEnglishNames
-{
-    return @[@"Gym", @"Tennis", @"Swim", @"Code", @"Cook", @"Read"];
-}
-
 // 每天的 fake record 生成规则：
 // 1. 每月 2 号到随机的 3/4/5 号视为生理期，不生成运动和编程。
 // 2. 非生理期每天早上生成一条运动：偶数 dayIndex 健身；非健身日夏天游泳、冬天网球，其他季节游泳/网球按概率切换。
@@ -587,16 +571,6 @@
         return translations[languageKey];
     }
     return translations.firstObject;
-}
-
-+ (NSString *)englishTaskNameForLocalizedTaskName:(NSString *)taskName
-{
-    for (NSString *englishName in [self fakeTaskEnglishNames]) {
-        if ([[self localizedSampleTaskNamesForEnglishName:englishName] containsObject:taskName]) {
-            return englishName;
-        }
-    }
-    return @"Code";
 }
 
 + (BOOL)startTime:(long)startTime endTime:(long)endTime overlapsRecord:(MirrorRecordModel *)record
