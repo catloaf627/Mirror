@@ -219,6 +219,8 @@
 
     self.gridData = [MirrorStorage getGridData];
     [self reloadSpecialDaysByDateKey];
+    // 入口每次打开都以 selectedDate 为准，避免沿用上一次在 picker 内翻到的月份。
+    [self rebuildCalendarPickerView];
     [self applyCalendarSettings];
     [self updateCalendarSelectionForSelectedDate];
     [self.calendarView reloadDecorationsForDateComponents:[self calendarDecorationDateComponents] animated:NO];
@@ -227,12 +229,9 @@
         make.edges.mas_equalTo(self.view);
     }];
     [self.view addSubview:self.calendarPickerContainerView];
-    [self.calendarPickerContainerView mas_remakeConstraints:^(MASConstraintMaker *make) {
-        make.top.mas_equalTo(self.timelineViewController.view.mas_top).offset(8);
-        make.centerX.mas_equalTo(self.view);
-        make.width.mas_equalTo(MIN(kScreenWidth - 40*kWidthRatio, 340));
-        make.height.mas_equalTo([self calendarPickerHeight]);
-    }];
+    // 加回层级后再同步一次，防止 UICalendarView 在 attach 时恢复内部 visible month。
+    [self updateCalendarSelectionForSelectedDate];
+    [self updateCalendarPickerContainerConstraints];
     self.calendarPickerContainerView.alpha = 0;
     self.calendarPickerContainerView.transform = CGAffineTransformMakeScale(0.96, 0.96);
     [UIView animateWithDuration:0.18 animations:^{
@@ -455,6 +454,27 @@
     return calendar;
 }
 
+- (void)rebuildCalendarPickerView API_AVAILABLE(ios(16.0))
+{
+    // UICalendarView 会保留用户翻到的 visible month，复用实例时重新打开可能不回到入口日期。
+    // 每次入口打开都重建 calendar 和 selection，确保可见月份从 selectedDate 初始化。
+    if (_calendarView) {
+        _calendarView.delegate = nil;
+        [_calendarView removeFromSuperview];
+        _calendarView = nil;
+        _dateSelection = nil;
+    }
+
+    UIView *containerView = self.calendarPickerContainerView;
+    if (self.calendarView.superview != containerView) {
+        [self.calendarView removeFromSuperview];
+        [containerView addSubview:self.calendarView];
+        [self.calendarView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.edges.insets(UIEdgeInsetsMake(8, 8, 8, 8));
+        }];
+    }
+}
+
 - (void)applyCalendarSettings
 {
     self.calendarView.calendar = [self calendarForCurrentSettings];
@@ -484,8 +504,16 @@
 - (void)updateCalendarSelectionForSelectedDate
 {
     NSDateComponents *components = [self.calendarView.calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay fromDate:self.selectedDate ?: [NSDate now]];
+    // 直接写属性和调用 setter 都保留；不同系统版本下 UICalendarView 对 visible month 的同步时机不完全一致。
+    self.calendarView.visibleDateComponents = components;
     [self.calendarView setVisibleDateComponents:components animated:NO];
     [self.dateSelection setSelectedDate:components animated:NO];
+}
+
+- (void)calendarView:(UICalendarView *)calendarView didChangeVisibleDateComponentsFrom:(NSDateComponents *)previousDateComponents API_AVAILABLE(ios(16.0))
+{
+    // 月份切换后可见周数可能从 4 到 6 行变化，需要同步调整弹窗高度。
+    [self updateCalendarPickerContainerConstraints];
 }
 
 - (NSArray<NSDateComponents *> *)gridDateComponents
@@ -732,12 +760,57 @@
     return MAX(32*kWidthRatio, ceil(textWidth) + 8*kWidthRatio);
 }
 
+- (void)updateCalendarPickerContainerConstraints
+{
+    if (!self.calendarPickerContainerView.superview) {
+        return;
+    }
+    [self.calendarPickerContainerView mas_remakeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(self.timelineViewController.view.mas_top).offset(8);
+        make.centerX.mas_equalTo(self.view);
+        // UICalendarView needs extra width on some devices/locales; 340 can clip weekday/date columns.
+        make.width.mas_equalTo([self calendarPickerWidth]);
+        make.height.mas_equalTo([self calendarPickerHeight]);
+    }];
+}
+
+- (CGFloat)calendarPickerWidth
+{
+    return MIN(kScreenWidth - 32*kWidthRatio, 380);
+}
+
 - (CGFloat)calendarPickerHeight
 {
     CGFloat top = CGRectGetMinY(self.timelineViewController.view.frame) + 8;
     CGFloat bottomPadding = self.tabBarController.tabBar.frame.size.height + MirrorBottomSafeAreaHeight() + 12;
     CGFloat availableHeight = kScreenHeight - top - bottomPadding;
-    return MAX(320, MIN(380, availableHeight));
+    NSInteger visibleWeeks = [self visibleWeekCountForCalendarPicker];
+    // UICalendarView 没有稳定暴露真实内容高度；这里按标题、星期栏和月份行数估算容器高度。
+    CGFloat titleAndWeekdayHeight = 128;
+    CGFloat weekRowHeight = 72;
+    CGFloat contentInsets = 16;
+    CGFloat contentHeight = titleAndWeekdayHeight + visibleWeeks * weekRowHeight + contentInsets;
+    return MIN(contentHeight, availableHeight);
+}
+
+- (NSInteger)visibleWeekCountForCalendarPicker
+{
+    NSCalendar *calendar = self.calendarView.calendar ?: [self calendarForCurrentSettings];
+    NSDateComponents *visibleComponents = self.calendarView.visibleDateComponents;
+    if (visibleComponents.year == NSDateComponentUndefined || visibleComponents.month == NSDateComponentUndefined) {
+        visibleComponents = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth fromDate:self.selectedDate ?: [NSDate now]];
+    }
+    visibleComponents.calendar = calendar;
+    visibleComponents.day = 1;
+    NSDate *monthStart = visibleComponents.date;
+    if (!monthStart) {
+        return 6;
+    }
+    NSRange dayRange = [calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:monthStart];
+    // 根据月初星期和当月天数计算实际可见周数，避免所有月份都按 6 行撑开。
+    NSInteger firstWeekday = [calendar component:NSCalendarUnitWeekday fromDate:monthStart];
+    NSInteger leadingDays = (firstWeekday - calendar.firstWeekday + 7) % 7;
+    return ceil((leadingDays + dayRange.length) / 7.0);
 }
 
 @end
