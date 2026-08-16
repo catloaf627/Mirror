@@ -29,42 +29,18 @@
     [mirrorDict setValue:ML(@"Today", @"今天", @"Hoy", @"Aujourd'hui", @"今日", @"오늘", @"Heute", @"Сегодня") forKey:@"today"];
     [mirrorDict setValue:ML(@"Yesterday", @"昨天", @"Ayer", @"Hier", @"昨日", @"어제", @"Gestern", @"Вчера") forKey:@"yesterday"];
     [mirrorDict setValue:ML(@"Tomorrow", @"明天", @"Mañana", @"Demain", @"明日", @"내일", @"Morgen", @"Завтра") forKey:@"tomorrow"];
-    [mirrorDict setValue:ML(@"Calendar", @"日历", @"Calendario", @"Calendrier", @"カレンダー", @"캘린더", @"Kalender", @"Календарь") forKey:@"calendar"];
     [mirrorDict setValue:ML(@"Record", @"记录", @"Historial", @"Historique", @"記録", @"기록", @"Verlauf", @"Записи") forKey:@"record"];
     
     // Settings
-    [mirrorDict setValue:ML(@"Language", @"语言", @"Idioma", @"Langue", @"言語", @"언어", @"Sprache", @"Язык") forKey:@"language"];
-    [mirrorDict setValue:ML(@"Use Chinese", @"使用中文", @"Usar chino", @"Utiliser le chinois", @"中国語を使う", @"중국어 사용", @"Chinesisch verwenden", @"Использовать китайский") forKey:@"apply_chinese"];
-    [mirrorDict setValue:ML(@"Weeks start on Monday", @"周一作为一周的第一天", @"Las semanas empiezan el lunes", @"Les semaines commencent le lundi", @"週の始まりを月曜日にする", @"월요일부터 주 시작", @"Wochen beginnen am Montag", @"Неделя начинается с понедельника") forKey:@"week_starts_on_Monday"];
-    [mirrorDict setValue:ML(@"Show record indexes", @"展示记录的序号", @"Mostrar índices de registros", @"Afficher les index des enregistrements", @"記録番号を表示", @"기록 번호 표시", @"Eintragsnummern anzeigen", @"Показывать номера записей") forKey:@"show_record_indexes"];
-    [mirrorDict setValue:ML(@"Piechart on Record", @"记录页使用饼状图", @"Gráfico circular en Registro", @"Camembert dans Historique", @"記録で円グラフを表示", @"기록에 원형 차트 표시", @"Kreisdiagramm im Verlauf", @"Круговая диаграмма в записях") forKey:@"show_piechart_on_record"];
-    [mirrorDict setValue:ML(@"Heatmap on Record", @"记录页使用热力图", @"Mapa de calor en Registro", @"Carte thermique dans Historique", @"記録でヒートマップを表示", @"기록에 히트맵 표시", @"Heatmap im Verlauf", @"Тепловая карта в записях") forKey:@"heatmap"];
-    [mirrorDict setValue:ML(@"Download from iCloud", @"从 iCloud 下载", @"Descargar desde iCloud", @"Télécharger depuis iCloud", @"iCloudからダウンロード", @"iCloud에서 다운로드", @"Aus iCloud laden", @"Загрузить из iCloud") forKey:@"download_from_icloud"];
-    [mirrorDict setValue:ML(@"Download from iCloud?", @"确认从 iCloud 下载？", @"¿Descargar desde iCloud?", @"Télécharger depuis iCloud ?", @"iCloudからダウンロードしますか？", @"iCloud에서 다운로드할까요?", @"Aus iCloud laden?", @"Загрузить из iCloud?") forKey:@"download_from_icloud_?"];
-    [mirrorDict setValue:ML(@"There are %@ records on your iCloud. Downloading will replace your current data.", @"你的 iCloud 上有 %@ 条记录。下载后会替换当前数据。", @"Hay %@ registros en tu iCloud. La descarga reemplazará tus datos actuales.", @"Il y a %@ enregistrements sur votre iCloud. Le téléchargement remplacera vos données actuelles.", @"iCloudに%@件の記録があります。ダウンロードすると現在のデータが置き換えられます。", @"iCloud에 %@개의 기록이 있습니다. 다운로드하면 현재 데이터가 대체됩니다.", @"In deiner iCloud gibt es %@ Einträge. Das Laden ersetzt deine aktuellen Daten.", @"В iCloud найдено %@ записей. Загрузка заменит текущие данные.") forKey:@"icloud_records_message"];
     [mirrorDict setValue:ML(@"There are %@ tasks, %@ records, and %@ special days on your iCloud.", @"您的 iCloud 上存在 %@ 个任务，%@ 条记录，%@ 个特别日。", @"Hay %@ tareas, %@ registros y %@ días especiales en tu iCloud.", @"Il y a %@ tâches, %@ enregistrements et %@ jours spéciaux sur votre iCloud.", @"iCloudに%@個のタスク、%@件の記録、%@件の特別な日があります。", @"iCloud에 %@개의 작업, %@개의 기록, %@개의 특별한 날이 있습니다.", @"In deiner iCloud gibt es %@ Aufgaben, %@ Einträge und %@ besondere Tage.", @"В iCloud найдено %@ задач, %@ записей и %@ особых дней.") forKey:@"icloud_summary_message"];
-    [mirrorDict setValue:ML(@"Download", @"下载", @"Descargar", @"Télécharger", @"ダウンロード", @"다운로드", @"Laden", @"Загрузить") forKey:@"download"];
-    [mirrorDict setValue:ML(@"No iCloud data", @"没有 iCloud 数据", @"No hay datos en iCloud", @"Aucune donnée iCloud", @"iCloudデータがありません", @"iCloud 데이터 없음", @"Keine iCloud-Daten", @"Нет данных iCloud") forKey:@"no_icloud_data"];
     [mirrorDict setValue:ML(@"No iCloud data was found. Example data will be generated.", @"没有找到 iCloud 数据，将生成示例数据。", @"No se encontraron datos de iCloud. Se generarán datos de ejemplo.", @"Aucune donnée iCloud trouvée. Des données d’exemple seront générées.", @"iCloudデータが見つかりませんでした。サンプルデータを生成します。", @"iCloud 데이터를 찾지 못했습니다. 예시 데이터가 생성됩니다.", @"Es wurden keine iCloud-Daten gefunden. Beispieldaten werden erzeugt.", @"Данные iCloud не найдены. Будут созданы примерные данные.") forKey:@"no_icloud_data_generated_example_data_message"];
-    [mirrorDict setValue:ML(@"Export/Import data", @"导出/导入数据", @"Exportar/importar datos", @"Exporter/importer les données", @"データの書き出し/読み込み", @"데이터 내보내기/가져오기", @"Daten exportieren/importieren", @"Экспорт/импорт данных") forKey:@"export_import_data"];
-    [mirrorDict setValue:ML(@"Export or import data?", @"选择导入或是导出", @"¿Exportar o importar datos?", @"Exporter ou importer les données ?", @"データを書き出すか読み込みますか？", @"데이터를 내보내거나 가져올까요?", @"Daten exportieren oder importieren?", @"Экспортировать или импортировать данные?") forKey:@"export_or_import"];
-    [mirrorDict setValue:ML(@"Export data", @"导出数据", @"Exportar datos", @"Exporter les données", @"データを書き出す", @"데이터 내보내기", @"Daten exportieren", @"Экспорт данных") forKey:@"export_data"];
-    [mirrorDict setValue:ML(@"Export JSON", @"导出 JSON", @"Exportar JSON", @"Exporter JSON", @"JSONを書き出す", @"JSON 내보내기", @"JSON exportieren", @"Экспорт JSON") forKey:@"export_json"];
-    [mirrorDict setValue:ML(@"Import data", @"导入数据", @"Importar datos", @"Importer les données", @"データを読み込む", @"데이터 가져오기", @"Daten importieren", @"Импорт данных") forKey:@"import_data"];
-    [mirrorDict setValue:ML(@"Import JSON", @"导入 JSON", @"Importar JSON", @"Importer JSON", @"JSONを読み込む", @"JSON 가져오기", @"JSON importieren", @"Импорт JSON") forKey:@"import_json"];
-    [mirrorDict setValue:ML(@"Import data?", @"确认导入该数据？", @"¿Importar datos?", @"Importer les données ?", @"データを読み込みますか？", @"데이터를 가져올까요?", @"Daten importieren?", @"Импортировать данные?") forKey:@"import_data_?"];
-    [mirrorDict setValue:ML(@"Current data will be replaced by the imported data", @"导入后当前的数据将被覆盖", @"Los datos actuales serán reemplazados por los datos importados", @"Les données actuelles seront remplacées par les données importées", @"現在のデータは読み込んだデータで置き換えられます", @"현재 데이터가 가져온 데이터로 대체됩니다", @"Aktuelle Daten werden durch die importierten Daten ersetzt", @"Текущие данные будут заменены импортированными") forKey:@"import_data_?_message"];
     [mirrorDict setValue:ML(@"Import", @"导入", @"Importar", @"Importer", @"読み込む", @"가져오기", @"Importieren", @"Импорт") forKey:@"import"];
     [mirrorDict setValue:ML(@"Wrong data format", @"数据格式错误", @"Formato de datos incorrecto", @"Format de données incorrect", @"データ形式が正しくありません", @"데이터 형식이 잘못되었습니다", @"Falsches Datenformat", @"Неверный формат данных") forKey:@"wrong_data_format"];
     [mirrorDict setValue:ML(@"OK", @"好的", @"OK", @"OK", @"OK", @"확인", @"OK", @"OK") forKey:@"ok"];
-    [mirrorDict setValue:ML(@"Contact me", @"联系作者", @"Contáctame", @"Me contacter", @"連絡する", @"문의하기", @"Kontakt", @"Связаться") forKey:@"contact_me"];
-    [mirrorDict setValue:ML(@"Copy author's email address to clipboard", @"拷贝作者邮箱地址到剪切板", @"Copiar el correo del autor al portapapeles", @"Copier l'adresse e-mail de l'auteur", @"作者のメールアドレスをコピー", @"작성자 이메일 주소 복사", @"E-Mail-Adresse des Autors kopieren", @"Скопировать email автора") forKey:@"copy_email_address_to_clipboard"];
-    [mirrorDict setValue:ML(@"Copy", @"拷贝", @"Copiar", @"Copier", @"コピー", @"복사", @"Kopieren", @"Копировать") forKey:@"copy"];
     
     // Profile edit cell
     [mirrorDict setValue:ML(@"Save", @"保存", @"Guardar", @"Enregistrer", @"保存", @"저장", @"Speichern", @"Сохранить") forKey:@"save"];
     [mirrorDict setValue:ML(@"Edit", @"编辑", @"Editar", @"Modifier", @"編集", @"편집", @"Bearbeiten", @"Изменить") forKey:@"edit"];
-    [mirrorDict setValue:ML(@"Remove", @"移掉", @"Quitar", @"Retirer", @"取り除く", @"제거", @"Entfernen", @"Убрать") forKey:@"remove"];
     [mirrorDict setValue:ML(@"Delete", @"删除", @"Eliminar", @"Supprimer", @"削除", @"삭제", @"Löschen", @"Удалить") forKey:@"delete"];
     [mirrorDict setValue:ML(@"Merge", @"合并", @"Fusionar", @"Fusionner", @"結合", @"병합", @"Zusammenführen", @"Объединить") forKey:@"merge"];
     [mirrorDict setValue:ML(@"Cancel", @"取消", @"Cancelar", @"Annuler", @"キャンセル", @"취소", @"Abbrechen", @"Отмена") forKey:@"cancel"];
@@ -75,25 +51,16 @@
     [mirrorDict setValue:ML(@"Enter task title", @"输入任务名称", @"Ingresa el título de la tarea", @"Saisir le titre de la tâche", @"タスク名を入力", @"작업 제목 입력", @"Aufgabentitel eingeben", @"Введите название задачи") forKey:@"enter_task_title"];
     [mirrorDict setValue:ML(@"Edit task", @"编辑任务", @"Editar tarea", @"Modifier la tâche", @"タスクを編集", @"작업 편집", @"Aufgabe bearbeiten", @"Изменить задачу") forKey:@"edit_task"];
     [mirrorDict setValue:ML(@"Create a new task", @"创建新任务", @"Crear una nueva tarea", @"Créer une nouvelle tâche", @"新しいタスクを作成", @"새 작업 만들기", @"Neue Aufgabe erstellen", @"Создать новую задачу") forKey:@"create_a_new_task"];
-    [mirrorDict setValue:ML(@"Edit this task", @"编辑此任务", @"Editar esta tarea", @"Modifier cette tâche", @"このタスクを編集", @"이 작업 편집", @"Diese Aufgabe bearbeiten", @"Изменить эту задачу") forKey:@"edit_this_task"];
     [mirrorDict setValue:ML(@"Create", @"创建", @"Crear", @"Créer", @"作成", @"생성", @"Erstellen", @"Создать") forKey:@"create"];
-    [mirrorDict setValue:ML(@"Discard", @"放弃", @"Descartar", @"Abandonner", @"破棄", @"취소", @"Verwerfen", @"Отменить") forKey:@"discard"];
-    [mirrorDict setValue:ML(@"Untitled", @"未命名", @"Sin título", @"Sans titre", @"無題", @"제목 없음", @"Ohne Titel", @"Без названия") forKey:@"untitled"];
-    [mirrorDict setValue:ML(@"Enter a title to create a new task", @"输入名称以创建新的任务", @"Ingresa un título para crear una nueva tarea", @"Saisir un titre pour créer une tâche", @"新しいタスク名を入力", @"새 작업을 만들 제목 입력", @"Gib einen Titel ein, um eine neue Aufgabe zu erstellen", @"Введите название для новой задачи") forKey:@"add_taskname_hint"];
     [mirrorDict setValue:ML(@"Name field cannot be empty", @"任务名不能为空", @"El nombre no puede estar vacío", @"Le nom ne peut pas être vide", @"名前は空にできません", @"이름은 비워둘 수 없습니다", @"Der Name darf nicht leer sein", @"Название не может быть пустым") forKey:@"name_field_cannot_be_empty"];
     [mirrorDict setValue:ML(@"Gotcha", @"知道啦", @"Entendido", @"Compris", @"了解", @"알겠어요", @"Verstanden", @"Понятно") forKey:@"gotcha"];
     [mirrorDict setValue:ML(@"Task cannot be duplicated", @"任务不可重复", @"La tarea no puede duplicarse", @"La tâche ne peut pas être dupliquée", @"タスクは重複できません", @"작업은 중복될 수 없습니다", @"Aufgabe darf nicht doppelt sein", @"Задача не должна повторяться") forKey:@"task_cannot_be_duplicated"];
-    [mirrorDict setValue:ML(@"This task exists in the current task list", @"这个任务已经存在于当前任务列表中", @"Esta tarea ya existe en la lista actual", @"Cette tâche existe déjà dans la liste actuelle", @"このタスクは現在のリストに存在します", @"이 작업은 현재 목록에 이미 있습니다", @"Diese Aufgabe existiert bereits in der aktuellen Liste", @"Эта задача уже есть в текущем списке") forKey:@"this_task_exists_in_current_task_list"];
     
     // Full screen
     [mirrorDict setValue:ML(@"Go!", @"开始!", @"¡Vamos!", @"C'est parti !", @"開始!", @"시작!", @"Los!", @"Начать!") forKey:@"go"];
     [mirrorDict setValue:ML(@"Give up", @"放弃", @"Rendirse", @"Abandonner", @"あきらめる", @"포기", @"Aufgeben", @"Сдаться") forKey:@"give_up"];
     [mirrorDict setValue:ML(@"Stop", @"结束", @"Finalizar", @"Terminer", @"終了", @"종료", @"Stopp", @"Стоп") forKey:@"stop"];
-    
-    // Task record
-    [mirrorDict setValue:ML(@"Counting...", @"计时中...", @"Cronometrando...", @"Chronométrage...", @"計時中...", @"타이머 실행 중...", @"Zeit läuft...", @"Идет отсчет...") forKey:@"counting"];
-    [mirrorDict setValue:ML(@"Lasted: ", @"持续时间：", @"Duración: ", @"Durée : ", @"経過時間: ", @"지속 시간: ", @"Dauer: ", @"Длилось: ") forKey:@"lasted"];
-    
+
     // Delete period
     [mirrorDict setValue:ML(@"Delete this time period? ", @"确定删除这个时间段？", @"¿Eliminar este periodo?", @"Supprimer cette période ?", @"この時間帯を削除しますか？", @"이 시간대를 삭제할까요?", @"Diesen Zeitraum löschen? ", @"Удалить этот период? ") forKey:@"delete_period_?"];
     [mirrorDict setValue:ML(@"Ends at", @"结束于", @"Termina a las", @"Termine à", @"終了時刻", @"종료 시각", @"Endet um", @"Заканчивается в") forKey:@"ends_at"];
@@ -107,14 +74,10 @@
     [mirrorDict setValue:ML(@"Long press timeline records to delete", @"长按时间线记录可删除", @"Mantén registros para eliminarlos", @"Appuyez longuement pour supprimer", @"タイムライン記録を長押しして削除", @"타임라인 기록을 길게 눌러 삭제", @"Timeline-Einträge lange drücken, um sie zu löschen", @"Удерживайте запись на линии времени, чтобы удалить") forKey:@"timeVC_hint4"];
     
     // All tasks
-    [mirrorDict setValue:ML(@"Long press to reorder tasks", @"长按拖动可以编辑顺序", @"Mantén presionado para reordenar tareas", @"Appuyez longuement pour réordonner les tâches", @"長押しでタスクを並べ替え", @"길게 눌러 작업 순서 변경", @"Lange drücken, um Aufgaben neu zu sortieren", @"Удерживайте, чтобы изменить порядок задач") forKey:@"alltasks_hint0"];
-    [mirrorDict setValue:ML(@"Tap task name to edit", @"轻点任务名可编辑", @"Toca el nombre para editar", @"Touchez le nom pour modifier", @"タスク名をタップして編集", @"작업 이름을 눌러 편집", @"Aufgabennamen antippen zum Bearbeiten", @"Нажмите название задачи, чтобы изменить") forKey:@"alltasks_hint1"];
-    [mirrorDict setValue:ML(@"Up to 8 tasks can be created", @"最多可建立8个任务", @"Se pueden crear hasta 8 tareas", @"Jusqu'à 8 tâches peuvent être créées", @"最大8個のタスクを作成できます", @"최대 8개의 작업을 만들 수 있습니다", @"Bis zu 8 Aufgaben können erstellt werden", @"Можно создать до 8 задач") forKey:@"alltasks_hint3"];
     [mirrorDict setValue:ML(@"Delete this task? ", @"确定删除这个任务？", @"¿Eliminar esta tarea?", @"Supprimer cette tâche ?", @"このタスクを削除しますか？", @"이 작업을 삭제할까요?", @"Diese Aufgabe löschen? ", @"Удалить эту задачу? ") forKey:@"delete_task_?"];
     [mirrorDict setValue:ML(@"This will permanently delete this task and all records inside it. This cannot be undone.", @"这会永久删除此任务以及其中的所有记录，且无法撤销。", @"Esto eliminará permanentemente esta tarea y todos sus registros. No se puede deshacer.", @"Cela supprimera définitivement cette tâche et tous ses enregistrements. Cette action est irréversible.", @"このタスクとそのすべての記録が完全に削除され、元に戻せません。", @"이 작업과 포함된 모든 기록이 영구 삭제되며 되돌릴 수 없습니다.", @"Diese Aufgabe und alle enthaltenen Einträge werden dauerhaft gelöscht. Das kann nicht rückgängig gemacht werden.", @"Эта задача и все ее записи будут удалены навсегда. Это действие нельзя отменить.") forKey:@"delete_task_warning"];
     [mirrorDict setValue:ML(@"Merge tasks?", @"合并任务？", @"¿Fusionar tareas?", @"Fusionner les tâches ?", @"タスクを結合しますか？", @"작업을 병합할까요?", @"Aufgaben zusammenführen?", @"Объединить задачи?") forKey:@"merge_tasks_?"];
     [mirrorDict setValue:ML(@"This will merge the selected task into another task. This cannot be undone.", @"这会将所选任务合并到另一个任务，且无法撤销。", @"Esto fusionará la tarea seleccionada con otra tarea. No se puede deshacer.", @"Cela fusionnera la tâche sélectionnée avec une autre tâche. Cette action est irréversible.", @"選択したタスクを別のタスクに結合します。元に戻せません。", @"선택한 작업을 다른 작업에 병합하며 되돌릴 수 없습니다.", @"Die ausgewählte Aufgabe wird mit einer anderen Aufgabe zusammengeführt. Das kann nicht rückgängig gemacht werden.", @"Выбранная задача будет объединена с другой. Это действие нельзя отменить.") forKey:@"merge_task_warning"];
-    [mirrorDict setValue:ML(@"Created at ", @"创建于 ", @"Creada el ", @"Créée le ", @"作成日 ", @"생성일 ", @"Erstellt am ", @"Создано ") forKey:@"created_at"];
     
     // Special days
     [mirrorDict setValue:ML(@"Special Days", @"特别日", @"Días especiales", @"Jours spéciaux", @"特別な日", @"특별한 날", @"Besondere Tage", @"Особые дни") forKey:@"special_days"];
@@ -156,24 +119,8 @@
     
     // Time editing
     [mirrorDict setValue:ML(@"Starts at", @"开始于", @"Comienza a las", @"Commence à", @"開始時刻", @"시작 시각", @"Beginnt um", @"Начинается в") forKey:@"starts_at"];
-    [mirrorDict setValue:ML(@"OR", @"或", @"O", @"OU", @"または", @"또는", @"ODER", @"ИЛИ") forKey:@"or"];
-    [mirrorDict setValue:ML(@"Start now", @"开始计时", @"Empezar ahora", @"Commencer maintenant", @"今すぐ開始", @"지금 시작", @"Jetzt starten", @"Начать сейчас") forKey:@"start_now"];
     [mirrorDict setValue:ML(@"The current time is already covered by an existing record, so counting cannot start.", @"当前时间已被已有记录占用，无法开始计时。", @"La hora actual ya está cubierta por un registro existente, así que no se puede empezar a contar.", @"L’heure actuelle est déjà couverte par un enregistrement existant, le chronométrage ne peut pas démarrer.", @"現在時刻は既存の記録に含まれているため、計時を開始できません。", @"현재 시간이 기존 기록에 포함되어 있어 타이머를 시작할 수 없습니다.", @"Die aktuelle Zeit ist bereits durch einen vorhandenen Eintrag belegt, daher kann die Zeitmessung nicht starten.", @"Текущее время уже занято существующей записью, поэтому отсчет нельзя начать.") forKey:@"current_time_occupied_cannot_start_counting"];
-    [mirrorDict setValue:ML(@" hours", @" 小时", @" horas", @" heures", @" 時間", @"시간", @" Stunden", @" ч") forKey:@"picker_hours"];
-    [mirrorDict setValue:ML(@" mins", @" 分钟", @" min", @" min", @" 分", @"분", @" Min.", @" мин") forKey:@"picker_mins"];
-    [mirrorDict setValue:ML(@" hour", @" 小时", @" hora", @" heure", @" 時間", @"시간", @" Stunde", @" ч") forKey:@"picker_hour"];
-    [mirrorDict setValue:ML(@" min", @" 分钟", @" min", @" min", @" 分", @"분", @" Min.", @" мин") forKey:@"picker_min"];
-    
-    // All records
-    [mirrorDict setValue:ML(@"All records", @"所有记录", @"Todos los registros", @"Tous les enregistrements", @"すべての記録", @"모든 기록", @"Alle Einträge", @"Все записи") forKey:@"all_records"];
-    [mirrorDict setValue:ML(@"Records", @"记录", @"Registros", @"Enregistrements", @"記録", @"기록", @"Einträge", @"Записи") forKey:@"records"];
-    [mirrorDict setValue:ML(@"Check all records of %@ for %@?", @"查看 %@ 在 %@ 的所有记录？", @"¿Revisar todos los registros de %@ para %@?", @"Voir tous les enregistrements de %@ pour %@ ?", @"%@ の %@ のすべての記録を確認しますか？", @"%@의 %@ 모든 기록을 확인할까요?", @"Alle Einträge von %@ für %@ ansehen?", @"Посмотреть все записи %@ за %@?") forKey:@"check_task_records_for_period_?"];
-    [mirrorDict setValue:ML(@"the year of %@", @"%@年", @"el año %@", @"l’année %@", @"%@年", @"%@년", @"das Jahr %@", @"год %@") forKey:@"period_year_format"];
-    [mirrorDict setValue:ML(@"the week from %@ to %@", @"%@ 至 %@ 这一周", @"la semana del %@ al %@", @"la semaine du %@ au %@", @"%@ から %@ までの週", @"%@부터 %@까지의 주", @"die Woche von %@ bis %@", @"неделя с %@ по %@") forKey:@"period_week_format"];
-    
-    // Motto
-    [mirrorDict setValue:ML(@"Something you want to keep in mind?", @"想记下来什么？", @"¿Algo que quieras recordar?", @"Quelque chose à garder en tête ?", @"覚えておきたいことは？", @"기억하고 싶은 것이 있나요?", @"Etwas, das du dir merken möchtest?", @"Что хотите запомнить?") forKey:@"motto"];
-    
+
     return [MirrorLanguage localizedValue:[mirrorDict valueForKey:key] languageKey:languageKey fallback:key];
 }
 
@@ -183,7 +130,6 @@
     NSMutableDictionary *mirrorDict = [NSMutableDictionary new];
 
     // Time
-    [mirrorDict setValue:ML(@"Pick a color for %@", @"为 %@ 选择颜色", @"Elige un color para %@", @"Choisir une couleur pour %@", @"%@ の色を選択", @"%@ 색상 선택", @"Farbe für %@ wählen", @"Выберите цвет для %@") forKey:@"pick_color_for_task"];
     [mirrorDict setValue:ML(@"Merge %@ to", @"将 %@ 合并到", @"Fusionar %@ con", @"Fusionner %@ avec", @"%@ の結合先", @"%@ 병합 대상", @"%@ zusammenführen mit", @"Объединить %@ с") forKey:@"merge_task_to"];
     [mirrorDict setValue:ML(@"%@h ", @"%@时", @"%@ h ", @"%@ h ", @"%@時間", @"%@시간", @"%@ Std. ", @"%@ ч ") forKey:@"h"];
     [mirrorDict setValue:ML(@"%@m ", @"%@分", @"%@ min ", @"%@ min ", @"%@分", @"%@분", @"%@ Min. ", @"%@ мин ") forKey:@"m"];
