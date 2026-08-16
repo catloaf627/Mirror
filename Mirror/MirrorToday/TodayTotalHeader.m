@@ -27,7 +27,7 @@
 @property (nonatomic, strong) UILabel *todayLabel;
 @property (nonatomic, strong) UIButton *datePickerButton;
 @property (nonatomic, strong) UIButton *calendarIconButton;
-@property (nonatomic, strong) UILabel *todayDateLabel;
+@property (nonatomic, strong) UILabel *secondLabel;
 @property (nonatomic, strong) PiechartView *pieChart;
 @property (nonatomic, strong) UIButton *crownButton;
 @property (nonatomic, strong) UILabel *countLabel;
@@ -109,8 +109,8 @@
         make.centerY.mas_equalTo(self.calendarIconButton);
         make.width.mas_lessThanOrEqualTo(viewWidth/5*3-62);
     }];
-    [self.todayViewLeft addSubview:self.todayDateLabel];
-    [self.todayDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.todayViewLeft addSubview:self.secondLabel];
+    [self.secondLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.right.offset(-10);
         make.top.mas_equalTo(self.todayLabel.mas_bottom);
         make.width.mas_lessThanOrEqualTo(viewWidth/5*3-30); // left padding 20, right padding 10
@@ -254,20 +254,20 @@
     return _calendarIconButton;
 }
 
-- (UILabel *)todayDateLabel
+- (UILabel *)secondLabel
 {
-    if (!_todayDateLabel) {
-        _todayDateLabel = [UILabel new];
-        _todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:self.date ?: [NSDate now]];
-        _todayDateLabel.font = [UIFont mirrorSubtitleFont];
-        _todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
-        _todayDateLabel.adjustsFontSizeToFitWidth = YES;
-        _todayDateLabel.textAlignment = NSTextAlignmentRight;
-        _todayDateLabel.userInteractionEnabled = YES;
-        [_todayDateLabel addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(datePickerButtonTapped)]];
+    if (!_secondLabel) {
+        _secondLabel = [UILabel new];
+        _secondLabel.text = [MirrorTimeText YYYYmmddWeekday:self.date ?: [NSDate now]];
+        _secondLabel.font = [UIFont mirrorSubtitleFont];
+        _secondLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse]; // 和nickname的文字颜色保持一致
+        _secondLabel.adjustsFontSizeToFitWidth = YES;
+        _secondLabel.textAlignment = NSTextAlignmentRight;
+        _secondLabel.userInteractionEnabled = YES;
+        [_secondLabel addGestureRecognizer:[[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(datePickerButtonTapped)]];
 
     }
-    return _todayDateLabel;
+    return _secondLabel;
 }
 
 - (PiechartView *)pieChart
@@ -321,13 +321,13 @@
 
     self.todayLabel.hidden = !usesRelativeDateLabel;
     self.datePickerButton.hidden = usesRelativeDateLabel;
-    self.todayDateLabel.hidden = !usesRelativeDateLabel;
+    self.secondLabel.hidden = NO;
     self.calendarIconButton.hidden = NO;
 
     self.todayLabel.text = [self relativeDateTitleForDayOffset:dayOffset];
     self.todayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    self.todayDateLabel.text = [MirrorTimeText YYYYmmddWeekday:date];
-    self.todayDateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
+    self.secondLabel.text = usesRelativeDateLabel ? [MirrorTimeText YYYYmmddWeekday:date] : [self weekdayTextForDate:date];
+    self.secondLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
 
     [self.datePickerButton setTitle:[MirrorTimeText YYYYmmdd:date] forState:UIControlStateNormal];
     [self.datePickerButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
@@ -371,6 +371,21 @@
     if (dayOffset == -1) return [MirrorLanguage mirror_stringWithKey:@"yesterday"];
     if (dayOffset == 1) return [MirrorLanguage mirror_stringWithKey:@"tomorrow"];
     return [MirrorLanguage mirror_stringWithKey:@"today"];
+}
+
+- (NSString *)weekdayTextForDate:(NSDate *)date
+{
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDateComponents *components = [gregorian components:NSCalendarUnitWeekday fromDate:date ?: [NSDate now]];
+    NSInteger weekday = components.weekday;
+    if (weekday == 1) return [MirrorLanguage mirror_stringWithKey:@"sunday"];
+    if (weekday == 2) return [MirrorLanguage mirror_stringWithKey:@"monday"];
+    if (weekday == 3) return [MirrorLanguage mirror_stringWithKey:@"tuesday"];
+    if (weekday == 4) return [MirrorLanguage mirror_stringWithKey:@"wednesday"];
+    if (weekday == 5) return [MirrorLanguage mirror_stringWithKey:@"thursday"];
+    if (weekday == 6) return [MirrorLanguage mirror_stringWithKey:@"friday"];
+    return [MirrorLanguage mirror_stringWithKey:@"saturday"];
 }
 
 - (NSArray *)startEndTimeForDate:(NSDate *)date
