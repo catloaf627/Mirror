@@ -165,7 +165,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 
 - (void)updateSupportButtonIcon
 {
-    UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular];
+    UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightRegular];
     UIImage *iconImage = [[[UIImage systemImageNamed:@"headset"] imageWithConfiguration:configuration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [_supportButton setImage:iconImage forState:UIControlStateNormal];
     [_supportButton setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateNormal];
