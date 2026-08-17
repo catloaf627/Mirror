@@ -61,7 +61,6 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 
 @interface MirrorTrackingCircleView : UIView
 
-@property (nonatomic, assign) BOOL isCountingDown;
 @property (nonatomic, assign) CGFloat progress;
 @property (nonatomic, assign) CGFloat startAngle;
 @property (nonatomic, strong) UIColor *taskColor;
@@ -93,12 +92,6 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 {
     self.backgroundColor = UIColor.clearColor;
     self.contentMode = UIViewContentModeRedraw;
-}
-
-- (void)setIsCountingDown:(BOOL)isCountingDown
-{
-    _isCountingDown = isCountingDown;
-    [self setNeedsDisplay];
 }
 
 - (void)setProgress:(CGFloat)progress
@@ -284,7 +277,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     }
 
     CGFloat startAngle = self.startAngle;
-    CGFloat sweepAngle = (!self.isCountingDown && progress >= 1) ? 2*M_PI : 2*M_PI*progress;
+    CGFloat sweepAngle = progress >= 1 ? 2*M_PI : 2*M_PI*progress;
 
     UIBezierPath *trackPath = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:startAngle endAngle:startAngle + 2*M_PI clockwise:YES];
     trackPath.lineWidth = kCircleLineWidth;
@@ -422,22 +415,11 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
         return;
     }
 
-    BOOL canStop = [self canStopAndKeepRecord];
-
-    if (canStop) {
-        self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
-        self.circleView.isCountingDown = NO;
-        self.circleView.startAngle = [self hourCircleStartAngle];
-        self.circleView.progress = [self hourCircleProgress];
-        [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"stop"] forState:UIControlStateNormal];
-    } else {
-        NSTimeInterval countdown = MAX(0, kMinSeconds - self.accurateTimeInterval);
-        self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:ceil(countdown)];
-        self.circleView.isCountingDown = YES;
-        self.circleView.startAngle = -M_PI_2;
-        self.circleView.progress = countdown / kMinSeconds;
-        [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] forState:UIControlStateNormal];
-    }
+    self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
+    self.circleView.startAngle = [self hourCircleStartAngle];
+    self.circleView.progress = [self hourCircleProgress];
+    NSString *buttonTitleKey = [self canStopAndKeepRecord] ? @"stop" : @"cancel";
+    [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:buttonTitleKey] forState:UIControlStateNormal];
 
     [self.circleView setNeedsDisplay];
 }
@@ -474,21 +456,21 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 
 - (CGFloat)hourCircleProgress
 {
-    NSInteger elapsedMinutes = MAX(0, floor(self.timeInterval / 60.0));
-    if (elapsedMinutes >= 60) {
+    NSTimeInterval elapsedSeconds = MAX(0, self.timeInterval);
+    if (elapsedSeconds >= 60 * 60) {
         return 1;
     }
-    return elapsedMinutes / 60.0;
+    return elapsedSeconds / (60.0 * 60.0);
 }
 
 - (CGFloat)hourCircleStartAngle
 {
-    NSInteger elapsedMinutes = MAX(0, floor(self.timeInterval / 60.0));
-    if (elapsedMinutes < 60) {
+    NSTimeInterval elapsedSeconds = MAX(0, self.timeInterval);
+    if (elapsedSeconds < 60 * 60) {
         return -M_PI_2;
     }
-    NSInteger minuteInHour = elapsedMinutes % 60;
-    return -M_PI_2 + 2*M_PI*(minuteInHour / 60.0);
+    NSTimeInterval secondsInHour = fmod(elapsedSeconds, 60 * 60);
+    return -M_PI_2 + 2*M_PI*(secondsInHour / (60.0 * 60.0));
 }
 
 - (void)triggerButtonHapticFeedback
