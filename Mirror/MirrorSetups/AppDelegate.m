@@ -11,7 +11,6 @@
 #import "MirrorSettings.h"
 #import "MirrorStorage.h"
 #import "MirrorMacro.h"
-#import "MirrorFakeDataSeeder.h"
 
 @interface AppDelegate () <UITabBarControllerDelegate>
 

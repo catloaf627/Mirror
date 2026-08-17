@@ -10,8 +10,6 @@
 #import "MirrorNaviManager.h"
 #import "MirrorSettings.h"
 #import "MirrorStorage.h"
-#import "MirrorFakeDataSeeder.h"
-#import "MirrorLanguage.h"
 #import "MirrorMacro.h"
 #import <UIKit/UIKit.h>
 
@@ -19,9 +17,6 @@
 @interface SceneDelegate ()<UITabBarControllerDelegate>
 
 @property (nonatomic, assign) BOOL didStartInitialICloudCheck;
-@property (nonatomic, strong) NSNumber *initialICloudTaskCount;
-@property (nonatomic, strong) NSNumber *initialICloudRecordCount;
-@property (nonatomic, strong) NSNumber *initialICloudDayCount;
 @property (nonatomic, assign) BOOL isShowingInitialLanguageAlert;
 
 @end
@@ -55,6 +50,10 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
 
 - (void)showInitialDataPromptIfNeeded
 {
+    if (![MirrorSettings hasPreferredLanguage]) {
+        [self showInitialLanguageAlert];
+    }
+
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if ([defaults boolForKey:kMirrorInitialDataPromptShownKey]) {
         return;
@@ -64,20 +63,6 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
         return;
     }
     [self startInitialICloudCheckIfNeeded];
-    if (![MirrorSettings hasPreferredLanguage]) {
-        [self showInitialLanguageAlert];
-        return;
-    }
-    if (!self.initialICloudTaskCount && !self.initialICloudRecordCount && !self.initialICloudDayCount) {
-        return;
-    }
-    
-    [defaults setBool:YES forKey:kMirrorInitialDataPromptShownKey];
-    if (self.initialICloudTaskCount.integerValue > 0 || self.initialICloudRecordCount.integerValue > 0 || self.initialICloudDayCount.integerValue > 0) {
-        [self showInitialICloudImportAlert];
-    } else {
-        [self showNoICloudDataGeneratedExampleDataAlert];
-    }
 }
 
 - (void)startInitialICloudCheckIfNeeded
@@ -90,11 +75,14 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
         NSNumber *taskCount = [MirrorStorage iCloudTaskCount];
         NSNumber *recordCount = [MirrorStorage iCloudRecordCount];
         NSNumber *dayCount = [MirrorStorage iCloudDayCount];
+        BOOL hasICloudData = taskCount.integerValue > 0 || recordCount.integerValue > 0 || dayCount.integerValue > 0;
+        BOOL didImportICloudData = hasICloudData && [MirrorStorage importDataFromICloud];
         dispatch_async(dispatch_get_main_queue(), ^{
-            self.initialICloudTaskCount = taskCount ?: @0;
-            self.initialICloudRecordCount = recordCount ?: @0;
-            self.initialICloudDayCount = dayCount ?: @0;
-            [self showInitialDataPromptIfNeeded];
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kMirrorInitialDataPromptShownKey];
+            if (didImportICloudData) {
+                [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
+                [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
+            }
         });
     });
 }
@@ -118,54 +106,6 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
             });
         }]];
     }
-    [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
-}
-
-- (void)showInitialICloudImportAlert
-{
-    NSString *message = [NSString stringWithFormat:[MirrorLanguage mirror_stringWithKey:@"icloud_summary_message"], self.initialICloudTaskCount, self.initialICloudRecordCount, self.initialICloudDayCount];
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
-                                                                             message:message
-                                                                      preferredStyle:UIAlertControllerStyleAlert];
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"import"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self importInitialICloudData];
-    }]];
-    [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
-}
-
-- (void)importInitialICloudData
-{
-    if ([MirrorStorage importDataFromICloud]) {
-        [MirrorStorage saveSecondsFromGMT:@([NSTimeZone systemTimeZone].secondsFromGMT)];
-        [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
-    } else {
-        [self showWrongDataFormatAlert];
-    }
-}
-
-- (void)seedInitialExampleData
-{
-    [MirrorFakeDataSeeder seedFakeData];
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
-}
-
-- (void)showNoICloudDataGeneratedExampleDataAlert
-{
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
-                                                                             message:[MirrorLanguage mirror_stringWithKey:@"no_icloud_data_generated_example_data_message"]
-                                                                      preferredStyle:UIAlertControllerStyleAlert];
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [self seedInitialExampleData];
-    }]];
-    [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
-}
-
-- (void)showWrongDataFormatAlert
-{
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"wrong_data_format"]
-                                                                             message:nil
-                                                                      preferredStyle:UIAlertControllerStyleAlert];
-    [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
     [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
 }
 
