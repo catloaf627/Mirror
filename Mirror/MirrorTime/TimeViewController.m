@@ -253,7 +253,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     [window addSubview:hitView];
 
     UITapGestureRecognizer *debugTapRecognizer = [UITapGestureRecognizer new];
-    debugTapRecognizer.numberOfTouchesRequired = 2;
+    debugTapRecognizer.numberOfTouchesRequired = 1;
     [debugTapRecognizer addTarget:self action:@selector(countNavigationDebugTap:)];
     [hitView addGestureRecognizer:debugTapRecognizer];
 }
