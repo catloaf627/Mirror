@@ -32,10 +32,6 @@
     [mirrorDict setValue:ML(@"Record", @"记录", @"Historial", @"Historique", @"記録", @"기록", @"Verlauf", @"Записи") forKey:@"record"];
     
     // Settings
-    [mirrorDict setValue:ML(@"There are %@ tasks, %@ records, and %@ special days on your iCloud.", @"您的 iCloud 上存在 %@ 个任务，%@ 条记录，%@ 个特别日。", @"Hay %@ tareas, %@ registros y %@ días especiales en tu iCloud.", @"Il y a %@ tâches, %@ enregistrements et %@ jours spéciaux sur votre iCloud.", @"iCloudに%@個のタスク、%@件の記録、%@件の特別な日があります。", @"iCloud에 %@개의 작업, %@개의 기록, %@개의 특별한 날이 있습니다.", @"In deiner iCloud gibt es %@ Aufgaben, %@ Einträge und %@ besondere Tage.", @"В iCloud найдено %@ задач, %@ записей и %@ особых дней.") forKey:@"icloud_summary_message"];
-    [mirrorDict setValue:ML(@"No iCloud data was found. Example data will be generated.", @"没有找到 iCloud 数据，将生成示例数据。", @"No se encontraron datos de iCloud. Se generarán datos de ejemplo.", @"Aucune donnée iCloud trouvée. Des données d’exemple seront générées.", @"iCloudデータが見つかりませんでした。サンプルデータを生成します。", @"iCloud 데이터를 찾지 못했습니다. 예시 데이터가 생성됩니다.", @"Es wurden keine iCloud-Daten gefunden. Beispieldaten werden erzeugt.", @"Данные iCloud не найдены. Будут созданы примерные данные.") forKey:@"no_icloud_data_generated_example_data_message"];
-    [mirrorDict setValue:ML(@"Import", @"导入", @"Importar", @"Importer", @"読み込む", @"가져오기", @"Importieren", @"Импорт") forKey:@"import"];
-    [mirrorDict setValue:ML(@"Wrong data format", @"数据格式错误", @"Formato de datos incorrecto", @"Format de données incorrect", @"データ形式が正しくありません", @"데이터 형식이 잘못되었습니다", @"Falsches Datenformat", @"Неверный формат данных") forKey:@"wrong_data_format"];
     [mirrorDict setValue:ML(@"OK", @"好的", @"OK", @"OK", @"OK", @"확인", @"OK", @"OK") forKey:@"ok"];
     [mirrorDict setValue:ML(@"Contact Author", @"联系作者", @"Contactar al autor", @"Contacter l’auteur", @"作者に連絡", @"작성자에게 문의", @"Autor kontaktieren", @"Связаться с автором") forKey:@"contact_author"];
     [mirrorDict setValue:ML(@"Mail is unavailable", @"无法打开邮件", @"Mail no está disponible", @"Mail n’est pas disponible", @"メールを使用できません", @"Mail을 사용할 수 없습니다", @"Mail ist nicht verfügbar", @"Почта недоступна") forKey:@"mail_unavailable"];
