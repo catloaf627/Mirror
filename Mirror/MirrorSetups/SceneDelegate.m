@@ -108,7 +108,7 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
                                                                              message:nil
                                                                       preferredStyle:UIAlertControllerStyleAlert];
-    NSArray<NSString *> *languages = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어", @"Deutsch"];
+    NSArray<NSString *> *languages = @[@"English", @"中文", @"Español", @"Français", @"日本語", @"한국어", @"Deutsch", @"Русский"];
     for (NSInteger i=0; i<languages.count; i++) {
         [alertController addAction:[UIAlertAction actionWithTitle:languages[i] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
             [MirrorSettings changeLanguageWithKey:i];
