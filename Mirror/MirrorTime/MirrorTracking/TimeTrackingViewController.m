@@ -532,7 +532,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 {
     NSDate *startTime = self.accurateStartDate ?: [NSDate date];
     if (is_debug) {
-        startTime = [startTime dateByAddingTimeInterval:-3600];
+        startTime = [startTime dateByAddingTimeInterval:-2730];
     }
     return startTime;
 }
