@@ -284,7 +284,7 @@
 + (NSArray<NSString *> *)localizedSampleTaskNamesForEnglishName:(NSString *)englishName
 {
     NSDictionary<NSString *, NSArray<NSString *> *> *taskNames = @{
-        @"Gym": ML(@"Gym", @"健身", @"Gimnasio", @"Sport", @"ジム", @"운동", @"Fitness", @"Тренировка"),
+        @"Gym": ML(@"Gym", @"健身", @"Gimnasio", @"Musculation", @"ジム", @"운동", @"Fitness", @"Тренировка"),
         @"Tennis": ML(@"Tennis", @"网球", @"Tenis", @"Tennis", @"テニス", @"테니스", @"Tennis", @"Теннис"),
         @"Code": ML(@"Code", @"编程", @"Programar", @"Coder", @"コーディング", @"코딩", @"Programmieren", @"Код"),
         @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Natation", @"水泳", @"수영", @"Schwimmen", @"Плавание"),
