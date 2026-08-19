@@ -875,12 +875,22 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage saveJSONDataToICloud:data];
 }
 
-// 返回本地缓存 JSON 路径；例如 .../Library/Caches/mirror.json。
+// 返回本地持久化 JSON 路径；例如 .../Library/Application Support/mirror.json。
 + (NSString *)jsonFilePath
 {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-    NSString *path = [paths objectAtIndex:0];
-    return [path stringByAppendingPathComponent:kMirrorJSONFileName];
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+    NSString *directoryPath = paths.firstObject;
+    if (directoryPath.length == 0) {
+        return nil;
+    }
+    
+    NSError *error = nil;
+    [[NSFileManager defaultManager] createDirectoryAtPath:directoryPath withIntermediateDirectories:YES attributes:nil error:&error];
+    if (error) {
+        NSLog(@"Create Application Support folder failed: %@", error);
+        return nil;
+    }
+    return [directoryPath stringByAppendingPathComponent:kMirrorJSONFileName];
 }
 
 // 异步把 JSON 写入 iCloud Documents；例如每次本地保存后同步 mirror.json，失败只记录日志不阻塞 UI。
