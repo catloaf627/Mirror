@@ -25,6 +25,7 @@
 		4A379B4728E2F33C00785CAE /* MirrorLanguage.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A379B4628E2F33B00785CAE /* MirrorLanguage.m */; };
 		4A379B5428E31BD200785CAE /* MirrorMacro.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A379B5328E31BD200785CAE /* MirrorMacro.m */; };
 		4A379B5728E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A379B5628E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m */; };
+		4A3A2373303CD6C7006597F0 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 4A3A2372303CD6C7006597F0 /* AppIcon.icon */; };
 		4A3DC92C29FCE3D200679C11 /* MirrorNaviManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A3DC92B29FCE3D200679C11 /* MirrorNaviManager.m */; };
 		4A3DC9302A0106F700679C11 /* GridViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A3DC92F2A0106F600679C11 /* GridViewController.m */; };
 		4A3DC9332A0109DA00679C11 /* GridCollectionViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A3DC9322A0109DA00679C11 /* GridCollectionViewCell.m */; };
@@ -122,6 +123,7 @@
 		4A379B5328E31BD200785CAE /* MirrorMacro.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorMacro.m; sourceTree = "<group>"; };
 		4A379B5528E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeTrackerAddTaskCollectionViewCell.h; sourceTree = "<group>"; };
 		4A379B5628E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimeTrackerAddTaskCollectionViewCell.m; sourceTree = "<group>"; };
+		4A3A2372303CD6C7006597F0 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		4A3DC92A29FCE3D200679C11 /* MirrorNaviManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorNaviManager.h; sourceTree = "<group>"; };
 		4A3DC92B29FCE3D200679C11 /* MirrorNaviManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorNaviManager.m; sourceTree = "<group>"; };
 		4A3DC92E2A0106F600679C11 /* GridViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GridViewController.h; sourceTree = "<group>"; };
@@ -498,6 +500,7 @@
 		4AFB779F28DF4A380064CBCA /* Mirror */ = {
 			isa = PBXGroup;
 			children = (
+				4A3A2372303CD6C7006597F0 /* AppIcon.icon */,
 				4ADCD21B3026B05600578A81 /* Mirror.entitlements */,
 				4AFB77B128DF4A3B0064CBCA /* Info.plist */,
 				4AFB77AC28DF4A3B0064CBCA /* Assets.xcassets */,
@@ -630,6 +633,7 @@
 			files = (
 				4AD065A630301334005A894C /* SFSymbolNames.plist in Resources */,
 				4AFB77AD28DF4A3B0064CBCA /* Assets.xcassets in Resources */,
+				4A3A2373303CD6C7006597F0 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
