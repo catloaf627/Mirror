@@ -33,7 +33,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 @property (nonatomic, strong) NSDate *selectedDate;
 @property (nonatomic, copy) MirrorHandmadeCalendarDateHandler dateSelectionHandler;
 @property (nonatomic, copy) NSDictionary<NSString *, NSArray<UIColor *> *> *recordColorsByDateKey;
-@property (nonatomic, copy) NSDictionary<NSString *, UIColor *> *specialDayColorsByDateKey;
+@property (nonatomic, copy) NSDictionary<NSString *, MirrorDayModel *> *specialDaysByDateKey;
 @property (nonatomic, assign) BOOL weekStartsOnMonday;
 @property (nonatomic, copy) MirrorHandmadeCalendarLayoutHandler layoutChangeHandler;
 
@@ -293,11 +293,18 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
 - (void)updateSelectedDate:(NSDate *)date
 {
+    [self updateSelectedDate:date dismissDatePicker:YES];
+}
+
+- (void)updateSelectedDate:(NSDate *)date dismissDatePicker:(BOOL)dismissDatePicker
+{
     if (!date) {
         return;
     }
     self.selectedDate = date;
-    [self dismissDatePicker];
+    if (dismissDatePicker) {
+        [self dismissDatePicker];
+    }
     [self updateHeaderStateWithRecords:nil];
     [self updateNavigationItem];
     [self.timelineViewController updateDate:date];
@@ -466,7 +473,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     self.handmadeCalendarView.selectedDate = self.selectedDate ?: [NSDate now];
     self.handmadeCalendarView.weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
     self.handmadeCalendarView.recordColorsByDateKey = [self handmadeCalendarRecordColorsByDateKey];
-    self.handmadeCalendarView.specialDayColorsByDateKey = [self handmadeCalendarSpecialDayColorsByDateKey];
+    self.handmadeCalendarView.specialDaysByDateKey = self.specialDaysByDateKey ?: @{};
     [self.handmadeCalendarView reloadCalendar];
 }
 
@@ -508,24 +515,6 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     return colorsByDateKey;
 }
 
-- (NSDictionary<NSString *, UIColor *> *)handmadeCalendarSpecialDayColorsByDateKey
-{
-    NSMutableDictionary<NSString *, UIColor *> *colorsByDateKey = [NSMutableDictionary new];
-    if (![self.specialDaysByDateKey isKindOfClass:NSDictionary.class]) {
-        return colorsByDateKey;
-    }
-
-    [self.specialDaysByDateKey enumerateKeysAndObjectsUsingBlock:^(NSString *dateKey, MirrorDayModel *day, BOOL *stop) {
-        if (![dateKey isKindOfClass:NSString.class] || dateKey.length == 0 || ![day isKindOfClass:MirrorDayModel.class]) {
-            return;
-        }
-        UIColor *color = [UIColor mirrorSystemColorNamed:day.color];
-        if ([color isKindOfClass:UIColor.class]) {
-            colorsByDateKey[dateKey] = color;
-        }
-    }];
-    return colorsByDateKey;
-}
 
 - (NSString *)keyFromDate:(NSDate *)date
 {
@@ -583,7 +572,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 {
     if (!_calendarPickerContainerView) {
         _calendarPickerContainerView = [UIView new];
-        _calendarPickerContainerView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _calendarPickerContainerView.backgroundColor = UIColor.clearColor;
         _calendarPickerContainerView.layer.cornerRadius = 8;
         _calendarPickerContainerView.layer.borderWidth = 1;
         _calendarPickerContainerView.layer.borderColor = [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:0.12].CGColor;
@@ -591,6 +580,17 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         _calendarPickerContainerView.layer.shadowOpacity = 0.12;
         _calendarPickerContainerView.layer.shadowRadius = 12;
         _calendarPickerContainerView.layer.shadowOffset = CGSizeMake(0, 4);
+
+        UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleLight]];
+        blurView.userInteractionEnabled = NO;
+        blurView.alpha = 0.8;
+        blurView.clipsToBounds = YES;
+        blurView.layer.cornerRadius = 8;
+        [_calendarPickerContainerView addSubview:blurView];
+        [blurView mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.edges.offset(0);
+        }];
+
         [_calendarPickerContainerView addSubview:self.handmadeCalendarView];
         [self.handmadeCalendarView mas_makeConstraints:^(MASConstraintMaker *make) {
             make.edges.insets(UIEdgeInsetsMake(8, 8, 8, 8));
@@ -606,7 +606,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         _handmadeCalendarView.weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
         __weak typeof(self) weakSelf = self;
         _handmadeCalendarView.dateSelectionHandler = ^(NSDate *date) {
-            [weakSelf updateSelectedDate:date];
+            [weakSelf updateSelectedDate:date dismissDatePicker:NO];
         };
         _handmadeCalendarView.layoutChangeHandler = ^{
             [weakSelf updateCalendarPickerContainerConstraints];

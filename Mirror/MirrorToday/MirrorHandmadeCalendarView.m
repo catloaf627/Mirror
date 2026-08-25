@@ -11,19 +11,20 @@
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
+#import "MirrorDayModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
 typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
-@interface MirrorHandmadeCalendarView : UIView
+@interface MirrorHandmadeCalendarView : UIView <UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) NSDate *selectedDate;
 @property (nonatomic, copy, nullable) MirrorHandmadeCalendarDateHandler dateSelectionHandler;
 @property (nonatomic, copy, nullable) MirrorHandmadeCalendarLayoutHandler layoutChangeHandler;
 @property (nonatomic, copy) NSDictionary<NSString *, NSArray<UIColor *> *> *recordColorsByDateKey;
-@property (nonatomic, copy) NSDictionary<NSString *, UIColor *> *specialDayColorsByDateKey;
+@property (nonatomic, copy) NSDictionary<NSString *, MirrorDayModel *> *specialDaysByDateKey;
 @property (nonatomic, assign) BOOL weekStartsOnMonday;
 
 - (instancetype)initWithSelectedDate:(NSDate *)selectedDate;
@@ -40,6 +41,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 @property (nonatomic, assign) BOOL showsToday;
 @property (nonatomic, assign) BOOL showsSelectedDate;
 @property (nonatomic, strong, nullable) UIColor *specialDayColor;
+@property (nonatomic, copy) NSString *specialDayIconName;
 @property (nonatomic, copy) NSArray<UIColor *> *recordColors;
 
 - (void)setDayText:(NSString *)dayText;
@@ -48,6 +50,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
 @implementation MirrorHandmadeCalendarDayCell {
     UILabel *_dayLabel;
+    UIImageView *_iconView;
 }
 
 - (instancetype)initWithFrame:(CGRect)frame
@@ -58,8 +61,13 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         _recordColors = @[];
         _dayLabel = [UILabel new];
         _dayLabel.textAlignment = NSTextAlignmentCenter;
-        _dayLabel.font = [UIFont mirrorHintFont];
+        _dayLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightRegular];
         [self addSubview:_dayLabel];
+
+        _iconView = [UIImageView new];
+        _iconView.contentMode = UIViewContentModeScaleAspectFit;
+        _iconView.hidden = YES;
+        [self addSubview:_iconView];
     }
     return self;
 }
@@ -67,12 +75,14 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 - (void)setDayText:(NSString *)dayText
 {
     _dayLabel.text = dayText;
+    [self updateSpecialDayIcon];
 }
 
 - (void)setInVisibleMonth:(BOOL)inVisibleMonth
 {
     _inVisibleMonth = inVisibleMonth;
     [self updateTextColor];
+    [self updateSpecialDayIcon];
 }
 
 - (void)setShowsToday:(BOOL)showsToday
@@ -91,13 +101,22 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 - (void)setSpecialDayColor:(nullable UIColor *)specialDayColor
 {
     _specialDayColor = specialDayColor;
+    [self updateTextColor];
+    [self updateSpecialDayIcon];
     [self setNeedsDisplay];
+}
+
+- (void)setSpecialDayIconName:(NSString *)specialDayIconName
+{
+    _specialDayIconName = [specialDayIconName copy] ?: @"";
+    [self updateSpecialDayIcon];
 }
 
 - (void)setRecordColors:(NSArray<UIColor *> *)recordColors
 {
     if (![recordColors isKindOfClass:NSArray.class]) {
         _recordColors = @[];
+        [self updateTextColor];
         [self setNeedsDisplay];
         return;
     }
@@ -109,6 +128,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         }
     }
     _recordColors = validColors;
+    [self updateTextColor];
     [self setNeedsDisplay];
 }
 
@@ -120,8 +140,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
                                  4,
                                  labelSide,
                                  labelSide);
-    _dayLabel.layer.cornerRadius = labelSide / 2.0;
-    _dayLabel.layer.masksToBounds = YES;
+    _iconView.frame = CGRectInset(_dayLabel.frame, labelSide * 0.14, labelSide * 0.14);
 }
 
 - (void)drawRect:(CGRect)rect
@@ -133,61 +152,76 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         return;
     }
 
-    if (self.showsToday && !self.showsSelectedDate) {
-        CGRect todayRect = CGRectInset(_dayLabel.frame, 1.5, 1.5);
-        if (CGRectGetWidth(todayRect) > 0 && CGRectGetHeight(todayRect) > 0) {
+    CGRect dateRect = _dayLabel.frame;
+    if (CGRectGetWidth(dateRect) <= 0 || CGRectGetHeight(dateRect) <= 0) {
+        return;
+    }
+
+    NSArray<UIColor *> *backgroundColors = [self decorationBackgroundColors];
+    if (backgroundColors.count > 0) {
+        UIBezierPath *clipPath = [UIBezierPath bezierPathWithRoundedRect:dateRect cornerRadius:6];
+        CGContextSaveGState(context);
+        [clipPath addClip];
+
+        CGFloat segmentHeight = CGRectGetHeight(dateRect) / backgroundColors.count;
+        [backgroundColors enumerateObjectsUsingBlock:^(UIColor *color, NSUInteger index, BOOL *stop) {
+            if (![color isKindOfClass:UIColor.class]) {
+                return;
+            }
+            CGFloat y = CGRectGetMinY(dateRect) + segmentHeight * index;
+            CGFloat height = index == backgroundColors.count - 1 ? CGRectGetMaxY(dateRect) - y : segmentHeight;
+            CGRect segmentRect = CGRectMake(CGRectGetMinX(dateRect), y, CGRectGetWidth(dateRect), height);
+            CGContextSetFillColorWithColor(context, color.CGColor);
+            CGContextFillRect(context, segmentRect);
+        }];
+        CGContextRestoreGState(context);
+    }
+
+    if (self.showsSelectedDate) {
+        CGFloat lineWidth = 1.6;
+        CGRect outlineRect = CGRectInset(dateRect, lineWidth / 2.0, lineWidth / 2.0);
+        if (CGRectGetWidth(outlineRect) > 0 && CGRectGetHeight(outlineRect) > 0) {
             CGContextSetStrokeColorWithColor(context, [UIColor mirrorColorNamed:MirrorColorTypeText].CGColor);
-            CGContextSetLineWidth(context, 1.0);
-            CGContextStrokeEllipseInRect(context, todayRect);
+            CGContextSetLineWidth(context, lineWidth);
+            UIBezierPath *outlinePath = [UIBezierPath bezierPathWithRoundedRect:outlineRect cornerRadius:6 - lineWidth / 2.0];
+            [outlinePath stroke];
         }
     }
-
-    CGFloat decorationY = CGRectGetMaxY(_dayLabel.frame) + 4;
-    if (self.specialDayColor) {
-        CGFloat side = 6;
-        CGRect dotRect = CGRectMake((CGRectGetWidth(self.bounds) - side) / 2.0, decorationY, side, side);
-        CGContextSetFillColorWithColor(context, self.specialDayColor.CGColor);
-        CGContextFillEllipseInRect(context, dotRect);
-        return;
-    }
-
-    if (self.recordColors.count == 0) {
-        return;
-    }
-
-    CGFloat barHeight = 5;
-    CGFloat barWidth = MIN(28, CGRectGetWidth(self.bounds) - 10);
-    if (barWidth <= 0 || CGRectGetHeight(self.bounds) <= decorationY) {
-        return;
-    }
-    CGRect barRect = CGRectMake((CGRectGetWidth(self.bounds) - barWidth) / 2.0, decorationY, barWidth, barHeight);
-    UIBezierPath *clipPath = [UIBezierPath bezierPathWithRoundedRect:barRect cornerRadius:barHeight / 2.0];
-    CGContextSaveGState(context);
-    [clipPath addClip];
-
-    CGFloat segmentWidth = barWidth / MAX(self.recordColors.count, 1);
-    [self.recordColors enumerateObjectsUsingBlock:^(UIColor *color, NSUInteger index, BOOL *stop) {
-        if (![color isKindOfClass:UIColor.class]) {
-            return;
-        }
-        CGRect segmentRect = CGRectMake(CGRectGetMinX(barRect) + segmentWidth * index,
-                                        CGRectGetMinY(barRect),
-                                        index == self.recordColors.count - 1 ? CGRectGetMaxX(barRect) - (CGRectGetMinX(barRect) + segmentWidth * index) : segmentWidth,
-                                        barHeight);
-        CGContextSetFillColorWithColor(context, color.CGColor);
-        CGContextFillRect(context, segmentRect);
-    }];
-    CGContextRestoreGState(context);
 }
 
 - (void)updateTextColor
 {
     UIColor *baseColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    _dayLabel.textColor = self.inVisibleMonth ? baseColor : [baseColor colorWithAlphaComponent:0.28];
-    _dayLabel.backgroundColor = self.showsSelectedDate ? baseColor : UIColor.clearColor;
-    if (self.showsSelectedDate) {
-        _dayLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    if (!self.inVisibleMonth) {
+        _dayLabel.textColor = UIColor.clearColor;
+    } else if ([self.specialDayColor isKindOfClass:UIColor.class]) {
+        _dayLabel.textColor = self.specialDayColor;
+    } else {
+        _dayLabel.textColor = baseColor;
     }
+    _dayLabel.backgroundColor = UIColor.clearColor;
+}
+
+- (NSArray<UIColor *> *)decorationBackgroundColors
+{
+    if (self.recordColors.count > 0) {
+        return self.recordColors;
+    }
+    return @[];
+}
+
+- (void)updateSpecialDayIcon
+{
+    UIImage *iconImage = nil;
+    if (self.inVisibleMonth && self.specialDayIconName.length > 0) {
+        iconImage = [UIImage systemImageNamed:self.specialDayIconName];
+    }
+
+    BOOL showsIcon = [iconImage isKindOfClass:UIImage.class];
+    _iconView.hidden = !showsIcon;
+    _dayLabel.hidden = showsIcon;
+    _iconView.image = showsIcon ? [iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] : nil;
+    _iconView.tintColor = [self.specialDayColor isKindOfClass:UIColor.class] ? self.specialDayColor : [UIColor mirrorColorNamed:MirrorColorTypeText];
 }
 
 @end
@@ -206,6 +240,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     NSDateFormatter *_monthFormatter;
     NSDateFormatter *_dateKeyFormatter;
     NSInteger _visibleWeekCount;
+    BOOL _didHandleMonthPan;
 }
 
 - (instancetype)initWithSelectedDate:(NSDate *)selectedDate
@@ -216,7 +251,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         _visibleMonthDate = _selectedDate;
         _weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
         _recordColorsByDateKey = @{};
-        _specialDayColorsByDateKey = @{};
+        _specialDaysByDateKey = @{};
         _visibleWeekCount = 6;
         [self setupCalendarHelpers];
         [self setupViews];
@@ -246,9 +281,9 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     [self reloadCalendar];
 }
 
-- (void)setSpecialDayColorsByDateKey:(NSDictionary<NSString *,UIColor *> *)specialDayColorsByDateKey
+- (void)setSpecialDaysByDateKey:(NSDictionary<NSString *,MirrorDayModel *> *)specialDaysByDateKey
 {
-    _specialDayColorsByDateKey = [specialDayColorsByDateKey copy] ?: @{};
+    _specialDaysByDateKey = [specialDaysByDateKey copy] ?: @{};
     [self reloadCalendar];
 }
 
@@ -310,6 +345,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
             cell.date = nil;
             cell.dateKey = @"";
             cell.specialDayColor = nil;
+            cell.specialDayIconName = @"";
             cell.recordColors = @[];
             [cell setDayText:@""];
             continue;
@@ -327,23 +363,28 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         if (![dateKey isKindOfClass:NSString.class]) {
             dateKey = @"";
         }
-        UIColor *specialDayColor = self.specialDayColorsByDateKey[dateKey];
-        if (![specialDayColor isKindOfClass:UIColor.class]) {
-            specialDayColor = nil;
+        MirrorDayModel *specialDay = self.specialDaysByDateKey[dateKey];
+        UIColor *specialDayColor = nil;
+        NSString *specialDayIconName = @"";
+        if ([specialDay isKindOfClass:MirrorDayModel.class]) {
+            specialDayColor = [UIColor mirrorSystemColorNamed:specialDay.color];
+            specialDayIconName = [self specialDayIconNameFromStoredIconName:specialDay.icon];
         }
         NSArray<UIColor *> *recordColors = self.recordColorsByDateKey[dateKey];
         if (![recordColors isKindOfClass:NSArray.class]) {
             recordColors = @[];
         }
 
-        cell.date = date;
-        cell.dateKey = dateKey;
-        cell.inVisibleMonth = components.month == visibleComponents.month;
-        cell.showsToday = [_calendar isDateInToday:date];
-        cell.showsSelectedDate = [_calendar isDate:date inSameDayAsDate:self.selectedDate ?: [NSDate now]];
-        cell.specialDayColor = specialDayColor;
-        cell.recordColors = recordColors;
-        [cell setDayText:[NSString stringWithFormat:@"%ld", (long)components.day]];
+        BOOL inVisibleMonth = components.month == visibleComponents.month;
+        cell.date = inVisibleMonth ? date : nil;
+        cell.dateKey = inVisibleMonth ? dateKey : @"";
+        cell.inVisibleMonth = inVisibleMonth;
+        cell.showsToday = inVisibleMonth && [_calendar isDateInToday:date];
+        cell.showsSelectedDate = inVisibleMonth && [_calendar isDate:date inSameDayAsDate:self.selectedDate ?: [NSDate now]];
+        cell.specialDayColor = inVisibleMonth ? specialDayColor : nil;
+        cell.specialDayIconName = inVisibleMonth ? specialDayIconName : @"";
+        cell.recordColors = inVisibleMonth ? recordColors : @[];
+        [cell setDayText:inVisibleMonth ? [NSString stringWithFormat:@"%ld", (long)components.day] : @""];
     }
 
     [self setNeedsLayout];
@@ -358,6 +399,14 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     CGFloat weekdayHeight = 28;
     CGFloat weekRowHeight = 48;
     return headerHeight + weekdayHeight + MAX(1, _visibleWeekCount) * weekRowHeight;
+}
+
+- (NSString *)specialDayIconNameFromStoredIconName:(NSString *)storedIconName
+{
+    if (storedIconName.length > 0 && [UIImage systemImageNamed:storedIconName]) {
+        return storedIconName;
+    }
+    return @"star.fill";
 }
 
 - (void)setupCalendarHelpers
@@ -378,7 +427,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
 - (void)setupViews
 {
-    self.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+    self.backgroundColor = UIColor.clearColor;
 
     _swipeGestureView = [UIView new];
     _swipeGestureView.backgroundColor = UIColor.clearColor;
@@ -397,7 +446,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
     _monthLabel = [UILabel new];
     _monthLabel.textAlignment = NSTextAlignmentCenter;
-    _monthLabel.font = [UIFont mirrorHintFont];
+    _monthLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightSemibold];
     _monthLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     [_headerView addSubview:_monthLabel];
 
@@ -428,15 +477,21 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
 - (void)setupSwipeGestures
 {
-    UISwipeGestureRecognizer *leftSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleCalendarSwipe:)];
-    leftSwipeGesture.direction = UISwipeGestureRecognizerDirectionLeft;
-    leftSwipeGesture.cancelsTouchesInView = NO;
-    [_swipeGestureView addGestureRecognizer:leftSwipeGesture];
+    UIPanGestureRecognizer *monthPanGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleCalendarMonthPan:)];
+    monthPanGesture.cancelsTouchesInView = YES;
+    monthPanGesture.delegate = self;
+    [_swipeGestureView addGestureRecognizer:monthPanGesture];
+}
 
-    UISwipeGestureRecognizer *rightSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleCalendarSwipe:)];
-    rightSwipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
-    rightSwipeGesture.cancelsTouchesInView = NO;
-    [_swipeGestureView addGestureRecognizer:rightSwipeGesture];
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
+{
+    if (![gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]) {
+        return YES;
+    }
+
+    UIPanGestureRecognizer *panGesture = (UIPanGestureRecognizer *)gestureRecognizer;
+    CGPoint velocity = [panGesture velocityInView:_swipeGestureView];
+    return fabs(velocity.x) > fabs(velocity.y) * 1.4 && fabs(velocity.x) > 120;
 }
 
 - (void)reloadWeekdayTitles
@@ -447,8 +502,8 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         UILabel *label = [UILabel new];
         label.text = [MirrorLanguage mirror_stringWithKey:key];
         label.textAlignment = NSTextAlignmentCenter;
-        label.font = [UIFont mirrorHintFont];
-        label.textColor = [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:0.58];
+        label.font = [UIFont systemFontOfSize:12 weight:UIFontWeightRegular];
+        label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
         [_weekdayStackView addArrangedSubview:label];
     }
 }
@@ -502,14 +557,30 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     [self moveVisibleMonthByOffset:1];
 }
 
-- (void)handleCalendarSwipe:(UISwipeGestureRecognizer *)gestureRecognizer
+- (void)handleCalendarMonthPan:(UIPanGestureRecognizer *)gestureRecognizer
 {
-    if (![gestureRecognizer isKindOfClass:UISwipeGestureRecognizer.class]) {
+    if (![gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]) {
         return;
     }
-    if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionLeft) {
+
+    if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
+        _didHandleMonthPan = NO;
+        return;
+    }
+    if (_didHandleMonthPan || (gestureRecognizer.state != UIGestureRecognizerStateChanged && gestureRecognizer.state != UIGestureRecognizerStateEnded)) {
+        return;
+    }
+
+    CGPoint translation = [gestureRecognizer translationInView:_swipeGestureView];
+    CGPoint velocity = [gestureRecognizer velocityInView:_swipeGestureView];
+    if (fabs(translation.x) < 46 && fabs(velocity.x) < 420) {
+        return;
+    }
+
+    _didHandleMonthPan = YES;
+    if (translation.x < 0 || velocity.x < -420) {
         [self moveVisibleMonthByOffset:1];
-    } else if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionRight) {
+    } else {
         [self moveVisibleMonthByOffset:-1];
     }
 }
@@ -522,6 +593,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     NSDateComponents *components = [NSDateComponents new];
     components.month = offset;
     _visibleMonthDate = [_calendar dateByAddingComponents:components toDate:_visibleMonthDate ?: [NSDate now] options:0];
+    [self triggerLightFeedback];
     [self reloadCalendar];
 }
 
@@ -530,10 +602,17 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     if (!cell.date) {
         return;
     }
+    [self triggerLightFeedback];
     self.selectedDate = cell.date;
     if (self.dateSelectionHandler) {
         self.dateSelectionHandler(cell.date);
     }
+}
+
+- (void)triggerLightFeedback
+{
+    UIImpactFeedbackGenerator *feedbackGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+    [feedbackGenerator impactOccurred];
 }
 
 @end
