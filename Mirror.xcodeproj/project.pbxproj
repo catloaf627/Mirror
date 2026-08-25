@@ -50,6 +50,7 @@
 		4ADCD2413026B95E00578A81 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4ADCD2233026B92E00578A81 /* SwiftUI.framework */; };
 		4ADCD24E3026B95F00578A81 /* MirrorLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4ADCD23F3026B95E00578A81 /* MirrorLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */; };
+		4ADD1708303DE34D005857EA /* MirrorHandmadeCalendarView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1707303DE34C005857EA /* MirrorHandmadeCalendarView.m */; };
 		4ADDCA86302EE270003EE2A3 /* MirrorDebugAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */; };
 		4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171828DF613D008A6A18 /* TimeViewController.m */; };
 		4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */; };
@@ -169,6 +170,7 @@
 		4ADCD2233026B92E00578A81 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		4ADCD23F3026B95E00578A81 /* MirrorLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MirrorLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorLiveActivityManager.swift; sourceTree = "<group>"; };
+		4ADD1707303DE34C005857EA /* MirrorHandmadeCalendarView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorHandmadeCalendarView.m; sourceTree = "<group>"; };
 		4ADDCA84302EE251003EE2A3 /* MirrorDebugAlert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorDebugAlert.h; sourceTree = "<group>"; };
 		4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorDebugAlert.m; sourceTree = "<group>"; };
 		4AE4171728DF613D008A6A18 /* TimeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeViewController.h; sourceTree = "<group>"; };
@@ -326,6 +328,7 @@
 				4A88211729F2A2B8009E422C /* TodayTotalHeader.h */,
 				4A88211829F2A2B8009E422C /* TodayTotalHeader.m */,
 				4A88211029F26094009E422C /* TimeLine */,
+				4ADD1707303DE34C005857EA /* MirrorHandmadeCalendarView.m */,
 			);
 			path = MirrorToday;
 			sourceTree = "<group>";
@@ -700,6 +703,7 @@
 				4ADCD21A302410C600578A81 /* MirrorFakeDataSeeder.m in Sources */,
 				4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */,
 				4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */,
+				4ADD1708303DE34D005857EA /* MirrorHandmadeCalendarView.m in Sources */,
 				4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */,
 				4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */,
 				4A7CCD2629DBC7CF00879D9C /* TodayViewController.m in Sources */,

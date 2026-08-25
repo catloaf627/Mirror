@@ -25,7 +25,22 @@
 
 #define kLeftRightSpacing (20*kWidthRatio)
 
-@interface TodayViewController () <UIGestureRecognizerDelegate, UICalendarViewDelegate, UICalendarSelectionSingleDateDelegate>
+typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
+
+@interface MirrorHandmadeCalendarView : UIView
+
+@property (nonatomic, strong) NSDate *selectedDate;
+@property (nonatomic, copy) MirrorHandmadeCalendarDateHandler dateSelectionHandler;
+@property (nonatomic, copy) NSDictionary<NSString *, NSArray<UIColor *> *> *recordColorsByDateKey;
+@property (nonatomic, copy) NSDictionary<NSString *, UIColor *> *specialDayColorsByDateKey;
+@property (nonatomic, assign) BOOL weekStartsOnMonday;
+
+- (instancetype)initWithSelectedDate:(NSDate *)selectedDate;
+- (void)reloadCalendar;
+
+@end
+
+@interface TodayViewController () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 @property (nonatomic, strong) NSDate *selectedDate;
@@ -43,8 +58,7 @@
 @property (nonatomic, strong) TodayTotalHeader *todayTotalHeader;
 @property (nonatomic, strong) UIView *calendarPickerDismissView;
 @property (nonatomic, strong) UIView *calendarPickerContainerView;
-@property (nonatomic, strong) UICalendarView *calendarView;
-@property (nonatomic, strong) UICalendarSelectionSingleDate *dateSelection;
+@property (nonatomic, strong) MirrorHandmadeCalendarView *handmadeCalendarView;
 @property (nonatomic, strong) NSDictionary<NSString *, NSMutableArray<MirrorReadModel *> *> *gridData;
 @property (nonatomic, strong) NSDictionary<NSString *, MirrorDayModel *> *specialDaysByDateKey;
 
@@ -114,8 +128,7 @@
     self.todayTotalHeader = nil;
     self.calendarPickerDismissView = nil;
     self.calendarPickerContainerView = nil;
-    self.calendarView = nil;
-    self.dateSelection = nil;
+    self.handmadeCalendarView = nil;
     self.gridData = nil;
     self.specialDaysByDateKey = nil;
     self.specialDaysButton = nil;
@@ -219,18 +232,12 @@
 
     self.gridData = [MirrorStorage getGridData];
     [self reloadSpecialDaysByDateKey];
-    // 入口每次打开都以 selectedDate 为准，避免沿用上一次在 picker 内翻到的月份。
-    [self rebuildCalendarPickerView];
-    [self applyCalendarSettings];
-    [self updateCalendarSelectionForSelectedDate];
-    [self.calendarView reloadDecorationsForDateComponents:[self calendarDecorationDateComponents] animated:NO];
+    [self updateHandmadeCalendarData];
     [self.view addSubview:self.calendarPickerDismissView];
     [self.calendarPickerDismissView mas_remakeConstraints:^(MASConstraintMaker *make) {
         make.edges.mas_equalTo(self.view);
     }];
     [self.view addSubview:self.calendarPickerContainerView];
-    // 加回层级后再同步一次，防止 UICalendarView 在 attach 时恢复内部 visible month。
-    [self updateCalendarSelectionForSelectedDate];
     [self updateCalendarPickerContainerConstraints];
     self.calendarPickerContainerView.alpha = 0;
     self.calendarPickerContainerView.transform = CGAffineTransformMakeScale(0.96, 0.96);
@@ -391,7 +398,7 @@
     [self reloadSpecialDaysByDateKey];
     [self updateSpecialDaysButton];
     if (self.calendarPickerContainerView.superview) {
-        [self.calendarView reloadDecorationsForDateComponents:[self calendarDecorationDateComponents] animated:NO];
+        [self updateHandmadeCalendarData];
     }
 }
 
@@ -446,184 +453,75 @@
 
 #pragma mark - Calendar Picker
 
-- (NSCalendar *)calendarForCurrentSettings
-{
-    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
-    calendar.timeZone = [NSTimeZone systemTimeZone];
-    calendar.firstWeekday = [MirrorSettings appliedWeekStarsOnMonday] ? 2 : 1;
-    return calendar;
-}
-
-- (void)rebuildCalendarPickerView API_AVAILABLE(ios(16.0))
-{
-    // UICalendarView 会保留用户翻到的 visible month，复用实例时重新打开可能不回到入口日期。
-    // 每次入口打开都重建 calendar 和 selection，确保可见月份从 selectedDate 初始化。
-    if (_calendarView) {
-        _calendarView.delegate = nil;
-        [_calendarView removeFromSuperview];
-        _calendarView = nil;
-        _dateSelection = nil;
-    }
-
-    UIView *containerView = self.calendarPickerContainerView;
-    if (self.calendarView.superview != containerView) {
-        [self.calendarView removeFromSuperview];
-        [containerView addSubview:self.calendarView];
-        [self.calendarView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.edges.insets(UIEdgeInsetsMake(8, 8, 8, 8));
-        }];
-    }
-}
-
-- (void)applyCalendarSettings
-{
-    self.calendarView.calendar = [self calendarForCurrentSettings];
-    self.calendarView.locale = [MirrorTool formatterLocaleForCurrentLanguage];
-    self.calendarPickerContainerView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    self.calendarView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    self.calendarView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    if (@available(iOS 13.0, *)) {
-        UIUserInterfaceStyle style = [MirrorSettings appliedDarkMode] ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
-        self.calendarPickerContainerView.overrideUserInterfaceStyle = style;
-        self.calendarView.overrideUserInterfaceStyle = style;
-    }
-}
-
 - (void)handleWeekStartsOnChanged
 {
-    if (!_calendarView) {
-        return;
+    self.handmadeCalendarView.weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
+}
+
+- (void)updateHandmadeCalendarData
+{
+    self.handmadeCalendarView.selectedDate = self.selectedDate ?: [NSDate now];
+    self.handmadeCalendarView.weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
+    self.handmadeCalendarView.recordColorsByDateKey = [self handmadeCalendarRecordColorsByDateKey];
+    self.handmadeCalendarView.specialDayColorsByDateKey = [self handmadeCalendarSpecialDayColorsByDateKey];
+    [self.handmadeCalendarView reloadCalendar];
+}
+
+- (NSDictionary<NSString *, NSArray<UIColor *> *> *)handmadeCalendarRecordColorsByDateKey
+{
+    NSMutableDictionary<NSString *, NSArray<UIColor *> *> *colorsByDateKey = [NSMutableDictionary new];
+    if (![self.gridData isKindOfClass:NSDictionary.class]) {
+        return colorsByDateKey;
     }
-    [self applyCalendarSettings];
-    [self updateCalendarSelectionForSelectedDate];
-    if (self.calendarPickerContainerView.superview) {
-        [self.calendarView reloadDecorationsForDateComponents:[self calendarDecorationDateComponents] animated:NO];
-    }
-}
 
-- (void)updateCalendarSelectionForSelectedDate
-{
-    NSDateComponents *components = [self.calendarView.calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay fromDate:self.selectedDate ?: [NSDate now]];
-    // 直接写属性和调用 setter 都保留；不同系统版本下 UICalendarView 对 visible month 的同步时机不完全一致。
-    self.calendarView.visibleDateComponents = components;
-    [self.calendarView setVisibleDateComponents:components animated:NO];
-    [self.dateSelection setSelectedDate:components animated:NO];
-}
-
-- (void)calendarView:(UICalendarView *)calendarView didChangeVisibleDateComponentsFrom:(NSDateComponents *)previousDateComponents API_AVAILABLE(ios(16.0))
-{
-    // 月份切换后可见周数可能从 4 到 6 行变化，需要同步调整弹窗高度。
-    [self updateCalendarPickerContainerConstraints];
-}
-
-- (NSArray<NSDateComponents *> *)gridDateComponents
-{
-    return [self dateComponentsForDateKeys:self.gridData.allKeys];
-}
-
-- (NSArray<NSDateComponents *> *)calendarDecorationDateComponents
-{
-    NSMutableSet<NSString *> *dateKeys = [NSMutableSet setWithArray:self.gridData.allKeys ?: @[]];
-    [dateKeys addObjectsFromArray:self.specialDaysByDateKey.allKeys ?: @[]];
-    return [self dateComponentsForDateKeys:dateKeys.allObjects];
-}
-
-- (NSArray<NSDateComponents *> *)dateComponentsForDateKeys:(NSArray<NSString *> *)dateKeys
-{
-    NSMutableArray<NSDateComponents *> *components = [NSMutableArray new];
-    NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateFormat = @"yyyy-MM-dd";
-    formatter.timeZone = [NSTimeZone systemTimeZone];
-    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
-    calendar.timeZone = [NSTimeZone systemTimeZone];
-    for (NSString *key in dateKeys) {
-        NSDate *date = [formatter dateFromString:key];
-        if (!date) {
-            continue;
+    [self.gridData enumerateKeysAndObjectsUsingBlock:^(NSString *dateKey, NSMutableArray<MirrorReadModel *> *records, BOOL *stop) {
+        if (![dateKey isKindOfClass:NSString.class] || dateKey.length == 0 || ![records isKindOfClass:NSArray.class]) {
+            return;
         }
-        [components addObject:[calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay fromDate:date]];
-    }
-    return components;
-}
-
-- (UICalendarViewDecoration *)calendarView:(UICalendarView *)calendarView decorationForDateComponents:(NSDateComponents *)dateComponents API_AVAILABLE(ios(16.0))
-{
-    NSDate *date = dateComponents.date;
-    if (!date) return nil;
-
-    MirrorDayModel *specialDay = self.specialDaysByDateKey[[self keyFromDate:date]];
-    long totalTime = 0;
-    NSMutableArray<NSNumber *> *taskTimes = [NSMutableArray array];
-    NSMutableArray<UIColor *> *taskColors = [NSMutableArray array];
-    [self getTaskTimes:taskTimes taskColors:taskColors totalTime:&totalTime forDate:date];
-    BOOL hasTaskDecoration = totalTime > 0 && taskTimes.count > 0 && taskColors.count > 0;
-    if (specialDay) {
-        return [UICalendarViewDecoration decorationWithCustomViewProvider:^UIView * _Nonnull{
-            CGFloat markerSide = 8;
-            UIView *markerView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, markerSide, markerSide)];
-            markerView.layer.cornerRadius = markerSide / 2;
-            markerView.backgroundColor = [UIColor mirrorSystemColorNamed:specialDay.color];
-            return markerView;
-        }];
-    }
-    if (!hasTaskDecoration) return nil;
-
-    CGFloat barHeight = 6;
-    CGFloat minWidth = barHeight;
-    CGFloat maxWidth = 30;
-    CGFloat hours = totalTime / 3600.0;
-    CGFloat barWidth = minWidth;
-    if (hours >= 8) {
-        barWidth = maxWidth;
-    } else if (hours > 1) {
-        barWidth = minWidth + (maxWidth - minWidth) * ((hours - 1) / 7.0);
-    }
-
-    return [UICalendarViewDecoration decorationWithCustomViewProvider:^UIView * _Nonnull{
-        UIView *barView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, barWidth, barHeight)];
-        barView.layer.cornerRadius = barHeight / 2;
-        barView.clipsToBounds = YES;
-
-        CGFloat currentX = 0;
-        for (NSInteger index = 0; index < taskTimes.count; index++) {
-            CGFloat segmentWidth = index == taskTimes.count - 1 ? barWidth - currentX : barWidth * (taskTimes[index].doubleValue / (CGFloat)totalTime);
-            if (segmentWidth <= 0) {
+        NSMutableArray<UIColor *> *colors = [NSMutableArray new];
+        for (id object in records) {
+            if (![object isKindOfClass:MirrorReadModel.class]) {
                 continue;
             }
-            UIView *segmentView = [[UIView alloc] initWithFrame:CGRectMake(currentX, 0, segmentWidth, barHeight)];
-            segmentView.backgroundColor = taskColors[index];
-            [barView addSubview:segmentView];
-            currentX += segmentWidth;
+            MirrorReadModel *readModel = object;
+            if (![readModel.records isKindOfClass:NSArray.class]) {
+                continue;
+            }
+            if (![readModel.taskModel isKindOfClass:MirrorTaskModel.class]) {
+                continue;
+            }
+            long taskTime = [MirrorTool getTotalTimeOfPeriods:readModel.records];
+            if (taskTime > 0) {
+                UIColor *color = [UIColor mirrorColorNamed:readModel.taskModel.color];
+                if ([color isKindOfClass:UIColor.class]) {
+                    [colors addObject:color];
+                }
+            }
         }
-        return barView;
+        if (colors.count > 0) {
+            colorsByDateKey[dateKey] = colors;
+        }
     }];
+    return colorsByDateKey;
 }
 
-- (BOOL)dateSelection:(UICalendarSelectionSingleDate *)selection canSelectDate:(NSDateComponents *)dateComponents API_AVAILABLE(ios(16.0))
+- (NSDictionary<NSString *, UIColor *> *)handmadeCalendarSpecialDayColorsByDateKey
 {
-    return dateComponents != nil;
-}
-
-- (void)dateSelection:(UICalendarSelectionSingleDate *)selection didSelectDate:(NSDateComponents *)dateComponents API_AVAILABLE(ios(16.0))
-{
-    NSDate *date = dateComponents.date;
-    if (!date) return;
-    [self updateSelectedDate:date];
-}
-
-- (void)getTaskTimes:(NSMutableArray<NSNumber *> *)taskTimes taskColors:(NSMutableArray<UIColor *> *)taskColors totalTime:(long *)totalTime forDate:(NSDate *)date
-{
-    NSMutableArray<MirrorReadModel *> *data = self.gridData[[self keyFromDate:date]];
-    if (data.count == 0) return;
-
-    for (MirrorReadModel *readModel in data) {
-        long taskTime = [MirrorTool getTotalTimeOfPeriods:readModel.records];
-        if (taskTime > 0) {
-            [taskTimes addObject:@(taskTime)];
-            [taskColors addObject:[UIColor mirrorColorNamed:readModel.taskModel.color]];
-        }
-        *totalTime += taskTime;
+    NSMutableDictionary<NSString *, UIColor *> *colorsByDateKey = [NSMutableDictionary new];
+    if (![self.specialDaysByDateKey isKindOfClass:NSDictionary.class]) {
+        return colorsByDateKey;
     }
+
+    [self.specialDaysByDateKey enumerateKeysAndObjectsUsingBlock:^(NSString *dateKey, MirrorDayModel *day, BOOL *stop) {
+        if (![dateKey isKindOfClass:NSString.class] || dateKey.length == 0 || ![day isKindOfClass:MirrorDayModel.class]) {
+            return;
+        }
+        UIColor *color = [UIColor mirrorSystemColorNamed:day.color];
+        if ([color isKindOfClass:UIColor.class]) {
+            colorsByDateKey[dateKey] = color;
+        }
+    }];
+    return colorsByDateKey;
 }
 
 - (NSString *)keyFromDate:(NSDate *)date
@@ -684,44 +582,31 @@
         _calendarPickerContainerView = [UIView new];
         _calendarPickerContainerView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
         _calendarPickerContainerView.layer.cornerRadius = 8;
+        _calendarPickerContainerView.layer.borderWidth = 1;
+        _calendarPickerContainerView.layer.borderColor = [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:0.12].CGColor;
         _calendarPickerContainerView.layer.shadowColor = [UIColor blackColor].CGColor;
         _calendarPickerContainerView.layer.shadowOpacity = 0.12;
         _calendarPickerContainerView.layer.shadowRadius = 12;
         _calendarPickerContainerView.layer.shadowOffset = CGSizeMake(0, 4);
-        [_calendarPickerContainerView addSubview:self.calendarView];
-        [self.calendarView mas_makeConstraints:^(MASConstraintMaker *make) {
+        [_calendarPickerContainerView addSubview:self.handmadeCalendarView];
+        [self.handmadeCalendarView mas_makeConstraints:^(MASConstraintMaker *make) {
             make.edges.insets(UIEdgeInsetsMake(8, 8, 8, 8));
         }];
     }
     return _calendarPickerContainerView;
 }
 
-- (UICalendarView *)calendarView API_AVAILABLE(ios(16.0))
+- (MirrorHandmadeCalendarView *)handmadeCalendarView
 {
-    if (!_calendarView) {
-        _calendarView = [UICalendarView new];
-        _calendarView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-        _calendarView.calendar = [self calendarForCurrentSettings];
-        _calendarView.locale = [MirrorTool formatterLocaleForCurrentLanguage];
-        _calendarView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        if (@available(iOS 13.0, *)) {
-            _calendarView.overrideUserInterfaceStyle = [MirrorSettings appliedDarkMode] ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
-        }
-        _calendarView.delegate = self;
-        _calendarView.wantsDateDecorations = YES;
-        _calendarView.selectionBehavior = self.dateSelection;
+    if (!_handmadeCalendarView) {
+        _handmadeCalendarView = [[MirrorHandmadeCalendarView alloc] initWithSelectedDate:self.selectedDate ?: [NSDate now]];
+        _handmadeCalendarView.weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
+        __weak typeof(self) weakSelf = self;
+        _handmadeCalendarView.dateSelectionHandler = ^(NSDate *date) {
+            [weakSelf updateSelectedDate:date];
+        };
     }
-    return _calendarView;
-}
-
-- (UICalendarSelectionSingleDate *)dateSelection API_AVAILABLE(ios(16.0))
-{
-    if (!_dateSelection) {
-        _dateSelection = [[UICalendarSelectionSingleDate alloc] initWithDelegate:self];
-        NSDateComponents *components = [self.calendarView.calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay fromDate:self.selectedDate ?: [NSDate now]];
-        [_dateSelection setSelectedDate:components animated:NO];
-    }
-    return _dateSelection;
+    return _handmadeCalendarView;
 }
 
 - (UIButton *)todayButton
@@ -768,7 +653,6 @@
     [self.calendarPickerContainerView mas_remakeConstraints:^(MASConstraintMaker *make) {
         make.top.mas_equalTo(self.timelineViewController.view.mas_top).offset(8);
         make.centerX.mas_equalTo(self.view);
-        // UICalendarView needs extra width on some devices/locales; 340 can clip weekday/date columns.
         make.width.mas_equalTo([self calendarPickerWidth]);
         make.height.mas_equalTo([self calendarPickerHeight]);
     }];
@@ -783,34 +667,9 @@
 {
     CGFloat top = CGRectGetMinY(self.timelineViewController.view.frame) + 8;
     CGFloat bottomPadding = self.tabBarController.tabBar.frame.size.height + MirrorBottomSafeAreaHeight() + 12;
-    CGFloat availableHeight = kScreenHeight - top - bottomPadding;
-    NSInteger visibleWeeks = [self visibleWeekCountForCalendarPicker];
-    // UICalendarView 没有稳定暴露真实内容高度；这里按标题、星期栏和月份行数估算容器高度。
-    CGFloat titleAndWeekdayHeight = 128;
-    CGFloat weekRowHeight = 72;
-    CGFloat contentInsets = 16;
-    CGFloat contentHeight = titleAndWeekdayHeight + visibleWeeks * weekRowHeight + contentInsets;
+    CGFloat availableHeight = MAX(0, kScreenHeight - top - bottomPadding);
+    CGFloat contentHeight = 384;
     return MIN(contentHeight, availableHeight);
-}
-
-- (NSInteger)visibleWeekCountForCalendarPicker
-{
-    NSCalendar *calendar = self.calendarView.calendar ?: [self calendarForCurrentSettings];
-    NSDateComponents *visibleComponents = self.calendarView.visibleDateComponents;
-    if (visibleComponents.year == NSDateComponentUndefined || visibleComponents.month == NSDateComponentUndefined) {
-        visibleComponents = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth fromDate:self.selectedDate ?: [NSDate now]];
-    }
-    visibleComponents.calendar = calendar;
-    visibleComponents.day = 1;
-    NSDate *monthStart = visibleComponents.date;
-    if (!monthStart) {
-        return 6;
-    }
-    NSRange dayRange = [calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:monthStart];
-    // 根据月初星期和当月天数计算实际可见周数，避免所有月份都按 6 行撑开。
-    NSInteger firstWeekday = [calendar component:NSCalendarUnitWeekday fromDate:monthStart];
-    NSInteger leadingDays = (firstWeekday - calendar.firstWeekday + 7) % 7;
-    return ceil((leadingDays + dayRange.length) / 7.0);
 }
 
 @end
