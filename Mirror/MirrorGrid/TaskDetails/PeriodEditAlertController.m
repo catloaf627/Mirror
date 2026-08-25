@@ -208,8 +208,8 @@
 - (UIView *)taskNamePickerView
 {
     UIView *pickerView = [UIView new];
-    UIButton *previousButton = [self taskArrowButtonWithSystemImageName:@"chevron.left" fallbackTitle:@"<" action:@selector(previousTaskButtonTapped:)];
-    UIButton *nextButton = [self taskArrowButtonWithSystemImageName:@"chevron.right" fallbackTitle:@">" action:@selector(nextTaskButtonTapped:)];
+    UIButton *previousButton = [self taskArrowButtonWithSystemImageName:@"chevron.left" action:@selector(previousTaskButtonTapped:)];
+    UIButton *nextButton = [self taskArrowButtonWithSystemImageName:@"chevron.right" action:@selector(nextTaskButtonTapped:)];
     UILabel *taskNameLabel = [UILabel new];
     taskNameLabel.text = self.editingRecord.taskName;
     taskNameLabel.textColor = self.accentColor;
@@ -246,16 +246,11 @@
     return pickerView;
 }
 
-- (UIButton *)taskArrowButtonWithSystemImageName:(NSString *)systemImageName fallbackTitle:(NSString *)fallbackTitle action:(SEL)action
+- (UIButton *)taskArrowButtonWithSystemImageName:(NSString *)systemImageName action:(SEL)action
 {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
     button.tintColor = self.accentColor;
-    if (@available(iOS 13.0, *)) {
-        [button setImage:[UIImage systemImageNamed:systemImageName] forState:UIControlStateNormal];
-    } else {
-        [button setTitle:fallbackTitle forState:UIControlStateNormal];
-        button.titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
-    }
+    [button setImage:[UIImage systemImageNamed:systemImageName] forState:UIControlStateNormal];
     [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
     return button;
 }

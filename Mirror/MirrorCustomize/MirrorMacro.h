@@ -17,24 +17,18 @@ NS_ASSUME_NONNULL_BEGIN
 #define kHeightRatio (kScreenHeight / 693.0) // 基准是 iPhone 14 Pro，它的屏幕高度是 693 points
 
 static inline UIWindow * _Nullable MirrorKeyWindow(void) {
-    if (@available(iOS 13.0, *)) {
-        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
-            if (scene.activationState != UISceneActivationStateForegroundActive || ![scene isKindOfClass:[UIWindowScene class]]) {
-                continue;
-            }
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+        if (scene.activationState != UISceneActivationStateForegroundActive || ![scene isKindOfClass:[UIWindowScene class]]) {
+            continue;
+        }
 
-            for (UIWindow *window in ((UIWindowScene *)scene).windows) {
-                if (window.isKeyWindow) {
-                    return window;
-                }
+        for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+            if (window.isKeyWindow) {
+                return window;
             }
         }
     }
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    return [UIApplication sharedApplication].keyWindow;
-#pragma clang diagnostic pop
+    return nil;
 }
 
 static inline CGFloat MirrorBottomSafeAreaHeight(void) {

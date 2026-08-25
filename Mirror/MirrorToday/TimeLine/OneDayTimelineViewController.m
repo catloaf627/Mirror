@@ -456,10 +456,7 @@
 
 - (UIColor *)nowLineColor
 {
-    if (@available(iOS 13.0, *)) {
-        return UIColor.systemRedColor;
-    }
-    return UIColor.redColor;
+    return UIColor.systemRedColor;
 }
 
 - (NSString *)shortTimeFromTimestamp:(long)timestamp

@@ -782,10 +782,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 
 - (UIColor *)specialDayAlertControlBackgroundColor
 {
-    if (@available(iOS 13.0, *)) {
-        return [UIColor tertiarySystemFillColor];
-    }
-    return [UIColor colorWithWhite:0.92 alpha:1];
+    return [UIColor tertiarySystemFillColor];
 }
 
 - (UIView *)colorPickerViewWithSelectedColor:(MirrorSystemColorType)selectedColor selectionHandler:(void (^)(MirrorSystemColorType colorType))selectionHandler
@@ -1051,10 +1048,8 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     if (!viewController) {
         return;
     }
-    if (@available(iOS 13.0, *)) {
-        viewController.overrideUserInterfaceStyle = [MirrorSettings appliedDarkMode] ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
-        viewController.view.overrideUserInterfaceStyle = viewController.overrideUserInterfaceStyle;
-    }
+    viewController.overrideUserInterfaceStyle = [MirrorSettings appliedDarkMode] ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+    viewController.view.overrideUserInterfaceStyle = viewController.overrideUserInterfaceStyle;
     viewController.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
 }
 

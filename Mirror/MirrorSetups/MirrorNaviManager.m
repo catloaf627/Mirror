@@ -100,13 +100,11 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 
     if ([view isKindOfClass:UIButton.class]) {
         UIButton *button = (UIButton *)view;
-        if (@available(iOS 13.0, *)) {
-            if (![button.accessibilityIdentifier isEqualToString:kNaviIconUsesCustomConfigurationIdentifier]) {
-                UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:kNaviIconPointSize weight:UIImageSymbolWeightRegular];
-                [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateNormal];
-                [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateHighlighted];
-                [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateSelected];
-            }
+        if (![button.accessibilityIdentifier isEqualToString:kNaviIconUsesCustomConfigurationIdentifier]) {
+            UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:kNaviIconPointSize weight:UIImageSymbolWeightRegular];
+            [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateNormal];
+            [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateHighlighted];
+            [button setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateSelected];
         }
         button.imageView.contentMode = UIViewContentModeScaleAspectFit;
     }

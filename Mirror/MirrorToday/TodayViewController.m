@@ -581,13 +581,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         _calendarPickerContainerView.layer.shadowRadius = 12;
         _calendarPickerContainerView.layer.shadowOffset = CGSizeMake(0, 4);
 
-        UIBlurEffectStyle blurStyle = UIBlurEffectStyleLight;
-        if (@available(iOS 13.0, *)) {
-            blurStyle = UIBlurEffectStyleSystemUltraThinMaterial;
-        } else if (self.traitCollection.userInterfaceStyle == UIUserInterfaceStyleDark) {
-            blurStyle = UIBlurEffectStyleDark;
-        }
-        UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:blurStyle]];
+        UIVisualEffectView *blurView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemUltraThinMaterial]];
         blurView.userInteractionEnabled = NO;
         blurView.alpha = 0.9;
         blurView.clipsToBounds = YES;

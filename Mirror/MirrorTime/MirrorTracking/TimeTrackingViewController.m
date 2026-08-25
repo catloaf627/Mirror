@@ -691,18 +691,12 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
         _noteButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"note"];
         [_noteButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonBackgroundColor()) forState:UIControlStateNormal];
         [_noteButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonHighlightedColor()) forState:UIControlStateHighlighted];
-        if (@available(iOS 13.0, *)) {
-            UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:21 weight:UIImageSymbolWeightRegular];
-            UIImage *image = [[UIImage systemImageNamed:@"pencil.and.list.clipboard"] imageWithConfiguration:configuration];
-            if (!image) {
-                image = [[UIImage systemImageNamed:@"pencil"] imageWithConfiguration:configuration];
-            }
-            [_noteButton setImage:image forState:UIControlStateNormal];
+        UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:21 weight:UIImageSymbolWeightRegular];
+        UIImage *image = [[UIImage systemImageNamed:@"pencil.and.list.clipboard"] imageWithConfiguration:configuration];
+        if (!image) {
+            image = [[UIImage systemImageNamed:@"pencil"] imageWithConfiguration:configuration];
         }
-        if (!_noteButton.currentImage) {
-            [_noteButton setTitle:[MirrorLanguage mirror_stringWithKey:@"note"] forState:UIControlStateNormal];
-            _noteButton.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightRegular];
-        }
+        [_noteButton setImage:image forState:UIControlStateNormal];
         [_noteButton addTarget:self action:@selector(noteButtonClicked) forControlEvents:UIControlEventTouchUpInside];
     }
     return _noteButton;
