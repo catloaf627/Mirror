@@ -26,6 +26,7 @@
 #define kLeftRightSpacing (20*kWidthRatio)
 
 typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
+typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
 @interface MirrorHandmadeCalendarView : UIView
 
@@ -34,9 +35,11 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
 @property (nonatomic, copy) NSDictionary<NSString *, NSArray<UIColor *> *> *recordColorsByDateKey;
 @property (nonatomic, copy) NSDictionary<NSString *, UIColor *> *specialDayColorsByDateKey;
 @property (nonatomic, assign) BOOL weekStartsOnMonday;
+@property (nonatomic, copy) MirrorHandmadeCalendarLayoutHandler layoutChangeHandler;
 
 - (instancetype)initWithSelectedDate:(NSDate *)selectedDate;
 - (void)reloadCalendar;
+- (CGFloat)preferredHeight;
 
 @end
 
@@ -605,6 +608,9 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
         _handmadeCalendarView.dateSelectionHandler = ^(NSDate *date) {
             [weakSelf updateSelectedDate:date];
         };
+        _handmadeCalendarView.layoutChangeHandler = ^{
+            [weakSelf updateCalendarPickerContainerConstraints];
+        };
     }
     return _handmadeCalendarView;
 }
@@ -668,7 +674,7 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     CGFloat top = CGRectGetMinY(self.timelineViewController.view.frame) + 8;
     CGFloat bottomPadding = self.tabBarController.tabBar.frame.size.height + MirrorBottomSafeAreaHeight() + 12;
     CGFloat availableHeight = MAX(0, kScreenHeight - top - bottomPadding);
-    CGFloat contentHeight = 384;
+    CGFloat contentHeight = [self.handmadeCalendarView preferredHeight] + 16;
     return MIN(contentHeight, availableHeight);
 }
 

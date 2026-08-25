@@ -15,17 +15,20 @@
 NS_ASSUME_NONNULL_BEGIN
 
 typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
+typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
 @interface MirrorHandmadeCalendarView : UIView
 
 @property (nonatomic, strong) NSDate *selectedDate;
 @property (nonatomic, copy, nullable) MirrorHandmadeCalendarDateHandler dateSelectionHandler;
+@property (nonatomic, copy, nullable) MirrorHandmadeCalendarLayoutHandler layoutChangeHandler;
 @property (nonatomic, copy) NSDictionary<NSString *, NSArray<UIColor *> *> *recordColorsByDateKey;
 @property (nonatomic, copy) NSDictionary<NSString *, UIColor *> *specialDayColorsByDateKey;
 @property (nonatomic, assign) BOOL weekStartsOnMonday;
 
 - (instancetype)initWithSelectedDate:(NSDate *)selectedDate;
 - (void)reloadCalendar;
+- (CGFloat)preferredHeight;
 
 @end
 
@@ -190,6 +193,7 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
 @end
 
 @implementation MirrorHandmadeCalendarView {
+    UIView *_swipeGestureView;
     UIView *_headerView;
     UIButton *_previousMonthButton;
     UIButton *_nextMonthButton;
@@ -201,6 +205,7 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     NSCalendar *_calendar;
     NSDateFormatter *_monthFormatter;
     NSDateFormatter *_dateKeyFormatter;
+    NSInteger _visibleWeekCount;
 }
 
 - (instancetype)initWithSelectedDate:(NSDate *)selectedDate
@@ -212,6 +217,7 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
         _weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
         _recordColorsByDateKey = @{};
         _specialDayColorsByDateKey = @{};
+        _visibleWeekCount = 6;
         [self setupCalendarHelpers];
         [self setupViews];
         [self reloadCalendar];
@@ -254,8 +260,10 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     CGFloat headerHeight = 48;
     CGFloat weekdayHeight = 28;
     CGFloat dayGridTop = headerHeight + weekdayHeight;
+    NSInteger rowCount = MAX(1, _visibleWeekCount);
     CGFloat dayGridHeight = MAX(0, CGRectGetHeight(self.bounds) - dayGridTop);
 
+    _swipeGestureView.frame = self.bounds;
     _headerView.frame = CGRectMake(0, 0, width, headerHeight);
     _previousMonthButton.frame = CGRectMake(0, 4, 44, 40);
     _nextMonthButton.frame = CGRectMake(MAX(0, width - 44), 4, 44, 40);
@@ -264,7 +272,7 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     _daysContainerView.frame = CGRectMake(0, dayGridTop, width, dayGridHeight);
 
     CGFloat cellWidth = width / 7.0;
-    CGFloat cellHeight = dayGridHeight / 6.0;
+    CGFloat cellHeight = dayGridHeight / rowCount;
     [_dayCells enumerateObjectsUsingBlock:^(MirrorHandmadeCalendarDayCell *cell, NSUInteger index, BOOL *stop) {
         NSUInteger row = index / 7;
         NSUInteger column = index % 7;
@@ -286,12 +294,27 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     _dateKeyFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
     _monthLabel.text = [_monthFormatter stringFromDate:_visibleMonthDate ?: [NSDate now]];
 
-    NSDate *firstVisibleDate = [self firstDateInGridForMonthDate:_visibleMonthDate ?: [NSDate now]];
+    NSDate *visibleMonthDate = _visibleMonthDate ?: [NSDate now];
+    NSInteger previousVisibleWeekCount = _visibleWeekCount;
+    _visibleWeekCount = [self visibleWeekCountForMonthDate:visibleMonthDate];
+    NSDate *firstVisibleDate = [self firstDateInGridForMonthDate:visibleMonthDate];
+    NSUInteger visibleCellCount = MIN(_dayCells.count, MAX(1, _visibleWeekCount) * 7);
     for (NSUInteger index = 0; index < _dayCells.count; index++) {
         MirrorHandmadeCalendarDayCell *cell = _dayCells[index];
         if (![cell isKindOfClass:MirrorHandmadeCalendarDayCell.class]) {
             continue;
         }
+        BOOL shouldShowCell = index < visibleCellCount;
+        cell.hidden = !shouldShowCell;
+        if (!shouldShowCell) {
+            cell.date = nil;
+            cell.dateKey = @"";
+            cell.specialDayColor = nil;
+            cell.recordColors = @[];
+            [cell setDayText:@""];
+            continue;
+        }
+
         NSDateComponents *offset = [NSDateComponents new];
         offset.day = index;
         NSDate *date = [_calendar dateByAddingComponents:offset toDate:firstVisibleDate options:0] ?: firstVisibleDate;
@@ -324,6 +347,17 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     }
 
     [self setNeedsLayout];
+    if (previousVisibleWeekCount != _visibleWeekCount && self.layoutChangeHandler) {
+        self.layoutChangeHandler();
+    }
+}
+
+- (CGFloat)preferredHeight
+{
+    CGFloat headerHeight = 48;
+    CGFloat weekdayHeight = 28;
+    CGFloat weekRowHeight = 48;
+    return headerHeight + weekdayHeight + MAX(1, _visibleWeekCount) * weekRowHeight;
 }
 
 - (void)setupCalendarHelpers
@@ -346,8 +380,14 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
 {
     self.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
 
+    _swipeGestureView = [UIView new];
+    _swipeGestureView.backgroundColor = UIColor.clearColor;
+    _swipeGestureView.userInteractionEnabled = YES;
+    [self addSubview:_swipeGestureView];
+    [self setupSwipeGestures];
+
     _headerView = [UIView new];
-    [self addSubview:_headerView];
+    [_swipeGestureView addSubview:_headerView];
 
     _previousMonthButton = [UIButton buttonWithType:UIButtonTypeSystem];
     [_previousMonthButton setImage:[UIImage systemImageNamed:@"chevron.left"] forState:UIControlStateNormal];
@@ -370,11 +410,11 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     _weekdayStackView = [[UIStackView alloc] initWithFrame:CGRectZero];
     _weekdayStackView.axis = UILayoutConstraintAxisHorizontal;
     _weekdayStackView.distribution = UIStackViewDistributionFillEqually;
-    [self addSubview:_weekdayStackView];
+    [_swipeGestureView addSubview:_weekdayStackView];
     [self reloadWeekdayTitles];
 
     _daysContainerView = [UIView new];
-    [self addSubview:_daysContainerView];
+    [_swipeGestureView addSubview:_daysContainerView];
 
     NSMutableArray<MirrorHandmadeCalendarDayCell *> *cells = [NSMutableArray arrayWithCapacity:42];
     for (NSUInteger index = 0; index < 42; index++) {
@@ -384,6 +424,19 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
         [cells addObject:cell];
     }
     _dayCells = cells;
+}
+
+- (void)setupSwipeGestures
+{
+    UISwipeGestureRecognizer *leftSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleCalendarSwipe:)];
+    leftSwipeGesture.direction = UISwipeGestureRecognizerDirectionLeft;
+    leftSwipeGesture.cancelsTouchesInView = NO;
+    [_swipeGestureView addGestureRecognizer:leftSwipeGesture];
+
+    UISwipeGestureRecognizer *rightSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(handleCalendarSwipe:)];
+    rightSwipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
+    rightSwipeGesture.cancelsTouchesInView = NO;
+    [_swipeGestureView addGestureRecognizer:rightSwipeGesture];
 }
 
 - (void)reloadWeekdayTitles
@@ -414,6 +467,31 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     return [_calendar dateByAddingComponents:offset toDate:firstDayOfMonth options:0] ?: firstDayOfMonth;
 }
 
+- (NSInteger)visibleWeekCountForMonthDate:(NSDate *)monthDate
+{
+    if (!_calendar) {
+        [self setupCalendarHelpers];
+    }
+    NSDateComponents *monthComponents = [_calendar components:NSCalendarUnitYear | NSCalendarUnitMonth fromDate:monthDate ?: [NSDate now]];
+    monthComponents.day = 1;
+    monthComponents.calendar = _calendar;
+    monthComponents.timeZone = _calendar.timeZone;
+    NSDate *firstDayOfMonth = monthComponents.date;
+    if (!firstDayOfMonth) {
+        return 6;
+    }
+
+    NSRange dayRange = [_calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:firstDayOfMonth];
+    if (dayRange.length == 0) {
+        return 6;
+    }
+
+    NSInteger firstWeekday = [_calendar component:NSCalendarUnitWeekday fromDate:firstDayOfMonth];
+    NSInteger leadingDays = (firstWeekday - _calendar.firstWeekday + 7) % 7;
+    NSInteger weekCount = ceil((leadingDays + dayRange.length) / 7.0);
+    return MIN(MAX(weekCount, 4), 6);
+}
+
 - (void)showPreviousMonth
 {
     [self moveVisibleMonthByOffset:-1];
@@ -424,8 +502,23 @@ typedef void (^MirrorHandmadeCalendarDateHandler)(NSDate *date);
     [self moveVisibleMonthByOffset:1];
 }
 
+- (void)handleCalendarSwipe:(UISwipeGestureRecognizer *)gestureRecognizer
+{
+    if (![gestureRecognizer isKindOfClass:UISwipeGestureRecognizer.class]) {
+        return;
+    }
+    if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionLeft) {
+        [self moveVisibleMonthByOffset:1];
+    } else if (gestureRecognizer.direction == UISwipeGestureRecognizerDirectionRight) {
+        [self moveVisibleMonthByOffset:-1];
+    }
+}
+
 - (void)moveVisibleMonthByOffset:(NSInteger)offset
 {
+    if (!_calendar) {
+        [self setupCalendarHelpers];
+    }
     NSDateComponents *components = [NSDateComponents new];
     components.month = offset;
     _visibleMonthDate = [_calendar dateByAddingComponents:components toDate:_visibleMonthDate ?: [NSDate now] options:0];
