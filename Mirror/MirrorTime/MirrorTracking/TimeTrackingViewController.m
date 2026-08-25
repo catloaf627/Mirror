@@ -22,6 +22,8 @@ static CGFloat const kIntervalSize = 70;
 
 static NSString *const kHintFont = @"TrebuchetMS-Italic";
 static CGFloat const kCircleLineWidth = 18;
+static CFTimeInterval const kStopHoldDuration = 2.0;
+static CFTimeInterval const kStopHoldHapticInterval = 0.18;
 
 static UIColor *MirrorTrackingBackgroundColor(void)
 {
@@ -299,6 +301,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 @property (nonatomic, strong) MirrorTrackingCircleView *circleView;
 @property (nonatomic, strong) UILabel *timeIntervalLabel;
 @property (nonatomic, strong) UIButton *stopButton;
+@property (nonatomic, strong) UIView *stopButtonProgressView;
 
 // Data
 
@@ -311,10 +314,14 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 @property (nonatomic, assign) NSTimeInterval timeInterval;
 @property (nonatomic, assign) NSTimeInterval accurateTimeInterval;
 @property (nonatomic, assign) BOOL didFinishAutomatically;
+@property (nonatomic, assign) BOOL didCompleteStopHold;
+@property (nonatomic, assign) CFTimeInterval stopHoldStartTime;
+@property (nonatomic, assign) CFTimeInterval stopHoldLastHapticTime;
 
 
 // Timer
 @property (nonatomic, strong) NSTimer *timer;
+@property (nonatomic, strong) CADisplayLink *stopHoldDisplayLink;
 
 @end
 
@@ -347,6 +354,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 {
     [self.timer invalidate];
     self.timer = nil;
+    [self stopStopHoldDisplayLink];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -354,6 +362,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     [super viewDidDisappear:animated];
     [self.timer invalidate];
     self.timer = nil;
+    [self resetStopHoldProgress];
 }
 
 - (void)p_setupUI
@@ -418,7 +427,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
     self.circleView.startAngle = [self hourCircleStartAngle];
     self.circleView.progress = [self hourCircleProgress];
-    NSString *buttonTitleKey = [self canStopAndKeepRecord] ? @"stop" : @"cancel";
+    NSString *buttonTitleKey = [self canStopAndKeepRecord] ? @"hold_to_stop" : @"cancel";
     [self.stopButton setTitle:[MirrorLanguage mirror_stringWithKey:buttonTitleKey] forState:UIControlStateNormal];
 
     [self.circleView setNeedsDisplay];
@@ -473,21 +482,111 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     return -M_PI_2 + 2*M_PI*(secondsInHour / (60.0 * 60.0));
 }
 
-- (void)triggerButtonHapticFeedback
+- (void)stopButtonTouchDown
 {
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    if (![self canStopAndKeepRecord]) {
+        return;
+    }
+
+    self.didCompleteStopHold = NO;
+    self.stopHoldStartTime = CACurrentMediaTime();
+    self.stopHoldLastHapticTime = 0;
+    [self updateStopHoldProgress:0];
+    [self startStopHoldDisplayLink];
 }
 
-- (void)stopButtonClicked
+- (void)stopButtonTouchUpInside
 {
-    if ([self canStopAndKeepRecord]) {
-        [self triggerButtonHapticFeedback];
-        [self dismissViewControllerAnimated:YES completion:nil];
-        [MirrorStorage stopTask:self.taskName at:[NSDate now]];
-    } else {
+    if (![self canStopAndKeepRecord]) {
         [self dismissViewControllerAnimated:YES completion:nil];
         [MirrorStorage cancelGoingOnTask];
+        return;
     }
+
+    if (!self.didCompleteStopHold) {
+        [self resetStopHoldProgress];
+    }
+}
+
+- (void)stopButtonTouchCancelled
+{
+    if (!self.didCompleteStopHold) {
+        [self resetStopHoldProgress];
+    }
+}
+
+- (void)startStopHoldDisplayLink
+{
+    [self stopStopHoldDisplayLink];
+    self.stopHoldDisplayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(updateStopHoldDisplayLink:)];
+    [self.stopHoldDisplayLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+}
+
+- (void)stopStopHoldDisplayLink
+{
+    [self.stopHoldDisplayLink invalidate];
+    self.stopHoldDisplayLink = nil;
+}
+
+- (void)updateStopHoldDisplayLink:(CADisplayLink *)displayLink
+{
+    if (![self canStopAndKeepRecord]) {
+        [self resetStopHoldProgress];
+        return;
+    }
+
+    CGFloat progress = MIN(1, (CACurrentMediaTime() - self.stopHoldStartTime) / kStopHoldDuration);
+    [self updateStopHoldProgress:progress];
+    [self triggerStopHoldHapticFeedbackForProgress:progress];
+
+    if (progress >= 1) {
+        self.didCompleteStopHold = YES;
+        [self stopStopHoldDisplayLink];
+        [self stopAndKeepRecord];
+    }
+}
+
+- (void)updateStopHoldProgress:(CGFloat)progress
+{
+    CGFloat normalizedProgress = MIN(1, MAX(0, progress));
+    CGRect progressFrame = self.stopButton.bounds;
+    progressFrame.size.width = CGRectGetWidth(self.stopButton.bounds) * normalizedProgress;
+    self.stopButtonProgressView.frame = progressFrame;
+    self.stopButtonProgressView.hidden = normalizedProgress <= 0;
+}
+
+- (void)resetStopHoldProgress
+{
+    [self stopStopHoldDisplayLink];
+    self.didCompleteStopHold = NO;
+    self.stopHoldLastHapticTime = 0;
+    [UIView animateWithDuration:0.15 animations:^{
+        [self updateStopHoldProgress:0];
+    }];
+}
+
+- (void)triggerStopHoldHapticFeedbackForProgress:(CGFloat)progress
+{
+    CFTimeInterval currentTime = CACurrentMediaTime();
+    if (self.stopHoldLastHapticTime > 0 && currentTime - self.stopHoldLastHapticTime < kStopHoldHapticInterval) {
+        return;
+    }
+
+    self.stopHoldLastHapticTime = currentTime;
+    UIImpactFeedbackStyle style = UIImpactFeedbackStyleLight;
+    if (progress >= 0.66) {
+        style = UIImpactFeedbackStyleHeavy;
+    } else if (progress >= 0.33) {
+        style = UIImpactFeedbackStyleMedium;
+    }
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:style] impactOccurred];
+}
+
+- (void)stopAndKeepRecord
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy] impactOccurred];
+    [self dismissViewControllerAnimated:YES completion:nil];
+    [MirrorStorage stopTask:self.taskName at:[NSDate now]];
 }
 
 - (void)noteButtonClicked
@@ -609,6 +708,19 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     return _noteButton;
 }
 
+- (UIView *)stopButtonProgressView
+{
+    if (!_stopButtonProgressView) {
+        _stopButtonProgressView = [UIView new];
+        _stopButtonProgressView.backgroundColor = [self.taskColor colorWithAlphaComponent:0.38];
+        _stopButtonProgressView.userInteractionEnabled = NO;
+        _stopButtonProgressView.hidden = YES;
+        _stopButtonProgressView.layer.cornerRadius = 12;
+        _stopButtonProgressView.layer.masksToBounds = YES;
+    }
+    return _stopButtonProgressView;
+}
+
 - (MirrorTrackingCircleView *)circleView
 {
     if (!_circleView) {
@@ -643,13 +755,18 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
         _stopButton.backgroundColor = MirrorTrackingButtonBackgroundColor();
         [_stopButton setTitleColor:MirrorTrackingPrimaryTextColor() forState:UIControlStateNormal];
         _stopButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
+        _stopButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+        _stopButton.titleLabel.minimumScaleFactor = 0.6;
         _stopButton.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.18].CGColor;
         _stopButton.layer.borderWidth = 1;
         _stopButton.layer.cornerRadius = 12;
         _stopButton.clipsToBounds = YES;
         [_stopButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonBackgroundColor()) forState:UIControlStateNormal];
         [_stopButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonHighlightedColor()) forState:UIControlStateHighlighted];
-        [_stopButton addTarget:self action:@selector(stopButtonClicked) forControlEvents:UIControlEventTouchUpInside];
+        [_stopButton insertSubview:self.stopButtonProgressView atIndex:0];
+        [_stopButton addTarget:self action:@selector(stopButtonTouchDown) forControlEvents:UIControlEventTouchDown];
+        [_stopButton addTarget:self action:@selector(stopButtonTouchUpInside) forControlEvents:UIControlEventTouchUpInside];
+        [_stopButton addTarget:self action:@selector(stopButtonTouchCancelled) forControlEvents:UIControlEventTouchUpOutside | UIControlEventTouchCancel];
     }
     return _stopButton;
 }

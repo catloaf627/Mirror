@@ -75,6 +75,7 @@
     // Full screen
     [mirrorDict setValue:ML(@"Go!", @"开始!", @"¡Vamos!", @"C'est parti !", @"開始!", @"시작!", @"Los!", @"Начать!") forKey:@"go"];
     [mirrorDict setValue:ML(@"Stop", @"结束", @"Finalizar", @"Terminer", @"終了", @"종료", @"Stopp", @"Стоп") forKey:@"stop"];
+    [mirrorDict setValue:ML(@"Hold to stop", @"长按结束", @"Mantén para parar", @"Maintenir pour arrêter", @"長押しで終了", @"길게 눌러 종료", @"Zum Stoppen halten", @"Удерживайте для остановки") forKey:@"hold_to_stop"];
 
     // Delete period
     [mirrorDict setValue:ML(@"Delete this time period? ", @"确定删除这个时间段？", @"¿Eliminar este periodo?", @"Supprimer cette période ?", @"この時間帯を削除しますか？", @"이 시간대를 삭제할까요?", @"Diesen Zeitraum löschen? ", @"Удалить этот период? ") forKey:@"delete_period_?"];
