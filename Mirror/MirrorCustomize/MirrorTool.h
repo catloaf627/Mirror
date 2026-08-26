@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "MirrorRecordModel.h"
+#import "UIColor+MirrorColor.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -17,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (NSString *)timelineMonthDayTextForTimestamp:(long)timestamp;
 + (NSString *)timelineYearTextForTimestamp:(long)timestamp;
 + (NSLocale *)formatterLocaleForCurrentLanguage;
++ (UIColor *)colorWithPulseMixedForColorType:(MirrorColorType)colorType; // when used as bg-color, taskcolors are too light, so mixing with a little pulse color can be helpful
 + (long)getDayGapFromTheFirstDayThisWeek; // 本日0点与本周0点的天数差距（取决于本周的开始是算周一，还是算周日）
 + (long)getTotalTimeOfPeriods:(NSMutableArray<MirrorRecordModel *> *)periods;
 

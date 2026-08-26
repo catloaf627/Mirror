@@ -104,6 +104,31 @@
     return [NSLocale localeWithLocaleIdentifier:localeIdentifier];
 }
 
++ (UIColor *)colorWithPulseMixedForColorType:(MirrorColorType)colorType
+{
+    UIColor *baseColor = [UIColor mirrorColorNamed:colorType];
+    UIColor *pulseColor = [UIColor mirrorColorPulsed:colorType];
+
+    CGFloat baseRed = 0;
+    CGFloat baseGreen = 0;
+    CGFloat baseBlue = 0;
+    CGFloat baseAlpha = 0;
+    CGFloat pulseRed = 0;
+    CGFloat pulseGreen = 0;
+    CGFloat pulseBlue = 0;
+    CGFloat pulseAlpha = 0;
+    if (![baseColor getRed:&baseRed green:&baseGreen blue:&baseBlue alpha:&baseAlpha] ||
+        ![pulseColor getRed:&pulseRed green:&pulseGreen blue:&pulseBlue alpha:&pulseAlpha]) {
+        return baseColor;
+    }
+
+    CGFloat pulseProgress = 0.1;
+    return [UIColor colorWithRed:baseRed + (pulseRed - baseRed) * pulseProgress
+                           green:baseGreen + (pulseGreen - baseGreen) * pulseProgress
+                            blue:baseBlue + (pulseBlue - baseBlue) * pulseProgress
+                           alpha:baseAlpha + (pulseAlpha - baseAlpha) * pulseProgress];
+}
+
 // Returns today's offset from the configured week start; for example Wednesday returns 2 when weeks start Monday.
 + (long)getDayGapFromTheFirstDayThisWeek
 {

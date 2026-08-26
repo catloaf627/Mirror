@@ -29,13 +29,11 @@
     _totalTime = 0;
     NSMutableArray<NSNumber *> *taskTimes = [NSMutableArray array];
     NSMutableArray<UIColor *> *taskColors = [NSMutableArray array];
-    NSMutableArray<UIColor *> *taskPulseColors = [NSMutableArray array];
     for (int i=0; i<data.count; i++) {
         long taskTime = [MirrorTool getTotalTimeOfPeriods:data[i].records];
         if (taskTime > 0) {
             [taskTimes addObject:@(taskTime)];
-            [taskColors addObject:[UIColor mirrorColorNamed:data[i].taskModel.color]];
-            [taskPulseColors addObject:[UIColor mirrorColorPulsed:data[i].taskModel.color]];
+            [taskColors addObject:[MirrorTool colorWithPulseMixedForColorType:data[i].taskModel.color]];
         }
         _totalTime = _totalTime + taskTime;
     }
@@ -46,8 +44,6 @@
         UIColor *mixedColor = [self mixedColorWithTaskColors:taskColors taskTimes:taskTimes];
         if ([MirrorSettings appliedHeatmap]) {
             CGFloat alpha = MIN(1.0, 0.2 + floor(_totalTime / 3600) * 0.1);
-            UIColor *mixedPulseColor = [self mixedColorWithTaskColors:taskPulseColors taskTimes:taskTimes];
-            mixedColor = [self colorByBlendingColor:mixedColor withColor:mixedPulseColor progress:0.1]; // 最大值（>8小时）使用的是混合了一点pulse的color，否则只用mixed_tasks_colors太浅了
             self.backgroundColor = [mixedColor colorWithAlphaComponent:alpha];
         } else {
             self.backgroundColor = [mixedColor colorWithAlphaComponent:1];
@@ -100,27 +96,6 @@
                                                (self.contentView.bounds.size.height - iconSide) / 2,
                                                iconSide,
                                                iconSide);
-}
-
-- (UIColor *)colorByBlendingColor:(UIColor *)fromColor withColor:(UIColor *)toColor progress:(CGFloat)progress
-{
-    CGFloat fromRed = 0;
-    CGFloat fromGreen = 0;
-    CGFloat fromBlue = 0;
-    CGFloat fromAlpha = 0;
-    CGFloat toRed = 0;
-    CGFloat toGreen = 0;
-    CGFloat toBlue = 0;
-    CGFloat toAlpha = 0;
-    if (![fromColor getRed:&fromRed green:&fromGreen blue:&fromBlue alpha:&fromAlpha] ||
-        ![toColor getRed:&toRed green:&toGreen blue:&toBlue alpha:&toAlpha]) {
-        return fromColor;
-    }
-    CGFloat clampedProgress = MIN(1.0, MAX(0, progress));
-    return [UIColor colorWithRed:fromRed + (toRed - fromRed) * clampedProgress
-                           green:fromGreen + (toGreen - fromGreen) * clampedProgress
-                            blue:fromBlue + (toBlue - fromBlue) * clampedProgress
-                           alpha:fromAlpha + (toAlpha - fromAlpha) * clampedProgress];
 }
 
 - (UIColor *)mixedColorWithTaskColors:(NSMutableArray<UIColor *> *)taskColors taskTimes:(NSMutableArray<NSNumber *> *)taskTimes
