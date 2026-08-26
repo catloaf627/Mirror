@@ -78,7 +78,7 @@
     [alertController addAction:[UIAlertAction actionWithTitle:@"Import JSON" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self showJSONDocumentPicker];
     }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"生成假数据" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertController addAction:[UIAlertAction actionWithTitle:@"Seed Fake Data" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [MirrorFakeDataSeeder seedFakeData];
         [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
     }]];
