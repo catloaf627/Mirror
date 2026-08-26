@@ -224,24 +224,6 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskHiddenNotification object:nil userInfo:nil];
 }
 
-// 批量设置所有任务隐藏状态；例如在 Grid 页一键隐藏全部任务后，Grid/History 这类隐藏过滤数据源不再统计它们。
-+ (void)setAllTasksHidden:(BOOL)isHidden
-{
-    NSMutableArray <MirrorTaskModel *> *tasks = [MirrorStorage retriveMirrorTasks];
-    BOOL didChange = NO;
-    for (MirrorTaskModel *task in tasks) {
-        if (task.isHidden != isHidden) {
-            task.isHidden = isHidden;
-            didChange = YES;
-        }
-    }
-    if (!didChange) {
-        return;
-    }
-    [MirrorStorage saveMirrorTasks:tasks];
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskHiddenNotification object:nil userInfo:nil];
-}
-
 // 修改任务名称，并同步改所有原始记录里的 taskName；例如“英语”改成“English”，历史记录也会一起改名。
 + (void)editTask:(NSString *)oldName name:(NSString *)newName
 {
