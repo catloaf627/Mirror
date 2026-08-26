@@ -113,8 +113,11 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     self.firstHighlightedRow = nil;
     self.firstTimelineRow = nil;
     self.lastTimelineRow = nil;
-    [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    [self p_setupUI];
+    [UIView performWithoutAnimation:^{
+        [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
+        [self p_setupUI];
+        [self.view layoutIfNeeded];
+    }];
 }
 
 - (void)reloadData
@@ -227,21 +230,19 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     [self addTimelineRowsFromIndex:safeStartIndex toIndex:endIndex afterRow:nil beforeRow:nil];
     [self updateTimelineContentBottomConstraint];
     
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.view layoutIfNeeded];
-        CGFloat maxOffsetY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
-        if (scrollPosition == TimelineBatchScrollPositionTop) {
-            self.scrollView.contentOffset = CGPointZero;
-        }
-        if (self.shouldRestoreTimelineScrollPosition) {
-            self.scrollView.contentOffset = CGPointMake(
-                0,
-                MIN(MAX(self.savedTimelineContentOffset.y, 0), maxOffsetY)
-            );
-            self.shouldRestoreTimelineScrollPosition = NO;
-        }
-        self.isRenderingTimelineBatch = NO;
-    });
+    [self.view layoutIfNeeded];
+    CGFloat maxOffsetY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
+    if (scrollPosition == TimelineBatchScrollPositionTop) {
+        self.scrollView.contentOffset = CGPointZero;
+    }
+    if (self.shouldRestoreTimelineScrollPosition) {
+        self.scrollView.contentOffset = CGPointMake(
+            0,
+            MIN(MAX(self.savedTimelineContentOffset.y, 0), maxOffsetY)
+        );
+        self.shouldRestoreTimelineScrollPosition = NO;
+    }
+    self.isRenderingTimelineBatch = NO;
 }
 
 - (void)addTimelineRowsFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex afterRow:(UIView *)afterRow beforeRow:(UIView *)beforeRow
