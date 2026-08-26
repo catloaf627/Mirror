@@ -172,6 +172,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 @property (nonatomic, assign) NSInteger selectedDayIndex;
 @property (nonatomic, assign) BOOL isSpecialDayEditMenuVisible;
 @property (nonatomic, assign) BOOL shouldSuppressNextSpecialDayEditMenu;
+@property (nonatomic, weak) UIView *borderedSpecialDayRow;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleSpecialDayEditMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
@@ -397,10 +398,13 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 - (UIView *)timelineRowWithDay:(MirrorDayModel *)day isFirst:(BOOL)isFirst isLast:(BOOL)isLast
 {
     UIView *row = [UIView new];
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(specialDayRowTapped:)];
+    [row addGestureRecognizer:tapRecognizer];
     if (@available(iOS 16.0, *)) {
         UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
         [row addInteraction:editMenuInteraction];
         UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showSpecialDayEditMenu:)];
+        [tapRecognizer requireGestureRecognizerToFail:longPressRecognizer];
         [row addGestureRecognizer:longPressRecognizer];
     }
     UIColor *dayColor = [UIColor mirrorSystemColorNamed:day.color];
@@ -488,6 +492,58 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     return row;
 }
 
+- (void)specialDayRowTapped:(UITapGestureRecognizer *)recognizer
+{
+    if (recognizer.state != UIGestureRecognizerStateEnded) {
+        return;
+    }
+    
+    UIView *row = recognizer.view;
+    NSInteger index = row.tag;
+    if (index < 0 || index >= self.days.count) {
+        return;
+    }
+    
+    UIColor *borderColor = [UIColor mirrorSystemColorNamed:self.days[index].color];
+    [self flashBorderForSpecialDayRow:row color:borderColor];
+}
+
+- (void)showBorderForSpecialDayRow:(UIView *)row color:(UIColor *)color
+{
+    if (self.borderedSpecialDayRow && self.borderedSpecialDayRow != row) {
+        [self clearBorderForSpecialDayRow:self.borderedSpecialDayRow];
+    }
+    
+    self.borderedSpecialDayRow = row;
+    row.layer.cornerRadius = 8;
+    row.layer.masksToBounds = YES;
+    row.layer.borderColor = color.CGColor;
+    row.layer.borderWidth = 1.5;
+}
+
+- (void)clearBorderForSpecialDayRow:(UIView *)row
+{
+    if (!row) {
+        return;
+    }
+    
+    row.layer.borderWidth = 0;
+    row.layer.borderColor = nil;
+    if (self.borderedSpecialDayRow == row) {
+        self.borderedSpecialDayRow = nil;
+    }
+}
+
+- (void)flashBorderForSpecialDayRow:(UIView *)row color:(UIColor *)color
+{
+    [self showBorderForSpecialDayRow:row color:color];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (!self.isSpecialDayEditMenuVisible && self.borderedSpecialDayRow == row) {
+            [self clearBorderForSpecialDayRow:row];
+        }
+    });
+}
+
 - (long)timestampFromDay:(MirrorDayModel *)day
 {
     NSDate *date = [self.dateFormatter dateFromString:day.dateStr];
@@ -517,6 +573,10 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     
     UIView *view = recognizer.view;
     self.selectedDayIndex = view.tag;
+    if (self.selectedDayIndex >= 0 && self.selectedDayIndex < self.days.count) {
+        UIColor *borderColor = [UIColor mirrorSystemColorNamed:self.days[self.selectedDayIndex].color];
+        [self showBorderForSpecialDayRow:view color:borderColor];
+    }
     [self shakeSelectedRow:view];
     
     if (@available(iOS 16.0, *)) {
@@ -578,6 +638,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     if (interaction == self.visibleSpecialDayEditMenuInteraction) {
         self.isSpecialDayEditMenuVisible = NO;
         self.visibleSpecialDayEditMenuInteraction = nil;
+        [self clearBorderForSpecialDayRow:self.borderedSpecialDayRow];
         self.shouldSuppressNextSpecialDayEditMenu = YES;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!self.isSpecialDayEditMenuVisible) {
@@ -597,6 +658,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     }
     self.isSpecialDayEditMenuVisible = NO;
     self.visibleSpecialDayEditMenuInteraction = nil;
+    [self clearBorderForSpecialDayRow:self.borderedSpecialDayRow];
     self.shouldSuppressNextSpecialDayEditMenu = NO;
     return YES;
 }

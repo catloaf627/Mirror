@@ -55,6 +55,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, strong) PeriodEditAlertView *editingPeriodAlert;
 @property (nonatomic, weak) UIView *firstTimelineRow;
 @property (nonatomic, weak) UIView *lastTimelineRow;
+@property (nonatomic, weak) UIView *borderedRecordRow;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
@@ -420,10 +421,13 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     CGFloat dotSize = [self dotSizeForRecord:record];
     row.backgroundColor = isHighlighted ? [pulseColor colorWithAlphaComponent:0.12] : [UIColor clearColor];
     row.tag = record.originalIndex;
+    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(recordRowTapped:)];
+    [row addGestureRecognizer:tapRecognizer];
     if (@available(iOS 16.0, *)) {
         UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
         [row addInteraction:editMenuInteraction];
         UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+        [tapRecognizer requireGestureRecognizerToFail:longPressRecognizer];
         [row addGestureRecognizer:longPressRecognizer];
     }
     
@@ -526,6 +530,52 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     return row;
 }
 
+- (void)recordRowTapped:(UITapGestureRecognizer *)recognizer
+{
+    if (recognizer.state != UIGestureRecognizerStateEnded) {
+        return;
+    }
+    
+    UIColor *borderColor = [UIColor mirrorColorPulsed:self.data.taskModel.color];
+    [self flashBorderForRecordRow:recognizer.view color:borderColor];
+}
+
+- (void)showBorderForRecordRow:(UIView *)row color:(UIColor *)color
+{
+    if (self.borderedRecordRow && self.borderedRecordRow != row) {
+        [self clearBorderForRecordRow:self.borderedRecordRow];
+    }
+    
+    self.borderedRecordRow = row;
+    row.layer.cornerRadius = 8;
+    row.layer.masksToBounds = YES;
+    row.layer.borderColor = color.CGColor;
+    row.layer.borderWidth = 1.5;
+}
+
+- (void)clearBorderForRecordRow:(UIView *)row
+{
+    if (!row) {
+        return;
+    }
+    
+    row.layer.borderWidth = 0;
+    row.layer.borderColor = nil;
+    if (self.borderedRecordRow == row) {
+        self.borderedRecordRow = nil;
+    }
+}
+
+- (void)flashBorderForRecordRow:(UIView *)row color:(UIColor *)color
+{
+    [self showBorderForRecordRow:row color:color];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (!self.isRecordEditMenuVisible && self.borderedRecordRow == row) {
+            [self clearBorderForRecordRow:row];
+        }
+    });
+}
+
 #pragma mark - Edit Menu
 
 - (void)showEditMenu:(UILongPressGestureRecognizer *)recognizer
@@ -546,6 +596,8 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     
     UIView *view = recognizer.view;
     self.selectedPeriodIndex = view.tag;
+    UIColor *borderColor = [UIColor mirrorColorPulsed:self.data.taskModel.color];
+    [self showBorderForRecordRow:view color:borderColor];
     [self shakeSelectedRow:view];
     
     if (@available(iOS 16.0, *)) {
@@ -612,6 +664,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (interaction == self.visibleRecordEditMenuInteraction) {
         self.isRecordEditMenuVisible = NO;
         self.visibleRecordEditMenuInteraction = nil;
+        [self clearBorderForRecordRow:self.borderedRecordRow];
         self.shouldSuppressNextRecordEditMenu = YES;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!self.isRecordEditMenuVisible) {
@@ -631,6 +684,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     }
     self.isRecordEditMenuVisible = NO;
     self.visibleRecordEditMenuInteraction = nil;
+    [self clearBorderForRecordRow:self.borderedRecordRow];
     self.shouldSuppressNextRecordEditMenu = NO;
     return YES;
 }
