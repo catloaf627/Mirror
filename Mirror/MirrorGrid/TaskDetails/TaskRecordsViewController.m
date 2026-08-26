@@ -13,7 +13,7 @@
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
-#import "PeriodEditAlertController.h"
+#import "PeriodEditAlertView.h"
 #import <math.h>
 
 static CGFloat const kHorizontalPadding = 20;
@@ -52,7 +52,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 @property (nonatomic, assign) BOOL didScrollToInitialHighlightedRow;
 @property (nonatomic, assign) BOOL isRecordEditMenuVisible;
 @property (nonatomic, assign) BOOL shouldSuppressNextRecordEditMenu;
-@property (nonatomic, strong) PeriodEditAlertController *editingPeriodAlert;
+@property (nonatomic, strong) PeriodEditAlertView *editingPeriodAlert;
 @property (nonatomic, weak) UIView *firstTimelineRow;
 @property (nonatomic, weak) UIView *lastTimelineRow;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
@@ -665,11 +665,11 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     NSNumber *maximumTimestamp = hasNextRecord ? @(records[periodIndex + 1].startTime) : nil;
     self.editingPeriodIndex = periodIndex;
     __weak typeof(self) weakSelf = self;
-    PeriodEditAlertController *alert = [[PeriodEditAlertController alloc] initWithRecord:record
+    PeriodEditAlertView *alert = [[PeriodEditAlertView alloc] initWithRecord:record
+                                                                             periodIndex:periodIndex
                                                                          minimumTimestamp:minimumTimestamp
                                                                          maximumTimestamp:maximumTimestamp
                                                                             recordChanged:^(MirrorRecordModel *editedRecord) {
-        [weakSelf saveEditingRecord:editedRecord periodIndex:periodIndex];
         BOOL shouldReload = weakSelf.shouldReloadAfterEditingPeriodAlert;
         weakSelf.shouldReloadAfterEditingPeriodAlert = NO;
         weakSelf.editingPeriodAlert = nil;

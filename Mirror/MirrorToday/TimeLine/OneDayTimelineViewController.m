@@ -11,7 +11,7 @@
 #import "MirrorMacro.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
-#import "PeriodEditAlertController.h"
+#import "PeriodEditAlertView.h"
 #import <Masonry/Masonry.h>
 
 #define kLeftRightSpacing (20*kWidthRatio)
@@ -31,7 +31,7 @@
 @property (nonatomic, assign) BOOL didScrollToDefaultHours;
 @property (nonatomic, assign) CGFloat hourHeight;
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
-@property (nonatomic, strong) PeriodEditAlertController *editingPeriodAlert;
+@property (nonatomic, strong) PeriodEditAlertView *editingPeriodAlert;
 @property (nonatomic, weak) TimelineRecordView *activeRecordView;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *oneDayData;
 @property (nonatomic, strong) UIScrollView *timelineScrollView;
@@ -222,11 +222,11 @@
     NSNumber *maximumTimestamp = hasNextRecord ? @(records[periodIndex + 1].startTime) : nil;
     self.editingPeriodIndex = periodIndex;
     __weak typeof(self) weakSelf = self;
-    PeriodEditAlertController *alert = [[PeriodEditAlertController alloc] initWithRecord:record
+    PeriodEditAlertView *alert = [[PeriodEditAlertView alloc] initWithRecord:record
+                                                                             periodIndex:periodIndex
                                                                          minimumTimestamp:minimumTimestamp
                                                                          maximumTimestamp:maximumTimestamp
                                                                             recordChanged:^(MirrorRecordModel *editedRecord) {
-        [weakSelf saveEditingRecord:editedRecord periodIndex:periodIndex];
         weakSelf.editingPeriodAlert = nil;
     }];
     self.editingPeriodAlert = alert;

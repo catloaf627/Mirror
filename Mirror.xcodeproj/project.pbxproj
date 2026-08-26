@@ -15,7 +15,6 @@
 		4A0E001D3032505A00EFB7A0 /* MirrorSupportManualAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A0E001C3032505A00EFB7A0 /* MirrorSupportManualAlert.m */; };
 		4A1D1F8E3031490600AACB20 /* MirrorToast.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1D1F8D3031490600AACB20 /* MirrorToast.m */; };
 		4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C3A302A452000045430 /* TaskPickerViewController.m */; };
-		4A1F8C5B302C16A200045430 /* PeriodEditAlertController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A1F8C5A302C16A200045430 /* PeriodEditAlertController.m */; };
 		4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */; };
 		4A37369429E2AEE900187280 /* PiechartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369329E2AEE900187280 /* PiechartView.m */; };
 		4A37369729E2BD3C00187280 /* SliceLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A37369629E2BD3C00187280 /* SliceLayer.m */; };
@@ -51,7 +50,7 @@
 		4ADCD24E3026B95F00578A81 /* MirrorLiveActivityExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 4ADCD23F3026B95E00578A81 /* MirrorLiveActivityExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */; };
 		4ADD1708303DE34D005857EA /* MirrorHandmadeCalendarView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1707303DE34C005857EA /* MirrorHandmadeCalendarView.m */; };
-		4ADD1723303E5E7E005857EA /* PeriodEditView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1722303E5E7E005857EA /* PeriodEditView.m */; };
+		4ADD1723303E5E7E005857EA /* PeriodEditAlertView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1722303E5E7E005857EA /* PeriodEditAlertView.m */; };
 		4ADDCA86302EE270003EE2A3 /* MirrorDebugAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */; };
 		4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171828DF613D008A6A18 /* TimeViewController.m */; };
 		4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */; };
@@ -105,8 +104,6 @@
 		4A1F8C39302A450200045430 /* TaskPickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskPickerViewController.h; sourceTree = "<group>"; };
 		4A1F8C3A302A452000045430 /* TaskPickerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskPickerViewController.m; sourceTree = "<group>"; };
 		4A1F8C58302C009500045430 /* ProjectSettings.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProjectSettings.md; sourceTree = "<group>"; };
-		4A1F8C59302C167700045430 /* PeriodEditAlertController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PeriodEditAlertController.h; sourceTree = "<group>"; };
-		4A1F8C5A302C16A200045430 /* PeriodEditAlertController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PeriodEditAlertController.m; sourceTree = "<group>"; };
 		4A32A3FC29F7782200DCCF57 /* MirrorTimeText.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorTimeText.h; sourceTree = "<group>"; };
 		4A32A3FD29F7782200DCCF57 /* MirrorTimeText.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTimeText.m; sourceTree = "<group>"; };
 		4A37369229E2AEE900187280 /* PiechartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PiechartView.h; sourceTree = "<group>"; };
@@ -172,8 +169,8 @@
 		4ADCD23F3026B95E00578A81 /* MirrorLiveActivityExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = MirrorLiveActivityExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorLiveActivityManager.swift; sourceTree = "<group>"; };
 		4ADD1707303DE34C005857EA /* MirrorHandmadeCalendarView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorHandmadeCalendarView.m; sourceTree = "<group>"; };
-		4ADD1715303E5BAF005857EA /* PeriodEditView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PeriodEditView.h; sourceTree = "<group>"; };
-		4ADD1722303E5E7E005857EA /* PeriodEditView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PeriodEditView.m; sourceTree = "<group>"; };
+		4ADD1715303E5BAF005857EA /* PeriodEditAlertView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PeriodEditAlertView.h; sourceTree = "<group>"; };
+		4ADD1722303E5E7E005857EA /* PeriodEditAlertView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PeriodEditAlertView.m; sourceTree = "<group>"; };
 		4ADDCA84302EE251003EE2A3 /* MirrorDebugAlert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorDebugAlert.h; sourceTree = "<group>"; };
 		4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorDebugAlert.m; sourceTree = "<group>"; };
 		4AE4171728DF613D008A6A18 /* TimeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeViewController.h; sourceTree = "<group>"; };
@@ -526,10 +523,8 @@
 			children = (
 				4AFBD19F3029558E006A6350 /* TaskRecordsViewController.h */,
 				4AFBD1A03029558E006A6350 /* TaskRecordsViewController.m */,
-				4A1F8C59302C167700045430 /* PeriodEditAlertController.h */,
-				4A1F8C5A302C16A200045430 /* PeriodEditAlertController.m */,
-				4ADD1715303E5BAF005857EA /* PeriodEditView.h */,
-				4ADD1722303E5E7E005857EA /* PeriodEditView.m */,
+				4ADD1715303E5BAF005857EA /* PeriodEditAlertView.h */,
+				4ADD1722303E5E7E005857EA /* PeriodEditAlertView.m */,
 			);
 			path = TaskDetails;
 			sourceTree = "<group>";
@@ -710,10 +705,9 @@
 				4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */,
 				4ADD1708303DE34D005857EA /* MirrorHandmadeCalendarView.m in Sources */,
 				4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */,
-				4ADD1723303E5E7E005857EA /* PeriodEditView.m in Sources */,
+				4ADD1723303E5E7E005857EA /* PeriodEditAlertView.m in Sources */,
 				4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */,
 				4A7CCD2629DBC7CF00879D9C /* TodayViewController.m in Sources */,
-				4A1F8C5B302C16A200045430 /* PeriodEditAlertController.m in Sources */,
 				4A88212929F6035E009E422C /* CellAnimation.m in Sources */,
 				4A1F8C3B302A452000045430 /* TaskPickerViewController.m in Sources */,
 				4A410A2829EA51750007003B /* LegendCollectionViewCell.m in Sources */,

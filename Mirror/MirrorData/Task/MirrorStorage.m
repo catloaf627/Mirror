@@ -616,6 +616,18 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
 }
 
++ (void)editPeriodTaskName:(NSString *)taskName periodIndex:(NSInteger)index
+{
+    NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
+    if (index < 0 || index >= records.count || taskName.length == 0) return;
+    MirrorRecordModel *record = records[index];
+    if ([record.taskName isEqualToString:taskName]) return;
+    record.taskName = taskName;
+    [MirrorStorage saveMirrorRecords:records];
+    NSLog(@"Period task name is edited");
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorPeriodEditNotification object:nil userInfo:nil];
+}
+
 // 修改某条原始记录的完整内容；例如编辑弹窗关闭时一次写回任务、起止时间和备注。
 + (void)editPeriodWithRecord:(MirrorRecordModel *)record periodIndex:(NSInteger)index
 {
