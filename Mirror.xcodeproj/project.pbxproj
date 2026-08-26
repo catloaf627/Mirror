@@ -38,6 +38,8 @@
 		4A9FDB21302D0CA0007707FC /* TimelineRecordView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */; };
 		4A9FDB24302D1234007707FC /* TimelineBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB23302D1234007707FC /* TimelineBackgroundView.m */; };
 		4A9FDB27302D1600007707FC /* OneDayTimelineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */; };
+		4AABB5F1303F622A00AA0DE3 /* MirrorTrackingCircleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB5F0303F622A00AA0DE3 /* MirrorTrackingCircleView.m */; };
+		4AABB5F4303F623F00AA0DE3 /* StopButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB5F3303F623F00AA0DE3 /* StopButton.m */; };
 		4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */; };
 		4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBF2A03B05100CDCED9 /* MirrorReadModel.m */; };
 		4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ACB422D29EEA411005EECC4 /* LeftAnimation.m */; };
@@ -151,6 +153,10 @@
 		4A9FDB23302D1234007707FC /* TimelineBackgroundView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineBackgroundView.m; sourceTree = "<group>"; };
 		4A9FDB25302D15A7007707FC /* OneDayTimelineViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OneDayTimelineViewController.h; sourceTree = "<group>"; };
 		4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = OneDayTimelineViewController.m; sourceTree = "<group>"; };
+		4AABB5EF303F61F600AA0DE3 /* MirrorTrackingCircleView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorTrackingCircleView.h; sourceTree = "<group>"; };
+		4AABB5F0303F622A00AA0DE3 /* MirrorTrackingCircleView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTrackingCircleView.m; sourceTree = "<group>"; };
+		4AABB5F2303F622E00AA0DE3 /* StopButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StopButton.h; sourceTree = "<group>"; };
+		4AABB5F3303F623F00AA0DE3 /* StopButton.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StopButton.m; sourceTree = "<group>"; };
 		4AC1FDBB2A0384A600CDCED9 /* MirrorRecordModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorRecordModel.h; sourceTree = "<group>"; };
 		4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorRecordModel.m; sourceTree = "<group>"; };
 		4AC1FDBE2A03B05100CDCED9 /* MirrorReadModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorReadModel.h; sourceTree = "<group>"; };
@@ -245,6 +251,10 @@
 			children = (
 				4A88212D29F671F7009E422C /* TimeTrackingViewController.h */,
 				4A88212E29F671F7009E422C /* TimeTrackingViewController.m */,
+				4AABB5EF303F61F600AA0DE3 /* MirrorTrackingCircleView.h */,
+				4AABB5F0303F622A00AA0DE3 /* MirrorTrackingCircleView.m */,
+				4AABB5F2303F622E00AA0DE3 /* StopButton.h */,
+				4AABB5F3303F623F00AA0DE3 /* StopButton.m */,
 			);
 			path = MirrorTracking;
 			sourceTree = "<group>";
@@ -713,6 +723,7 @@
 				4ADD1726303E7718005857EA /* UIImage+MirrorSymbol.m in Sources */,
 				4A9FDB21302D0CA0007707FC /* TimelineRecordView.m in Sources */,
 				4AD065A3302FCEB7005A894C /* SpecialDaysViewController.m in Sources */,
+				4AABB5F1303F622A00AA0DE3 /* MirrorTrackingCircleView.m in Sources */,
 				4AFB77B328DF4A3B0064CBCA /* main.m in Sources */,
 				4A0D410229F13C5300F13EAE /* LegendView.m in Sources */,
 				4A37369A29E3AD8700187280 /* MirrorSettings.m in Sources */,
@@ -736,6 +747,7 @@
 				4AD065A0302FCA1F005A894C /* MirrorDayModel.m in Sources */,
 				4A3DC9332A0109DA00679C11 /* GridCollectionViewCell.m in Sources */,
 				4A0E001D3032505A00EFB7A0 /* MirrorSupportManualAlert.m in Sources */,
+				4AABB5F4303F623F00AA0DE3 /* StopButton.m in Sources */,
 				4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */,
 				015564E428E1A78E008AB06C /* TimeTrackerTaskCollectionViewCell.m in Sources */,
 				4A1D1F8E3031490600AACB20 /* MirrorToast.m in Sources */,

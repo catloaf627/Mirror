@@ -14,6 +14,9 @@
 #import "MirrorStorage.h"
 #import "CellAnimation.h"
 #import "UIImage+MirrorSymbol.h"
+#import "MirrorTrackingCircleView.h"
+#import "StopButton.h"
+#import <CoreHaptics/CoreHaptics.h>
 #import <QuartzCore/QuartzCore.h>
 
 static CGFloat const kPadding = 20;
@@ -22,18 +25,11 @@ static CGFloat const kTaskNameSize = 35;
 static CGFloat const kIntervalSize = 70;
 
 static NSString *const kHintFont = @"TrebuchetMS-Italic";
-static CGFloat const kCircleLineWidth = 18;
-static CFTimeInterval const kStopHoldDuration = 2.0;
-static CFTimeInterval const kStopHoldHapticInterval = 0.18;
+static CFTimeInterval const kStopHoldDuration = 1.2;
 
 static UIColor *MirrorTrackingBackgroundColor(void)
 {
     return [UIColor colorWithWhite:0 alpha:0.8];
-}
-
-static UIColor *MirrorTrackingCircleTrackColor(void)
-{
-    return [UIColor colorWithWhite:0.08 alpha:0.2];
 }
 
 static UIColor *MirrorTrackingPrimaryTextColor(void)
@@ -62,238 +58,6 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     return image;
 }
 
-@interface MirrorTrackingCircleView : UIView
-
-@property (nonatomic, assign) CGFloat progress;
-@property (nonatomic, assign) CGFloat startAngle;
-@property (nonatomic, strong) UIColor *taskColor;
-@property (nonatomic, strong) UIColor *pulseColor;
-
-@end
-
-@implementation MirrorTrackingCircleView
-
-- (instancetype)initWithFrame:(CGRect)frame
-{
-    self = [super initWithFrame:frame];
-    if (self) {
-        [self setupLayers];
-    }
-    return self;
-}
-
-- (instancetype)initWithCoder:(NSCoder *)coder
-{
-    self = [super initWithCoder:coder];
-    if (self) {
-        [self setupLayers];
-    }
-    return self;
-}
-
-- (void)setupLayers
-{
-    self.backgroundColor = UIColor.clearColor;
-    self.contentMode = UIViewContentModeRedraw;
-}
-
-- (void)setProgress:(CGFloat)progress
-{
-    _progress = progress;
-    [self setNeedsDisplay];
-}
-
-- (void)setStartAngle:(CGFloat)startAngle
-{
-    _startAngle = startAngle;
-    [self setNeedsDisplay];
-}
-
-- (void)setTaskColor:(UIColor *)taskColor
-{
-    _taskColor = taskColor;
-    [self setNeedsDisplay];
-}
-
-- (void)setPulseColor:(UIColor *)pulseColor
-{
-    _pulseColor = pulseColor;
-    [self setNeedsDisplay];
-}
-
-- (CGFloat)normalizedAngleDeltaFromAngle:(CGFloat)angle startAngle:(CGFloat)startAngle
-{
-    CGFloat delta = angle - startAngle;
-    while (delta < 0) {
-        delta += 2*M_PI;
-    }
-    while (delta >= 2*M_PI) {
-        delta -= 2*M_PI;
-    }
-    return delta;
-}
-
-- (BOOL)colorComponentsFromColor:(UIColor *)color red:(CGFloat *)red green:(CGFloat *)green blue:(CGFloat *)blue alpha:(CGFloat *)alpha
-{
-    if ([color getRed:red green:green blue:blue alpha:alpha]) {
-        return YES;
-    }
-    CGFloat white = 0;
-    if ([color getWhite:&white alpha:alpha]) {
-        *red = white;
-        *green = white;
-        *blue = white;
-        return YES;
-    }
-    return NO;
-}
-
-- (UIImage *)ringImageWithRect:(CGRect)rect center:(CGPoint)center radius:(CGFloat)radius startAngle:(CGFloat)startAngle sweepAngle:(CGFloat)sweepAngle
-{
-    CGFloat scale = UIScreen.mainScreen.scale;
-    size_t width = MAX(1, (size_t)ceil(CGRectGetWidth(rect) * scale));
-    size_t height = MAX(1, (size_t)ceil(CGRectGetHeight(rect) * scale));
-    size_t bytesPerRow = width * 4;
-    unsigned char *pixels = calloc(height * bytesPerRow, 1);
-    if (!pixels) {
-        return nil;
-    }
-
-    CGFloat startRed = 0, startGreen = 0, startBlue = 0, startAlpha = 0;
-    CGFloat endRed = 0, endGreen = 0, endBlue = 0, endAlpha = 0;
-    if (![self colorComponentsFromColor:self.taskColor red:&startRed green:&startGreen blue:&startBlue alpha:&startAlpha] ||
-        ![self colorComponentsFromColor:self.pulseColor red:&endRed green:&endGreen blue:&endBlue alpha:&endAlpha]) {
-        free(pixels);
-        return nil;
-    }
-
-    CGFloat halfLineWidth = kCircleLineWidth / 2.0;
-    CGFloat capRadius = halfLineWidth;
-    CGFloat innerRadius = radius - halfLineWidth;
-    CGFloat outerRadius = radius + halfLineWidth;
-    CGFloat edgeWidth = 1.0 / scale;
-    BOOL drawsCaps = YES;
-    CGFloat capLength = drawsCaps ? capRadius : 0;
-    CGFloat ringLength = radius * sweepAngle;
-    CGFloat totalLength = MAX(0.001, ringLength + 2*capLength);
-    CGFloat startUnitX = cos(startAngle);
-    CGFloat startUnitY = sin(startAngle);
-    CGFloat startCapCenterX = center.x + radius * startUnitX;
-    CGFloat startCapCenterY = center.y + radius * startUnitY;
-    CGFloat startTangentX = -sin(startAngle);
-    CGFloat startTangentY = cos(startAngle);
-    CGFloat endAngle = startAngle + sweepAngle;
-    CGFloat endUnitX = cos(endAngle);
-    CGFloat endUnitY = sin(endAngle);
-    CGFloat endCapCenterX = center.x + radius * endUnitX;
-    CGFloat endCapCenterY = center.y + radius * endUnitY;
-    CGFloat endTangentX = -sin(endAngle);
-    CGFloat endTangentY = cos(endAngle);
-
-    for (size_t y = 0; y < height; y++) {
-        CGFloat pointY = ((CGFloat)y + 0.5) / scale;
-        for (size_t x = 0; x < width; x++) {
-            CGFloat pointX = ((CGFloat)x + 0.5) / scale;
-            size_t offset = y * bytesPerRow + x * 4;
-
-            void (^blendPixel)(CGFloat, CGFloat) = ^(CGFloat coverage, CGFloat selectedProgress) {
-                if (coverage <= 0) {
-                    return;
-                }
-                CGFloat progress = MIN(1, MAX(0, selectedProgress));
-                CGFloat red = startRed + (endRed - startRed) * progress;
-                CGFloat green = startGreen + (endGreen - startGreen) * progress;
-                CGFloat blue = startBlue + (endBlue - startBlue) * progress;
-                CGFloat alpha = (startAlpha + (endAlpha - startAlpha) * progress) * MIN(1, MAX(0, coverage));
-                CGFloat dstAlpha = pixels[offset + 3] / 255.0;
-                CGFloat outAlpha = alpha + dstAlpha * (1 - alpha);
-                CGFloat outRed = red * alpha + (pixels[offset] / 255.0) * (1 - alpha);
-                CGFloat outGreen = green * alpha + (pixels[offset + 1] / 255.0) * (1 - alpha);
-                CGFloat outBlue = blue * alpha + (pixels[offset + 2] / 255.0) * (1 - alpha);
-                pixels[offset] = (unsigned char)lrint(MIN(1, MAX(0, outRed)) * 255);
-                pixels[offset + 1] = (unsigned char)lrint(MIN(1, MAX(0, outGreen)) * 255);
-                pixels[offset + 2] = (unsigned char)lrint(MIN(1, MAX(0, outBlue)) * 255);
-                pixels[offset + 3] = (unsigned char)lrint(MIN(1, MAX(0, outAlpha)) * 255);
-            };
-
-            if (drawsCaps) {
-                CGFloat startCapDistance = hypot(pointX - startCapCenterX, pointY - startCapCenterY);
-                CGFloat startCapProjection = (pointX - startCapCenterX) * startTangentX + (pointY - startCapCenterY) * startTangentY;
-                CGFloat startCapCoverage = MIN(1, MAX(0, (capRadius - startCapDistance) / edgeWidth));
-                CGFloat startCapSideCoverage = MIN(1, MAX(0, (edgeWidth - startCapProjection) / edgeWidth));
-                startCapCoverage *= startCapSideCoverage;
-                CGFloat projection = (startCapProjection + capRadius) / capRadius;
-                blendPixel(startCapCoverage, MIN(1, MAX(0, projection)) * capLength / totalLength);
-            }
-
-            CGFloat dx = pointX - center.x;
-            CGFloat dy = pointY - center.y;
-            CGFloat distance = hypot(dx, dy);
-            CGFloat innerCoverage = MIN(1, MAX(0, (distance - innerRadius) / edgeWidth));
-            CGFloat outerCoverage = MIN(1, MAX(0, (outerRadius - distance) / edgeWidth));
-            CGFloat ringCoverage = innerCoverage * outerCoverage;
-            CGFloat angle = atan2(dy, dx);
-            CGFloat delta = [self normalizedAngleDeltaFromAngle:angle startAngle:startAngle];
-            if (delta <= sweepAngle) {
-                blendPixel(ringCoverage, (capLength + radius * delta) / totalLength);
-            }
-
-            if (drawsCaps) {
-                CGFloat endCapDistance = hypot(pointX - endCapCenterX, pointY - endCapCenterY);
-                CGFloat endCapProjection = (pointX - endCapCenterX) * endTangentX + (pointY - endCapCenterY) * endTangentY;
-                CGFloat endCapCoverage = MIN(1, MAX(0, (capRadius - endCapDistance) / edgeWidth));
-                CGFloat endCapSideCoverage = MIN(1, MAX(0, (endCapProjection + edgeWidth * 2) / edgeWidth));
-                endCapCoverage *= endCapSideCoverage;
-                CGFloat projection = endCapProjection / capRadius;
-                blendPixel(endCapCoverage, (capLength + ringLength + MIN(1, MAX(0, projection)) * capLength) / totalLength);
-            }
-        }
-    }
-
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef bitmapContext = CGBitmapContextCreate(pixels, width, height, 8, bytesPerRow, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-    CGImageRef imageRef = bitmapContext ? CGBitmapContextCreateImage(bitmapContext) : NULL;
-    UIImage *image = imageRef ? [UIImage imageWithCGImage:imageRef scale:scale orientation:UIImageOrientationUp] : nil;
-    if (imageRef) {
-        CGImageRelease(imageRef);
-    }
-    if (bitmapContext) {
-        CGContextRelease(bitmapContext);
-    }
-    CGColorSpaceRelease(colorSpace);
-    free(pixels);
-    return image;
-}
-
-- (void)drawRect:(CGRect)rect
-{
-    if (CGRectIsEmpty(self.bounds) || !self.taskColor || !self.pulseColor) {
-        return;
-    }
-
-    CGRect circleRect = CGRectInset(self.bounds, kCircleLineWidth/2 + 4, kCircleLineWidth/2 + 4);
-    CGPoint center = CGPointMake(CGRectGetMidX(circleRect), CGRectGetMidY(circleRect));
-    CGFloat radius = MIN(CGRectGetWidth(circleRect), CGRectGetHeight(circleRect))/2;
-    CGFloat progress = MAX(0, MIN(1, self.progress));
-    if (progress <= 0) {
-        return;
-    }
-
-    CGFloat startAngle = self.startAngle;
-    CGFloat sweepAngle = progress >= 1 ? 2*M_PI : 2*M_PI*progress;
-
-    UIBezierPath *trackPath = [UIBezierPath bezierPathWithArcCenter:center radius:radius startAngle:startAngle endAngle:startAngle + 2*M_PI clockwise:YES];
-    trackPath.lineWidth = kCircleLineWidth;
-    trackPath.lineCapStyle = kCGLineCapRound;
-    [MirrorTrackingCircleTrackColor() setStroke];
-    [trackPath stroke];
-
-    UIImage *ringImage = [self ringImageWithRect:self.bounds center:center radius:radius startAngle:startAngle sweepAngle:sweepAngle];
-    [ringImage drawInRect:self.bounds];
-}
-
-@end
-
 @interface TimeTrackingViewController () <UIViewControllerTransitioningDelegate>
 
 // UI
@@ -301,8 +65,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 @property (nonatomic, strong) UIButton *noteButton;
 @property (nonatomic, strong) MirrorTrackingCircleView *circleView;
 @property (nonatomic, strong) UILabel *timeIntervalLabel;
-@property (nonatomic, strong) UIButton *stopButton;
-@property (nonatomic, strong) UIView *stopButtonProgressView;
+@property (nonatomic, strong) StopButton *stopButton;
 
 // Data
 
@@ -317,7 +80,8 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 @property (nonatomic, assign) BOOL didFinishAutomatically;
 @property (nonatomic, assign) BOOL didCompleteStopHold;
 @property (nonatomic, assign) CFTimeInterval stopHoldStartTime;
-@property (nonatomic, assign) CFTimeInterval stopHoldLastHapticTime;
+@property (nonatomic, strong) CHHapticEngine *stopHoldHapticEngine;
+@property (nonatomic, strong) id<CHHapticAdvancedPatternPlayer> stopHoldHapticPlayer;
 
 
 // Timer
@@ -356,6 +120,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     [self.timer invalidate];
     self.timer = nil;
     [self stopStopHoldDisplayLink];
+    [self stopContinuousStopHoldHaptic];
 }
 
 - (void)viewDidDisappear:(BOOL)animated
@@ -380,7 +145,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     [self.view addSubview:self.timeIntervalLabel];
     [self.timeIntervalLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.center.equalTo(self.circleView);
-        make.width.equalTo(self.circleView).offset(-2*kCircleLineWidth - 16);
+        make.width.equalTo(self.circleView).offset(-2*MirrorTrackingCircleLineWidth - 16);
     }];
     
     [self.view addSubview:self.taskNameLabel];
@@ -491,8 +256,8 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 
     self.didCompleteStopHold = NO;
     self.stopHoldStartTime = CACurrentMediaTime();
-    self.stopHoldLastHapticTime = 0;
     [self updateStopHoldProgress:0];
+    [self startContinuousStopHoldHaptic];
     [self startStopHoldDisplayLink];
 }
 
@@ -538,11 +303,11 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 
     CGFloat progress = MIN(1, (CACurrentMediaTime() - self.stopHoldStartTime) / kStopHoldDuration);
     [self updateStopHoldProgress:progress];
-    [self triggerStopHoldHapticFeedbackForProgress:progress];
 
     if (progress >= 1) {
         self.didCompleteStopHold = YES;
         [self stopStopHoldDisplayLink];
+        [self stopContinuousStopHoldHaptic];
         [self stopAndKeepRecord];
     }
 }
@@ -550,37 +315,62 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 - (void)updateStopHoldProgress:(CGFloat)progress
 {
     CGFloat normalizedProgress = MIN(1, MAX(0, progress));
-    CGRect progressFrame = self.stopButton.bounds;
-    progressFrame.size.width = CGRectGetWidth(self.stopButton.bounds) * normalizedProgress;
-    self.stopButtonProgressView.frame = progressFrame;
-    self.stopButtonProgressView.hidden = normalizedProgress <= 0;
+    [self.stopButton updateProgress:normalizedProgress];
 }
 
 - (void)resetStopHoldProgress
 {
     [self stopStopHoldDisplayLink];
+    [self stopContinuousStopHoldHaptic];
     self.didCompleteStopHold = NO;
-    self.stopHoldLastHapticTime = 0;
     [UIView animateWithDuration:0.15 animations:^{
         [self updateStopHoldProgress:0];
     }];
 }
 
-- (void)triggerStopHoldHapticFeedbackForProgress:(CGFloat)progress
+- (void)startContinuousStopHoldHaptic
 {
-    CFTimeInterval currentTime = CACurrentMediaTime();
-    if (self.stopHoldLastHapticTime > 0 && currentTime - self.stopHoldLastHapticTime < kStopHoldHapticInterval) {
+    if (!CHHapticEngine.capabilitiesForHardware.supportsHaptics) {
         return;
     }
 
-    self.stopHoldLastHapticTime = currentTime;
-    UIImpactFeedbackStyle style = UIImpactFeedbackStyleLight;
-    if (progress >= 0.66) {
-        style = UIImpactFeedbackStyleHeavy;
-    } else if (progress >= 0.33) {
-        style = UIImpactFeedbackStyleMedium;
+    NSError *error = nil;
+    if (!self.stopHoldHapticEngine) {
+        self.stopHoldHapticEngine = [[CHHapticEngine alloc] initAndReturnError:&error];
+        if (error) {
+            return;
+        }
     }
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:style] impactOccurred];
+
+    [self.stopHoldHapticEngine startAndReturnError:&error];
+    if (error) {
+        return;
+    }
+
+    CHHapticEventParameter *intensity = [[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticIntensity value:0.22];
+    CHHapticEventParameter *sharpness = [[CHHapticEventParameter alloc] initWithParameterID:CHHapticEventParameterIDHapticSharpness value:0.08];
+    CHHapticEvent *event = [[CHHapticEvent alloc] initWithEventType:CHHapticEventTypeHapticContinuous
+                                                          parameters:@[intensity, sharpness]
+                                                        relativeTime:0
+                                                            duration:kStopHoldDuration];
+    CHHapticPattern *pattern = [[CHHapticPattern alloc] initWithEvents:@[event] parameters:@[] error:&error];
+    if (error) {
+        return;
+    }
+
+    self.stopHoldHapticPlayer = [self.stopHoldHapticEngine createAdvancedPlayerWithPattern:pattern error:&error];
+    if (error) {
+        self.stopHoldHapticPlayer = nil;
+        return;
+    }
+
+    [self.stopHoldHapticPlayer startAtTime:0 error:nil];
+}
+
+- (void)stopContinuousStopHoldHaptic
+{
+    [self.stopHoldHapticPlayer stopAtTime:0 error:nil];
+    self.stopHoldHapticPlayer = nil;
 }
 
 - (void)stopAndKeepRecord
@@ -700,19 +490,6 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     return _noteButton;
 }
 
-- (UIView *)stopButtonProgressView
-{
-    if (!_stopButtonProgressView) {
-        _stopButtonProgressView = [UIView new];
-        _stopButtonProgressView.backgroundColor = [self.taskColor colorWithAlphaComponent:0.38];
-        _stopButtonProgressView.userInteractionEnabled = NO;
-        _stopButtonProgressView.hidden = YES;
-        _stopButtonProgressView.layer.cornerRadius = 12;
-        _stopButtonProgressView.layer.masksToBounds = YES;
-    }
-    return _stopButtonProgressView;
-}
-
 - (MirrorTrackingCircleView *)circleView
 {
     if (!_circleView) {
@@ -739,23 +516,10 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     return _timeIntervalLabel;
 }
 
-- (UIButton *)stopButton
+- (StopButton *)stopButton
 {
     if (!_stopButton) {
-        _stopButton = [UIButton new];
-        [_stopButton setTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] forState:UIControlStateNormal];
-        _stopButton.backgroundColor = MirrorTrackingButtonBackgroundColor();
-        [_stopButton setTitleColor:MirrorTrackingPrimaryTextColor() forState:UIControlStateNormal];
-        _stopButton.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
-        _stopButton.titleLabel.adjustsFontSizeToFitWidth = YES;
-        _stopButton.titleLabel.minimumScaleFactor = 0.6;
-        _stopButton.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.18].CGColor;
-        _stopButton.layer.borderWidth = 1;
-        _stopButton.layer.cornerRadius = 12;
-        _stopButton.clipsToBounds = YES;
-        [_stopButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonBackgroundColor()) forState:UIControlStateNormal];
-        [_stopButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonHighlightedColor()) forState:UIControlStateHighlighted];
-        [_stopButton insertSubview:self.stopButtonProgressView atIndex:0];
+        _stopButton = [[StopButton alloc] initWithTaskColor:self.taskColor];
         [_stopButton addTarget:self action:@selector(stopButtonTouchDown) forControlEvents:UIControlEventTouchDown];
         [_stopButton addTarget:self action:@selector(stopButtonTouchUpInside) forControlEvents:UIControlEventTouchUpInside];
         [_stopButton addTarget:self action:@selector(stopButtonTouchCancelled) forControlEvents:UIControlEventTouchUpOutside | UIControlEventTouchCancel];
