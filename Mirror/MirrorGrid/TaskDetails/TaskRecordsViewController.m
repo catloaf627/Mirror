@@ -21,41 +21,197 @@ static CGFloat const kDotMinSize = 8;
 static CGFloat const kDotMaxSize = 16;
 static NSTimeInterval const kDotMaxDuration = 8 * 60 * 60;
 static CGFloat const kRowMinHeight = 72;
-static NSInteger const kTimelineBatchSize = 50;
-static CGFloat const kTimelineLoadThreshold = 48;
+static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimelineCell";
 
 #define kTimelineX (kScreenWidth/4)
 
-typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
-    TimelineBatchScrollPositionTop,
-    TimelineBatchScrollPositionNearTop,
-    TimelineBatchScrollPositionNearBottom,
-};
+@interface TaskRecordTimelineCell : UICollectionViewCell
 
-@interface TaskRecordsViewController () <UIEditMenuInteractionDelegate, UIScrollViewDelegate>
+- (void)configureWithRecord:(MirrorRecordModel *)record
+                  taskColor:(UIColor *)taskColor
+                 pulseColor:(UIColor *)pulseColor
+                    dotSize:(CGFloat)dotSize
+                    isFirst:(BOOL)isFirst
+                     isLast:(BOOL)isLast
+              isHighlighted:(BOOL)isHighlighted
+                 isSelected:(BOOL)isSelected;
+- (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color;
+- (void)shake;
 
-@property (nonatomic, strong) UIScrollView *scrollView;
-@property (nonatomic, strong) UIView *contentView;
+@end
+
+@interface TaskRecordTimelineCell ()
+
+@property (nonatomic, strong) UIView *topLine;
+@property (nonatomic, strong) UIView *bottomLine;
+@property (nonatomic, strong) UIView *dot;
+@property (nonatomic, strong) UILabel *leftDateLabel;
+@property (nonatomic, strong) UILabel *leftYearLabel;
+@property (nonatomic, strong) UILabel *durationLabel;
+@property (nonatomic, strong) UILabel *noteLabel;
+@property (nonatomic, assign) CGFloat dotSize;
+
+@end
+
+@implementation TaskRecordTimelineCell
+
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = UIColor.clearColor;
+        self.contentView.backgroundColor = UIColor.clearColor;
+
+        self.topLine = [UIView new];
+        [self.contentView addSubview:self.topLine];
+
+        self.bottomLine = [UIView new];
+        [self.contentView addSubview:self.bottomLine];
+
+        self.dot = [UIView new];
+        [self.contentView addSubview:self.dot];
+
+        self.leftDateLabel = [UILabel new];
+        self.leftDateLabel.font = [UIFont mirrorHighlightFont];
+        self.leftDateLabel.textAlignment = NSTextAlignmentRight;
+        self.leftDateLabel.adjustsFontSizeToFitWidth = YES;
+        self.leftDateLabel.minimumScaleFactor = 0.7;
+        [self.contentView addSubview:self.leftDateLabel];
+
+        self.leftYearLabel = [UILabel new];
+        self.leftYearLabel.font = [UIFont mirrorHintFont];
+        self.leftYearLabel.textAlignment = NSTextAlignmentRight;
+        self.leftYearLabel.adjustsFontSizeToFitWidth = YES;
+        self.leftYearLabel.minimumScaleFactor = 0.7;
+        [self.contentView addSubview:self.leftYearLabel];
+
+        self.durationLabel = [UILabel new];
+        self.durationLabel.font = [UIFont mirrorLabelFont];
+        self.durationLabel.adjustsFontSizeToFitWidth = YES;
+        self.durationLabel.minimumScaleFactor = 0.7;
+        [self.contentView addSubview:self.durationLabel];
+
+        self.noteLabel = [UILabel new];
+        self.noteLabel.font = [UIFont mirrorHintFont];
+        self.noteLabel.adjustsFontSizeToFitWidth = YES;
+        self.noteLabel.minimumScaleFactor = 0.7;
+        [self.contentView addSubview:self.noteLabel];
+    }
+    return self;
+}
+
+- (void)prepareForReuse
+{
+    [super prepareForReuse];
+    [self setShowsSelectionBorder:NO color:nil];
+    self.layer.backgroundColor = UIColor.clearColor.CGColor;
+}
+
+- (void)configureWithRecord:(MirrorRecordModel *)record
+                  taskColor:(UIColor *)taskColor
+                 pulseColor:(UIColor *)pulseColor
+                    dotSize:(CGFloat)dotSize
+                    isFirst:(BOOL)isFirst
+                     isLast:(BOOL)isLast
+              isHighlighted:(BOOL)isHighlighted
+                 isSelected:(BOOL)isSelected
+{
+    self.dotSize = dotSize;
+    self.contentView.backgroundColor = isHighlighted ? [pulseColor colorWithAlphaComponent:0.12] : UIColor.clearColor;
+    self.topLine.backgroundColor = pulseColor;
+    self.topLine.alpha = isFirst ? 0 : 0.35;
+    self.bottomLine.backgroundColor = pulseColor;
+    self.bottomLine.alpha = isLast ? 0 : 0.35;
+    self.dot.backgroundColor = taskColor;
+    self.dot.layer.borderColor = pulseColor.CGColor;
+    self.dot.layer.borderWidth = 2;
+    self.leftDateLabel.textColor = pulseColor;
+    self.leftDateLabel.alpha = 0.7;
+    self.leftDateLabel.text = [MirrorTool timelineMonthDayTextForTimestamp:record.startTime];
+    self.leftYearLabel.textColor = pulseColor;
+    self.leftYearLabel.alpha = 0.7;
+    self.leftYearLabel.text = [MirrorTool timelineYearTextForTimestamp:record.startTime];
+    self.durationLabel.textColor = pulseColor;
+    self.durationLabel.text = [MirrorTimeText XdXhXmXsShortWithstart:record.startTime end:record.endTime];
+    self.noteLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.noteLabel.text = record.note;
+    if (is_debug) {
+        self.noteLabel.text = [NSString stringWithFormat:@"%@ #%ld", record.note ?: @"", (long)record.originalIndex];
+    }
+    [self setShowsSelectionBorder:isSelected color:pulseColor];
+    [self setNeedsLayout];
+}
+
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+
+    CGFloat width = CGRectGetWidth(self.contentView.bounds);
+    CGFloat height = CGRectGetHeight(self.contentView.bounds);
+    CGFloat timelineX = kHorizontalPadding + kTimelineX;
+    CGFloat centerY = height / 2.0;
+    CGFloat dotSize = self.dotSize > 0 ? self.dotSize : kDotMinSize;
+
+    self.topLine.frame = CGRectMake(timelineX - 1, 0, 2, MAX(centerY - dotSize / 2.0, 0));
+    self.bottomLine.frame = CGRectMake(timelineX - 1, centerY + dotSize / 2.0, 2, MAX(height - centerY - dotSize / 2.0, 0));
+    self.dot.frame = CGRectMake(timelineX - dotSize / 2.0, centerY - dotSize / 2.0, dotSize, dotSize);
+    self.dot.layer.cornerRadius = dotSize / 2.0;
+
+    CGFloat leftLabelX = 4 * kWidthRatio;
+    CGFloat leftLabelRight = CGRectGetMinX(self.dot.frame) - 8 * kWidthRatio;
+    CGFloat leftLabelWidth = MAX(leftLabelRight - leftLabelX, 0);
+    self.leftDateLabel.frame = CGRectMake(leftLabelX, centerY - 22 * kHeightRatio, leftLabelWidth, 18 * kHeightRatio);
+    self.leftYearLabel.frame = CGRectMake(leftLabelX, CGRectGetMaxY(self.leftDateLabel.frame) + 4 * kHeightRatio, leftLabelWidth, 16 * kHeightRatio);
+
+    [self.durationLabel sizeToFit];
+    CGFloat durationX = CGRectGetMaxX(self.dot.frame) + 8 * kWidthRatio;
+    CGFloat durationWidth = MIN(CGRectGetWidth(self.durationLabel.bounds), MAX(width - durationX - kHorizontalPadding, 0));
+    self.durationLabel.frame = CGRectMake(durationX, centerY - 10 * kHeightRatio, durationWidth, 20 * kHeightRatio);
+
+    CGFloat noteX = CGRectGetMaxX(self.durationLabel.frame) + 10;
+    CGFloat noteWidth = MAX(width - noteX - kHorizontalPadding, 0);
+    self.noteLabel.frame = CGRectMake(noteX, centerY - 10 * kHeightRatio, noteWidth, 20 * kHeightRatio);
+}
+
+- (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color
+{
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    self.layer.cornerRadius = 8;
+    self.layer.masksToBounds = YES;
+    self.layer.borderWidth = showsSelectionBorder ? 1.5 : 0;
+    self.layer.borderColor = showsSelectionBorder ? color.CGColor : nil;
+    [CATransaction commit];
+}
+
+- (void)shake
+{
+    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    animation.values = @[@0, @(-4 * kWidthRatio), @(4 * kWidthRatio), @(-2 * kWidthRatio), @(2 * kWidthRatio), @0];
+    animation.duration = 0.18;
+    [self.layer addAnimation:animation forKey:@"selectedRowShake"];
+}
+
+@end
+
+@interface TaskRecordsViewController () <UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, UIEditMenuInteractionDelegate, UIGestureRecognizerDelegate>
+
+@property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) MirrorReadModel *data;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *highlightedRecords;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *sortedTimelineRecords;
-@property (nonatomic, weak) UIView *firstHighlightedRow;
 @property (nonatomic, assign) NSInteger selectedPeriodIndex;
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
-@property (nonatomic, assign) NSInteger timelineBatchStartIndex;
-@property (nonatomic, assign) NSInteger timelineBatchEndIndex;
-@property (nonatomic, assign) NSInteger savedTimelineBatchStartIndex;
+@property (nonatomic, assign) CGSize lastCollectionViewBoundsSize;
 @property (nonatomic, assign) CGPoint savedTimelineContentOffset;
-@property (nonatomic, assign) BOOL isRenderingTimelineBatch;
+@property (nonatomic, assign) NSInteger pendingDeletedPeriodIndex;
 @property (nonatomic, assign) BOOL shouldReloadAfterEditingPeriodAlert;
 @property (nonatomic, assign) BOOL shouldRestoreTimelineScrollPosition;
-@property (nonatomic, assign) BOOL didScrollToInitialHighlightedRow;
+@property (nonatomic, assign) BOOL didScrollToInitialHighlightedRecord;
 @property (nonatomic, assign) BOOL isRecordEditMenuVisible;
 @property (nonatomic, assign) BOOL shouldSuppressNextRecordEditMenu;
 @property (nonatomic, strong) PeriodEditAlertView *editingPeriodAlert;
-@property (nonatomic, weak) UIView *firstTimelineRow;
-@property (nonatomic, weak) UIView *lastTimelineRow;
-@property (nonatomic, weak) UIView *borderedRecordRow;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleRecordEditMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
@@ -73,6 +229,8 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (self) {
         self.data = data;
         self.highlightedRecords = highlightedRecords;
+        self.selectedPeriodIndex = NSNotFound;
+        self.pendingDeletedPeriodIndex = NSNotFound;
         [self addObservers];
     }
     return self;
@@ -81,7 +239,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 - (void)addObservers
 {
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(periodDeleted) name:MirrorPeriodDeleteNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
 }
 
@@ -102,18 +260,23 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[self navigationTitle] leftButton:nil rightButton:nil];
 }
 
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    CGSize boundsSize = self.collectionView.bounds.size;
+    if (!CGSizeEqualToSize(boundsSize, self.lastCollectionViewBoundsSize)) {
+        self.lastCollectionViewBoundsSize = boundsSize;
+        [self.collectionView.collectionViewLayout invalidateLayout];
+    }
+}
+
 - (void)restartVC
 {
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[self navigationTitle] leftButton:nil rightButton:nil];
-    self.scrollView = nil;
-    self.contentView = nil;
-    self.sortedTimelineRecords = nil;
-    self.timelineBatchStartIndex = 0;
-    self.timelineBatchEndIndex = 0;
-    self.firstHighlightedRow = nil;
-    self.firstTimelineRow = nil;
-    self.lastTimelineRow = nil;
     [UIView performWithoutAnimation:^{
+        self.collectionView = nil;
+        self.lastCollectionViewBoundsSize = CGSizeZero;
+        self.didScrollToInitialHighlightedRecord = NO;
         [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
         [self p_setupUI];
         [self.view layoutIfNeeded];
@@ -126,23 +289,56 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         self.shouldReloadAfterEditingPeriodAlert = YES;
         return;
     }
-    
-    self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
-    if (self.scrollView != nil) {
-        self.savedTimelineContentOffset = self.scrollView.contentOffset;
-        self.savedTimelineBatchStartIndex = self.timelineBatchStartIndex;
+
+    if (self.collectionView) {
+        self.savedTimelineContentOffset = self.collectionView.contentOffset;
         self.shouldRestoreTimelineScrollPosition = YES;
     }
-    self.scrollView = nil;
-    self.contentView = nil;
-    self.sortedTimelineRecords = nil;
-    self.timelineBatchStartIndex = 0;
-    self.timelineBatchEndIndex = 0;
-    self.firstHighlightedRow = nil;
-    self.firstTimelineRow = nil;
-    self.lastTimelineRow = nil;
-    [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    [self p_setupUI];
+    self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
+    [self sortTimelineRecords];
+    [self clearSelectedPeriodIfNeeded];
+    [self.collectionView reloadData];
+    [self restoreTimelineScrollPositionIfNeeded];
+}
+
+- (void)periodDeleted
+{
+    if (self.editingPeriodAlert.isPresented) {
+        self.shouldReloadAfterEditingPeriodAlert = YES;
+        return;
+    }
+    // Deletes started from this screen skip full reload so the collection view can animate the removed cell.
+    if (self.pendingDeletedPeriodIndex == NSNotFound || !self.collectionView) {
+        [self reloadData];
+        return;
+    }
+
+    NSIndexPath *deletedIndexPath = [self indexPathForOriginalIndex:self.pendingDeletedPeriodIndex];
+    self.pendingDeletedPeriodIndex = NSNotFound;
+    if (!deletedIndexPath) {
+        [self reloadData];
+        return;
+    }
+
+    NSInteger deletedItem = deletedIndexPath.item;
+    self.selectedPeriodIndex = NSNotFound;
+    [self.collectionView deselectItemAtIndexPath:deletedIndexPath animated:NO];
+    self.data.records = [MirrorStorage getAllTaskRecords:self.data.taskModel.taskName];
+    [self sortTimelineRecords];
+
+    NSInteger expectedCount = [self.collectionView numberOfItemsInSection:0] - 1;
+    if (expectedCount != self.sortedTimelineRecords.count) {
+        [self.collectionView reloadData];
+        return;
+    }
+
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView deleteItemsAtIndexPaths:@[deletedIndexPath]];
+    } completion:^(BOOL finished) {
+        [UIView performWithoutAnimation:^{
+            [self reloadBoundaryItemsAroundDeletedItem:deletedItem];
+        }];
+    }];
 }
 
 - (NSString *)navigationTitle
@@ -158,250 +354,94 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 - (void)p_setupUI
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    
-    [self.view addSubview:self.scrollView];
-    [self.scrollView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self sortTimelineRecords];
+
+    [self.view addSubview:self.collectionView];
+    [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.mas_equalTo(self.view);
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
         make.bottom.mas_equalTo(self.view);
     }];
-    
-    [self.scrollView addSubview:self.contentView];
-    [self.contentView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo(self.scrollView);
-        make.width.mas_equalTo(self.scrollView);
-    }];
-    
-    [self buildTimelineRows];
+
+    if (!self.didScrollToInitialHighlightedRecord) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self scrollToFirstHighlightedRecordIfNeeded];
+        });
+    }
 }
 
-- (void)buildTimelineRows
+- (void)sortTimelineRecords
 {
     self.sortedTimelineRecords = [[[self timelineRecords] sortedArrayUsingComparator:^NSComparisonResult(MirrorRecordModel *record0, MirrorRecordModel *record1) {
         if (record0.startTime < record1.startTime) return NSOrderedAscending;
         if (record0.startTime > record1.startTime) return NSOrderedDescending;
         return NSOrderedSame;
     }] mutableCopy];
-    self.timelineBatchStartIndex = self.shouldRestoreTimelineScrollPosition ? self.savedTimelineBatchStartIndex : [self initialTimelineBatchStartIndex];
-    [self renderTimelineBatchAtStartIndex:self.timelineBatchStartIndex scrollPosition:TimelineBatchScrollPositionTop];
-    
-    if (self.firstHighlightedRow && !self.shouldRestoreTimelineScrollPosition && !self.didScrollToInitialHighlightedRow) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [self scrollToFirstHighlightedRow];
-        });
+}
+
+- (void)clearSelectedPeriodIfNeeded
+{
+    if (self.selectedPeriodIndex == NSNotFound) {
+        return;
+    }
+    if (![self indexPathForOriginalIndex:self.selectedPeriodIndex]) {
+        self.selectedPeriodIndex = NSNotFound;
     }
 }
 
-- (NSInteger)initialTimelineBatchStartIndex
+- (void)restoreTimelineScrollPositionIfNeeded
 {
-    if (self.highlightedRecords.count == 0 || self.sortedTimelineRecords.count <= kTimelineBatchSize) {
-        return 0;
+    if (!self.shouldRestoreTimelineScrollPosition) {
+        return;
     }
-    
+    self.shouldRestoreTimelineScrollPosition = NO;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        CGFloat maxOffsetY = MAX(self.collectionView.contentSize.height - CGRectGetHeight(self.collectionView.bounds), 0);
+        self.collectionView.contentOffset = CGPointMake(0, MIN(MAX(self.savedTimelineContentOffset.y, 0), maxOffsetY));
+    });
+}
+
+- (void)scrollToFirstHighlightedRecordIfNeeded
+{
+    NSIndexPath *indexPath = [self firstHighlightedRecordIndexPath];
+    if (!indexPath) {
+        return;
+    }
+    [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionTop animated:NO];
+    CGPoint offset = self.collectionView.contentOffset;
+    offset.y = MAX(offset.y - 16 * kHeightRatio, -self.collectionView.adjustedContentInset.top);
+    self.collectionView.contentOffset = offset;
+    self.didScrollToInitialHighlightedRecord = YES;
+}
+
+- (NSIndexPath *)firstHighlightedRecordIndexPath
+{
     for (NSInteger index = 0; index < self.sortedTimelineRecords.count; index++) {
         if ([self shouldHighlightRecord:self.sortedTimelineRecords[index]]) {
-            NSInteger maxStartIndex = MAX((NSInteger)self.sortedTimelineRecords.count - kTimelineBatchSize, 0);
-            NSInteger leadingRecordCount = kTimelineBatchSize / 2;
-            return MIN(MAX(index - leadingRecordCount, 0), maxStartIndex);
-        }
-    }
-    return 0;
-}
-
-- (void)renderTimelineBatchAtStartIndex:(NSInteger)startIndex scrollPosition:(TimelineBatchScrollPosition)scrollPosition
-{
-    if (self.isRenderingTimelineBatch) {
-        return;
-    }
-    
-    self.isRenderingTimelineBatch = YES;
-    [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    self.firstHighlightedRow = nil;
-    self.firstTimelineRow = nil;
-    self.lastTimelineRow = nil;
-    
-    NSInteger totalCount = self.sortedTimelineRecords.count;
-    NSInteger maxStartIndex = MAX(totalCount - kTimelineBatchSize, 0);
-    NSInteger safeStartIndex = MIN(MAX(startIndex, 0), maxStartIndex);
-    NSInteger endIndex = MIN(safeStartIndex + kTimelineBatchSize, totalCount);
-    self.timelineBatchStartIndex = safeStartIndex;
-    self.timelineBatchEndIndex = endIndex;
-    
-    [self addTimelineRowsFromIndex:safeStartIndex toIndex:endIndex afterRow:nil beforeRow:nil];
-    [self updateTimelineContentBottomConstraint];
-    
-    [self.view layoutIfNeeded];
-    CGFloat maxOffsetY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
-    if (scrollPosition == TimelineBatchScrollPositionTop) {
-        self.scrollView.contentOffset = CGPointZero;
-    }
-    if (self.shouldRestoreTimelineScrollPosition) {
-        self.scrollView.contentOffset = CGPointMake(
-            0,
-            MIN(MAX(self.savedTimelineContentOffset.y, 0), maxOffsetY)
-        );
-        self.shouldRestoreTimelineScrollPosition = NO;
-    }
-    self.isRenderingTimelineBatch = NO;
-}
-
-- (void)addTimelineRowsFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex afterRow:(UIView *)afterRow beforeRow:(UIView *)beforeRow
-{
-    if (startIndex >= endIndex) {
-        return;
-    }
-    
-    NSInteger totalCount = self.sortedTimelineRecords.count;
-    UIView *previousRow = afterRow;
-    UIView *firstAddedRow = nil;
-    UIView *lastAddedRow = nil;
-    
-    for (NSInteger index = startIndex; index < endIndex; index++) {
-        MirrorRecordModel *record = self.sortedTimelineRecords[index];
-        BOOL isHighlighted = [self shouldHighlightRecord:record];
-        UIView *row = [self timelineRowWithRecord:record isFirst:index == 0 isLast:index == totalCount - 1 isHighlighted:isHighlighted];
-        if (isHighlighted && self.firstHighlightedRow == nil) {
-            self.firstHighlightedRow = row;
-        }
-        [self.contentView addSubview:row];
-        [row mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.left.right.mas_equalTo(self.contentView);
-            make.height.mas_greaterThanOrEqualTo(kRowMinHeight * kHeightRatio);
-            if (previousRow) {
-                make.top.mas_equalTo(previousRow.mas_bottom);
-            } else {
-                make.top.mas_equalTo(self.contentView).offset(12 * kHeightRatio);
-            }
-        }];
-        if (firstAddedRow == nil) {
-            firstAddedRow = row;
-        }
-        lastAddedRow = row;
-        previousRow = row;
-    }
-    
-    if (beforeRow != nil && lastAddedRow != nil) {
-        [beforeRow mas_remakeConstraints:^(MASConstraintMaker *make) {
-            make.left.right.mas_equalTo(self.contentView);
-            make.height.mas_greaterThanOrEqualTo(kRowMinHeight * kHeightRatio);
-            make.top.mas_equalTo(lastAddedRow.mas_bottom);
-        }];
-    }
-    
-    if (self.firstTimelineRow == nil || beforeRow == self.firstTimelineRow) {
-        self.firstTimelineRow = firstAddedRow;
-    }
-    if (self.lastTimelineRow == nil || afterRow == self.lastTimelineRow) {
-        self.lastTimelineRow = lastAddedRow;
-    }
-}
-
-- (void)updateTimelineContentBottomConstraint
-{
-    UIView *lastRow = self.lastTimelineRow;
-    [self.contentView mas_remakeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo(self.scrollView);
-        make.width.mas_equalTo(self.scrollView);
-        if (lastRow) {
-            make.bottom.mas_equalTo(lastRow.mas_bottom).offset(20 * kHeightRatio);
-        } else {
-            make.bottom.mas_equalTo(self.contentView.mas_top);
-        }
-    }];
-}
-
-- (void)appendNextTimelineBatchIfNeeded
-{
-    if (self.timelineBatchEndIndex >= self.sortedTimelineRecords.count) {
-        return;
-    }
-    
-    self.isRenderingTimelineBatch = YES;
-    NSInteger nextEndIndex = MIN(self.timelineBatchEndIndex + kTimelineBatchSize, self.sortedTimelineRecords.count);
-    [self addTimelineRowsFromIndex:self.timelineBatchEndIndex toIndex:nextEndIndex afterRow:self.lastTimelineRow beforeRow:nil];
-    self.timelineBatchEndIndex = nextEndIndex;
-    [self updateTimelineContentBottomConstraint];
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.view layoutIfNeeded];
-        self.isRenderingTimelineBatch = NO;
-    });
-}
-
-- (void)prependPreviousTimelineBatchIfNeeded
-{
-    if (self.timelineBatchStartIndex <= 0) {
-        return;
-    }
-    
-    self.isRenderingTimelineBatch = YES;
-    [self.view layoutIfNeeded];
-    CGFloat oldContentHeight = self.scrollView.contentSize.height;
-    CGFloat oldOffsetY = self.scrollView.contentOffset.y;
-    
-    NSInteger previousStartIndex = MAX(self.timelineBatchStartIndex - kTimelineBatchSize, 0);
-    [self addTimelineRowsFromIndex:previousStartIndex toIndex:self.timelineBatchStartIndex afterRow:nil beforeRow:self.firstTimelineRow];
-    self.timelineBatchStartIndex = previousStartIndex;
-    [self updateTimelineContentBottomConstraint];
-    
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self.view layoutIfNeeded];
-        CGFloat heightDelta = self.scrollView.contentSize.height - oldContentHeight;
-        CGFloat maxOffsetY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
-        self.scrollView.contentOffset = CGPointMake(0, MIN(MAX(oldOffsetY + heightDelta, 0), maxOffsetY));
-        self.isRenderingTimelineBatch = NO;
-    });
-}
-
-- (BOOL)shouldHighlightRecord:(MirrorRecordModel *)record
-{
-    for (MirrorRecordModel *highlightedRecord in self.highlightedRecords) {
-        if (highlightedRecord.originalIndex == record.originalIndex) {
-            return YES;
-        }
-    }
-    return NO;
-}
-
-- (void)scrollToFirstHighlightedRow
-{
-    self.isRenderingTimelineBatch = YES;
-    [self.view layoutIfNeeded];
-    CGRect rowRect = [self.firstHighlightedRow.superview convertRect:self.firstHighlightedRow.frame toView:self.scrollView];
-    CGFloat targetY = MAX(rowRect.origin.y - 16 * kHeightRatio, 0);
-    CGFloat maxY = MAX(self.scrollView.contentSize.height - CGRectGetHeight(self.scrollView.bounds), 0);
-    [self.scrollView setContentOffset:CGPointMake(0, MIN(targetY, maxY)) animated:NO];
-    self.didScrollToInitialHighlightedRow = YES;
-    self.isRenderingTimelineBatch = NO;
-}
-
-- (UIView *)visibleTimelineRowWithOriginalIndex:(NSInteger)originalIndex
-{
-    for (UIView *row in self.contentView.subviews) {
-        if (row.tag == originalIndex) {
-            return row;
+            return [NSIndexPath indexPathForItem:index inSection:0];
         }
     }
     return nil;
 }
 
-- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+- (NSIndexPath *)indexPathForOriginalIndex:(NSInteger)originalIndex
 {
-    if (self.isRenderingTimelineBatch || self.sortedTimelineRecords.count <= kTimelineBatchSize) {
-        return;
-    }
-    
-    CGFloat maxOffsetY = scrollView.contentSize.height - CGRectGetHeight(scrollView.bounds);
-    if (maxOffsetY <= 0) {
-        return;
-    }
-    
-    if (scrollView.contentOffset.y >= maxOffsetY - kTimelineLoadThreshold) {
-        [self appendNextTimelineBatchIfNeeded];
-    } else if (scrollView.contentOffset.y <= kTimelineLoadThreshold) {
-        if (self.timelineBatchStartIndex > 0) {
-            [self prependPreviousTimelineBatchIfNeeded];
+    for (NSInteger index = 0; index < self.sortedTimelineRecords.count; index++) {
+        if (self.sortedTimelineRecords[index].originalIndex == originalIndex) {
+            return [NSIndexPath indexPathForItem:index inSection:0];
         }
     }
+    return nil;
+}
+
+- (BOOL)shouldHighlightRecord:(MirrorRecordModel *)record
+{
+    for (MirrorRecordModel *highlightedRecord in self.highlightedRecords) {
+        if (record.startTime < highlightedRecord.endTime && record.endTime > highlightedRecord.startTime) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 // Scale the timeline dot by duration, using a capped logarithmic curve to keep long records understated.
@@ -413,171 +453,123 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     return kDotMinSize + (kDotMaxSize - kDotMinSize) * durationRatio;
 }
 
-- (UIView *)timelineRowWithRecord:(MirrorRecordModel *)record isFirst:(BOOL)isFirst isLast:(BOOL)isLast isHighlighted:(BOOL)isHighlighted
+#pragma mark - Collection View
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    UIView *row = [UIView new];
-    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
-    UIColor *pulseColor = [UIColor mirrorColorPulsed:task.color];
-    UIColor *taskColor = [UIColor mirrorColorNamed:task.color];
-    CGFloat dotSize = [self dotSizeForRecord:record];
-    row.backgroundColor = isHighlighted ? [pulseColor colorWithAlphaComponent:0.12] : [UIColor clearColor];
-    row.tag = record.originalIndex;
-    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(recordRowTapped:)];
-    [row addGestureRecognizer:tapRecognizer];
-    if (@available(iOS 16.0, *)) {
-        UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
-        [row addInteraction:editMenuInteraction];
-        UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
-        [tapRecognizer requireGestureRecognizerToFail:longPressRecognizer];
-        [row addGestureRecognizer:longPressRecognizer];
-    }
-    
-    UIView *topLine = [UIView new];
-    topLine.backgroundColor = pulseColor;
-    topLine.alpha = isFirst ? 0 : 0.35;
-    [row addSubview:topLine];
-    [topLine mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(row.mas_left).offset(kHorizontalPadding + kTimelineX);
-        make.top.mas_equalTo(row);
-        make.width.mas_equalTo(2);
-        make.bottom.mas_equalTo(row.mas_centerY).offset(-dotSize / 2);
-    }];
-    
-    UIView *bottomLine = [UIView new];
-    bottomLine.backgroundColor = pulseColor;
-    bottomLine.alpha = isLast ? 0 : 0.35;
-    [row addSubview:bottomLine];
-    [bottomLine mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(topLine);
-        make.top.mas_equalTo(row.mas_centerY).offset(dotSize / 2);
-        make.width.mas_equalTo(2);
-        make.bottom.mas_equalTo(row);
-    }];
-    
-    UIView *dot = [UIView new];
-    dot.backgroundColor = taskColor;
-    dot.layer.borderColor = pulseColor.CGColor;
-    dot.layer.borderWidth = 2;
-    dot.layer.cornerRadius = dotSize / 2;
-    [row addSubview:dot];
-    [dot mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(topLine);
-        make.centerY.mas_equalTo(row);
-        make.width.height.mas_equalTo(dotSize);
-    }];
-    
-    UILabel *leftDateLabel = [UILabel new];
-    leftDateLabel.font = [UIFont mirrorHighlightFont];
-    leftDateLabel.textColor = pulseColor;
-    leftDateLabel.alpha = 0.7;
-    leftDateLabel.textAlignment = NSTextAlignmentRight;
-    leftDateLabel.adjustsFontSizeToFitWidth = YES;
-    leftDateLabel.minimumScaleFactor = 0.7;
-    leftDateLabel.text = [MirrorTool timelineMonthDayTextForTimestamp:record.startTime];
-    [row addSubview:leftDateLabel];
-    [leftDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(row).offset(4 * kWidthRatio);
-        make.right.mas_equalTo(dot.mas_left).offset(-8 * kWidthRatio);
-        make.centerY.mas_equalTo(dot.mas_centerY).offset(-6 * kHeightRatio);
-    }];
-    
-    UILabel *leftYearLabel = [UILabel new];
-    leftYearLabel.font = [UIFont mirrorHintFont];
-    leftYearLabel.textColor = pulseColor;
-    leftYearLabel.alpha = 0.7;
-    leftYearLabel.textAlignment = NSTextAlignmentRight;
-    leftYearLabel.adjustsFontSizeToFitWidth = YES;
-    leftYearLabel.minimumScaleFactor = 0.7;
-    leftYearLabel.text = [MirrorTool timelineYearTextForTimestamp:record.startTime];
-    [row addSubview:leftYearLabel];
-    [leftYearLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.mas_equalTo(leftDateLabel);
-        make.top.mas_equalTo(leftDateLabel.mas_bottom).offset(4 * kHeightRatio);
-        make.bottom.mas_lessThanOrEqualTo(row).offset(-10 * kHeightRatio);
-    }];
-    
-    UILabel *durationLabel = [UILabel new];
-    durationLabel.font = [UIFont mirrorLabelFont];
-    durationLabel.textColor = pulseColor;
-    durationLabel.adjustsFontSizeToFitWidth = YES;
-    durationLabel.minimumScaleFactor = 0.7;
-    durationLabel.text = [MirrorTimeText XdXhXmXsShortWithstart:record.startTime end:record.endTime];
-    [durationLabel setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    [durationLabel setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
-    [row addSubview:durationLabel];
-    [durationLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(dot.mas_right).offset(8 * kWidthRatio);
-        make.centerY.mas_equalTo(dot.mas_centerY);
-    }];
-    
-    UILabel *noteLabel = [UILabel new];
-    noteLabel.font = [UIFont mirrorHintFont];
-    noteLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    noteLabel.adjustsFontSizeToFitWidth = YES;
-    noteLabel.minimumScaleFactor = 0.7;
-    noteLabel.text = record.note;
-    if (is_debug) {
-        noteLabel.text = [NSString stringWithFormat:@"%@ #%ld", record.note ?: @"", (long)record.originalIndex];
-    }
-    [noteLabel setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
-    [row addSubview:noteLabel];
-    [noteLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(durationLabel.mas_right).offset(10);
-        make.right.mas_equalTo(row).offset(-kHorizontalPadding);
-        make.centerY.mas_equalTo(durationLabel.mas_centerY);
-        make.bottom.mas_lessThanOrEqualTo(row).offset(-10 * kHeightRatio);
-    }];
-    
-    return row;
+    return self.sortedTimelineRecords.count;
 }
 
-- (void)recordRowTapped:(UITapGestureRecognizer *)recognizer
+- (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    TaskRecordTimelineCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kTaskRecordsTimelineCellIdentifier forIndexPath:indexPath];
+    MirrorRecordModel *record = self.sortedTimelineRecords[indexPath.item];
+    MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
+    UIColor *taskColor = [UIColor mirrorColorNamed:task.color ?: self.data.taskModel.color];
+    UIColor *pulseColor = [UIColor mirrorColorPulsed:task.color ?: self.data.taskModel.color];
+    [cell configureWithRecord:record
+                    taskColor:taskColor
+                   pulseColor:pulseColor
+                      dotSize:[self dotSizeForRecord:record]
+                      isFirst:indexPath.item == 0
+                       isLast:indexPath.item == self.sortedTimelineRecords.count - 1
+                isHighlighted:[self shouldHighlightRecord:record]
+                   isSelected:record.originalIndex == self.selectedPeriodIndex];
+    [self installEditMenuInteractionIfNeededForCell:cell];
+    return cell;
+}
+
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    return CGSizeMake(CGRectGetWidth(collectionView.bounds), kRowMinHeight * kHeightRatio);
+}
+
+- (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
+{
+    return UIEdgeInsetsMake(12 * kHeightRatio, 0, 20 * kHeightRatio, 0);
+}
+
+- (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section
+{
+    return 0;
+}
+
+- (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    NSInteger previousPeriodIndex = self.selectedPeriodIndex;
+    MirrorRecordModel *record = self.sortedTimelineRecords[indexPath.item];
+    self.selectedPeriodIndex = record.originalIndex;
+    [self reloadSelectionFromPreviousPeriodIndex:previousPeriodIndex currentPeriodIndex:self.selectedPeriodIndex];
+}
+
+- (void)reloadSelectionFromPreviousPeriodIndex:(NSInteger)previousPeriodIndex currentPeriodIndex:(NSInteger)currentPeriodIndex
+{
+    UIColor *selectionColor = [UIColor mirrorColorPulsed:self.data.taskModel.color];
+    NSIndexPath *previousIndexPath = [self indexPathForOriginalIndex:previousPeriodIndex];
+    if (previousIndexPath) {
+        TaskRecordTimelineCell *previousCell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:previousIndexPath];
+        [previousCell setShowsSelectionBorder:NO color:nil];
+    }
+    NSIndexPath *currentIndexPath = [self indexPathForOriginalIndex:currentPeriodIndex];
+    if (currentIndexPath) {
+        TaskRecordTimelineCell *currentCell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:currentIndexPath];
+        [currentCell setShowsSelectionBorder:YES color:selectionColor];
+    }
+}
+
+- (void)reloadBoundaryItemsAroundDeletedItem:(NSInteger)deletedItem
+{
+    if (self.sortedTimelineRecords.count == 0) {
+        return;
+    }
+
+    NSMutableOrderedSet<NSIndexPath *> *indexPaths = [NSMutableOrderedSet new];
+    NSInteger previousItem = deletedItem - 1;
+    if (previousItem >= 0 && previousItem < self.sortedTimelineRecords.count) {
+        [indexPaths addObject:[NSIndexPath indexPathForItem:previousItem inSection:0]];
+    }
+    NSInteger shiftedItem = MIN(deletedItem, self.sortedTimelineRecords.count - 1);
+    if (shiftedItem >= 0) {
+        [indexPaths addObject:[NSIndexPath indexPathForItem:shiftedItem inSection:0]];
+    }
+    if (indexPaths.count > 0) {
+        [self.collectionView reloadItemsAtIndexPaths:indexPaths.array];
+    }
+}
+
+- (void)timelineBackgroundTapped:(UITapGestureRecognizer *)recognizer
 {
     if (recognizer.state != UIGestureRecognizerStateEnded) {
         return;
     }
-    
-    UIColor *borderColor = [UIColor mirrorColorPulsed:self.data.taskModel.color];
-    [self flashBorderForRecordRow:recognizer.view color:borderColor];
+    NSInteger previousPeriodIndex = self.selectedPeriodIndex;
+    self.selectedPeriodIndex = NSNotFound;
+    [self reloadSelectionFromPreviousPeriodIndex:previousPeriodIndex currentPeriodIndex:NSNotFound];
 }
 
-- (void)showBorderForRecordRow:(UIView *)row color:(UIColor *)color
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
 {
-    if (self.borderedRecordRow && self.borderedRecordRow != row) {
-        [self clearBorderForRecordRow:self.borderedRecordRow];
+    if (gestureRecognizer.view == self.collectionView) {
+        CGPoint point = [touch locationInView:self.collectionView];
+        return [self.collectionView indexPathForItemAtPoint:point] == nil;
     }
-    
-    self.borderedRecordRow = row;
-    row.layer.cornerRadius = 8;
-    row.layer.masksToBounds = YES;
-    row.layer.borderColor = color.CGColor;
-    row.layer.borderWidth = 1.5;
-}
-
-- (void)clearBorderForRecordRow:(UIView *)row
-{
-    if (!row) {
-        return;
-    }
-    
-    row.layer.borderWidth = 0;
-    row.layer.borderColor = nil;
-    if (self.borderedRecordRow == row) {
-        self.borderedRecordRow = nil;
-    }
-}
-
-- (void)flashBorderForRecordRow:(UIView *)row color:(UIColor *)color
-{
-    [self showBorderForRecordRow:row color:color];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (!self.isRecordEditMenuVisible && self.borderedRecordRow == row) {
-            [self clearBorderForRecordRow:row];
-        }
-    });
+    return YES;
 }
 
 #pragma mark - Edit Menu
+
+- (void)installEditMenuInteractionIfNeededForCell:(UICollectionViewCell *)cell
+{
+    if (@available(iOS 16.0, *)) {
+        for (id<UIInteraction> interaction in cell.interactions) {
+            if ([interaction isKindOfClass:UIEditMenuInteraction.class]) {
+                return;
+            }
+        }
+        UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
+        [cell addInteraction:editMenuInteraction];
+    }
+}
 
 - (void)showEditMenu:(UILongPressGestureRecognizer *)recognizer
 {
@@ -591,20 +583,28 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         self.shouldSuppressNextRecordEditMenu = NO;
         return;
     }
-    
+
+    CGPoint point = [recognizer locationInView:self.collectionView];
+    NSIndexPath *indexPath = [self.collectionView indexPathForItemAtPoint:point];
+    if (!indexPath) {
+        return;
+    }
+
     UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
     [feedback impactOccurred];
-    
-    UIView *view = recognizer.view;
-    self.selectedPeriodIndex = view.tag;
-    UIColor *borderColor = [UIColor mirrorColorPulsed:self.data.taskModel.color];
-    [self showBorderForRecordRow:view color:borderColor];
-    [self shakeSelectedRow:view];
-    
+
+    MirrorRecordModel *record = self.sortedTimelineRecords[indexPath.item];
+    TaskRecordTimelineCell *cell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+    NSInteger previousPeriodIndex = self.selectedPeriodIndex;
+    self.selectedPeriodIndex = record.originalIndex;
+    [self reloadSelectionFromPreviousPeriodIndex:previousPeriodIndex currentPeriodIndex:self.selectedPeriodIndex];
+
+    [cell shake];
+
     if (@available(iOS 16.0, *)) {
         UIEditMenuInteraction *editMenuInteraction = nil;
-        for (id<UIInteraction> interaction in view.interactions) {
-            if ([interaction isKindOfClass:[UIEditMenuInteraction class]]) {
+        for (id<UIInteraction> interaction in cell.interactions) {
+            if ([interaction isKindOfClass:UIEditMenuInteraction.class]) {
                 editMenuInteraction = (UIEditMenuInteraction *)interaction;
                 break;
             }
@@ -612,20 +612,11 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
         if (!editMenuInteraction) {
             return;
         }
-        
-        CGPoint point = [recognizer locationInView:view];
-        UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
+
+        CGPoint cellPoint = [recognizer locationInView:cell];
+        UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:cellPoint];
         [editMenuInteraction presentEditMenuWithConfiguration:configuration];
     }
-}
-
-- (void)shakeSelectedRow:(UIView *)row
-{
-    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
-    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-    animation.values = @[@0, @(-4 * kWidthRatio), @(4 * kWidthRatio), @(-2 * kWidthRatio), @(2 * kWidthRatio), @0];
-    animation.duration = 0.18;
-    [row.layer addAnimation:animation forKey:@"selectedRowShake"];
 }
 
 - (UIMenu *)recordMenuForPeriodIndex:(NSInteger)periodIndex
@@ -634,7 +625,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (periodIndex < 0 || periodIndex >= records.count) {
         return nil;
     }
-    
+
     UIAction *editAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
         UIButton *button = [UIButton new];
         button.tag = periodIndex;
@@ -665,7 +656,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (interaction == self.visibleRecordEditMenuInteraction) {
         self.isRecordEditMenuVisible = NO;
         self.visibleRecordEditMenuInteraction = nil;
-        [self clearBorderForRecordRow:self.borderedRecordRow];
         self.shouldSuppressNextRecordEditMenu = YES;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!self.isRecordEditMenuVisible) {
@@ -685,7 +675,6 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     }
     self.isRecordEditMenuVisible = NO;
     self.visibleRecordEditMenuInteraction = nil;
-    [self clearBorderForRecordRow:self.borderedRecordRow];
     self.shouldSuppressNextRecordEditMenu = NO;
     return YES;
 }
@@ -694,12 +683,20 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 {
     NSInteger periodIndex = sender.tag;
     UIAlertController *deleteButtonAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_period_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
-    
+
     UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSIndexPath *deletedIndexPath = [self indexPathForOriginalIndex:periodIndex];
+        if (deletedIndexPath) {
+            TaskRecordTimelineCell *cell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:deletedIndexPath];
+            [cell setShowsSelectionBorder:NO color:nil];
+            [self.collectionView deselectItemAtIndexPath:deletedIndexPath animated:NO];
+        }
+        self.selectedPeriodIndex = NSNotFound;
+        self.pendingDeletedPeriodIndex = periodIndex;
         [MirrorStorage deletePeriodAtIndex:periodIndex];
     }];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
-    
+
     [deleteButtonAlert addAction:cancelAction];
     [deleteButtonAlert addAction:deleteAction];
     [self presentViewController:deleteButtonAlert animated:YES completion:nil];
@@ -712,7 +709,7 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     if (periodIndex < 0 || periodIndex >= records.count) {
         return;
     }
-    
+
     MirrorRecordModel *record = records[periodIndex];
     BOOL hasPreviousRecord = periodIndex - 1 >= 0;
     BOOL hasNextRecord = periodIndex + 1 <= records.count - 1;
@@ -721,13 +718,14 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
     self.editingPeriodIndex = periodIndex;
     __weak typeof(self) weakSelf = self;
     PeriodEditAlertView *alert = [[PeriodEditAlertView alloc] initWithRecord:record
-                                                                             periodIndex:periodIndex
-                                                                         minimumTimestamp:minimumTimestamp
-                                                                         maximumTimestamp:maximumTimestamp
-                                                                            recordChanged:^(MirrorRecordModel *editedRecord) {
+                                                                  periodIndex:periodIndex
+                                                              minimumTimestamp:minimumTimestamp
+                                                              maximumTimestamp:maximumTimestamp
+                                                                 recordChanged:^(MirrorRecordModel *editedRecord) {
         BOOL shouldReload = weakSelf.shouldReloadAfterEditingPeriodAlert;
         weakSelf.shouldReloadAfterEditingPeriodAlert = NO;
         weakSelf.editingPeriodAlert = nil;
+        weakSelf.selectedPeriodIndex = periodIndex;
         if (shouldReload) {
             [weakSelf reloadData];
         }
@@ -743,24 +741,30 @@ typedef NS_ENUM(NSInteger, TimelineBatchScrollPosition) {
 
 #pragma mark - Getters
 
-- (UIScrollView *)scrollView
+- (UICollectionView *)collectionView
 {
-    if (!_scrollView) {
-        _scrollView = [UIScrollView new];
-        _scrollView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-        _scrollView.alwaysBounceVertical = YES;
-        _scrollView.delegate = self;
-    }
-    return _scrollView;
-}
+    if (!_collectionView) {
+        UICollectionViewFlowLayout *layout = [UICollectionViewFlowLayout new];
+        layout.scrollDirection = UICollectionViewScrollDirectionVertical;
+        layout.minimumLineSpacing = 0;
+        layout.minimumInteritemSpacing = 0;
 
-- (UIView *)contentView
-{
-    if (!_contentView) {
-        _contentView = [UIView new];
-        _contentView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
+        _collectionView.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        _collectionView.alwaysBounceVertical = YES;
+        _collectionView.dataSource = self;
+        _collectionView.delegate = self;
+        [_collectionView registerClass:TaskRecordTimelineCell.class forCellWithReuseIdentifier:kTaskRecordsTimelineCellIdentifier];
+
+        UITapGestureRecognizer *backgroundTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(timelineBackgroundTapped:)];
+        backgroundTapRecognizer.delegate = self;
+        backgroundTapRecognizer.cancelsTouchesInView = NO;
+        [_collectionView addGestureRecognizer:backgroundTapRecognizer];
+
+        UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+        [_collectionView addGestureRecognizer:longPressRecognizer];
     }
-    return _contentView;
+    return _collectionView;
 }
 
 @end

@@ -75,8 +75,8 @@
     [mirrorDict setValue:ML(@"Stop", @"结束", @"Finalizar", @"Terminer", @"終了", @"종료", @"Stopp", @"Стоп") forKey:@"stop"];
     [mirrorDict setValue:ML(@"Hold to stop", @"长按结束", @"Mantén para parar", @"Maintenir pour arrêter", @"長押しで終了", @"길게 눌러 종료", @"Zum Stoppen halten", @"Удерживайте для остановки") forKey:@"hold_to_stop"];
 
-    // Delete period
-    [mirrorDict setValue:ML(@"Delete this time period? ", @"确定删除这个时间段？", @"¿Eliminar este periodo?", @"Supprimer cette période ?", @"この時間帯を削除しますか？", @"이 시간대를 삭제할까요?", @"Diesen Zeitraum löschen? ", @"Удалить этот период? ") forKey:@"delete_period_?"];
+    // Delete record
+    [mirrorDict setValue:ML(@"Delete this record?", @"确定删除这条记录？", @"¿Eliminar este registro?", @"Supprimer cet enregistrement ?", @"この記録を削除しますか？", @"이 기록을 삭제할까요?", @"Diesen Eintrag löschen?", @"Удалить эту запись?") forKey:@"delete_period_?"];
     [mirrorDict setValue:ML(@"Ends at", @"结束于", @"Termina a las", @"Termine à", @"終了時刻", @"종료 시각", @"Endet um", @"Заканчивается в") forKey:@"ends_at"];
     [mirrorDict setValue:ML(@"Note", @"备注", @"Nota", @"Note", @"メモ", @"메모", @"Notiz", @"Заметка") forKey:@"note"];
     
