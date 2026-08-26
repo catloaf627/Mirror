@@ -446,12 +446,19 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     BOOL isToday = [self isSelectedDateToday];
     UIColor *textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     UIColor *buttonColor = isToday ? [textColor colorWithAlphaComponent:0] : textColor;
+    NSComparisonResult dateComparison = [self selectedDateDayComparisonToToday];
+    NSString *imageName = dateComparison == NSOrderedAscending ? @"chevron.right" : @"chevron.left";
+    UIImageSymbolConfiguration *iconConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:10*kWidthRatio weight:UIImageSymbolWeightRegular];
+    UIImage *iconImage = isToday ? nil : [[UIImage systemImageNamed:imageName withConfiguration:iconConfiguration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     self.todayButton.enabled = !isToday;
     self.todayButton.backgroundColor = UIColor.clearColor;
     self.todayButton.tintColor = buttonColor;
     [self.todayButton setTitleColor:buttonColor forState:UIControlStateNormal];
-    [self.todayButton setImage:nil forState:UIControlStateNormal];
+    [self.todayButton setImage:iconImage forState:UIControlStateNormal];
     [self.todayButton setTitle:[MirrorLanguage mirror_stringWithKey:@"today"] forState:UIControlStateNormal];
+    self.todayButton.semanticContentAttribute = dateComparison == NSOrderedAscending ? UISemanticContentAttributeForceRightToLeft : UISemanticContentAttributeForceLeftToRight;
+    self.todayButton.imageEdgeInsets = UIEdgeInsetsMake(0, 4*kWidthRatio, 0, 4*kWidthRatio);
+    self.todayButton.titleEdgeInsets = UIEdgeInsetsMake(0, 4*kWidthRatio, 0, 4*kWidthRatio);
 }
 
 - (BOOL)isSelectedDateToday
@@ -459,6 +466,15 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
     calendar.timeZone = [NSTimeZone systemTimeZone];
     return [calendar isDate:self.selectedDate ?: [NSDate now] inSameDayAsDate:[NSDate now]];
+}
+
+- (NSComparisonResult)selectedDateDayComparisonToToday
+{
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *selectedDay = [calendar startOfDayForDate:self.selectedDate ?: [NSDate now]];
+    NSDate *today = [calendar startOfDayForDate:[NSDate now]];
+    return [selectedDay compare:today];
 }
 
 #pragma mark - Calendar Picker
@@ -648,7 +664,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 {
     NSString *todayText = [MirrorLanguage mirror_stringWithKey:@"today"];
     CGFloat textWidth = [todayText sizeWithAttributes:@{NSFontAttributeName: [UIFont mirrorHintFont]}].width;
-    return MAX(32*kWidthRatio, ceil(textWidth) + 8*kWidthRatio);
+    return MAX(48*kWidthRatio, ceil(textWidth) + 30*kWidthRatio);
 }
 
 - (void)updateCalendarPickerContainerConstraints
