@@ -8,6 +8,7 @@
 #import "TimeTrackerAddTaskCollectionViewCell.h"
 #import <Masonry/Masonry.h>
 #import "UIColor+MirrorColor.h"
+#import "UIImage+MirrorSymbol.h"
 
 static CGFloat const kShadowWidth = 5;
 
@@ -61,7 +62,7 @@ static CGFloat const kShadowWidth = 5;
 - (UIImageView *)addIconView
 {
     if (!_addIconView) {
-        UIImage *image = [[UIImage systemImageNamed:@"plus"]imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage *image = [[UIImage mirror_systemImageNamed:@"plus" fallbackName:@"plus"]imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         _addIconView = [[UIImageView alloc]initWithImage:image];
         [_addIconView setTintColor:[UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellPlus]];
     }

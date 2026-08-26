@@ -51,6 +51,7 @@
 		4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */; };
 		4ADD1708303DE34D005857EA /* MirrorHandmadeCalendarView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1707303DE34C005857EA /* MirrorHandmadeCalendarView.m */; };
 		4ADD1723303E5E7E005857EA /* PeriodEditAlertView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1722303E5E7E005857EA /* PeriodEditAlertView.m */; };
+		4ADD1726303E7718005857EA /* UIImage+MirrorSymbol.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1725303E7718005857EA /* UIImage+MirrorSymbol.m */; };
 		4ADDCA86302EE270003EE2A3 /* MirrorDebugAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */; };
 		4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171828DF613D008A6A18 /* TimeViewController.m */; };
 		4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */; };
@@ -171,6 +172,8 @@
 		4ADD1707303DE34C005857EA /* MirrorHandmadeCalendarView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorHandmadeCalendarView.m; sourceTree = "<group>"; };
 		4ADD1715303E5BAF005857EA /* PeriodEditAlertView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PeriodEditAlertView.h; sourceTree = "<group>"; };
 		4ADD1722303E5E7E005857EA /* PeriodEditAlertView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PeriodEditAlertView.m; sourceTree = "<group>"; };
+		4ADD1724303E7710005857EA /* UIImage+MirrorSymbol.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "UIImage+MirrorSymbol.h"; sourceTree = "<group>"; };
+		4ADD1725303E7718005857EA /* UIImage+MirrorSymbol.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIImage+MirrorSymbol.m"; sourceTree = "<group>"; };
 		4ADDCA84302EE251003EE2A3 /* MirrorDebugAlert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorDebugAlert.h; sourceTree = "<group>"; };
 		4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorDebugAlert.m; sourceTree = "<group>"; };
 		4AE4171728DF613D008A6A18 /* TimeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeViewController.h; sourceTree = "<group>"; };
@@ -354,6 +357,8 @@
 				4A1D1F8D3031490600AACB20 /* MirrorToast.m */,
 				4A0E001B3032504000EFB7A0 /* MirrorSupportManualAlert.h */,
 				4A0E001C3032505A00EFB7A0 /* MirrorSupportManualAlert.m */,
+				4ADD1724303E7710005857EA /* UIImage+MirrorSymbol.h */,
+				4ADD1725303E7718005857EA /* UIImage+MirrorSymbol.m */,
 			);
 			path = MirrorCustomize;
 			sourceTree = "<group>";
@@ -713,6 +718,7 @@
 				4A410A2829EA51750007003B /* LegendCollectionViewCell.m in Sources */,
 				4A379B5728E42AC200785CAE /* TimeTrackerAddTaskCollectionViewCell.m in Sources */,
 				4A406C1A29071939001E83A1 /* MirrorStorage.m in Sources */,
+				4ADD1726303E7718005857EA /* UIImage+MirrorSymbol.m in Sources */,
 				4A9FDB21302D0CA0007707FC /* TimelineRecordView.m in Sources */,
 				4AD065A3302FCEB7005A894C /* SpecialDaysViewController.m in Sources */,
 				4AFB77B328DF4A3B0064CBCA /* main.m in Sources */,

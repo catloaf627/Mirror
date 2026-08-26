@@ -25,6 +25,7 @@
 #import "MirrorTabsManager.h"
 #import "UIFont+MirrorFont.h"
 #import "MirrorToast.h"
+#import "UIImage+MirrorSymbol.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 #define kCellWidth (25*kWidthRatio)
@@ -266,7 +267,7 @@
     BOOL appliedHeatmap = [MirrorSettings appliedHeatmap];
     NSString *imageName = appliedHeatmap ? @"paintpalette" : @"paintpalette.fill";
     UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightRegular];
-    UIImage *iconImage = [[UIImage systemImageNamed:imageName withConfiguration:configuration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    UIImage *iconImage = [[UIImage mirror_systemImageNamed:imageName fallbackName:@"paintpalette" configuration:configuration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.heatmapButton setImage:iconImage forState:UIControlStateNormal];
     [self.heatmapButton setTitle:iconImage ? nil : (appliedHeatmap ? @"ON" : @"OFF") forState:UIControlStateNormal];
     self.heatmapButton.titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
@@ -277,7 +278,7 @@
 {
     BOOL appliedWeekStarsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
     NSString *imageName = appliedWeekStarsOnMonday ? @"1.lane" : @"7.lane";
-    UIImage *iconImage = [[UIImage systemImageNamed:imageName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    UIImage *iconImage = [[UIImage mirror_systemImageNamed:imageName fallbackName:appliedWeekStarsOnMonday ? @"1" : @"7"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.weekStartsOnButton setImage:iconImage forState:UIControlStateNormal];
     [self.weekStartsOnButton setTitle:iconImage ? nil : (appliedWeekStarsOnMonday ? @"1" : @"7") forState:UIControlStateNormal];
     self.weekStartsOnButton.titleLabel.font = [UIFont systemFontOfSize:15 weight:UIFontWeightRegular];

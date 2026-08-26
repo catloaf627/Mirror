@@ -9,6 +9,7 @@
 #import "MirrorMacro.h"
 #import "MirrorStorage.h"
 #import "UIColor+MirrorColor.h"
+#import "UIImage+MirrorSymbol.h"
 
 @interface PeriodEditAlertView () <UIGestureRecognizerDelegate>
 
@@ -635,7 +636,7 @@
 - (UIButton *)calendarButtonWithAction:(SEL)action
 {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-    [button setImage:[UIImage systemImageNamed:@"calendar"] forState:UIControlStateNormal];
+    [button setImage:[UIImage mirror_systemImageNamed:@"calendar" fallbackName:@"calendar"] forState:UIControlStateNormal];
     button.layer.cornerRadius = 8*kWidthRatio;
     button.layer.borderWidth = 1;
     [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
@@ -657,7 +658,7 @@
 - (UIButton *)taskArrowButtonWithSystemImageName:(NSString *)systemImageName action:(SEL)action
 {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
-    [button setImage:[UIImage systemImageNamed:systemImageName] forState:UIControlStateNormal];
+    [button setImage:[UIImage mirror_systemImageNamed:systemImageName fallbackName:systemImageName] forState:UIControlStateNormal];
     [button addTarget:self action:action forControlEvents:UIControlEventTouchUpInside];
     return button;
 }

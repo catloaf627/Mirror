@@ -14,6 +14,7 @@
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
 #import "MirrorSettings.h"
+#import "UIImage+MirrorSymbol.h"
 
 static CGFloat const kSpecialDaysPadding = 20;
 static CGFloat const kSpecialDaysRowHeight = 58;
@@ -119,10 +120,10 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 {
     if (!_iconPicker) {
         _iconPicker = [[UISegmentedControl alloc] initWithItems:@[
-            [UIImage systemImageNamed:@"star"],
-            [UIImage systemImageNamed:@"heart"],
-            [UIImage systemImageNamed:@"pin"],
-            [UIImage systemImageNamed:@"gift"]
+            [UIImage mirror_systemImageNamed:@"star" fallbackName:kSpecialDayFallbackIconName],
+            [UIImage mirror_systemImageNamed:@"heart" fallbackName:kSpecialDayFallbackIconName],
+            [UIImage mirror_systemImageNamed:@"pin" fallbackName:kSpecialDayFallbackIconName],
+            [UIImage mirror_systemImageNamed:@"gift" fallbackName:kSpecialDayFallbackIconName]
         ]];
         _iconPicker.selectedSegmentIndex = 0;
     }
@@ -436,7 +437,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     iconButton.userInteractionEnabled = NO;
     iconButton.tintColor = dayColor;
     iconButton.backgroundColor = [UIColor clearColor];
-    [iconButton setImage:[UIImage systemImageNamed:day.icon] forState:UIControlStateNormal];
+    [iconButton setImage:[UIImage mirror_systemImageNamed:day.icon fallbackName:kSpecialDayFallbackIconName] forState:UIControlStateNormal];
     [row addSubview:iconButton];
     [iconButton mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.mas_equalTo(topLine);
@@ -707,7 +708,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 
     __block NSString *selectedIconName = isEditing && editingDay.icon.length > 0 ? editingDay.icon : kSpecialDayFallbackIconName;
     UIButton *iconPickerButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [iconPickerButton setImage:[UIImage systemImageNamed:selectedIconName] forState:UIControlStateNormal];
+    [iconPickerButton setImage:[UIImage mirror_systemImageNamed:selectedIconName fallbackName:kSpecialDayFallbackIconName] forState:UIControlStateNormal];
     iconPickerButton.tintColor = [UIColor mirrorSystemColorNamed:selectedColor];
     iconPickerButton.titleLabel.font = [UIFont mirrorButtonFont];
     iconPickerButton.backgroundColor = [self specialDayAlertControlBackgroundColor];
@@ -731,7 +732,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
         [iconPickerButton addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
             [self presentIconPickerFromAlert:addAlert selectedIconName:selectedIconName completion:^(NSString *iconName) {
                 selectedIconName = iconName;
-                [iconPickerButton setImage:[UIImage systemImageNamed:selectedIconName] forState:UIControlStateNormal];
+                [iconPickerButton setImage:[UIImage mirror_systemImageNamed:selectedIconName fallbackName:kSpecialDayFallbackIconName] forState:UIControlStateNormal];
             }];
         }] forControlEvents:UIControlEventTouchUpInside];
     }
@@ -1021,7 +1022,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
             iconButton.backgroundColor = [iconName isEqualToString:selectedIconName] ? [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG] : [UIColor clearColor];
             iconButton.layer.cornerRadius = 6;
             iconButton.layer.masksToBounds = YES;
-            [iconButton setImage:[UIImage systemImageNamed:iconName] forState:UIControlStateNormal];
+            [iconButton setImage:[UIImage mirror_systemImageNamed:iconName fallbackName:kSpecialDayFallbackIconName] forState:UIControlStateNormal];
             [iconGridView addSubview:iconButton];
             if (@available(iOS 14.0, *)) {
                 [iconButton addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
@@ -1318,7 +1319,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 {
     if (!_addButton) {
         _addButton = [UIButton new];
-        [_addButton setImage:[UIImage systemImageNamed:@"plus"] forState:UIControlStateNormal];
+        [_addButton setImage:[UIImage mirror_systemImageNamed:@"plus" fallbackName:@"plus"] forState:UIControlStateNormal];
         _addButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         [_addButton addTarget:self action:@selector(showAddDialog) forControlEvents:UIControlEventTouchUpInside];
     }

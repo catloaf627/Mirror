@@ -13,6 +13,7 @@
 #import "MirrorLanguage.h"
 #import "MirrorStorage.h"
 #import "CellAnimation.h"
+#import "UIImage+MirrorSymbol.h"
 #import <QuartzCore/QuartzCore.h>
 
 static CGFloat const kPadding = 20;
@@ -692,10 +693,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
         [_noteButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonBackgroundColor()) forState:UIControlStateNormal];
         [_noteButton setBackgroundImage:MirrorTrackingImageWithColor(MirrorTrackingButtonHighlightedColor()) forState:UIControlStateHighlighted];
         UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:21 weight:UIImageSymbolWeightRegular];
-        UIImage *image = [[UIImage systemImageNamed:@"pencil.and.list.clipboard"] imageWithConfiguration:configuration];
-        if (!image) {
-            image = [[UIImage systemImageNamed:@"pencil"] imageWithConfiguration:configuration];
-        }
+        UIImage *image = [UIImage mirror_systemImageNamed:@"pencil.and.list.clipboard" fallbackName:@"pencil" configuration:configuration];
         [_noteButton setImage:image forState:UIControlStateNormal];
         [_noteButton addTarget:self action:@selector(noteButtonClicked) forControlEvents:UIControlEventTouchUpInside];
     }

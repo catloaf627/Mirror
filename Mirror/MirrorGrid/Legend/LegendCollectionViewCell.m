@@ -11,6 +11,7 @@
 #import "MirrorTaskModel.h"
 #import "UIFont+MirrorFont.h"
 #import "UIColor+MirrorColor.h"
+#import "UIImage+MirrorSymbol.h"
 static CGFloat const kPadding = 10;
 static NSTimeInterval const kLegendHighlightAnimationDuration = 0.3;
 
@@ -111,7 +112,7 @@ static NSTimeInterval const kLegendHighlightAnimationDuration = 0.3;
 - (UIImageView *)checkMark
 {
     if (!_checkMark) {
-        UIImage *image = [[UIImage systemImageNamed:@"checkmark"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        UIImage *image = [[UIImage mirror_systemImageNamed:@"checkmark" fallbackName:@"checkmark"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
         _checkMark = [[UIImageView alloc] initWithImage:image];
         _checkMark.contentMode = UIViewContentModeScaleAspectFit;
     }

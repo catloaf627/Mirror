@@ -14,6 +14,7 @@
 #import "UIColor+MirrorColor.h"
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
+#import "UIImage+MirrorSymbol.h"
 
 @interface MirrorTabsManager ()
 
@@ -76,15 +77,10 @@
     if (index < 0 || index >= tabbarController.viewControllers.count) {
         return;
     }
-    UIImage *normalSymbol = [UIImage systemImageNamed:imageName];
-    // doc.plaintext 在旧系统取不到时，用 calendar 避免 tab 图标空白
-    if (!normalSymbol && [imageName isEqualToString:@"doc.plaintext"]) {
-        normalSymbol = [UIImage systemImageNamed:@"calendar"];
-    }
-    UIImage *selectedSymbol = [UIImage systemImageNamed:selectedImageName];
-    if (!selectedSymbol && [selectedImageName isEqualToString:@"doc.plaintext.fill"]) {
-        selectedSymbol = [UIImage systemImageNamed:@"calendar"];
-    }
+    NSString *normalFallbackName = [imageName isEqualToString:@"doc.plaintext"] ? @"calendar" : imageName;
+    NSString *selectedFallbackName = [selectedImageName isEqualToString:@"doc.plaintext.fill"] ? @"calendar" : selectedImageName;
+    UIImage *normalSymbol = [UIImage mirror_systemImageNamed:imageName fallbackName:normalFallbackName];
+    UIImage *selectedSymbol = [UIImage mirror_systemImageNamed:selectedImageName fallbackName:selectedFallbackName];
     // 默认图片
     UIImage *image = [normalSymbol imageWithTintColor:[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconText]];
     UIImage *imageWithRightColor = [image imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal]; //这一行的作用是让image使用image本身的颜色，而不是系统颜色

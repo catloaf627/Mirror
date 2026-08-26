@@ -12,6 +12,7 @@
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
 #import "MirrorDayModel.h"
+#import "UIImage+MirrorSymbol.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -214,7 +215,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 {
     UIImage *iconImage = nil;
     if (self.inVisibleMonth && self.specialDayIconName.length > 0) {
-        iconImage = [UIImage systemImageNamed:self.specialDayIconName];
+        iconImage = [UIImage mirror_systemImageNamed:self.specialDayIconName fallbackName:@"star.fill"];
     }
 
     BOOL showsIcon = [iconImage isKindOfClass:UIImage.class];
@@ -403,10 +404,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
 - (NSString *)specialDayIconNameFromStoredIconName:(NSString *)storedIconName
 {
-    if (storedIconName.length > 0 && [UIImage systemImageNamed:storedIconName]) {
-        return storedIconName;
-    }
-    return @"star.fill";
+    return storedIconName.length > 0 ? storedIconName : @"star.fill";
 }
 
 - (void)setupCalendarHelpers
@@ -439,7 +437,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     [_swipeGestureView addSubview:_headerView];
 
     _previousMonthButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [_previousMonthButton setImage:[UIImage systemImageNamed:@"chevron.left"] forState:UIControlStateNormal];
+    [_previousMonthButton setImage:[UIImage mirror_systemImageNamed:@"chevron.left" fallbackName:@"chevron.left"] forState:UIControlStateNormal];
     [_previousMonthButton addTarget:self action:@selector(showPreviousMonth) forControlEvents:UIControlEventTouchUpInside];
     _previousMonthButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     [_headerView addSubview:_previousMonthButton];
@@ -451,7 +449,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     [_headerView addSubview:_monthLabel];
 
     _nextMonthButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    [_nextMonthButton setImage:[UIImage systemImageNamed:@"chevron.right"] forState:UIControlStateNormal];
+    [_nextMonthButton setImage:[UIImage mirror_systemImageNamed:@"chevron.right" fallbackName:@"chevron.right"] forState:UIControlStateNormal];
     [_nextMonthButton addTarget:self action:@selector(showNextMonth) forControlEvents:UIControlEventTouchUpInside];
     _nextMonthButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     [_headerView addSubview:_nextMonthButton];

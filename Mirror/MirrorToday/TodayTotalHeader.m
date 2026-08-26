@@ -15,6 +15,7 @@
 #import "MirrorTimeText.h"
 #import "MirrorMacro.h"
 #import "UIFont+MirrorFont.h"
+#import "UIImage+MirrorSymbol.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 
@@ -247,7 +248,7 @@
 {
     if (!_calendarIconButton) {
         _calendarIconButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        [_calendarIconButton setImage:[UIImage systemImageNamed:@"calendar"] forState:UIControlStateNormal];
+        [_calendarIconButton setImage:[UIImage mirror_systemImageNamed:@"calendar" fallbackName:@"calendar"] forState:UIControlStateNormal];
         _calendarIconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         [_calendarIconButton addTarget:self action:@selector(calendarIconButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     }
@@ -291,7 +292,7 @@
         _crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4);
         _crownButton.hidden = YES;
         _crownButton.tintColor = [UIColor systemYellowColor];
-        [_crownButton setImage:[[UIImage systemImageNamed:@"crown.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+        [_crownButton setImage:[[UIImage mirror_systemImageNamed:@"crown.fill" fallbackName:@"crown.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
         [_crownButton addTarget:self action:@selector(crownAnimation) forControlEvents:UIControlEventTouchUpInside];
     }
     return _crownButton;
@@ -334,7 +335,7 @@
     self.datePickerButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     self.datePickerButton.backgroundColor = UIColor.clearColor;
     self.datePickerButton.layer.borderWidth = 0;
-    [self.calendarIconButton setImage:[[UIImage systemImageNamed:@"calendar"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+    [self.calendarIconButton setImage:[[UIImage mirror_systemImageNamed:@"calendar" fallbackName:@"calendar"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
     self.calendarIconButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     [self.crownButton mas_remakeConstraints:^(MASConstraintMaker *make) {
         if (usesRelativeDateLabel) {
@@ -354,7 +355,7 @@
     self.crownButton.hidden = !isToday || self.count < 8 * 60 * 60;
     self.crownButton.transform = CGAffineTransformMakeRotation(-M_PI/4);
     self.crownButton.tintColor = [UIColor systemYellowColor];
-    [self.crownButton setImage:[[UIImage systemImageNamed:@"crown.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+    [self.crownButton setImage:[[UIImage mirror_systemImageNamed:@"crown.fill" fallbackName:@"crown.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
 }
 
 - (NSInteger)dayOffsetFromTodayForDate:(NSDate *)date

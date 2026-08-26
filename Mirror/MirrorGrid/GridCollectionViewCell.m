@@ -9,6 +9,7 @@
 #import "MirrorTool.h"
 #import "UIColor+MirrorColor.h"
 #import "MirrorSettings.h"
+#import "UIImage+MirrorSymbol.h"
 
 @interface GridCollectionViewCell ()
 
@@ -73,10 +74,7 @@
         return;
     }
     
-    UIImage *iconImage = [[UIImage systemImageNamed:day.icon] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    if (!iconImage) {
-        iconImage = [[UIImage systemImageNamed:@"star.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    }
+    UIImage *iconImage = [[UIImage mirror_systemImageNamed:day.icon fallbackName:@"star.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     
     self.specialDayIconView.hidden = NO;
     self.specialDayIconView.image = iconImage;

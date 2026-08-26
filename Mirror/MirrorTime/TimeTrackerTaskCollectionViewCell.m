@@ -14,6 +14,7 @@
 #import "MirrorTimeText.h"
 #import "MirrorTool.h"
 #import "UIFont+MirrorFont.h"
+#import "UIImage+MirrorSymbol.h"
 
 static CGFloat const kShadowWidth = 5;
 static CGFloat const kCornerRadius = 14;
@@ -259,7 +260,7 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
         _editButton = [UIButton new];
         _editButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _editButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"edit"];
-        [_editButton setImage:[UIImage systemImageNamed:@"pencil"] forState:UIControlStateNormal];
+        [_editButton setImage:[UIImage mirror_systemImageNamed:@"pencil" fallbackName:@"pencil"] forState:UIControlStateNormal];
         [_editButton addTarget:self action:@selector(tapEditButton) forControlEvents:UIControlEventTouchUpInside];
     }
     return _editButton;
@@ -271,7 +272,7 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
         _deleteButton = [UIButton new];
         _deleteButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _deleteButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"delete"];
-        [_deleteButton setImage:[UIImage systemImageNamed:@"trash"] forState:UIControlStateNormal];
+        [_deleteButton setImage:[UIImage mirror_systemImageNamed:@"trash" fallbackName:@"trash"] forState:UIControlStateNormal];
         [_deleteButton addTarget:self action:@selector(tapDeleteButton) forControlEvents:UIControlEventTouchUpInside];
     }
     return _deleteButton;

@@ -23,6 +23,7 @@
 #import "HintFooter.h"
 #import "TaskPickerViewController.h"
 #import "MirrorSupportManualAlert.h"
+#import "UIImage+MirrorSymbol.h"
 
 #import "Mirror-Swift.h"
 
@@ -159,22 +160,20 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 
 - (void)updateSettingsButtonIcon
 {
-    UIImage *iconImage = [[UIImage systemImageNamed:[self languageGlobeIconName]] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    [_settingsButton setImage:iconImage ?: [[UIImage systemImageNamed:@"globe"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
+    UIImage *iconImage = [[UIImage mirror_systemImageNamed:[self languageGlobeIconName] fallbackName:@"globe"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [_settingsButton setImage:iconImage forState:UIControlStateNormal];
 }
 
 - (void)updateSupportButtonIcon
 {
-    UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightRegular];
-    UIImage *iconImage = [[UIImage systemImageNamed:@"headset"] imageWithConfiguration:configuration];
-    if (!iconImage) {
-        iconImage = [[UIImage systemImageNamed:@"questionmark.circle"] imageWithConfiguration:configuration];
-    }
+    UIImageSymbolConfiguration *headsetConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightRegular];
+    UIImageSymbolConfiguration *fallbackConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:22 weight:UIImageSymbolWeightRegular];
+    UIImage *iconImage = [UIImage mirror_systemImageNamed:@"headset" fallbackName:@"questionmark.circle" configuration:headsetConfiguration fallbackConfiguration:fallbackConfiguration];
     [_supportButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
     [_supportButton setTitle:iconImage ? nil : @"?" forState:UIControlStateNormal];
-    _supportButton.titleLabel.font = [UIFont systemFontOfSize:17 weight:UIFontWeightRegular];
-    [_supportButton setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateNormal];
-    [_supportButton setPreferredSymbolConfiguration:configuration forImageInState:UIControlStateHighlighted];
+    _supportButton.titleLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightRegular];
+    [_supportButton setPreferredSymbolConfiguration:nil forImageInState:UIControlStateNormal];
+    [_supportButton setPreferredSymbolConfiguration:nil forImageInState:UIControlStateHighlighted];
 }
 
 - (NSString *)languageGlobeIconName

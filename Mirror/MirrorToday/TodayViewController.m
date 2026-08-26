@@ -22,6 +22,7 @@
 #import "SpecialDaysViewController.h"
 #import "MirrorTool.h"
 #import "MirrorSettings.h"
+#import "UIImage+MirrorSymbol.h"
 
 #define kLeftRightSpacing (20*kWidthRatio)
 
@@ -398,7 +399,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         iconName = @"sparkles";
         tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     }
-    UIImage *iconImage = [[UIImage systemImageNamed:iconName] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    UIImage *iconImage = [[UIImage mirror_systemImageNamed:iconName fallbackName:@"star.fill"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     [self.specialDaysButton setImage:iconImage forState:UIControlStateNormal];
     self.specialDaysButton.tintColor = tintColor;
 }
@@ -435,10 +436,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 
 - (NSString *)specialDaysButtonFilledIconNameFromStoredIconName:(NSString *)storedIconName
 {
-    if (storedIconName.length > 0 && [UIImage systemImageNamed:storedIconName]) {
-        return storedIconName;
-    }
-    return @"star.fill";
+    return storedIconName.length > 0 ? storedIconName : @"star.fill";
 }
 
 - (void)updateTodayButtonState
@@ -449,7 +447,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     NSComparisonResult dateComparison = [self selectedDateDayComparisonToToday];
     NSString *imageName = dateComparison == NSOrderedAscending ? @"chevron.right" : @"chevron.left";
     UIImageSymbolConfiguration *iconConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:10*kWidthRatio weight:UIImageSymbolWeightRegular];
-    UIImage *iconImage = isToday ? nil : [[UIImage systemImageNamed:imageName withConfiguration:iconConfiguration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    UIImage *iconImage = isToday ? nil : [[UIImage mirror_systemImageNamed:imageName fallbackName:imageName configuration:iconConfiguration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
     self.todayButton.enabled = !isToday;
     self.todayButton.backgroundColor = UIColor.clearColor;
     self.todayButton.tintColor = buttonColor;
