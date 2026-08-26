@@ -131,8 +131,8 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Gym"] color:MirrorColorTypeCellBlue createdHour:7 createdMinute:30],
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Tennis"] color:MirrorColorTypeCellGreen createdHour:18 createdMinute:30],
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Swim"] color:MirrorColorTypeCellTeal createdHour:17 createdMinute:45],
-        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] color:MirrorColorTypeCellYellow createdHour:9 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Cook"] color:MirrorColorTypeCellPurple createdHour:18 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] color:MirrorColorTypeCellPurple createdHour:9 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Cook"] color:MirrorColorTypeCellYellow createdHour:18 createdMinute:30],
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Read"] color:MirrorColorTypeCellPink createdHour:21 createdMinute:30]
     ];
 }
