@@ -105,8 +105,11 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         NSDate *currentDate = [calendar dateByAddingUnit:NSCalendarUnitDay value:dayIndex toDate:startDate options:0];
         NSDateComponents *components = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitWeekday fromDate:currentDate];
         NSInteger monthIndex = [calendar components:NSCalendarUnitMonth fromDate:startDate toDate:currentDate options:0].month;
-        [self appendRecordsForDateComponents:components dayIndex:dayIndex monthIndex:monthIndex records:fakeRecords readingBookIndex:&readingBookIndex readingRemainingMinutes:&readingRemainingMinutes];
-        if (dayIndex == totalDays) {
+        BOOL isNoDataDay = dayIndex != totalDays && [self isNoDataDayForComponents:components dayIndex:dayIndex];
+        if (!isNoDataDay) {
+            [self appendRecordsForDateComponents:components dayIndex:dayIndex monthIndex:monthIndex records:fakeRecords readingBookIndex:&readingBookIndex readingRemainingMinutes:&readingRemainingMinutes];
+        }
+        if (dayIndex == totalDays && !isNoDataDay) {
             [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Read"] components:components hour:22 minute:15 durationMinutes:45 note:[self readingNoteForBookIndex:readingBookIndex] records:fakeRecords];
             [self advanceReadingBookIndex:&readingBookIndex remainingMinutes:&readingRemainingMinutes byReadMinutes:45];
         }
@@ -138,12 +141,14 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 }
 
 // 每天的 fake record 生成规则：
-// 1. 每月 2 号到随机的 3/4/5 号视为生理期，不生成运动和编程。
-// 2. 非生理期每天早上生成一条运动：偶数 dayIndex 健身；非健身日夏天游泳、冬天网球，其他季节游泳/网球按概率切换。
-// 3. 运动时间在 7 点左右，周末有概率推迟到 8/9 点，运动时长 1.5 到 2 小时。
-// 4. 编程从运动结束后 1 到 2 小时开始，时长 1 到 6 小时，偶尔偷懒跳过。
-// 5. 做饭基本每天晚饭时间生成，18 到 19 点开始，持续 20 到 90 分钟。
-// 6. 当天比较 chill 时晚上生成阅读；阅读 note 由连续书单进度决定。
+// 1. 前 180 天每月稳定随机 8-10 天完全不生成记录，制造无数据日。
+// 2. 每月 2 号到随机的 3/4/5 号视为生理期，不生成运动和编程。
+// 3. 非生理期有 20% 概率偷懒不运动；运动日早上生成一条运动：偶数 dayIndex 健身；非健身日夏天游泳、冬天网球，其他季节游泳/网球按概率切换。
+// 4. 运动时间在 7 点左右，周末有概率推迟到 8/9 点，运动时长 1.5 到 2 小时。
+// 5. 前 180 天不生成编程和做饭。
+// 6. 编程从运动结束后 1 到 2 小时开始，时长 1 到 12 小时，有 2% 概率偷懒跳过。
+// 7. 做饭基本每天晚饭时间生成，18 到 19 点开始，持续 20 到 90 分钟。
+// 8. 当天比较 chill 时晚上生成阅读；阅读 note 由连续书单进度决定。
 + (void)appendRecordsForDateComponents:(NSDateComponents *)components dayIndex:(NSInteger)dayIndex monthIndex:(NSInteger)monthIndex records:(NSMutableArray<MirrorRecordModel *> *)records readingBookIndex:(NSInteger *)readingBookIndex readingRemainingMinutes:(NSInteger *)readingRemainingMinutes
 {
     NSInteger month = components.month;
@@ -152,11 +157,13 @@ static BOOL MirrorFakeDataIsSeeding = NO;
     BOOL isWeekend = weekday == 1 || weekday == 7;
     BOOL isSummer = month >= 6 && month <= 8;
     BOOL isWinter = month == 12 || month <= 2;
+    BOOL isBeforeCodeAndCookStart = dayIndex < 180;
 
     BOOL isPeriodDay = day >= 2 && day <= [self periodEndDayForComponents:components];
     NSInteger recordCount = 0;
 
-    if (!isPeriodDay) {
+    BOOL isLazyMovementDay = [self randomPercentForDayIndex:dayIndex salt:29] < 20;
+    if (!isPeriodDay && !isLazyMovementDay) {
         NSString *movementTaskName = nil;
         BOOL isGymDay = dayIndex % 2 == 0;
         if (isGymDay) {
@@ -188,20 +195,19 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 
         NSInteger movementEndMinutes = movementHour * 60 + movementMinute + movementDuration;
         NSInteger codeStartMinutes = movementEndMinutes + 60 + [self randomValueForDayIndex:dayIndex salt:31 modulo:61];
-        BOOL shouldCode = [self randomValueForDayIndex:dayIndex salt:37 modulo:7] >= 2;
-        BOOL isLazyCodeDay = [self randomPercentForDayIndex:dayIndex salt:43] < 14;
-        if (shouldCode && !isLazyCodeDay) {
-            NSInteger codeDuration = 60 + [self randomValueForDayIndex:dayIndex salt:41 modulo:301];
-            NSInteger latestCodeEnd = 17 * 60 + 45;
+        BOOL isLazyCodeDay = [self randomPercentForDayIndex:dayIndex salt:43] < 2;
+        if (!isBeforeCodeAndCookStart && !isLazyCodeDay) {
+            NSInteger codeDuration = 60 + [self randomValueForDayIndex:dayIndex salt:41 modulo:661];
+            NSInteger latestCodeEnd = 23 * 60 + 45;
             codeDuration = MIN(codeDuration, MAX(60, latestCodeEnd - codeStartMinutes));
-            if (codeDuration >= 60 && codeStartMinutes < 18 * 60) {
+            if (codeDuration >= 60 && codeStartMinutes < 24 * 60) {
                 [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] components:components hour:codeStartMinutes / 60 minute:codeStartMinutes % 60 durationMinutes:codeDuration note:[self codeNoteForDayIndex:dayIndex] records:records];
                 recordCount += 1;
             }
         }
     }
 
-    if ([self randomPercentForDayIndex:dayIndex salt:53] < 94) {
+    if (!isBeforeCodeAndCookStart && [self randomPercentForDayIndex:dayIndex salt:53] < 94) {
         NSInteger cookStart = 18 * 60 + [self randomValueForDayIndex:dayIndex salt:59 modulo:61];
         NSInteger cookDuration = 20 + [self randomValueForDayIndex:dayIndex salt:61 modulo:71];
         [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Cook"] components:components hour:cookStart / 60 minute:cookStart % 60 durationMinutes:cookDuration note:[self cookNoteForDurationMinutes:cookDuration dayIndex:dayIndex] records:records];
@@ -265,6 +271,32 @@ static BOOL MirrorFakeDataIsSeeding = NO;
     return 3 + (seed % 3);
 }
 
++ (BOOL)isNoDataDayForComponents:(NSDateComponents *)components dayIndex:(NSInteger)dayIndex
+{
+    if (dayIndex >= 180) {
+        return NO;
+    }
+
+    NSInteger emptyDayCount = 8 + [self randomValueForYear:components.year month:components.month salt:127 modulo:3];
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *firstDay = [self dateWithYear:components.year month:components.month day:1 hour:0 minute:0];
+    NSRange dayRange = [calendar rangeOfUnit:NSCalendarUnitDay inUnit:NSCalendarUnitMonth forDate:firstDay];
+    NSInteger daysInMonth = (NSInteger)dayRange.length;
+    NSInteger segmentLength = MAX(1, daysInMonth / emptyDayCount);
+
+    for (NSInteger index = 0; index < emptyDayCount; index++) {
+        NSInteger segmentStartDay = index * segmentLength + 1;
+        NSInteger segmentEndDay = index == emptyDayCount - 1 ? daysInMonth : MIN(daysInMonth, segmentStartDay + segmentLength - 1);
+        NSInteger candidateRange = segmentEndDay - segmentStartDay + 1;
+        NSInteger emptyDay = segmentStartDay + [self randomValueForYear:components.year month:components.month salt:149 + index modulo:candidateRange];
+        if (components.day == emptyDay) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 + (NSInteger)randomPercentForDayIndex:(NSInteger)dayIndex salt:(NSInteger)salt
 {
     return [self randomValueForDayIndex:dayIndex salt:salt modulo:100];
@@ -277,6 +309,18 @@ static BOOL MirrorFakeDataIsSeeding = NO;
     }
     NSUInteger seed = 2166136261u;
     seed = (seed ^ (NSUInteger)dayIndex) * 16777619u;
+    seed = (seed ^ (NSUInteger)salt) * 16777619u;
+    return (NSInteger)(seed % (NSUInteger)modulo);
+}
+
++ (NSInteger)randomValueForYear:(NSInteger)year month:(NSInteger)month salt:(NSInteger)salt modulo:(NSInteger)modulo
+{
+    if (modulo <= 0) {
+        return 0;
+    }
+    NSUInteger seed = 2166136261u;
+    seed = (seed ^ (NSUInteger)year) * 16777619u;
+    seed = (seed ^ (NSUInteger)month) * 16777619u;
     seed = (seed ^ (NSUInteger)salt) * 16777619u;
     return (NSInteger)(seed % (NSUInteger)modulo);
 }
