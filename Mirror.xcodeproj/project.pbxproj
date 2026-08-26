@@ -339,7 +339,6 @@
 		4A379B3E28E0379E00785CAE /* MirrorCustomize */ = {
 			isa = PBXGroup;
 			children = (
-				4AE5E88F2A0253A3004228C1 /* View */,
 				4ACB422F29EECBC4005EECC4 /* Animations */,
 				4A099FAC29DD57AE002683A1 /* MirrorTool.h */,
 				4A099FAD29DD57AE002683A1 /* MirrorTool.m */,
@@ -474,13 +473,6 @@
 				4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */,
 			);
 			path = Fakedata_Debug;
-			sourceTree = "<group>";
-		};
-		4AE5E88F2A0253A3004228C1 /* View */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = View;
 			sourceTree = "<group>";
 		};
 		4AFB779428DF4A380064CBCA = {

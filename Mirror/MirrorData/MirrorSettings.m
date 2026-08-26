@@ -27,11 +27,6 @@ static NSString * const kMirrorPreferredLanguageKey = @"MirrorUserPreferredLangu
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchThemeNotification object:nil];
 }
 
-+ (BOOL)appliedChinese
-{
-    return [MirrorSettings preferredLanguageKey] == MirrorLanguageKeySimplifiedChinese;
-}
-
 + (BOOL)hasPreferredLanguage
 {
     return [[NSUserDefaults standardUserDefaults] objectForKey:kMirrorPreferredLanguageKey] != nil;

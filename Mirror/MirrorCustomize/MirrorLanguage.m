@@ -170,6 +170,129 @@
     return [NSString stringWithFormat:format, placeholder];
 }
 
+// 1996年6月27日 周四:
+// English: Thu, Jun 27, 1996
+// Chinese: 1996年6月27日 周四
+// Spanish: Jue, 27 Jun 1996
+// French: Jeu, 27 Juin 1996
+// Japanese: 1996年6月27日 木
+// Korean: 1996년 6월 27일 목
+// German: Do, 27. Jun 1996
+// Russian: Чт, 27 Июн 1996
++ (NSString *)mirror_dateStringWithYear:(long)year
+                                  month:(long)month
+                                    day:(long)day
+                                weekday:(long)weekday
+{
+    MirrorLanguageKey languageKey = [MirrorSettings preferredLanguageKey];
+    NSString *monthText = [MirrorLanguage monthTextForMonth:month languageKey:languageKey];
+    NSString *weekdayText = [MirrorLanguage weekdayTextForWeekday:weekday languageKey:languageKey];
+    
+    switch (languageKey) {
+        case MirrorLanguageKeySimplifiedChinese:
+            return [NSString stringWithFormat:@"%ld年%@%ld日 %@", year, monthText, day, weekdayText];
+        case MirrorLanguageKeyJapanese:
+            return [NSString stringWithFormat:@"%ld年%@%ld日 %@", year, monthText, day, weekdayText];
+        case MirrorLanguageKeyKorean:
+            return [NSString stringWithFormat:@"%ld년 %@ %ld일 %@", year, monthText, day, weekdayText];
+        case MirrorLanguageKeyGerman:
+            return [NSString stringWithFormat:@"%@, %ld. %@ %ld", weekdayText, day, monthText, year];
+        case MirrorLanguageKeySpanish:
+        case MirrorLanguageKeyFrench:
+        case MirrorLanguageKeyRussian:
+            return [NSString stringWithFormat:@"%@, %ld %@ %ld", weekdayText, day, monthText, year];
+        case MirrorLanguageKeyEnglish:
+        default:
+            return [NSString stringWithFormat:@"%@, %@ %ld, %ld", weekdayText, monthText, day, year];
+    }
+}
+
+// 1996年6月27日:
+// English: Jun 27, 1996
+// Chinese: 1996年6月27日
+// Spanish: 27 Jun 1996
+// French: 27 Juin 1996
+// Japanese: 1996年6月27日
+// Korean: 1996년 6월 27일
+// German: 27. Jun 1996
+// Russian: 27 Июн 1996
++ (NSString *)mirror_dateStringWithYear:(long)year
+                                  month:(long)month
+                                    day:(long)day
+{
+    MirrorLanguageKey languageKey = [MirrorSettings preferredLanguageKey];
+    NSString *monthText = [MirrorLanguage monthTextForMonth:month languageKey:languageKey];
+    
+    switch (languageKey) {
+        case MirrorLanguageKeySimplifiedChinese:
+        case MirrorLanguageKeyJapanese:
+            return [NSString stringWithFormat:@"%ld年%@%ld日", year, monthText, day];
+        case MirrorLanguageKeyKorean:
+            return [NSString stringWithFormat:@"%ld년 %@ %ld일", year, monthText, day];
+        case MirrorLanguageKeyGerman:
+            return [NSString stringWithFormat:@"%ld. %@ %ld", day, monthText, year];
+        case MirrorLanguageKeySpanish:
+        case MirrorLanguageKeyFrench:
+        case MirrorLanguageKeyRussian:
+            return [NSString stringWithFormat:@"%ld %@ %ld", day, monthText, year];
+        case MirrorLanguageKeyEnglish:
+        default:
+            return [NSString stringWithFormat:@"%@ %ld, %ld", monthText, day, year];
+    }
+}
+
+// 1996年6月:
+// English: Jun 1996
+// Chinese: 1996年6月
+// Spanish: Jun 1996
+// French: Juin 1996
+// Japanese: 1996年6月
+// Korean: 1996년 6월
+// German: Jun 1996
+// Russian: Июн 1996
++ (NSString *)mirror_monthStringWithYear:(long)year
+                                   month:(long)month
+{
+    MirrorLanguageKey languageKey = [MirrorSettings preferredLanguageKey];
+    NSString *monthText = [MirrorLanguage monthTextForMonth:month languageKey:languageKey];
+    
+    switch (languageKey) {
+        case MirrorLanguageKeySimplifiedChinese:
+        case MirrorLanguageKeyJapanese:
+            return [NSString stringWithFormat:@"%ld年%@", year, monthText];
+        case MirrorLanguageKeyKorean:
+            return [NSString stringWithFormat:@"%ld년 %@", year, monthText];
+        case MirrorLanguageKeyEnglish:
+            return [NSString stringWithFormat:@"%@ %ld", monthText, year];
+        case MirrorLanguageKeySpanish:
+        case MirrorLanguageKeyFrench:
+        case MirrorLanguageKeyGerman:
+        case MirrorLanguageKeyRussian:
+        default:
+            return [NSString stringWithFormat:@"%@ %ld", monthText, year];
+    }
+}
+
++ (NSString *)weekdayTextForWeekday:(long)weekday languageKey:(MirrorLanguageKey)languageKey
+{
+    NSArray<NSString *> *keys = @[@"sunday", @"monday", @"tuesday", @"wednesday", @"thursday", @"friday", @"saturday"];
+    if (weekday < 1 || weekday > keys.count) {
+        return @"";
+    }
+    
+    return [MirrorLanguage mirror_stringWithKey:keys[weekday - 1] languageKey:languageKey];
+}
+
++ (NSString *)monthTextForMonth:(long)month languageKey:(MirrorLanguageKey)languageKey
+{
+    NSArray<NSString *> *keys = @[@"january", @"february", @"march", @"april", @"may", @"june", @"july", @"august", @"september", @"october", @"november", @"december"];
+    if (month < 1 || month > keys.count) {
+        return @"";
+    }
+    
+    return [MirrorLanguage mirror_stringWithKey:keys[month - 1] languageKey:languageKey];
+}
+
 + (NSString *)localizedValue:(NSArray<NSString *> *)translations languageKey:(MirrorLanguageKey)languageKey fallback:(NSString *)fallback
 {
     if (![translations isKindOfClass:NSArray.class] || translations.count == 0) {

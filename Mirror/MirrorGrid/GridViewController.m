@@ -203,7 +203,7 @@
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
         make.top.mas_equalTo(self.collectionView.mas_bottom).offset(kGapInLine);
-        make.height.mas_equalTo(20*kHeightRatio);
+        make.height.mas_equalTo(24*kHeightRatio);
     }];
     [self.view addSubview:self.legendView];
     [self.legendView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -442,11 +442,11 @@
     }
     
     if (start == end) {
-        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[start]]] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
+        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[start]]] stringByAppendingString:@": "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
     } else {
         NSString *startDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[start]]];
         NSString *endDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[end]]];
-        self.dateLabel.text = [[[[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate] stringByAppendingString:@". "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
+        self.dateLabel.text = [[[[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate] stringByAppendingString:@": "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
     }
 
     // legend
@@ -742,8 +742,10 @@
     if (!_dateLabel) {
         _dateLabel = [UILabel new];
         _dateLabel.textAlignment = NSTextAlignmentCenter;
-        _dateLabel.font = [UIFont mirrorHintFont];
+        _dateLabel.font = [UIFont mirrorHighlightFont];
         _dateLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+        _dateLabel.adjustsFontSizeToFitWidth = YES;
+        _dateLabel.minimumScaleFactor = 0.7;
     }
     return _dateLabel;
 }

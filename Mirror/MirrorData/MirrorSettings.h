@@ -18,7 +18,6 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)switchTheme;
 
 // Language
-+ (BOOL)appliedChinese;
 + (BOOL)hasPreferredLanguage;
 + (MirrorLanguageKey)preferredLanguageKey;
 + (void)changeLanguageWithKey:(MirrorLanguageKey)languageKey;

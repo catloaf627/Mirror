@@ -26,16 +26,16 @@ NS_ASSUME_NONNULL_BEGIN
 // 1hour 23 mins | 16天1小时23分钟 —> total后面的标记
 + (NSString *)XdXhXmXsFull:(long)timeInterval;
 
-// Thu, Apr 25, 2023 | 2023年4月23日，周日 -> 所有历史记录的日期标记
+// Thu, Apr 25, 2023 | 2023年4月23日 周日 -> 所有历史记录的日期标记
 + (NSString *)YYYYmmddWeekdayWithStart:(long)start;
 
-// Thu, Apr 25, 2023 | 2023年4月23日，周日 -> 柱状图区间切换的标记（一天）、Today下方的日期标记
+// Thu, Apr 25, 2023 | 2023年4月23日 周日 -> 柱状图区间切换的标记（一天）、Today下方的日期标记
 + (NSString *)YYYYmmddWeekday:(NSDate *)date;
 
 // Apr 25, 2023 | 2023年4月23日 -> 柱状图区间切换的标记（区间）
 + (NSString *)YYYYmmdd:(NSDate *)date;
 
-// Apr, 2023 | 2023年4月 -> 格子图标记
+// Apr 2023 | 2023年4月 -> 格子图标记
 + (NSString *)YYYYmm:(NSDate *)date;
 
 
