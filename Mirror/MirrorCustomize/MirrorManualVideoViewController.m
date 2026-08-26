@@ -10,7 +10,7 @@
 static NSString * const kMirrorManualVideoItemTitleKey = @"title";
 static NSString * const kMirrorManualVideoItemURLKey = @"url";
 
-@interface MirrorManualVideoViewController ()
+@interface MirrorManualVideoViewController () <UIScrollViewDelegate>
 
 @property (nonatomic, copy) NSArray<NSDictionary<NSString *, id> *> *videoItems;
 @property (nonatomic, assign) NSInteger currentIndex;
@@ -23,6 +23,7 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
 @property (nonatomic, strong) UIStackView *thumbnailStackView;
 @property (nonatomic, copy) NSArray<UIButton *> *thumbnailButtons;
 @property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, strong) UILabel *indexLabel;
 @property (nonatomic, strong) UIButton *closeButton;
 @property (nonatomic, assign) BOOL didScrollToInitialThumbnail;
 
@@ -112,7 +113,9 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     self.thumbnailScrollView.showsVerticalScrollIndicator = NO;
     self.thumbnailScrollView.showsHorizontalScrollIndicator = NO;
     self.thumbnailScrollView.alwaysBounceHorizontal = NO;
+    self.thumbnailScrollView.alwaysBounceVertical = YES;
     self.thumbnailScrollView.directionalLockEnabled = YES;
+    self.thumbnailScrollView.delegate = self;
     if (@available(iOS 11.0, *)) {
         self.thumbnailScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     }
@@ -135,13 +138,19 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     self.titleLabel.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:self.titleLabel];
 
+    self.indexLabel = [UILabel new];
+    self.indexLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    self.indexLabel.textColor = [UIColor.whiteColor colorWithAlphaComponent:0.78];
+    self.indexLabel.font = [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightSemibold];
+    self.indexLabel.textAlignment = NSTextAlignmentCenter;
+    [self.view addSubview:self.indexLabel];
+
     self.closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.closeButton.translatesAutoresizingMaskIntoConstraints = NO;
     UIImage *closeImage = [UIImage systemImageNamed:@"xmark"];
     [self.closeButton setImage:closeImage forState:UIControlStateNormal];
     self.closeButton.tintColor = UIColor.whiteColor;
-    self.closeButton.backgroundColor = [self closeButtonColor];
-    self.closeButton.layer.cornerRadius = 8;
+    self.closeButton.backgroundColor = UIColor.clearColor;
     [self.closeButton addTarget:self action:@selector(closeButtonTapped) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:self.closeButton];
 
@@ -171,6 +180,9 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
         [self.titleLabel.trailingAnchor constraintEqualToAnchor:self.borderContainerView.trailingAnchor constant:-8],
         [self.titleLabel.bottomAnchor constraintEqualToAnchor:self.borderContainerView.topAnchor constant:-14],
 
+        [self.indexLabel.centerXAnchor constraintEqualToAnchor:self.thumbnailScrollView.centerXAnchor],
+        [self.indexLabel.topAnchor constraintEqualToAnchor:self.borderContainerView.bottomAnchor constant:10],
+
         [self.closeButton.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor constant:18],
         [self.closeButton.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:18],
         [self.closeButton.widthAnchor constraintEqualToConstant:32],
@@ -195,23 +207,6 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
         [colors addObject:[UIColor mirrorColorNamed:colorType.integerValue]];
     }
     return [colors copy];
-}
-
-- (UIColor *)closeButtonColor
-{
-    UIColor *firstColor = [UIColor mirrorColorNamed:MirrorColorTypeCellPurplePulse];
-    UIColor *secondColor = [UIColor mirrorColorNamed:MirrorColorTypeCellGrayPulse];
-    CGFloat firstRed = 0;
-    CGFloat firstGreen = 0;
-    CGFloat firstBlue = 0;
-    CGFloat firstAlpha = 0;
-    CGFloat secondRed = 0;
-    CGFloat secondGreen = 0;
-    CGFloat secondBlue = 0;
-    CGFloat secondAlpha = 0;
-    [firstColor getRed:&firstRed green:&firstGreen blue:&firstBlue alpha:&firstAlpha];
-    [secondColor getRed:&secondRed green:&secondGreen blue:&secondBlue alpha:&secondAlpha];
-    return [UIColor colorWithRed:(firstRed + secondRed) / 2.0 green:(firstGreen + secondGreen) / 2.0 blue:(firstBlue + secondBlue) / 2.0 alpha:0.92];
 }
 
 - (void)configureThumbnailButtons
@@ -260,13 +255,13 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
 
 - (void)configureGestures
 {
-    UISwipeGestureRecognizer *leftSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showNextVideo)];
-    leftSwipeGesture.direction = UISwipeGestureRecognizerDirectionLeft;
-    [self.view addGestureRecognizer:leftSwipeGesture];
+    UISwipeGestureRecognizer *upSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showNextVideo)];
+    upSwipeGesture.direction = UISwipeGestureRecognizerDirectionUp;
+    [self.videoContainerView addGestureRecognizer:upSwipeGesture];
 
-    UISwipeGestureRecognizer *rightSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showPreviousVideo)];
-    rightSwipeGesture.direction = UISwipeGestureRecognizerDirectionRight;
-    [self.view addGestureRecognizer:rightSwipeGesture];
+    UISwipeGestureRecognizer *downSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showPreviousVideo)];
+    downSwipeGesture.direction = UISwipeGestureRecognizerDirectionDown;
+    [self.videoContainerView addGestureRecognizer:downSwipeGesture];
 }
 
 - (void)loadVideoAtIndex:(NSInteger)index shouldPlay:(BOOL)shouldPlay
@@ -281,12 +276,20 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     NSString *title = item[kMirrorManualVideoItemTitleKey];
 
     self.titleLabel.text = title;
+    self.indexLabel.text = [NSString stringWithFormat:@"%ld/%ld", (long)(self.currentIndex + 1), (long)self.videoItems.count];
     [self updateThumbnailSelection];
     [self.player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithURL:videoURL]];
     [self resetPlayerEndObserver];
 
     if (shouldPlay) {
         [self playVideo];
+    }
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView
+{
+    if (scrollView == self.thumbnailScrollView && scrollView.contentOffset.x != 0) {
+        scrollView.contentOffset = CGPointMake(0, scrollView.contentOffset.y);
     }
 }
 

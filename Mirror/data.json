@@ -10,7 +10,7 @@
       "task_name": "Tennis",
       "start_time": 1773540000,
       "end_time": 1773543600,
-      "note": "forehand and backhand basics · feeling great"
+      "note": "strokes"
     },
     {
       "task_name": "Gym",
@@ -130,7 +130,7 @@
       "task_name": "Tennis",
       "start_time": 1776029400,
       "end_time": 1776033000,
-      "note": "footwork and split step"
+      "note": "footwork"
     },
     {
       "task_name": "Tennis",
@@ -172,7 +172,7 @@
       "task_name": "Tennis",
       "start_time": 1777336200,
       "end_time": 1777339800,
-      "note": "serve toss and rhythm · low energy"
+      "note": "serve"
     },
     {
       "task_name": "Swim",
@@ -244,7 +244,7 @@
       "task_name": "Tennis",
       "start_time": 1778965200,
       "end_time": 1778968800,
-      "note": "cross-court rally"
+      "note": "rally"
     },
     {
       "task_name": "Tennis",
@@ -652,7 +652,7 @@
       "task_name": "Tennis",
       "start_time": 1782916200,
       "end_time": 1782919800,
-      "note": "backhand slice · feeling great"
+      "note": "backhand"
     },
     {
       "task_name": "Gym",
@@ -736,7 +736,7 @@
       "task_name": "Tennis",
       "start_time": 1783864800,
       "end_time": 1783870200,
-      "note": "net volleys"
+      "note": "volleys"
     },
     {
       "task_name": "Code",
@@ -826,7 +826,7 @@
       "task_name": "Tennis",
       "start_time": 1784556000,
       "end_time": 1784561400,
-      "note": "approach shot · low energy"
+      "note": "approach"
     },
     {
       "task_name": "Code",
@@ -928,7 +928,7 @@
       "task_name": "Tennis",
       "start_time": 1785247200,
       "end_time": 1785252600,
-      "note": "second-serve topspin"
+      "note": "topspin"
     },
     {
       "task_name": "Code",
@@ -1000,7 +1000,7 @@
       "task_name": "Tennis",
       "start_time": 1785938400,
       "end_time": 1785943800,
-      "note": "down-the-line shots · feeling great"
+      "note": "shots"
     },
     {
       "task_name": "Code",
@@ -1180,7 +1180,7 @@
       "task_name": "Tennis",
       "start_time": 1787148480,
       "end_time": 1787153220,
-      "note": "overheads and lobs"
+      "note": "overheads"
     },
     {
       "task_name": "Code",
@@ -1302,7 +1302,7 @@
       "color": 4
     },
     {
-      "info": "Built abs😍",
+      "info": "Built abs😁",
       "date_str": "2026-05-23",
       "icon": "dumbbell.fill",
       "color": 3
