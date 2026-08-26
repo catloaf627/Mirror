@@ -517,8 +517,10 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
             long taskTime = [MirrorTool getTotalTimeOfPeriods:readModel.records];
             if (taskTime > 0) {
                 UIColor *color = [UIColor mirrorColorNamed:readModel.taskModel.color];
-                if ([color isKindOfClass:UIColor.class]) {
-                    [colors addObject:color];
+                UIColor *pulseColor = [UIColor mirrorColorPulsed:readModel.taskModel.color];
+                UIColor *calendarColor = [self colorByBlendingColor:color withColor:pulseColor progress:0.1];
+                if ([calendarColor isKindOfClass:UIColor.class]) {
+                    [colors addObject:calendarColor];
                 }
             }
         }
@@ -529,6 +531,28 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     return colorsByDateKey;
 }
 
+
+- (UIColor *)colorByBlendingColor:(UIColor *)fromColor withColor:(UIColor *)toColor progress:(CGFloat)progress
+{
+    CGFloat fromRed = 0;
+    CGFloat fromGreen = 0;
+    CGFloat fromBlue = 0;
+    CGFloat fromAlpha = 0;
+    CGFloat toRed = 0;
+    CGFloat toGreen = 0;
+    CGFloat toBlue = 0;
+    CGFloat toAlpha = 0;
+    if (![fromColor getRed:&fromRed green:&fromGreen blue:&fromBlue alpha:&fromAlpha] ||
+        ![toColor getRed:&toRed green:&toGreen blue:&toBlue alpha:&toAlpha]) {
+        return fromColor;
+    }
+
+    CGFloat clampedProgress = MIN(1.0, MAX(0, progress));
+    return [UIColor colorWithRed:fromRed + (toRed - fromRed) * clampedProgress
+                           green:fromGreen + (toGreen - fromGreen) * clampedProgress
+                            blue:fromBlue + (toBlue - fromBlue) * clampedProgress
+                           alpha:fromAlpha + (toAlpha - fromAlpha) * clampedProgress];
+}
 
 - (NSString *)keyFromDate:(NSDate *)date
 {
