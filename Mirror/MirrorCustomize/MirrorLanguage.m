@@ -29,7 +29,7 @@
     [mirrorDict setValue:ML(@"Today", @"今天", @"Hoy", @"Aujourd'hui", @"今日", @"오늘", @"Heute", @"Сегодня") forKey:@"today"];
     [mirrorDict setValue:ML(@"Yesterday", @"昨天", @"Ayer", @"Hier", @"昨日", @"어제", @"Gestern", @"Вчера") forKey:@"yesterday"];
     [mirrorDict setValue:ML(@"Tomorrow", @"明天", @"Mañana", @"Demain", @"明日", @"내일", @"Morgen", @"Завтра") forKey:@"tomorrow"];
-    [mirrorDict setValue:ML(@"Record", @"记录", @"Historial", @"Historique", @"記録", @"기록", @"Verlauf", @"Записи") forKey:@"record"];
+    [mirrorDict setValue:ML(@"Records", @"记录", @"Historial", @"Historique", @"記録", @"기록", @"Verlauf", @"Записи") forKey:@"record"];
     
     // Settings
     [mirrorDict setValue:ML(@"OK", @"好的", @"OK", @"OK", @"OK", @"확인", @"OK", @"OK") forKey:@"ok"];
@@ -38,7 +38,7 @@
     [mirrorDict setValue:ML(@"Manual", @"说明书", @"Manual", @"Guide", @"説明書", @"사용 설명서", @"Anleitung", @"Инструкция") forKey:@"support_manual_title"];
     [mirrorDict setValue:ML(@" Page", @"页", @"", @"", @"", @"", @"", @"") forKey:@"manual_page_suffix"];
     [mirrorDict setValue:ML(@"Record times cannot overlap.", @"两个记录时间不能重叠。", @"Los horarios de dos registros no pueden superponerse.", @"Les horaires de deux enregistrements ne peuvent pas se chevaucher.", @"2つの記録時間は重複できません。", @"두 기록 시간은 겹칠 수 없습니다.", @"Zeiten zweier Einträge dürfen sich nicht überschneiden.", @"Время двух записей не может пересекаться.") forKey:@"manual_no_overlap"];
-    [mirrorDict setValue:ML(@"Long press to edit/delete/merge a task", @"长按编辑/删除/合并任务", @"Mantén presionado para editar/eliminar/fusionar una tarea", @"Appuyez longuement pour modifier/supprimer/fusionner une tâche", @"長押しでタスクを編集/削除/結合", @"길게 눌러 작업 편집/삭제/병합", @"Lange drücken, um eine Aufgabe zu bearbeiten/löschen/zusammenzuführen", @"Удерживайте, чтобы изменить/удалить/объединить задачу") forKey:@"manual_start_edit_task"];
+    [mirrorDict setValue:ML(@"Long press to edit/merge/delete a task", @"长按编辑/合并/删除任务", @"Mantén presionado para editar/fusionar/eliminar una tarea", @"Appuyez longuement pour modifier/fusionner/supprimer une tâche", @"長押しでタスクを編集/結合/削除", @"길게 눌러 작업 편집/병합/삭제", @"Lange drücken, um eine Aufgabe zu bearbeiten/zusammenzuführen/löschen", @"Удерживайте, чтобы изменить/объединить/удалить задачу") forKey:@"manual_start_edit_task"];
     [mirrorDict setValue:ML(@"Tap to start counting", @"短按开始计时", @"Toca para empezar a contar", @"Touchez pour démarrer le chronométrage", @"タップして計時を開始", @"탭하여 타이머 시작", @"Tippen, um die Zeitmessung zu starten", @"Нажмите, чтобы начать отсчет") forKey:@"manual_start_count"];
     [mirrorDict setValue:ML(@"Up to 8 tasks can be added", @"最多只能添加 8 个任务", @"Se pueden añadir hasta 8 tareas", @"Jusqu’à 8 tâches peuvent être ajoutées", @"追加できるタスクは最大8個", @"작업은 최대 8개까지 추가 가능", @"Bis zu 8 Aufgaben können hinzugefügt werden", @"Можно добавить до 8 задач") forKey:@"manual_start_task_limit"];
     [mirrorDict setValue:ML(@"Tap top-left to change language", @"点击左上角更改语言", @"Toca arriba a la izquierda para cambiar el idioma", @"Touchez en haut à gauche pour changer la langue", @"左上をタップして言語を変更", @"왼쪽 위를 탭해 언어 변경", @"Oben links antippen, um die Sprache zu ändern", @"Нажмите слева сверху, чтобы изменить язык") forKey:@"manual_start_language"];
