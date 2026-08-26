@@ -24,7 +24,37 @@ static NSString * const kMirrorManualVideoURLScheme = @"mirror-manual-video";
 static NSString * const kMirrorManualVideoItemTitleKey = @"title";
 static NSString * const kMirrorManualVideoItemURLKey = @"url";
 
-@interface MirrorSupportManualAlert () <UITextViewDelegate>
+@interface MirrorManualVideoTouchDownGestureRecognizer : UIGestureRecognizer
+
+@end
+
+@implementation MirrorManualVideoTouchDownGestureRecognizer
+
+- (void)touchesBegan:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    self.state = UIGestureRecognizerStateBegan;
+}
+
+- (void)touchesMoved:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    self.state = UIGestureRecognizerStateChanged;
+}
+
+- (void)touchesEnded:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    self.state = UIGestureRecognizerStateEnded;
+}
+
+- (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event
+{
+    self.state = UIGestureRecognizerStateCancelled;
+}
+
+@end
+
+@interface MirrorSupportManualAlert () <UIGestureRecognizerDelegate, UITextViewDelegate>
+
+@property (nonatomic, strong) UIImpactFeedbackGenerator *videoLinkFeedbackGenerator;
 
 @end
 
@@ -37,6 +67,7 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     }
 
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [[self sharedLinkDelegate] prepareVideoLinkFeedback];
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"support_manual_title"]
                                                                              message:nil
                                                                       preferredStyle:UIAlertControllerStyleAlert];
@@ -73,7 +104,12 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     textView.backgroundColor = UIColor.clearColor;
     textView.editable = NO;
     textView.selectable = YES;
-    textView.delegate = [self sharedLinkDelegate];
+    MirrorSupportManualAlert *linkDelegate = [self sharedLinkDelegate];
+    textView.delegate = linkDelegate;
+    MirrorManualVideoTouchDownGestureRecognizer *videoLinkPressRecognizer = [[MirrorManualVideoTouchDownGestureRecognizer alloc] initWithTarget:linkDelegate action:@selector(videoLinkPressBegan:)];
+    videoLinkPressRecognizer.cancelsTouchesInView = NO;
+    videoLinkPressRecognizer.delegate = linkDelegate;
+    [textView addGestureRecognizer:videoLinkPressRecognizer];
     textView.scrollEnabled = YES;
     textView.textContainerInset = UIEdgeInsetsZero;
     textView.textContainer.lineFragmentPadding = 0;
@@ -283,9 +319,62 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
         return YES;
     }
 
-    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     [self presentVideoForManualKey:URL.host fromView:textView];
     return NO;
+}
+
+- (void)videoLinkPressBegan:(UIGestureRecognizer *)recognizer
+{
+    if (recognizer.state != UIGestureRecognizerStateBegan) {
+        return;
+    }
+
+    if (![recognizer.view isKindOfClass:UITextView.class]) {
+        return;
+    }
+
+    UITextView *textView = (UITextView *)recognizer.view;
+    NSURL *URL = [self manualVideoURLAtPoint:[recognizer locationInView:textView] textView:textView];
+    if ([URL.scheme isEqualToString:kMirrorManualVideoURLScheme]) {
+        [self playVideoLinkFeedback];
+    }
+}
+
+- (NSURL *)manualVideoURLAtPoint:(CGPoint)point textView:(UITextView *)textView
+{
+    NSLayoutManager *layoutManager = textView.layoutManager;
+    NSTextContainer *textContainer = textView.textContainer;
+    CGPoint location = CGPointMake(
+        point.x - textView.textContainerInset.left + textView.contentOffset.x,
+        point.y - textView.textContainerInset.top + textView.contentOffset.y
+    );
+    NSUInteger characterIndex = [layoutManager characterIndexForPoint:location inTextContainer:textContainer fractionOfDistanceBetweenInsertionPoints:nil];
+    if (characterIndex >= textView.attributedText.length) {
+        return nil;
+    }
+
+    id linkValue = [textView.attributedText attribute:NSLinkAttributeName atIndex:characterIndex effectiveRange:nil];
+    return [linkValue isKindOfClass:NSURL.class] ? linkValue : nil;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
+    return YES;
+}
+
+- (void)prepareVideoLinkFeedback
+{
+    self.videoLinkFeedbackGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
+    [self.videoLinkFeedbackGenerator prepare];
+}
+
+- (void)playVideoLinkFeedback
+{
+    if (!self.videoLinkFeedbackGenerator) {
+        [self prepareVideoLinkFeedback];
+    }
+    [self.videoLinkFeedbackGenerator impactOccurred];
+    [self.videoLinkFeedbackGenerator prepare];
 }
 
 - (void)presentVideoForManualKey:(NSString *)manualKey fromView:(UIView *)view
