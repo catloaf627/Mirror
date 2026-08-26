@@ -11,6 +11,7 @@
 #import "MirrorSettings.h"
 #import "MirrorStorage.h"
 #import "MirrorMacro.h"
+#import "MirrorRecordWindow.h"
 #import <UIKit/UIKit.h>
 
 
@@ -30,7 +31,8 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
     // 由于删除了storyboard，所以需要自己手动创建UIWindow
     // 类似于iPad可以分屏，所以有多个scene
     UIWindowScene *windowScene = (UIWindowScene *)scene;
-    _window = [[UIWindow alloc]initWithFrame:[[UIScreen mainScreen] bounds]];
+    Class windowClass = show_tap_dot ? MirrorRecordWindow.class : UIWindow.class;
+    _window = [[windowClass alloc]initWithFrame:[[UIScreen mainScreen] bounds]];
     
     // Init tabbarController (使用mirrorTabController避免重复init)
     UITabBarController *tabbarController = [[MirrorTabsManager sharedInstance] mirrorTabController];

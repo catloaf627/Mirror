@@ -38,8 +38,22 @@
     self.presentingViewController = viewController;
 
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"DEBUG"
-                                                                             message:@"\n\n"
+                                                                             message:@"\n\n\n\n"
                                                                       preferredStyle:UIAlertControllerStyleAlert];
+
+    UIView *tapDotSwitchContainer = [UIView new];
+    tapDotSwitchContainer.translatesAutoresizingMaskIntoConstraints = NO;
+
+    UILabel *tapDotSwitchLabel = [UILabel new];
+    tapDotSwitchLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    tapDotSwitchLabel.text = @"show_tap_dot";
+    tapDotSwitchLabel.font = [UIFont systemFontOfSize:17];
+    tapDotSwitchLabel.textColor = UIColor.labelColor;
+
+    UISwitch *tapDotSwitch = [UISwitch new];
+    tapDotSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+    tapDotSwitch.on = show_tap_dot;
+    [tapDotSwitch addTarget:self action:@selector(tapDotSwitchChanged:) forControlEvents:UIControlEventValueChanged];
 
     UIView *debugSwitchContainer = [UIView new];
     debugSwitchContainer.translatesAutoresizingMaskIntoConstraints = NO;
@@ -55,14 +69,28 @@
     debugSwitch.on = is_debug;
     [debugSwitch addTarget:self action:@selector(debugSwitchChanged:) forControlEvents:UIControlEventValueChanged];
 
+    [tapDotSwitchContainer addSubview:tapDotSwitchLabel];
+    [tapDotSwitchContainer addSubview:tapDotSwitch];
     [debugSwitchContainer addSubview:debugSwitchLabel];
     [debugSwitchContainer addSubview:debugSwitch];
+    [alertController.view addSubview:tapDotSwitchContainer];
     [alertController.view addSubview:debugSwitchContainer];
 
     [NSLayoutConstraint activateConstraints:@[
+        [tapDotSwitchContainer.leadingAnchor constraintEqualToAnchor:alertController.view.leadingAnchor constant:24],
+        [tapDotSwitchContainer.trailingAnchor constraintEqualToAnchor:alertController.view.trailingAnchor constant:-24],
+        [tapDotSwitchContainer.topAnchor constraintEqualToAnchor:alertController.view.topAnchor constant:60],
+        [tapDotSwitchContainer.heightAnchor constraintEqualToConstant:36],
+
+        [tapDotSwitchLabel.leadingAnchor constraintEqualToAnchor:tapDotSwitchContainer.leadingAnchor],
+        [tapDotSwitchLabel.centerYAnchor constraintEqualToAnchor:tapDotSwitchContainer.centerYAnchor],
+
+        [tapDotSwitch.trailingAnchor constraintEqualToAnchor:tapDotSwitchContainer.trailingAnchor],
+        [tapDotSwitch.centerYAnchor constraintEqualToAnchor:tapDotSwitchContainer.centerYAnchor],
+
         [debugSwitchContainer.leadingAnchor constraintEqualToAnchor:alertController.view.leadingAnchor constant:24],
         [debugSwitchContainer.trailingAnchor constraintEqualToAnchor:alertController.view.trailingAnchor constant:-24],
-        [debugSwitchContainer.topAnchor constraintEqualToAnchor:alertController.view.topAnchor constant:60],
+        [debugSwitchContainer.topAnchor constraintEqualToAnchor:tapDotSwitchContainer.bottomAnchor constant:8],
         [debugSwitchContainer.heightAnchor constraintEqualToConstant:36],
 
         [debugSwitchLabel.leadingAnchor constraintEqualToAnchor:debugSwitchContainer.leadingAnchor],
@@ -84,6 +112,11 @@
     }]];
     [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
     [viewController presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)tapDotSwitchChanged:(UISwitch *)tapDotSwitch
+{
+    [[NSUserDefaults standardUserDefaults] setBool:tapDotSwitch.isOn forKey:@"show_tap_dot"];
 }
 
 - (void)debugSwitchChanged:(UISwitch *)debugSwitch

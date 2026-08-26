@@ -11,6 +11,7 @@
 #import "MirrorSettings.h"
 #import "MirrorStorage.h"
 #import "MirrorMacro.h"
+#import "MirrorRecordWindow.h"
 
 @interface AppDelegate () <UITabBarControllerDelegate>
 
@@ -22,7 +23,8 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
     // 由于删除了storyboard，所以需要自己手动创建UIWindow
-    _window = [[UIWindow alloc]initWithFrame:[[UIScreen mainScreen] bounds]];
+    Class windowClass = show_tap_dot ? MirrorRecordWindow.class : UIWindow.class;
+    _window = [[windowClass alloc]initWithFrame:[[UIScreen mainScreen] bounds]];
     
     // Init tabbarController (使用mirrorTabController避免重复init)
     UITabBarController *tabbarController = [[MirrorTabsManager sharedInstance] mirrorTabController];

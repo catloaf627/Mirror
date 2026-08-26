@@ -84,6 +84,7 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 #define SECONDS @"seconds"
 
 // Debug
+#define show_tap_dot [[NSUserDefaults standardUserDefaults] boolForKey:@"show_tap_dot"]
 #define is_debug [[NSUserDefaults standardUserDefaults] boolForKey:@"is_debug"]
 
 @interface MirrorMacro : NSObject
