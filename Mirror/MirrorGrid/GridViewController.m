@@ -113,9 +113,9 @@
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
-    // scroll to today
-    if (_selectedCellIndex < [self.collectionView numberOfItemsInSection:0]) { // safty
-        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:_selectedCellIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
+    // Show today without an animated scroll.
+    if (_selectedCellIndex < [self.collectionView numberOfItemsInSection:0]) { // safety
+        [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:_selectedCellIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:NO];
     }
     [self updateHints];
 }
