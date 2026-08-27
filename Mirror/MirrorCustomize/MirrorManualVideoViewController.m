@@ -24,8 +24,14 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
 @property (nonatomic, copy) NSArray<UIButton *> *thumbnailButtons;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UILabel *indexLabel;
+@property (nonatomic, strong) UISegmentedControl *rateSegmentedControl;
+@property (nonatomic, strong) UISlider *progressSlider;
 @property (nonatomic, strong) UIButton *closeButton;
 @property (nonatomic, assign) BOOL didScrollToInitialThumbnail;
+@property (nonatomic, assign) float playbackRate;
+@property (nonatomic, strong) id playerTimeObserver;
+@property (nonatomic, assign) BOOL isScrubbingProgress;
+@property (nonatomic, assign) BOOL wasPlayingBeforeScrubbing;
 
 @end
 
@@ -37,6 +43,7 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     if (self) {
         _videoItems = [videoItems copy];
         _currentIndex = MAX(0, MIN(currentIndex, (NSInteger)videoItems.count - 1));
+        _playbackRate = 0.5f;
         self.modalPresentationStyle = UIModalPresentationOverFullScreen;
         self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
     }
@@ -74,6 +81,9 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
 - (void)dealloc
 {
     [NSNotificationCenter.defaultCenter removeObserver:self];
+    if (self.playerTimeObserver) {
+        [self.player removeTimeObserver:self.playerTimeObserver];
+    }
 }
 
 - (void)configurePlayer
@@ -81,6 +91,10 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     self.player = [AVPlayer new];
     self.playerLayer = [AVPlayerLayer playerLayerWithPlayer:self.player];
     self.playerLayer.videoGravity = AVLayerVideoGravityResizeAspect;
+    __weak typeof(self) weakSelf = self;
+    self.playerTimeObserver = [self.player addPeriodicTimeObserverForInterval:CMTimeMakeWithSeconds(0.1, NSEC_PER_SEC) queue:dispatch_get_main_queue() usingBlock:^(CMTime time) {
+        [weakSelf updateProgressSliderForPlaybackTime:time];
+    }];
 }
 
 - (void)configureViews
@@ -107,6 +121,21 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     self.videoContainerView.layer.cornerRadius = 14;
     [self.videoContainerView.layer addSublayer:self.playerLayer];
     [self.contentStackView addArrangedSubview:self.videoContainerView];
+
+    self.progressSlider = [UISlider new];
+    self.progressSlider.translatesAutoresizingMaskIntoConstraints = NO;
+    self.progressSlider.minimumValue = 0;
+    self.progressSlider.maximumValue = 1;
+    self.progressSlider.value = 0;
+    self.progressSlider.continuous = YES;
+    self.progressSlider.minimumTrackTintColor = [UIColor.whiteColor colorWithAlphaComponent:0.58];
+    self.progressSlider.maximumTrackTintColor = [UIColor.whiteColor colorWithAlphaComponent:0.18];
+    [self.progressSlider setThumbImage:[self progressSliderThumbImage] forState:UIControlStateNormal];
+    [self.progressSlider setThumbImage:[self progressSliderThumbImage] forState:UIControlStateHighlighted];
+    [self.progressSlider addTarget:self action:@selector(progressSliderTouchBegan:) forControlEvents:UIControlEventTouchDown];
+    [self.progressSlider addTarget:self action:@selector(progressSliderValueChanged:) forControlEvents:UIControlEventValueChanged];
+    [self.progressSlider addTarget:self action:@selector(progressSliderTouchEnded:) forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside | UIControlEventTouchCancel];
+    [self.videoContainerView addSubview:self.progressSlider];
 
     self.thumbnailScrollView = [UIScrollView new];
     self.thumbnailScrollView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -145,6 +174,25 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     self.indexLabel.textAlignment = NSTextAlignmentCenter;
     [self.view addSubview:self.indexLabel];
 
+    // Display labels are doubled: 1x / 1.5x / 2x map to actual AVPlayer rates 0.5 / 0.75 / 1.
+    self.rateSegmentedControl = [[UISegmentedControl alloc] initWithItems:@[@"1×", @"1.5×", @"2×"]];
+    self.rateSegmentedControl.translatesAutoresizingMaskIntoConstraints = NO;
+    self.rateSegmentedControl.selectedSegmentIndex = 0;
+    self.rateSegmentedControl.backgroundColor = [UIColor colorWithWhite:1 alpha:0.12];
+    self.rateSegmentedControl.selectedSegmentTintColor = [UIColor colorWithWhite:1 alpha:0.28];
+    NSDictionary *normalAttributes = @{
+        NSForegroundColorAttributeName: [UIColor.whiteColor colorWithAlphaComponent:0.78],
+        NSFontAttributeName: [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightSemibold]
+    };
+    NSDictionary *selectedAttributes = @{
+        NSForegroundColorAttributeName: UIColor.blackColor,
+        NSFontAttributeName: [UIFont monospacedDigitSystemFontOfSize:12 weight:UIFontWeightSemibold]
+    };
+    [self.rateSegmentedControl setTitleTextAttributes:normalAttributes forState:UIControlStateNormal];
+    [self.rateSegmentedControl setTitleTextAttributes:selectedAttributes forState:UIControlStateSelected];
+    [self.rateSegmentedControl addTarget:self action:@selector(rateSegmentedControlChanged:) forControlEvents:UIControlEventValueChanged];
+    [self.view addSubview:self.rateSegmentedControl];
+
     self.closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
     self.closeButton.translatesAutoresizingMaskIntoConstraints = NO;
     UIImage *closeImage = [UIImage systemImageNamed:@"xmark"];
@@ -168,6 +216,11 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
         [self.contentStackView.bottomAnchor constraintEqualToAnchor:self.borderContainerView.bottomAnchor constant:-8],
 
         [self.videoContainerView.widthAnchor constraintEqualToAnchor:self.videoContainerView.heightAnchor multiplier:9.0 / 16.0],
+        [self.progressSlider.leadingAnchor constraintEqualToAnchor:self.videoContainerView.leadingAnchor constant:10],
+        [self.progressSlider.trailingAnchor constraintEqualToAnchor:self.videoContainerView.trailingAnchor constant:-10],
+        [self.progressSlider.bottomAnchor constraintEqualToAnchor:self.videoContainerView.bottomAnchor constant:-6],
+        [self.progressSlider.heightAnchor constraintEqualToConstant:18],
+
         [self.thumbnailScrollView.widthAnchor constraintEqualToConstant:46],
 
         [self.thumbnailStackView.topAnchor constraintEqualToAnchor:self.thumbnailScrollView.contentLayoutGuide.topAnchor],
@@ -182,6 +235,11 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
 
         [self.indexLabel.centerXAnchor constraintEqualToAnchor:self.thumbnailScrollView.centerXAnchor],
         [self.indexLabel.topAnchor constraintEqualToAnchor:self.borderContainerView.bottomAnchor constant:10],
+
+        [self.rateSegmentedControl.leadingAnchor constraintEqualToAnchor:self.videoContainerView.leadingAnchor],
+        [self.rateSegmentedControl.topAnchor constraintEqualToAnchor:self.borderContainerView.bottomAnchor constant:8],
+        [self.rateSegmentedControl.widthAnchor constraintEqualToConstant:132],
+        [self.rateSegmentedControl.heightAnchor constraintEqualToConstant:28],
 
         [self.closeButton.leadingAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.leadingAnchor constant:18],
         [self.closeButton.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:18],
@@ -253,6 +311,17 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     return image;
 }
 
+- (UIImage *)progressSliderThumbImage
+{
+    CGFloat diameter = 8;
+    CGRect rect = CGRectMake(0, 0, diameter, diameter);
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:rect.size];
+    return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+        [[UIColor.whiteColor colorWithAlphaComponent:0.72] setFill];
+        CGContextFillEllipseInRect(context.CGContext, rect);
+    }];
+}
+
 - (void)configureGestures
 {
     UISwipeGestureRecognizer *upSwipeGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showNextVideo)];
@@ -277,6 +346,7 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
 
     self.titleLabel.text = title;
     self.indexLabel.text = [NSString stringWithFormat:@"%ld/%ld", (long)(self.currentIndex + 1), (long)self.videoItems.count];
+    self.progressSlider.value = 0;
     [self updateThumbnailSelection];
     [self.player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithURL:videoURL]];
     [self resetPlayerEndObserver];
@@ -339,7 +409,77 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
 
 - (void)playVideo
 {
-    [self.player play];
+    self.player.rate = self.playbackRate;
+}
+
+- (void)updateProgressSliderForPlaybackTime:(CMTime)time
+{
+    if (self.isScrubbingProgress) {
+        return;
+    }
+
+    Float64 duration = CMTimeGetSeconds(self.player.currentItem.duration);
+    Float64 currentTime = CMTimeGetSeconds(time);
+    if (!isfinite(duration) || duration <= 0 || !isfinite(currentTime)) {
+        self.progressSlider.value = 0;
+        return;
+    }
+
+    self.progressSlider.value = MAX(0, MIN(1, currentTime / duration));
+}
+
+- (void)progressSliderTouchBegan:(UISlider *)slider
+{
+    self.isScrubbingProgress = YES;
+    self.wasPlayingBeforeScrubbing = self.player.timeControlStatus != AVPlayerTimeControlStatusPaused;
+    [self.player pause];
+}
+
+- (void)progressSliderValueChanged:(UISlider *)slider
+{
+    self.isScrubbingProgress = YES;
+}
+
+- (void)progressSliderTouchEnded:(UISlider *)slider
+{
+    Float64 duration = CMTimeGetSeconds(self.player.currentItem.duration);
+    if (!isfinite(duration) || duration <= 0) {
+        self.isScrubbingProgress = NO;
+        return;
+    }
+
+    CMTime targetTime = CMTimeMakeWithSeconds(duration * slider.value, NSEC_PER_SEC);
+    __weak typeof(self) weakSelf = self;
+    [self.player seekToTime:targetTime toleranceBefore:kCMTimeZero toleranceAfter:kCMTimeZero completionHandler:^(BOOL finished) {
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self) {
+            return;
+        }
+        self.isScrubbingProgress = NO;
+        if (self.wasPlayingBeforeScrubbing) {
+            [self playVideo];
+        }
+    }];
+}
+
+- (void)rateSegmentedControlChanged:(UISegmentedControl *)sender
+{
+    switch (sender.selectedSegmentIndex) {
+        case 0:
+            self.playbackRate = 0.5f;
+            break;
+        case 1:
+            self.playbackRate = 0.75f;
+            break;
+        case 2:
+        default:
+            self.playbackRate = 1.0f;
+            break;
+    }
+
+    if (self.player.timeControlStatus != AVPlayerTimeControlStatusPaused) {
+        [self playVideo];
+    }
 }
 
 - (void)showNextVideo

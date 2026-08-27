@@ -334,13 +334,20 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     }
 
     UITextView *textView = (UITextView *)recognizer.view;
-    NSURL *URL = [self manualVideoURLAtPoint:[recognizer locationInView:textView] textView:textView];
+    NSRange linkRange = NSMakeRange(NSNotFound, 0);
+    NSURL *URL = [self manualVideoURLAtPoint:[recognizer locationInView:textView] textView:textView effectiveRange:&linkRange];
     if ([URL.scheme isEqualToString:kMirrorManualVideoURLScheme]) {
         [self playVideoLinkFeedback];
+        [self animateVideoLinkInTextView:textView range:linkRange];
     }
 }
 
 - (NSURL *)manualVideoURLAtPoint:(CGPoint)point textView:(UITextView *)textView
+{
+    return [self manualVideoURLAtPoint:point textView:textView effectiveRange:nil];
+}
+
+- (NSURL *)manualVideoURLAtPoint:(CGPoint)point textView:(UITextView *)textView effectiveRange:(NSRangePointer)effectiveRange
 {
     NSLayoutManager *layoutManager = textView.layoutManager;
     NSTextContainer *textContainer = textView.textContainer;
@@ -353,8 +360,51 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
         return nil;
     }
 
-    id linkValue = [textView.attributedText attribute:NSLinkAttributeName atIndex:characterIndex effectiveRange:nil];
+    id linkValue = [textView.attributedText attribute:NSLinkAttributeName atIndex:characterIndex effectiveRange:effectiveRange];
     return [linkValue isKindOfClass:NSURL.class] ? linkValue : nil;
+}
+
+- (void)animateVideoLinkInTextView:(UITextView *)textView range:(NSRange)range
+{
+    if (range.location == NSNotFound || NSMaxRange(range) > textView.attributedText.length) {
+        return;
+    }
+
+    NSTextAttachment *attachment = [textView.attributedText attribute:NSAttachmentAttributeName atIndex:range.location effectiveRange:nil];
+    if (![attachment isKindOfClass:NSTextAttachment.class] || !attachment.image) {
+        return;
+    }
+
+    NSLayoutManager *layoutManager = textView.layoutManager;
+    NSTextContainer *textContainer = textView.textContainer;
+    [layoutManager ensureLayoutForTextContainer:textContainer];
+    NSRange glyphRange = [layoutManager glyphRangeForCharacterRange:range actualCharacterRange:nil];
+    CGRect glyphRect = [layoutManager boundingRectForGlyphRange:glyphRange inTextContainer:textContainer];
+    glyphRect.origin.x += textView.textContainerInset.left - textView.contentOffset.x;
+    glyphRect.origin.y += textView.textContainerInset.top - textView.contentOffset.y;
+
+    CGFloat iconSize = MAX(CGRectGetWidth(glyphRect), CGRectGetHeight(glyphRect));
+    if (iconSize <= 0) {
+        iconSize = CGRectGetHeight(textView.font.lineHeight > 0 ? CGRectMake(0, 0, textView.font.lineHeight, textView.font.lineHeight) : attachment.bounds);
+    }
+
+    UIImageView *pulseImageView = [[UIImageView alloc] initWithImage:attachment.image];
+    pulseImageView.contentMode = UIViewContentModeScaleAspectFit;
+    pulseImageView.frame = CGRectMake(0, 0, iconSize, iconSize);
+    pulseImageView.center = CGPointMake(CGRectGetMidX(glyphRect), CGRectGetMidY(glyphRect));
+    pulseImageView.userInteractionEnabled = NO;
+    [textView addSubview:pulseImageView];
+
+    [UIView animateWithDuration:0.08 delay:0 options:UIViewAnimationOptionCurveEaseOut animations:^{
+        pulseImageView.transform = CGAffineTransformMakeScale(1.55, 1.55);
+    } completion:^(BOOL finished) {
+        [UIView animateWithDuration:0.14 delay:0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            pulseImageView.transform = CGAffineTransformIdentity;
+            pulseImageView.alpha = 0.0;
+        } completion:^(BOOL finished) {
+            [pulseImageView removeFromSuperview];
+        }];
+    }];
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
