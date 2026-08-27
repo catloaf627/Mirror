@@ -166,9 +166,9 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 
 - (void)updateSupportButtonIcon
 {
-    UIImageSymbolConfiguration *headsetConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightRegular];
+    UIImageSymbolConfiguration *manualConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:19 weight:UIImageSymbolWeightRegular];
     UIImageSymbolConfiguration *fallbackConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:22 weight:UIImageSymbolWeightRegular];
-    UIImage *iconImage = [UIImage mirror_systemImageNamed:@"headset" fallbackName:@"questionmark.circle" configuration:headsetConfiguration fallbackConfiguration:fallbackConfiguration];
+    UIImage *iconImage = [UIImage mirror_systemImageNamed:@"book.and.wrench" fallbackName:@"questionmark.circle" configuration:manualConfiguration fallbackConfiguration:fallbackConfiguration];
     [_supportButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
     [_supportButton setTitle:iconImage ? nil : @"?" forState:UIControlStateNormal];
     _supportButton.titleLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightRegular];

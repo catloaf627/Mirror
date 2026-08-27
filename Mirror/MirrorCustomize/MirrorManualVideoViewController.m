@@ -43,7 +43,7 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     if (self) {
         _videoItems = [videoItems copy];
         _currentIndex = MAX(0, MIN(currentIndex, (NSInteger)videoItems.count - 1));
-        _playbackRate = 0.5f;
+        _playbackRate = 0.75f;
         self.modalPresentationStyle = UIModalPresentationOverFullScreen;
         self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
     }
@@ -177,7 +177,7 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     // Display labels are doubled: 1x / 1.5x / 2x map to actual AVPlayer rates 0.5 / 0.75 / 1.
     self.rateSegmentedControl = [[UISegmentedControl alloc] initWithItems:@[@"1×", @"1.5×", @"2×"]];
     self.rateSegmentedControl.translatesAutoresizingMaskIntoConstraints = NO;
-    self.rateSegmentedControl.selectedSegmentIndex = 0;
+    self.rateSegmentedControl.selectedSegmentIndex = 1;
     self.rateSegmentedControl.backgroundColor = [UIColor colorWithWhite:1 alpha:0.12];
     self.rateSegmentedControl.selectedSegmentTintColor = [UIColor colorWithWhite:1 alpha:0.28];
     NSDictionary *normalAttributes = @{
