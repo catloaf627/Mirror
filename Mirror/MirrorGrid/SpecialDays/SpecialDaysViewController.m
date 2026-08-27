@@ -23,6 +23,7 @@ static CGFloat const kSpecialDaysDialogPadding = 16;
 static CGFloat const kSpecialDaysDialogCornerRadius = 12;
 static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 static NSString * const kSpecialDayFallbackIconName = @"star.fill";
+static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCell";
 
 #define kSpecialDaysTimelineX (kScreenWidth * 0.33)
 
@@ -154,11 +155,147 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 
 @end
 
-@interface SpecialDaysViewController () <UITextFieldDelegate, UIEditMenuInteractionDelegate>
+@interface SpecialDayCollectionViewCell : UICollectionViewCell
+
+@property (nonatomic, strong) UIView *topLine;
+@property (nonatomic, strong) UIView *bottomLine;
+@property (nonatomic, strong) UIButton *iconButton;
+@property (nonatomic, strong) UILabel *leftDateLabel;
+@property (nonatomic, strong) UILabel *leftYearLabel;
+@property (nonatomic, strong) UILabel *infoLabel;
+
+- (void)configureWithDay:(MirrorDayModel *)day timestamp:(long)timestamp isFirst:(BOOL)isFirst isLast:(BOOL)isLast;
+- (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color;
+
+@end
+
+@implementation SpecialDayCollectionViewCell
+
+- (instancetype)initWithFrame:(CGRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = UIColor.clearColor;
+        self.contentView.backgroundColor = UIColor.clearColor;
+        [self setupUI];
+    }
+    return self;
+}
+
+- (void)prepareForReuse
+{
+    [super prepareForReuse];
+    self.contentView.layer.borderWidth = 0;
+    self.contentView.layer.borderColor = nil;
+    self.contentView.backgroundColor = UIColor.clearColor;
+    [self.contentView.layer removeAnimationForKey:@"selectedRowShake"];
+}
+
+- (void)setupUI
+{
+    self.topLine = [UIView new];
+    [self.contentView addSubview:self.topLine];
+    [self.topLine mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.mas_equalTo(self.contentView.mas_left).offset(kSpecialDaysPadding + kSpecialDaysTimelineX);
+        make.top.mas_equalTo(self.contentView);
+        make.width.mas_equalTo(2);
+        make.bottom.mas_equalTo(self.contentView.mas_centerY).offset(-kSpecialDaysTimelineIconSize / 2);
+    }];
+
+    self.bottomLine = [UIView new];
+    [self.contentView addSubview:self.bottomLine];
+    [self.bottomLine mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.mas_equalTo(self.topLine);
+        make.top.mas_equalTo(self.contentView.mas_centerY).offset(kSpecialDaysTimelineIconSize / 2);
+        make.width.mas_equalTo(2);
+        make.bottom.mas_equalTo(self.contentView);
+    }];
+
+    self.iconButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    self.iconButton.userInteractionEnabled = NO;
+    self.iconButton.backgroundColor = UIColor.clearColor;
+    [self.contentView addSubview:self.iconButton];
+    [self.iconButton mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.mas_equalTo(self.topLine);
+        make.centerY.mas_equalTo(self.contentView);
+        make.width.height.mas_equalTo(kSpecialDaysTimelineIconSize);
+    }];
+
+    self.leftDateLabel = [UILabel new];
+    self.leftDateLabel.font = [UIFont mirrorHighlightFont];
+    self.leftDateLabel.alpha = 0.7;
+    self.leftDateLabel.textAlignment = NSTextAlignmentRight;
+    self.leftDateLabel.adjustsFontSizeToFitWidth = YES;
+    self.leftDateLabel.minimumScaleFactor = 0.7;
+    [self.contentView addSubview:self.leftDateLabel];
+    [self.leftDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.contentView).offset(4 * kWidthRatio);
+        make.right.mas_equalTo(self.iconButton.mas_left).offset(-10 * kWidthRatio);
+        make.centerY.mas_equalTo(self.iconButton.mas_centerY).offset(-6 * kHeightRatio);
+    }];
+
+    self.leftYearLabel = [UILabel new];
+    self.leftYearLabel.font = [UIFont mirrorHintFont];
+    self.leftYearLabel.alpha = 0.7;
+    self.leftYearLabel.textAlignment = NSTextAlignmentRight;
+    self.leftYearLabel.adjustsFontSizeToFitWidth = YES;
+    self.leftYearLabel.minimumScaleFactor = 0.7;
+    [self.contentView addSubview:self.leftYearLabel];
+    [self.leftYearLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.right.mas_equalTo(self.leftDateLabel);
+        make.top.mas_equalTo(self.leftDateLabel.mas_bottom).offset(4 * kHeightRatio);
+        make.bottom.mas_lessThanOrEqualTo(self.contentView).offset(-10 * kHeightRatio);
+    }];
+
+    self.infoLabel = [UILabel new];
+    self.infoLabel.font = [UIFont mirrorLabelFont];
+    self.infoLabel.numberOfLines = 0;
+    [self.contentView addSubview:self.infoLabel];
+    [self.infoLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.iconButton.mas_right).offset(12 * kWidthRatio);
+        make.right.mas_equalTo(self.contentView).offset(-kSpecialDaysPadding);
+        make.top.mas_greaterThanOrEqualTo(self.contentView).offset(12);
+        make.centerY.mas_equalTo(self.iconButton);
+        make.bottom.mas_lessThanOrEqualTo(self.contentView).offset(-12);
+    }];
+}
+
+- (void)configureWithDay:(MirrorDayModel *)day timestamp:(long)timestamp isFirst:(BOOL)isFirst isLast:(BOOL)isLast
+{
+    UIColor *dayColor = [UIColor mirrorSystemColorNamed:day.color];
+    UIColor *lineColor = [dayColor colorWithAlphaComponent:0.38];
+
+    self.topLine.backgroundColor = lineColor;
+    self.topLine.alpha = isFirst ? 0 : 1;
+    self.bottomLine.backgroundColor = lineColor;
+    self.bottomLine.alpha = isLast ? 0 : 1;
+    self.iconButton.tintColor = dayColor;
+    [self.iconButton setImage:[UIImage mirror_systemImageNamed:day.icon fallbackName:kSpecialDayFallbackIconName] forState:UIControlStateNormal];
+    self.leftDateLabel.textColor = dayColor;
+    self.leftDateLabel.text = [MirrorTool timelineMonthDayTextForTimestamp:timestamp];
+    self.leftYearLabel.textColor = dayColor;
+    self.leftYearLabel.text = [MirrorTool timelineYearTextForTimestamp:timestamp];
+    self.infoLabel.textColor = dayColor;
+    self.infoLabel.text = day.info.length > 0 ? day.info : day.dateStr;
+}
+
+- (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color
+{
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    self.contentView.layer.cornerRadius = 8;
+    self.contentView.layer.masksToBounds = YES;
+    self.contentView.layer.borderWidth = showsSelectionBorder ? 1.5 : 0;
+    self.contentView.layer.borderColor = showsSelectionBorder ? color.CGColor : nil;
+    [CATransaction commit];
+}
+
+@end
+
+@interface SpecialDaysViewController () <UITextFieldDelegate, UIEditMenuInteractionDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout>
 
 @property (nonatomic, strong) UIButton *addButton;
-@property (nonatomic, strong) UIScrollView *scrollView;
-@property (nonatomic, strong) UIView *contentView;
+@property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) UILabel *emptyLabel;
 @property (nonatomic, strong) UIView *dialogBackdropView;
 @property (nonatomic, strong) SpecialDayDialogView *dialogView;
@@ -174,6 +311,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 @property (nonatomic, assign) BOOL isSpecialDayEditMenuVisible;
 @property (nonatomic, assign) BOOL shouldSuppressNextSpecialDayEditMenu;
 @property (nonatomic, weak) UIView *borderedSpecialDayRow;
+@property (nonatomic, assign) BOOL shouldSuppressNextSpecialDayReload;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleSpecialDayEditMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
@@ -184,6 +322,7 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 {
     self = [super init];
     if (self) {
+        _selectedDayIndex = NSNotFound;
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshVisibleUI) name:MirrorSwitchThemeNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshVisibleUI) name:MirrorSwitchLanguageNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshVisibleUI) name:MirrorSignificantTimeChangeNotification object:nil];
@@ -233,15 +372,9 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 
 - (void)setupUI
 {
-    [self.view addSubview:self.scrollView];
-    [self.scrollView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.view addSubview:self.collectionView];
+    [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.edges.mas_equalTo(self.view);
-    }];
-    
-    [self.scrollView addSubview:self.contentView];
-    [self.contentView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo(self.scrollView);
-        make.width.mas_equalTo(self.scrollView);
     }];
 
     [self.view addSubview:self.emptyLabel];
@@ -253,6 +386,10 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 
 - (void)reloadData
 {
+    if (self.shouldSuppressNextSpecialDayReload) {
+        self.shouldSuppressNextSpecialDayReload = NO;
+        return;
+    }
     self.days = [MirrorStorage retriveMirrorDays];
     [self sortSpecialDays:self.days];
     self.emptyLabel.hidden = self.days.count > 0;
@@ -262,15 +399,14 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 - (void)refreshVisibleUI
 {
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    self.scrollView.backgroundColor = [UIColor clearColor];
-    self.contentView.backgroundColor = [UIColor clearColor];
+    self.collectionView.backgroundColor = [UIColor clearColor];
     self.addButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     [self updateNavigationItemIfNeeded];
     self.emptyLabel.text = [MirrorLanguage mirror_stringWithKey:@"no_special_days"];
     self.emptyLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     self.emptyLabel.hidden = self.days.count > 0;
     [self refreshIconPickerIfNeeded];
-    [self rebuildTimeline];
+    [self.collectionView reloadData];
 }
 
 - (void)updateNavigationItemIfNeeded
@@ -279,39 +415,6 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
         return;
     }
     [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:[MirrorLanguage mirror_stringWithKey:@"special_days"] leftButton:nil rightButton:self.addButton];
-}
-
-- (void)rebuildTimeline
-{
-    [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
-    
-    UIView *previousRow = nil;
-    for (NSInteger index = 0; index < self.days.count; index++) {
-        MirrorDayModel *day = self.days[index];
-        UIView *row = [self timelineRowWithDay:day isFirst:index == 0 isLast:index == self.days.count - 1];
-        row.tag = index;
-        [self.contentView addSubview:row];
-        [row mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.left.right.mas_equalTo(self.contentView);
-            make.height.mas_greaterThanOrEqualTo(kSpecialDaysRowHeight);
-            if (previousRow) {
-                make.top.mas_equalTo(previousRow.mas_bottom);
-            } else {
-                make.top.mas_equalTo(self.contentView).offset(kSpecialDaysPadding);
-            }
-        }];
-        previousRow = row;
-    }
-    
-    [self.contentView mas_remakeConstraints:^(MASConstraintMaker *make) {
-        make.edges.mas_equalTo(self.scrollView);
-        make.width.mas_equalTo(self.scrollView);
-        if (previousRow) {
-            make.bottom.mas_equalTo(previousRow.mas_bottom).offset(kSpecialDaysPadding);
-        } else {
-            make.bottom.mas_equalTo(self.scrollView);
-        }
-    }];
 }
 
 - (void)focusInitialDateIfNeeded
@@ -326,28 +429,14 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
         return;
     }
     
-    [self.view layoutIfNeeded];
-    UIView *focusRow = [self rowViewForIndex:focusIndex];
-    if (!focusRow) {
-        return;
-    }
-    
-    CGFloat visibleHeight = CGRectGetHeight(self.scrollView.bounds);
-    UIEdgeInsets adjustedInset = UIEdgeInsetsZero;
-    if (@available(iOS 11.0, *)) {
-        adjustedInset = self.scrollView.adjustedContentInset;
-    } else {
-        adjustedInset = self.scrollView.contentInset;
-    }
-    
-    CGFloat minOffsetY = -adjustedInset.top;
-    CGFloat maxOffsetY = MAX(minOffsetY, self.scrollView.contentSize.height - visibleHeight + adjustedInset.bottom);
-    CGFloat targetOffsetY = CGRectGetMidY(focusRow.frame) - visibleHeight / 2.0;
-    targetOffsetY = MIN(MAX(targetOffsetY, minOffsetY), maxOffsetY);
-    [self.scrollView setContentOffset:CGPointMake(0, targetOffsetY) animated:YES];
+    NSIndexPath *indexPath = [NSIndexPath indexPathForItem:focusIndex inSection:0];
+    [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:YES];
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.32 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        [self highlightRow:focusRow withDay:self.days[focusIndex]];
+        UIView *focusRow = [self rowViewForIndex:focusIndex];
+        if (focusRow && focusIndex < self.days.count) {
+            [self highlightRow:focusRow withDay:self.days[focusIndex]];
+        }
     });
 }
 
@@ -364,12 +453,11 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 
 - (UIView *)rowViewForIndex:(NSInteger)index
 {
-    for (UIView *row in self.contentView.subviews) {
-        if (row.tag == index) {
-            return row;
-        }
+    if (index < 0 || index >= self.days.count) {
+        return nil;
     }
-    return nil;
+    SpecialDayCollectionViewCell *cell = (SpecialDayCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:[NSIndexPath indexPathForItem:index inSection:0]];
+    return [cell isKindOfClass:[SpecialDayCollectionViewCell class]] ? cell.contentView : nil;
 }
 
 - (void)highlightRow:(UIView *)row withDay:(MirrorDayModel *)day
@@ -396,101 +484,65 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     }];
 }
 
-- (UIView *)timelineRowWithDay:(MirrorDayModel *)day isFirst:(BOOL)isFirst isLast:(BOOL)isLast
+#pragma mark - UICollectionViewDataSource
+
+- (NSInteger)collectionView:(UICollectionView *)collectionView numberOfItemsInSection:(NSInteger)section
 {
-    UIView *row = [UIView new];
+    return self.days.count;
+}
+
+- (__kindof UICollectionViewCell *)collectionView:(UICollectionView *)collectionView cellForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    SpecialDayCollectionViewCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:kSpecialDayCellIdentifier forIndexPath:indexPath];
+    if (indexPath.item >= self.days.count) {
+        return cell;
+    }
+
+    MirrorDayModel *day = self.days[indexPath.item];
+    [cell configureWithDay:day timestamp:[self timestampFromDay:day] isFirst:indexPath.item == 0 isLast:indexPath.item == self.days.count - 1];
+    [cell setShowsSelectionBorder:indexPath.item == self.selectedDayIndex color:[UIColor mirrorSystemColorNamed:day.color]];
+    cell.tag = indexPath.item;
+    cell.contentView.tag = indexPath.item;
+
+    for (UIGestureRecognizer *recognizer in cell.contentView.gestureRecognizers.copy) {
+        [cell.contentView removeGestureRecognizer:recognizer];
+    }
+    if (@available(iOS 16.0, *)) {
+        for (id<UIInteraction> interaction in cell.contentView.interactions.copy) {
+            if ([interaction isKindOfClass:[UIEditMenuInteraction class]]) {
+                [cell.contentView removeInteraction:interaction];
+            }
+        }
+    }
+
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(specialDayRowTapped:)];
-    [row addGestureRecognizer:tapRecognizer];
+    [cell.contentView addGestureRecognizer:tapRecognizer];
     if (@available(iOS 16.0, *)) {
         UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
-        [row addInteraction:editMenuInteraction];
+        [cell.contentView addInteraction:editMenuInteraction];
         UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showSpecialDayEditMenu:)];
         [tapRecognizer requireGestureRecognizerToFail:longPressRecognizer];
-        [row addGestureRecognizer:longPressRecognizer];
+        [cell.contentView addGestureRecognizer:longPressRecognizer];
     }
-    UIColor *dayColor = [UIColor mirrorSystemColorNamed:day.color];
-    UIColor *lineColor = [dayColor colorWithAlphaComponent:0.38];
-    
-    UIView *topLine = [UIView new];
-    topLine.backgroundColor = lineColor;
-    topLine.alpha = isFirst ? 0 : 1;
-    [row addSubview:topLine];
-    [topLine mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(row.mas_left).offset(kSpecialDaysPadding + kSpecialDaysTimelineX);
-        make.top.mas_equalTo(row);
-        make.width.mas_equalTo(2);
-        make.bottom.mas_equalTo(row.mas_centerY).offset(-kSpecialDaysTimelineIconSize / 2);
-    }];
-    
-    UIView *bottomLine = [UIView new];
-    bottomLine.backgroundColor = lineColor;
-    bottomLine.alpha = isLast ? 0 : 1;
-    [row addSubview:bottomLine];
-    [bottomLine mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(topLine);
-        make.top.mas_equalTo(row.mas_centerY).offset(kSpecialDaysTimelineIconSize / 2);
-        make.width.mas_equalTo(2);
-        make.bottom.mas_equalTo(row);
-    }];
-    
-    UIButton *iconButton = [UIButton buttonWithType:UIButtonTypeSystem];
-    iconButton.userInteractionEnabled = NO;
-    iconButton.tintColor = dayColor;
-    iconButton.backgroundColor = [UIColor clearColor];
-    [iconButton setImage:[UIImage mirror_systemImageNamed:day.icon fallbackName:kSpecialDayFallbackIconName] forState:UIControlStateNormal];
-    [row addSubview:iconButton];
-    [iconButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(topLine);
-        make.centerY.mas_equalTo(row);
-        make.width.height.mas_equalTo(kSpecialDaysTimelineIconSize);
-    }];
-    
-    long dayTimestamp = [self timestampFromDay:day];
-    UILabel *leftDateLabel = [UILabel new];
-    leftDateLabel.font = [UIFont mirrorHighlightFont];
-    leftDateLabel.textColor = dayColor;
-    leftDateLabel.alpha = 0.7;
-    leftDateLabel.textAlignment = NSTextAlignmentRight;
-    leftDateLabel.adjustsFontSizeToFitWidth = YES;
-    leftDateLabel.minimumScaleFactor = 0.7;
-    leftDateLabel.text = [MirrorTool timelineMonthDayTextForTimestamp:dayTimestamp];
-    [row addSubview:leftDateLabel];
-    [leftDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(row).offset(4 * kWidthRatio);
-        make.right.mas_equalTo(iconButton.mas_left).offset(-10 * kWidthRatio);
-        make.centerY.mas_equalTo(iconButton.mas_centerY).offset(-6 * kHeightRatio);
-    }];
-    
-    UILabel *leftYearLabel = [UILabel new];
-    leftYearLabel.font = [UIFont mirrorHintFont];
-    leftYearLabel.textColor = dayColor;
-    leftYearLabel.alpha = 0.7;
-    leftYearLabel.textAlignment = NSTextAlignmentRight;
-    leftYearLabel.adjustsFontSizeToFitWidth = YES;
-    leftYearLabel.minimumScaleFactor = 0.7;
-    leftYearLabel.text = [MirrorTool timelineYearTextForTimestamp:dayTimestamp];
-    [row addSubview:leftYearLabel];
-    [leftYearLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.mas_equalTo(leftDateLabel);
-        make.top.mas_equalTo(leftDateLabel.mas_bottom).offset(4 * kHeightRatio);
-        make.bottom.mas_lessThanOrEqualTo(row).offset(-10 * kHeightRatio);
-    }];
-    
-    UILabel *infoLabel = [UILabel new];
-    infoLabel.font = [UIFont mirrorLabelFont];
-    infoLabel.textColor = dayColor;
-    infoLabel.numberOfLines = 0;
-    infoLabel.text = day.info.length > 0 ? day.info : day.dateStr;
-    [row addSubview:infoLabel];
-    [infoLabel mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(iconButton.mas_right).offset(12 * kWidthRatio);
-        make.right.mas_equalTo(row).offset(-kSpecialDaysPadding);
-        make.top.mas_greaterThanOrEqualTo(row).offset(12);
-        make.centerY.mas_equalTo(iconButton);
-        make.bottom.mas_lessThanOrEqualTo(row).offset(-12);
-    }];
-    
-    return row;
+
+    return cell;
+}
+
+#pragma mark - UICollectionViewDelegateFlowLayout
+
+- (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    return CGSizeMake(CGRectGetWidth(collectionView.bounds), kSpecialDaysRowHeight);
+}
+
+- (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
+{
+    return UIEdgeInsetsMake(kSpecialDaysPadding, 0, kSpecialDaysPadding, 0);
+}
+
+- (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section
+{
+    return 0;
 }
 
 - (void)specialDayRowTapped:(UITapGestureRecognizer *)recognizer
@@ -504,45 +556,27 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     if (index < 0 || index >= self.days.count) {
         return;
     }
-    
-    UIColor *borderColor = [UIColor mirrorSystemColorNamed:self.days[index].color];
-    [self flashBorderForSpecialDayRow:row color:borderColor];
+
+    NSInteger previousDayIndex = self.selectedDayIndex;
+    self.selectedDayIndex = index;
+    [self reloadSelectionFromPreviousDayIndex:previousDayIndex currentDayIndex:self.selectedDayIndex];
 }
 
-- (void)showBorderForSpecialDayRow:(UIView *)row color:(UIColor *)color
+- (void)reloadSelectionFromPreviousDayIndex:(NSInteger)previousDayIndex currentDayIndex:(NSInteger)currentDayIndex
 {
-    if (self.borderedSpecialDayRow && self.borderedSpecialDayRow != row) {
-        [self clearBorderForSpecialDayRow:self.borderedSpecialDayRow];
+    if (previousDayIndex >= 0 && previousDayIndex < self.days.count && previousDayIndex != currentDayIndex) {
+        NSIndexPath *previousIndexPath = [NSIndexPath indexPathForItem:previousDayIndex inSection:0];
+        SpecialDayCollectionViewCell *previousCell = (SpecialDayCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:previousIndexPath];
+        [previousCell setShowsSelectionBorder:NO color:nil];
     }
-    
-    self.borderedSpecialDayRow = row;
-    row.layer.cornerRadius = 8;
-    row.layer.masksToBounds = YES;
-    row.layer.borderColor = color.CGColor;
-    row.layer.borderWidth = 1.5;
-}
 
-- (void)clearBorderForSpecialDayRow:(UIView *)row
-{
-    if (!row) {
-        return;
+    if (currentDayIndex >= 0 && currentDayIndex < self.days.count) {
+        NSIndexPath *currentIndexPath = [NSIndexPath indexPathForItem:currentDayIndex inSection:0];
+        SpecialDayCollectionViewCell *currentCell = (SpecialDayCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:currentIndexPath];
+        UIColor *borderColor = [UIColor mirrorSystemColorNamed:self.days[currentDayIndex].color];
+        [currentCell setShowsSelectionBorder:YES color:borderColor];
+        self.borderedSpecialDayRow = currentCell.contentView;
     }
-    
-    row.layer.borderWidth = 0;
-    row.layer.borderColor = nil;
-    if (self.borderedSpecialDayRow == row) {
-        self.borderedSpecialDayRow = nil;
-    }
-}
-
-- (void)flashBorderForSpecialDayRow:(UIView *)row color:(UIColor *)color
-{
-    [self showBorderForSpecialDayRow:row color:color];
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.65 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-        if (!self.isSpecialDayEditMenuVisible && self.borderedSpecialDayRow == row) {
-            [self clearBorderForSpecialDayRow:row];
-        }
-    });
 }
 
 - (long)timestampFromDay:(MirrorDayModel *)day
@@ -573,10 +607,11 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     [feedback impactOccurred];
     
     UIView *view = recognizer.view;
-    self.selectedDayIndex = view.tag;
-    if (self.selectedDayIndex >= 0 && self.selectedDayIndex < self.days.count) {
-        UIColor *borderColor = [UIColor mirrorSystemColorNamed:self.days[self.selectedDayIndex].color];
-        [self showBorderForSpecialDayRow:view color:borderColor];
+    NSInteger index = view.tag;
+    if (index >= 0 && index < self.days.count) {
+        NSInteger previousDayIndex = self.selectedDayIndex;
+        self.selectedDayIndex = index;
+        [self reloadSelectionFromPreviousDayIndex:previousDayIndex currentDayIndex:self.selectedDayIndex];
     }
     [self shakeSelectedRow:view];
     
@@ -639,7 +674,6 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     if (interaction == self.visibleSpecialDayEditMenuInteraction) {
         self.isSpecialDayEditMenuVisible = NO;
         self.visibleSpecialDayEditMenuInteraction = nil;
-        [self clearBorderForSpecialDayRow:self.borderedSpecialDayRow];
         self.shouldSuppressNextSpecialDayEditMenu = YES;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
             if (!self.isSpecialDayEditMenuVisible) {
@@ -659,7 +693,6 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     }
     self.isSpecialDayEditMenuVisible = NO;
     self.visibleSpecialDayEditMenuInteraction = nil;
-    [self clearBorderForSpecialDayRow:self.borderedSpecialDayRow];
     self.shouldSuppressNextSpecialDayEditMenu = NO;
     return YES;
 }
@@ -678,8 +711,33 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     if (index < 0 || index >= self.days.count) {
         return;
     }
-    
+
+    if (self.selectedDayIndex == index) {
+        self.selectedDayIndex = NSNotFound;
+    } else if (self.selectedDayIndex > index) {
+        self.selectedDayIndex -= 1;
+    }
+    self.borderedSpecialDayRow = nil;
+    self.shouldSuppressNextSpecialDayReload = YES;
+    [self.days removeObjectAtIndex:index];
     [MirrorStorage deleteMirrorDayAtIndex:index];
+    self.emptyLabel.hidden = self.days.count > 0;
+
+    NSIndexPath *deletedIndexPath = [NSIndexPath indexPathForItem:index inSection:0];
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView deleteItemsAtIndexPaths:@[deletedIndexPath]];
+    } completion:^(BOOL finished) {
+        NSMutableArray<NSIndexPath *> *reloadIndexPaths = [NSMutableArray new];
+        if (index - 1 >= 0) {
+            [reloadIndexPaths addObject:[NSIndexPath indexPathForItem:index - 1 inSection:0]];
+        }
+        if (index < self.days.count) {
+            [reloadIndexPaths addObject:[NSIndexPath indexPathForItem:index inSection:0]];
+        }
+        if (reloadIndexPaths.count > 0) {
+            [self.collectionView reloadItemsAtIndexPaths:reloadIndexPaths];
+        }
+    }];
 }
 
 - (void)showAddDialog
@@ -1326,24 +1384,23 @@ static NSString * const kSpecialDayFallbackIconName = @"star.fill";
     return _addButton;
 }
 
-- (UIScrollView *)scrollView
+- (UICollectionView *)collectionView
 {
-    if (!_scrollView) {
-        _scrollView = [UIScrollView new];
-        _scrollView.backgroundColor = [UIColor clearColor];
-        _scrollView.alwaysBounceVertical = YES;
-        _scrollView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
-    }
-    return _scrollView;
-}
+    if (!_collectionView) {
+        UICollectionViewFlowLayout *layout = [UICollectionViewFlowLayout new];
+        layout.scrollDirection = UICollectionViewScrollDirectionVertical;
+        layout.minimumLineSpacing = 0;
+        layout.minimumInteritemSpacing = 0;
 
-- (UIView *)contentView
-{
-    if (!_contentView) {
-        _contentView = [UIView new];
-        _contentView.backgroundColor = [UIColor clearColor];
+        _collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
+        _collectionView.backgroundColor = [UIColor clearColor];
+        _collectionView.alwaysBounceVertical = YES;
+        _collectionView.keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
+        _collectionView.dataSource = self;
+        _collectionView.delegate = self;
+        [_collectionView registerClass:[SpecialDayCollectionViewCell class] forCellWithReuseIdentifier:kSpecialDayCellIdentifier];
     }
-    return _contentView;
+    return _collectionView;
 }
 
 - (UILabel *)emptyLabel
