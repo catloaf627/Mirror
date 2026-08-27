@@ -94,6 +94,7 @@
     [mirrorDict setValue:ML(@"Add Special Day", @"添加特别日", @"Añadir día especial", @"Ajouter un jour spécial", @"特別な日を追加", @"특별한 날 추가", @"Besonderen Tag hinzufügen", @"Добавить особый день") forKey:@"add_special_day"];
     [mirrorDict setValue:ML(@"Info", @"信息", @"Información", @"Info", @"情報", @"정보", @"Info", @"Информация") forKey:@"special_day_info"];
     [mirrorDict setValue:ML(@"Icon", @"图标", @"Icono", @"Icône", @"アイコン", @"아이콘", @"Symbol", @"Иконка") forKey:@"special_day_icon"];
+    [mirrorDict setValue:ML(@"Search symbols (English only)", @"搜索图标（仅支持英文）", @"Buscar símbolos (solo inglés)", @"Rechercher des symboles (anglais uniquement)", @"シンボルを検索（英語のみ）", @"기호 검색(영어만 지원)", @"Symbole suchen (nur Englisch)", @"Поиск символов (только английский)") forKey:@"special_day_icon_search"];
     [mirrorDict setValue:ML(@"No special days", @"暂无特别日", @"Sin días especiales", @"Aucun jour spécial", @"特別な日はありません", @"특별한 날 없음", @"Keine besonderen Tage", @"Нет особых дней") forKey:@"no_special_days"];
     [mirrorDict setValue:ML(@"Only one special day can be added per day", @"一天只能添加一个特别日", @"Solo se puede añadir un día especial por fecha", @"Un seul jour spécial peut être ajouté par date", @"1日に追加できる特別な日は1つだけです", @"하루에 특별한 날은 하나만 추가할 수 있습니다", @"Pro Datum kann nur ein besonderer Tag hinzugefügt werden", @"На одну дату можно добавить только один особый день") forKey:@"special_day_cannot_be_duplicated"];
     

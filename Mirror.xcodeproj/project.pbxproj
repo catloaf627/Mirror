@@ -57,6 +57,7 @@
 		4ADD1723303E5E7E005857EA /* PeriodEditAlertView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1722303E5E7E005857EA /* PeriodEditAlertView.m */; };
 		4ADD1726303E7718005857EA /* UIImage+MirrorSymbol.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADD1725303E7718005857EA /* UIImage+MirrorSymbol.m */; };
 		4ADDCA86302EE270003EE2A3 /* MirrorDebugAlert.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */; };
+		4AE0C4923040B50700772B8E /* SpecialDayEditViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE0C4913040B50700772B8E /* SpecialDayEditViewController.m */; };
 		4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AE4171828DF613D008A6A18 /* TimeViewController.m */; };
 		4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AF5A32F2B9C5F98009A2FB3 /* HintFooter.m */; };
 		4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AFB77A128DF4A380064CBCA /* AppDelegate.m */; };
@@ -188,6 +189,8 @@
 		4ADD1725303E7718005857EA /* UIImage+MirrorSymbol.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = "UIImage+MirrorSymbol.m"; sourceTree = "<group>"; };
 		4ADDCA84302EE251003EE2A3 /* MirrorDebugAlert.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorDebugAlert.h; sourceTree = "<group>"; };
 		4ADDCA85302EE270003EE2A3 /* MirrorDebugAlert.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorDebugAlert.m; sourceTree = "<group>"; };
+		4AE0C4903040B47E00772B8E /* SpecialDayEditViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SpecialDayEditViewController.h; sourceTree = "<group>"; };
+		4AE0C4913040B50700772B8E /* SpecialDayEditViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SpecialDayEditViewController.m; sourceTree = "<group>"; };
 		4AE4171728DF613D008A6A18 /* TimeViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeViewController.h; sourceTree = "<group>"; };
 		4AE4171828DF613D008A6A18 /* TimeViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimeViewController.m; sourceTree = "<group>"; };
 		4AF5A32E2B9C5F98009A2FB3 /* HintFooter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HintFooter.h; sourceTree = "<group>"; };
@@ -472,6 +475,8 @@
 				4AD065A1302FCE78005A894C /* SpecialDaysViewController.h */,
 				4AD065A2302FCEB7005A894C /* SpecialDaysViewController.m */,
 				4AD065A530301334005A894C /* SFSymbolNames.plist */,
+				4AE0C4903040B47E00772B8E /* SpecialDayEditViewController.h */,
+				4AE0C4913040B50700772B8E /* SpecialDayEditViewController.m */,
 			);
 			path = SpecialDays;
 			sourceTree = "<group>";
@@ -727,6 +732,7 @@
 				4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */,
 				4AABB609303F8E0400AA0DE3 /* MirrorManualVideoViewController.m in Sources */,
 				4ADD1708303DE34D005857EA /* MirrorHandmadeCalendarView.m in Sources */,
+				4AE0C4923040B50700772B8E /* SpecialDayEditViewController.m in Sources */,
 				4ADCD25B3026BB1400578A81 /* MirrorLiveActivityManager.swift in Sources */,
 				4ADD1723303E5E7E005857EA /* PeriodEditAlertView.m in Sources */,
 				4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */,
