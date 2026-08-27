@@ -23,7 +23,7 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
 
     // 由于删除了storyboard，所以需要自己手动创建UIWindow
-    Class windowClass = show_tap_dot ? MirrorRecordWindow.class : UIWindow.class;
+    Class windowClass = is_record ? MirrorRecordWindow.class : UIWindow.class;
     _window = [[windowClass alloc]initWithFrame:[[UIScreen mainScreen] bounds]];
     
     // Init tabbarController (使用mirrorTabController避免重复init)

@@ -38,22 +38,46 @@
     self.presentingViewController = viewController;
 
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"DEBUG"
-                                                                             message:@"\n\n\n\n"
+                                                                             message:@"\n\n\n\n\n\n\n\n\n\n\n\n\n"
                                                                       preferredStyle:UIAlertControllerStyleAlert];
 
     UIView *tapDotSwitchContainer = [UIView new];
     tapDotSwitchContainer.translatesAutoresizingMaskIntoConstraints = NO;
 
-    UILabel *tapDotSwitchLabel = [UILabel new];
-    tapDotSwitchLabel.translatesAutoresizingMaskIntoConstraints = NO;
-    tapDotSwitchLabel.text = @"show_tap_dot";
-    tapDotSwitchLabel.font = [UIFont systemFontOfSize:17];
-    tapDotSwitchLabel.textColor = UIColor.labelColor;
+    UILabel *recordSwitchLabel = [UILabel new];
+    recordSwitchLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    recordSwitchLabel.text = @"is_record";
+    recordSwitchLabel.font = [UIFont systemFontOfSize:17];
+    recordSwitchLabel.textColor = UIColor.labelColor;
 
-    UISwitch *tapDotSwitch = [UISwitch new];
-    tapDotSwitch.translatesAutoresizingMaskIntoConstraints = NO;
-    tapDotSwitch.on = show_tap_dot;
-    [tapDotSwitch addTarget:self action:@selector(tapDotSwitchChanged:) forControlEvents:UIControlEventValueChanged];
+    UISwitch *recordSwitch = [UISwitch new];
+    recordSwitch.translatesAutoresizingMaskIntoConstraints = NO;
+    recordSwitch.on = is_record;
+    [recordSwitch addTarget:self action:@selector(recordSwitchChanged:) forControlEvents:UIControlEventValueChanged];
+
+    UIButton *copyTimeOnButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    copyTimeOnButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [copyTimeOnButton setTitle:@"sudo systemsetup -setusingnetworktime off" forState:UIControlStateNormal];
+    copyTimeOnButton.titleLabel.font = [UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightMedium];
+    copyTimeOnButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+    copyTimeOnButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    [copyTimeOnButton addTarget:self action:@selector(copyRecordNetworkTimeOffCommand) forControlEvents:UIControlEventTouchUpInside];
+
+    UIButton *copyDateButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    copyDateButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [copyDateButton setTitle:@"sudo date 0826010026" forState:UIControlStateNormal];
+    copyDateButton.titleLabel.font = [UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightMedium];
+    copyDateButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+    copyDateButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    [copyDateButton addTarget:self action:@selector(copyRecordDateCommand) forControlEvents:UIControlEventTouchUpInside];
+
+    UIButton *copyTimeOffButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    copyTimeOffButton.translatesAutoresizingMaskIntoConstraints = NO;
+    [copyTimeOffButton setTitle:@"sudo systemsetup -setusingnetworktime on" forState:UIControlStateNormal];
+    copyTimeOffButton.titleLabel.font = [UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightMedium];
+    copyTimeOffButton.titleLabel.adjustsFontSizeToFitWidth = YES;
+    copyTimeOffButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
+    [copyTimeOffButton addTarget:self action:@selector(copyRecordTimeOffCommand) forControlEvents:UIControlEventTouchUpInside];
 
     UIView *debugSwitchContainer = [UIView new];
     debugSwitchContainer.translatesAutoresizingMaskIntoConstraints = NO;
@@ -69,8 +93,11 @@
     debugSwitch.on = is_debug;
     [debugSwitch addTarget:self action:@selector(debugSwitchChanged:) forControlEvents:UIControlEventValueChanged];
 
-    [tapDotSwitchContainer addSubview:tapDotSwitchLabel];
-    [tapDotSwitchContainer addSubview:tapDotSwitch];
+    [tapDotSwitchContainer addSubview:recordSwitchLabel];
+    [tapDotSwitchContainer addSubview:recordSwitch];
+    [tapDotSwitchContainer addSubview:copyTimeOnButton];
+    [tapDotSwitchContainer addSubview:copyDateButton];
+    [tapDotSwitchContainer addSubview:copyTimeOffButton];
     [debugSwitchContainer addSubview:debugSwitchLabel];
     [debugSwitchContainer addSubview:debugSwitch];
     [alertController.view addSubview:tapDotSwitchContainer];
@@ -80,13 +107,28 @@
         [tapDotSwitchContainer.leadingAnchor constraintEqualToAnchor:alertController.view.leadingAnchor constant:24],
         [tapDotSwitchContainer.trailingAnchor constraintEqualToAnchor:alertController.view.trailingAnchor constant:-24],
         [tapDotSwitchContainer.topAnchor constraintEqualToAnchor:alertController.view.topAnchor constant:60],
-        [tapDotSwitchContainer.heightAnchor constraintEqualToConstant:36],
+        [tapDotSwitchContainer.heightAnchor constraintEqualToConstant:128],
 
-        [tapDotSwitchLabel.leadingAnchor constraintEqualToAnchor:tapDotSwitchContainer.leadingAnchor],
-        [tapDotSwitchLabel.centerYAnchor constraintEqualToAnchor:tapDotSwitchContainer.centerYAnchor],
+        [recordSwitchLabel.leadingAnchor constraintEqualToAnchor:tapDotSwitchContainer.leadingAnchor],
+        [recordSwitchLabel.topAnchor constraintEqualToAnchor:tapDotSwitchContainer.topAnchor],
 
-        [tapDotSwitch.trailingAnchor constraintEqualToAnchor:tapDotSwitchContainer.trailingAnchor],
-        [tapDotSwitch.centerYAnchor constraintEqualToAnchor:tapDotSwitchContainer.centerYAnchor],
+        [recordSwitch.trailingAnchor constraintEqualToAnchor:tapDotSwitchContainer.trailingAnchor],
+        [recordSwitch.centerYAnchor constraintEqualToAnchor:recordSwitchLabel.centerYAnchor],
+
+        [copyTimeOnButton.leadingAnchor constraintEqualToAnchor:tapDotSwitchContainer.leadingAnchor],
+        [copyTimeOnButton.trailingAnchor constraintEqualToAnchor:tapDotSwitchContainer.trailingAnchor],
+        [copyTimeOnButton.topAnchor constraintEqualToAnchor:recordSwitchLabel.bottomAnchor constant:8],
+        [copyTimeOnButton.heightAnchor constraintEqualToConstant:26],
+
+        [copyDateButton.leadingAnchor constraintEqualToAnchor:tapDotSwitchContainer.leadingAnchor],
+        [copyDateButton.trailingAnchor constraintEqualToAnchor:tapDotSwitchContainer.trailingAnchor],
+        [copyDateButton.topAnchor constraintEqualToAnchor:copyTimeOnButton.bottomAnchor constant:4],
+        [copyDateButton.heightAnchor constraintEqualToConstant:26],
+
+        [copyTimeOffButton.leadingAnchor constraintEqualToAnchor:tapDotSwitchContainer.leadingAnchor],
+        [copyTimeOffButton.trailingAnchor constraintEqualToAnchor:tapDotSwitchContainer.trailingAnchor],
+        [copyTimeOffButton.topAnchor constraintEqualToAnchor:copyDateButton.bottomAnchor constant:4],
+        [copyTimeOffButton.heightAnchor constraintEqualToConstant:26],
 
         [debugSwitchContainer.leadingAnchor constraintEqualToAnchor:alertController.view.leadingAnchor constant:24],
         [debugSwitchContainer.trailingAnchor constraintEqualToAnchor:alertController.view.trailingAnchor constant:-24],
@@ -114,9 +156,24 @@
     [viewController presentViewController:alertController animated:YES completion:nil];
 }
 
-- (void)tapDotSwitchChanged:(UISwitch *)tapDotSwitch
+- (void)recordSwitchChanged:(UISwitch *)recordSwitch
 {
-    [[NSUserDefaults standardUserDefaults] setBool:tapDotSwitch.isOn forKey:@"show_tap_dot"];
+    [[NSUserDefaults standardUserDefaults] setBool:recordSwitch.isOn forKey:@"is_record"];
+}
+
+- (void)copyRecordNetworkTimeOffCommand
+{
+    UIPasteboard.generalPasteboard.string = @"sudo systemsetup -setusingnetworktime off";
+}
+
+- (void)copyRecordDateCommand
+{
+    UIPasteboard.generalPasteboard.string = @"sudo date 0826010026";
+}
+
+- (void)copyRecordTimeOffCommand
+{
+    UIPasteboard.generalPasteboard.string = @"sudo systemsetup -setusingnetworktime on";
 }
 
 - (void)debugSwitchChanged:(UISwitch *)debugSwitch

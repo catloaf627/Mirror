@@ -14,6 +14,9 @@ static NSString * const kMirrorPreferredLanguageKey = @"MirrorUserPreferredLangu
 
 + (BOOL)appliedDarkMode
 {
+    if (is_record) {
+        return YES;
+    }
     return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredDarkMode"];
 }
 
