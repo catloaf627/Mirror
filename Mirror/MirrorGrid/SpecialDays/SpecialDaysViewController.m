@@ -17,7 +17,7 @@
 #import "SpecialDayEditViewController.h"
 
 static CGFloat const kSpecialDaysPadding = 20;
-static CGFloat const kSpecialDaysRowHeight = 58;
+static CGFloat const kSpecialDaysRowHeight = 68;
 static CGFloat const kSpecialDaysTimelineIconSize = 26;
 static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCell";
@@ -104,7 +104,7 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     [self.leftDateLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.contentView).offset(4 * kWidthRatio);
         make.right.mas_equalTo(self.iconButton.mas_left).offset(-10 * kWidthRatio);
-        make.centerY.mas_equalTo(self.iconButton.mas_centerY).offset(-6 * kHeightRatio);
+        make.bottom.mas_equalTo(self.iconButton.mas_centerY).offset(-1 * kHeightRatio);
     }];
 
     self.leftYearLabel = [UILabel new];
@@ -116,7 +116,7 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     [self.contentView addSubview:self.leftYearLabel];
     [self.leftYearLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.mas_equalTo(self.leftDateLabel);
-        make.top.mas_equalTo(self.leftDateLabel.mas_bottom).offset(4 * kHeightRatio);
+        make.top.mas_equalTo(self.iconButton.mas_centerY).offset(1 * kHeightRatio);
         make.bottom.mas_lessThanOrEqualTo(self.contentView).offset(-10 * kHeightRatio);
     }];
 
