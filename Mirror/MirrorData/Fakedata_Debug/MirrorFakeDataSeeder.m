@@ -105,13 +105,15 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         NSDate *currentDate = [calendar dateByAddingUnit:NSCalendarUnitDay value:dayIndex toDate:startDate options:0];
         NSDateComponents *components = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitWeekday fromDate:currentDate];
         NSInteger monthIndex = [calendar components:NSCalendarUnitMonth fromDate:startDate toDate:currentDate options:0].month;
-        BOOL isNoDataDay = dayIndex != totalDays && [self isNoDataDayForComponents:components dayIndex:dayIndex];
+        if (dayIndex == totalDays) {
+            [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Gym"] components:components hour:7 minute:30 durationMinutes:90 note:[self gymNoteForWorkoutIndex:dayIndex / 2 dayIndex:dayIndex] records:fakeRecords];
+            [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] components:components hour:10 minute:0 durationMinutes:60 note:[self codeNoteForDayIndex:dayIndex] records:fakeRecords];
+            continue;
+        }
+
+        BOOL isNoDataDay = [self isNoDataDayForComponents:components dayIndex:dayIndex];
         if (!isNoDataDay) {
             [self appendRecordsForDateComponents:components dayIndex:dayIndex monthIndex:monthIndex records:fakeRecords readingBookIndex:&readingBookIndex readingRemainingMinutes:&readingRemainingMinutes];
-        }
-        if (dayIndex == totalDays && !isNoDataDay) {
-            [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Read"] components:components hour:22 minute:15 durationMinutes:45 note:[self readingNoteForBookIndex:readingBookIndex] records:fakeRecords];
-            [self advanceReadingBookIndex:&readingBookIndex remainingMinutes:&readingRemainingMinutes byReadMinutes:45];
         }
     }
 
@@ -135,45 +137,41 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Tennis"] color:MirrorColorTypeCellGreen createdHour:18 createdMinute:30],
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Swim"] color:MirrorColorTypeCellTeal createdHour:17 createdMinute:45],
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] color:MirrorColorTypeCellPurple createdHour:9 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Cook"] color:MirrorColorTypeCellYellow createdHour:18 createdMinute:30],
-        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Read"] color:MirrorColorTypeCellPink createdHour:21 createdMinute:30]
+        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Read"] color:MirrorColorTypeCellPink createdHour:21 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Cook"] color:MirrorColorTypeCellYellow createdHour:18 createdMinute:30]
     ];
 }
 
 // 每天的 fake record 生成规则：
 // 1. 前 180 天每月稳定随机 8-10 天完全不生成记录，制造无数据日。
 // 2. 每月 2 号到随机的 3/4/5 号视为生理期，不生成运动和编程。
-// 3. 非生理期有 20% 概率偷懒不运动；运动日早上生成一条运动：偶数 dayIndex 健身；非健身日夏天游泳、冬天网球，其他季节游泳/网球按概率切换。
+// 3. 非生理期有 20% 概率偷懒不运动；运动日早上生成一条运动，健身和网球占主，游泳少量点缀。
 // 4. 运动时间在 7 点左右，周末有概率推迟到 8/9 点，运动时长 1.5 到 2 小时。
 // 5. 前 180 天不生成编程和做饭。
-// 6. 编程从运动结束后 1 到 2 小时开始，时长 1 到 12 小时，有 2% 概率偷懒跳过。
-// 7. 做饭基本每天晚饭时间生成，18 到 19 点开始，持续 20 到 90 分钟。
-// 8. 当天比较 chill 时晚上生成阅读；阅读 note 由连续书单进度决定。
+// 6. 编程独立高频生成，时长 1 到 8 小时，有 4% 概率偷懒跳过。
+// 7. 做饭有 60% 概率偷懒跳过；生成时落在 18 到 19 点之间，持续 20 到 60 分钟。
+// 8. 阅读有 80% 概率偷懒跳过；生成时 note 由连续书单进度决定。
 + (void)appendRecordsForDateComponents:(NSDateComponents *)components dayIndex:(NSInteger)dayIndex monthIndex:(NSInteger)monthIndex records:(NSMutableArray<MirrorRecordModel *> *)records readingBookIndex:(NSInteger *)readingBookIndex readingRemainingMinutes:(NSInteger *)readingRemainingMinutes
 {
-    NSInteger month = components.month;
     NSInteger day = components.day;
     NSInteger weekday = components.weekday;
     BOOL isWeekend = weekday == 1 || weekday == 7;
-    BOOL isSummer = month >= 6 && month <= 8;
-    BOOL isWinter = month == 12 || month <= 2;
     BOOL isBeforeCodeAndCookStart = dayIndex < 180;
 
     BOOL isPeriodDay = day >= 2 && day <= [self periodEndDayForComponents:components];
     NSInteger recordCount = 0;
 
+    NSInteger movementEndMinutes = 8 * 60 + 45;
     BOOL isLazyMovementDay = [self randomPercentForDayIndex:dayIndex salt:29] < 20;
     if (!isPeriodDay && !isLazyMovementDay) {
         NSString *movementTaskName = nil;
-        BOOL isGymDay = dayIndex % 2 == 0;
-        if (isGymDay) {
+        NSInteger movementRoll = [self randomPercentForDayIndex:dayIndex salt:11];
+        if (movementRoll < 52) {
             movementTaskName = @"Gym";
-        } else if (isSummer) {
-            movementTaskName = @"Swim";
-        } else if (isWinter) {
+        } else if (movementRoll < 88) {
             movementTaskName = @"Tennis";
         } else {
-            movementTaskName = [self randomPercentForDayIndex:dayIndex salt:11] < 48 ? @"Swim" : @"Tennis";
+            movementTaskName = @"Swim";
         }
 
         NSInteger movementHour = 7;
@@ -192,30 +190,32 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         }
         [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:movementTaskName] components:components hour:movementHour minute:movementMinute durationMinutes:movementDuration note:movementNote records:records];
         recordCount += 1;
+        movementEndMinutes = movementHour * 60 + movementMinute + movementDuration;
+    }
 
-        NSInteger movementEndMinutes = movementHour * 60 + movementMinute + movementDuration;
+    BOOL isLazyCodeDay = [self randomPercentForDayIndex:dayIndex salt:43] < 4;
+    if (!isPeriodDay && !isBeforeCodeAndCookStart && !isLazyCodeDay) {
         NSInteger codeStartMinutes = movementEndMinutes + 60 + [self randomValueForDayIndex:dayIndex salt:31 modulo:61];
-        BOOL isLazyCodeDay = [self randomPercentForDayIndex:dayIndex salt:43] < 2;
-        if (!isBeforeCodeAndCookStart && !isLazyCodeDay) {
-            NSInteger codeDuration = 60 + [self randomValueForDayIndex:dayIndex salt:41 modulo:661];
-            NSInteger latestCodeEnd = 23 * 60 + 45;
-            codeDuration = MIN(codeDuration, MAX(60, latestCodeEnd - codeStartMinutes));
-            if (codeDuration >= 60 && codeStartMinutes < 24 * 60) {
-                [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] components:components hour:codeStartMinutes / 60 minute:codeStartMinutes % 60 durationMinutes:codeDuration note:[self codeNoteForDayIndex:dayIndex] records:records];
-                recordCount += 1;
-            }
+        NSInteger codeDuration = 60 + [self randomValueForDayIndex:dayIndex salt:41 modulo:421];
+        NSInteger latestCodeEnd = 18 * 60;
+        codeDuration = MIN(codeDuration, MAX(60, latestCodeEnd - codeStartMinutes));
+        if (codeDuration >= 60 && codeStartMinutes < latestCodeEnd) {
+            [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] components:components hour:codeStartMinutes / 60 minute:codeStartMinutes % 60 durationMinutes:codeDuration note:[self codeNoteForDayIndex:dayIndex] records:records];
+            recordCount += 1;
         }
     }
 
-    if (!isBeforeCodeAndCookStart && [self randomPercentForDayIndex:dayIndex salt:53] < 94) {
-        NSInteger cookStart = 18 * 60 + [self randomValueForDayIndex:dayIndex salt:59 modulo:61];
-        NSInteger cookDuration = 20 + [self randomValueForDayIndex:dayIndex salt:61 modulo:71];
+    BOOL isLazyCookDay = [self randomPercentForDayIndex:dayIndex salt:53] < 60;
+    if (!isBeforeCodeAndCookStart && !isLazyCookDay) {
+        NSInteger cookDuration = 20 + [self randomValueForDayIndex:dayIndex salt:61 modulo:41];
+        NSInteger latestCookStart = 19 * 60 - cookDuration;
+        NSInteger cookStart = 18 * 60 + [self randomValueForDayIndex:dayIndex salt:59 modulo:(latestCookStart - 18 * 60 + 1)];
         [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Cook"] components:components hour:cookStart / 60 minute:cookStart % 60 durationMinutes:cookDuration note:[self cookNoteForDurationMinutes:cookDuration dayIndex:dayIndex] records:records];
         recordCount += 1;
     }
 
-    BOOL isChillDay = recordCount <= 2 || [self randomPercentForDayIndex:dayIndex salt:67] < 28;
-    if (isChillDay) {
+    BOOL isLazyReadDay = [self randomPercentForDayIndex:dayIndex salt:67] < 80;
+    if (!isLazyReadDay) {
         NSInteger readDuration = 25 + [self randomValueForDayIndex:dayIndex salt:71 modulo:56];
         NSInteger readStart = (isWeekend ? 20 : 21) * 60 + [self randomValueForDayIndex:dayIndex salt:73 modulo:46];
         [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Read"] components:components hour:readStart / 60 minute:readStart % 60 durationMinutes:readDuration note:[self readingNoteForBookIndex:*readingBookIndex] records:records];
@@ -252,9 +252,8 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         }
     }
 
-    // 不生成跨天记录，也不生成未来记录。
-    long now = round([[NSDate date] timeIntervalSince1970]);
-    if (endTime > dayEnd || endTime >= now) {
+    // 不生成跨天记录。
+    if (endTime > dayEnd) {
         return;
     }
 
@@ -351,11 +350,11 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:1 day:8 info:ML(@"got a car", @"提车啦", @"coche nuevo", @"nouvelle voiture", @"車を手に入れた", @"차를 샀어요", @"Auto bekommen", @"купил машину") icon:@"car.fill" color:MirrorSystemColorTypeGreen],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:2 day:7 info:ML(@"graduated", @"毕业啦", @"graduación", @"diplôme obtenu", @"卒業した", @"졸업했어요", @"Abschluss gemacht", @"выпуск") icon:@"graduationcap.fill" color:MirrorSystemColorTypeBlue],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:3 day:22 info:ML(@"got a job", @"找到工作", @"conseguí trabajo", @"nouveau travail", @"仕事が決まった", @"취업했어요", @"Job bekommen", @"нашел работу") icon:@"briefcase.fill" color:MirrorSystemColorTypeMint],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"got cats", @"接猫回家", @"adoptamos gatos", @"chats à la maison", @"猫を迎えた", @"고양이를 데려온 날", @"Katzen adoptiert", @"забрали кошек домой") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"moved to a new home", @"搬新家", @"mudanza a una casa nueva", @"déménagement", @"新居へ引っ越し", @"새집으로 이사", @"in ein neues Zuhause gezogen", @"переехал в новый дом") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:15 info:ML(@"learned butterfly", @"会游蝶泳了", @"aprendí mariposa", @"papillon appris", @"バタフライが泳げるようになった", @"접영을 할 수 있게 됐어요", @"Schmetterling gelernt", @"научился баттерфляю") icon:@"figure.pool.swim" color:MirrorSystemColorTypeOrange],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:6 day:27 info:ML(@"my birthday", @"我的生日", @"mi cumpleaños", @"mon anniversaire", @"自分の誕生日", @"내 생일", @"mein Geburtstag", @"мой день рождения") icon:@"birthday.cake.fill" color:MirrorSystemColorTypeYellow],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:7 day:19 info:ML(@"watched the World Cup", @"看世界杯", @"vimos el Mundial", @"Coupe du monde", @"ワールドカップを見た", @"월드컵 본 날", @"die WM geschaut", @"смотрел чемпионат мира") icon:@"soccerball" color:MirrorSystemColorTypeMint],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"moved to a new home", @"搬新家", @"mudanza a una casa nueva", @"déménagement", @"新居へ引っ越し", @"새집으로 이사", @"in ein neues Zuhause gezogen", @"переехал в новый дом") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"got cats", @"接猫回家", @"adoptamos gatos", @"chats à la maison", @"猫を迎えた", @"고양이를 데려온 날", @"Katzen adoptiert", @"забрали кошек домой") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:9 day:13 info:ML(@"got abs", @"练出腹肌！", @"conseguí abdominales", @"abdos dessinés", @"腹筋が割れた", @"복근 만들기 성공!", @"Bauchmuskeln bekommen!", @"появился пресс!") icon:@"dumbbell.fill" color:MirrorSystemColorTypeOrange],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:10 day:28 info:ML(@"won the 3.0 tennis tournament", @"网球比赛3.0冠军", @"campeón del torneo de tenis 3.0", @"champion du tournoi de tennis 3.0", @"テニス大会3.0優勝", @"테니스 대회 3.0 우승", @"das 3.0-Tennisturnier gewonnen", @"выиграл теннисный турнир 3.0") icon:@"medal.fill" color:MirrorSystemColorTypePurple],
         [[MirrorFakeSpecialDayPlan alloc] initWithMonth:11 day:11 info:ML(@"wedding", @"婚礼", @"boda", @"mariage", @"結婚式", @"결혼식", @"Hochzeit", @"свадьба") icon:@"heart.fill" color:MirrorSystemColorTypeRed],
@@ -413,76 +412,44 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 
 + (NSString *)gymNoteForWorkoutIndex:(NSInteger)workoutIndex dayIndex:(NSInteger)dayIndex
 {
-    // 健身每次都有 note，按练背日、练腿日、练肩日循环；小概率追加状态很好/状态不好。
+    // 健身每次都有 note，按练背日、练腿日、练肩日循环。
     NSArray<NSArray<NSString *> *> *workoutNotes = @[
         ML(@"back day", @"练背日", @"día de espalda", @"jour dos", @"背中の日", @"등 운동일", @"Rückentag", @"день спины"),
         ML(@"leg day", @"练腿日", @"día de pierna", @"jour jambes", @"脚の日", @"하체 운동일", @"Beintag", @"день ног"),
         ML(@"shoulder day", @"练肩日", @"día de hombros", @"jour épaules", @"肩の日", @"어깨 운동일", @"Schultertag", @"день плеч")
     ];
     NSArray<NSString *> *baseNote = workoutNotes[workoutIndex % workoutNotes.count];
-    NSString *note = [self localizedValue:baseNote
-                              languageKey:[self fakeDataLanguageKey]
-                                fallback:baseNote.firstObject];
-    NSInteger statusRoll = [self randomPercentForDayIndex:dayIndex salt:83];
-    if (statusRoll < 15) {
-        NSArray<NSString *> *goodStatus = ML(@"feeling great", @"状态很好", @"muy buenas sensaciones", @"très bonnes sensations", @"調子がとても良い", @"컨디션 좋음", @"fühle mich großartig", @"отличное самочувствие");
-        NSString *status = [self localizedValue:goodStatus
-                                    languageKey:[self fakeDataLanguageKey]
-                                      fallback:goodStatus.firstObject];
-        return [note stringByAppendingFormat:@" · %@", status];
-    }
-    if (statusRoll < 30) {
-        NSArray<NSString *> *badStatus = ML(@"low energy", @"状态不好", @"poca energía", @"petite forme", @"調子が悪い", @"컨디션 안 좋음", @"wenig Energie", @"мало энергии");
-        NSString *status = [self localizedValue:badStatus
-                                    languageKey:[self fakeDataLanguageKey]
-                                      fallback:badStatus.firstObject];
-        return [note stringByAppendingFormat:@" · %@", status];
-    }
-    return note;
+    return [self localizedValue:baseNote
+                    languageKey:[self fakeDataLanguageKey]
+                      fallback:baseNote.firstObject];
 }
 
 + (NSString *)tennisNoteForMonthIndex:(NSInteger)monthIndex dayIndex:(NSInteger)dayIndex
 {
-    // 网球 1/3 概率生成 note，内容按生成数据开始后的月份推进；有 note 时小概率追加状态很好/状态不好。
+    // 网球 1/3 概率生成 note，所有语言都尽量保持短标签。
     if ([self randomValueForDayIndex:dayIndex salt:89 modulo:3] != 0) {
         return nil;
     }
 
     NSArray<NSArray<NSString *> *> *progressNotes = @[
-        ML(@"forehand and backhand basics", @"练习正反手", @"derecha y revés básicos", @"bases coup droit et revers", @"フォアとバックの基礎", @"포핸드와 백핸드 기본", @"Grundlagen von Vorhand und Rückhand", @"основы форхенда и бэкхенда"),
-        ML(@"footwork and split step", @"脚步和分腿垫步", @"pies y split step", @"jeu de jambes et split step", @"フットワークとスプリットステップ", @"풋워크와 스플릿 스텝", @"Beinarbeit und Split Step", @"работа ног и сплит-степ"),
-        ML(@"serve toss and rhythm", @"发球抛球和节奏", @"lanzamiento y ritmo del saque", @"lancer et rythme au service", @"サーブのトスとリズム", @"서브 토스와 리듬", @"Aufwurftechnik und Rhythmus beim Aufschlag", @"подброс и ритм подачи"),
-        ML(@"cross-court rally", @"斜线对拉", @"peloteo cruzado", @"diagonales", @"クロスラリー", @"크로스 랠리", @"Crosscourt-Rallye", @"кроссовый розыгрыш"),
-        ML(@"backhand slice", @"反手切削", @"revés cortado", @"revers slicé", @"バックハンドスライス", @"백핸드 슬라이스", @"Rückhand-Slice", @"резаный бэкхенд"),
-        ML(@"net volleys", @"网前截击", @"voleas en la red", @"volées au filet", @"ネットボレー", @"네트 발리", @"Volleys am Netz", @"удары с лета у сетки"),
-        ML(@"approach shot", @"随球上网", @"golpe de aproximación", @"montée au filet", @"アプローチショット", @"어프로치 샷", @"Angriffsschlag", @"подходящий удар"),
-        ML(@"second-serve topspin", @"二发上旋", @"segundo saque con topspin", @"deuxième service lifté", @"セカンドサーブのトップスピン", @"세컨 서브 탑스핀", @"Topspin beim zweiten Aufschlag", @"топспин на второй подаче"),
-        ML(@"down-the-line shots", @"直线变线", @"golpes paralelos", @"long de ligne", @"ストレートへの展開", @"다운더라인 전환", @"Longline-Schläge", @"удары по линии"),
-        ML(@"overheads and lobs", @"高压和挑高球", @"remates y globos", @"smashs et lobs", @"スマッシュとロブ", @"오버헤드와 로브", @"Überkopfbälle und Lobs", @"смэши и свечи"),
-        ML(@"return practice", @"接发球", @"restos", @"retours de service", @"リターン練習", @"리턴 연습", @"Return-Training", @"тренировка приема"),
-        ML(@"point patterns", @"得分套路", @"patrones de punto", @"schémas de points", @"ポイントパターン", @"득점 패턴", @"Punktmuster", @"розыгрыш очков"),
-        ML(@"match play", @"实战局", @"juego de partido", @"jeu en match", @"実戦形式", @"실전 게임", @"Matchpraxis", @"игровая практика")
+        ML(@"strokes", @"正反手", @"golpes", @"coups", @"ストローク", @"스트로크", @"Schläge", @"удары"),
+        ML(@"footwork", @"脚步", @"pies", @"jambes", @"フットワーク", @"풋워크", @"Beinarbeit", @"ноги"),
+        ML(@"serve", @"发球", @"saque", @"service", @"サーブ", @"서브", @"Aufschlag", @"подача"),
+        ML(@"rally", @"对拉", @"rally", @"échange", @"ラリー", @"랠리", @"Rallye", @"розыгрыш"),
+        ML(@"slice", @"切削", @"slice", @"slice", @"スライス", @"슬라이스", @"Slice", @"слайс"),
+        ML(@"volley", @"截击", @"volea", @"volée", @"ボレー", @"발리", @"Volley", @"воллей"),
+        ML(@"approach", @"上网", @"subida", @"montée", @"アプローチ", @"어프로치", @"Angriff", @"выход"),
+        ML(@"topspin", @"上旋", @"topspin", @"lift", @"トップスピン", @"탑스핀", @"Topspin", @"топспин"),
+        ML(@"line", @"直线", @"línea", @"ligne", @"ストレート", @"라인", @"Linie", @"линия"),
+        ML(@"lob", @"挑高", @"globo", @"lob", @"ロブ", @"로브", @"Lob", @"свеча"),
+        ML(@"return", @"接发", @"resto", @"retour", @"リターン", @"리턴", @"Return", @"прием"),
+        ML(@"points", @"得分", @"puntos", @"points", @"ポイント", @"포인트", @"Punkte", @"очки"),
+        ML(@"match", @"实战", @"partido", @"match", @"試合", @"매치", @"Match", @"матч")
     ];
     NSArray<NSString *> *note = progressNotes[monthIndex % progressNotes.count];
-    NSString *localizedNote = [self localizedValue:note
-                                       languageKey:[self fakeDataLanguageKey]
-                                         fallback:note.firstObject];
-    NSInteger statusRoll = [self randomPercentForDayIndex:dayIndex salt:97];
-    if (statusRoll < 15) {
-        NSArray<NSString *> *goodStatus = ML(@"feeling great", @"状态很好", @"muy buenas sensaciones", @"très bonnes sensations", @"調子がとても良い", @"컨디션 좋음", @"fühle mich großartig", @"отличное самочувствие");
-        NSString *status = [self localizedValue:goodStatus
-                                    languageKey:[self fakeDataLanguageKey]
-                                      fallback:goodStatus.firstObject];
-        return [localizedNote stringByAppendingFormat:@" · %@", status];
-    }
-    if (statusRoll < 30) {
-        NSArray<NSString *> *badStatus = ML(@"low energy", @"状态不好", @"poca energía", @"petite forme", @"調子が悪い", @"컨디션 안 좋음", @"wenig Energie", @"мало энергии");
-        NSString *status = [self localizedValue:badStatus
-                                    languageKey:[self fakeDataLanguageKey]
-                                      fallback:badStatus.firstObject];
-        return [localizedNote stringByAppendingFormat:@" · %@", status];
-    }
-    return localizedNote;
+    return [self localizedValue:note
+                    languageKey:[self fakeDataLanguageKey]
+                      fallback:note.firstObject];
 }
 
 + (NSString *)codeNoteForDayIndex:(NSInteger)dayIndex
