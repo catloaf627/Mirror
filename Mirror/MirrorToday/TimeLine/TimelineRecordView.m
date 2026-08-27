@@ -104,10 +104,9 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     if (!self.isInlineEditing) {
         return [super pointInside:point withEvent:event];
     }
-    if (self.allowsMoveDrag) {
-        return CGRectContainsPoint(CGRectInset(self.bounds, -kTimelineRecordResizeTouchOutset, -kTimelineRecordResizeTouchOutset), point);
-    }
-    return CGRectContainsPoint(self.bounds, point) || CGRectContainsPoint([self startResizeTouchRect], point) || CGRectContainsPoint([self endResizeTouchRect], point);
+
+    CGRect baseTouchRect = self.allowsMoveDrag ? [self moveDragTouchRect] : self.bounds;
+    return CGRectContainsPoint(baseTouchRect, point) || CGRectContainsPoint([self startResizeTouchRect], point) || CGRectContainsPoint([self endResizeTouchRect], point);
 }
 
 - (UIView *)handleView
@@ -208,6 +207,11 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
                       sideLength);
 }
 
+- (CGRect)moveDragTouchRect
+{
+    return CGRectInset(self.bounds, -kTimelineRecordResizeTouchOutset, -kTimelineRecordResizeTouchOutset);
+}
+
 - (void)tapRecordView:(UITapGestureRecognizer *)recognizer
 {
     if (self.isInlineEditing) {
@@ -232,7 +236,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     if ([self.delegate respondsToSelector:@selector(timelineRecordViewDidRequestMoveEditing:)]) {
         [self.delegate timelineRecordViewDidRequestMoveEditing:self];
     } else {
-        [self beginSelectionShowsHandles:NO animated:YES];
+        [self beginSelectionShowsHandles:NO animated:NO];
     }
     if (@available(iOS 16.0, *)) {
         CGPoint point = [recognizer locationInView:self.foregroundView];
@@ -278,7 +282,10 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     if (CGRectContainsPoint([self endResizeTouchRect], location)) {
         return TimelineRecordDragModeEnd;
     }
-    return self.allowsMoveDrag ? TimelineRecordDragModeMove : TimelineRecordDragModeNone;
+    if (self.allowsMoveDrag && CGRectContainsPoint([self moveDragTouchRect], location)) {
+        return TimelineRecordDragModeMove;
+    }
+    return TimelineRecordDragModeNone;
 }
 
 - (void)beginInlineEditingWithMinimumTimestamp:(long)minimumTimestamp
@@ -293,7 +300,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
                          dayStartTimestamp:dayStartTimestamp
                            dayEndTimestamp:dayEndTimestamp
                               showsHandles:YES
-                            allowsMoveDrag:NO
+                            allowsMoveDrag:YES
                                   animated:NO];
 }
 
@@ -310,7 +317,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
                            dayEndTimestamp:dayEndTimestamp
                               showsHandles:NO
                             allowsMoveDrag:YES
-                                  animated:YES];
+                                  animated:NO];
 }
 
 - (void)beginEditingWithMinimumTimestamp:(long)minimumTimestamp
@@ -468,24 +475,21 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     }
 
     [self ensureDebugRangeViews];
-    CGFloat outset = kTimelineRecordResizeTouchOutset;
+    BOOL showsResizeRanges = !self.startHandleView.hidden && !self.endHandleView.hidden;
 
-    if (self.allowsMoveDrag) {
-        self.debugMoveRangeView.hidden = NO;
-        self.debugStartRangeView.hidden = YES;
-        self.debugEndRangeView.hidden = YES;
-        self.debugMoveRangeView.frame = CGRectInset(self.foregroundView.frame, -outset, -outset);
-        [self sendSubviewToBack:self.debugMoveRangeView];
-        return;
-    }
+    self.debugMoveRangeView.hidden = !self.allowsMoveDrag;
+    self.debugMoveRangeView.frame = [self moveDragTouchRect];
 
-    self.debugStartRangeView.hidden = NO;
-    self.debugEndRangeView.hidden = NO;
-    self.debugMoveRangeView.hidden = YES;
+    self.debugStartRangeView.hidden = !showsResizeRanges;
+    self.debugEndRangeView.hidden = !showsResizeRanges;
     self.debugStartRangeView.frame = [self startResizeTouchRect];
     self.debugEndRangeView.frame = [self endResizeTouchRect];
-    [self sendSubviewToBack:self.debugStartRangeView];
-    [self sendSubviewToBack:self.debugEndRangeView];
+
+    [self insertSubview:self.debugMoveRangeView belowSubview:self.foregroundView];
+    [self insertSubview:self.debugStartRangeView aboveSubview:self.debugMoveRangeView];
+    [self insertSubview:self.debugEndRangeView aboveSubview:self.debugMoveRangeView];
+    [self bringSubviewToFront:self.startHandleView];
+    [self bringSubviewToFront:self.endHandleView];
 }
 
 - (void)ensureDebugRangeViews
