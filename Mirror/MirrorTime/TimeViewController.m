@@ -410,10 +410,12 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     }
     MirrorTaskModel *task = self.data[indexPath.item];
     NSMutableArray<UIButton *> *colorButtons = [NSMutableArray new];
-    UIAlertController *editAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit_task"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    NSString *editTaskTitle = [MirrorLanguage mirror_stringWithKey:@"edit_task"];
+    UIAlertController *editAlert = [UIAlertController alertControllerWithTitle:editTaskTitle message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [editAlert setValue:[self taskAlertTitleWithText:editTaskTitle] forKey:@"attributedTitle"];
     [editAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
         textField.text = task.taskName;
-        textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"edit_task"];
+        textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"task_name"];
         textField.textAlignment = NSTextAlignmentCenter;
     }];
     [editAlert setValue:[self colorSelectionContentViewControllerWithSelectedColor:task.color colorButtons:colorButtons] forKey:@"contentViewController"];
@@ -481,6 +483,13 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     [self presentViewController:alert animated:YES completion:nil];
 }
 
+- (NSAttributedString *)taskAlertTitleWithText:(NSString *)title
+{
+    return [[NSAttributedString alloc] initWithString:title attributes:@{
+        NSFontAttributeName: [UIFont boldSystemFontOfSize:17.0]
+    }];
+}
+
 - (NSArray<NSNumber *> *)taskColorOptions
 {
     return @[@(MirrorColorTypeCellPink), @(MirrorColorTypeCellOrange), @(MirrorColorTypeCellYellow), @(MirrorColorTypeCellGreen), @(MirrorColorTypeCellTeal), @(MirrorColorTypeCellBlue), @(MirrorColorTypeCellPurple), @(MirrorColorTypeCellGray)];
@@ -490,7 +499,9 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 {
     MirrorColorType defaultColor = [self randomTaskColor];
     NSMutableArray<UIButton *> *colorButtons = [NSMutableArray new];
-    UIAlertController *addAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"create_a_new_task"] message:nil preferredStyle:UIAlertControllerStyleAlert];
+    NSString *addTaskTitle = [MirrorLanguage mirror_stringWithKey:@"create_a_new_task"];
+    UIAlertController *addAlert = [UIAlertController alertControllerWithTitle:addTaskTitle message:nil preferredStyle:UIAlertControllerStyleAlert];
+    [addAlert setValue:[self taskAlertTitleWithText:addTaskTitle] forKey:@"attributedTitle"];
     [addAlert addTextFieldWithConfigurationHandler:^(UITextField *textField) {
         textField.placeholder = [MirrorLanguage mirror_stringWithKey:@"enter_task_title"];
         textField.textAlignment = NSTextAlignmentCenter;
