@@ -19,141 +19,10 @@
 static CGFloat const kSpecialDaysPadding = 20;
 static CGFloat const kSpecialDaysRowHeight = 58;
 static CGFloat const kSpecialDaysTimelineIconSize = 26;
-static CGFloat const kSpecialDaysDialogPadding = 16;
-static CGFloat const kSpecialDaysDialogCornerRadius = 12;
-static CGFloat const kSpecialDaysBackdropAlpha = 0.45;
 static NSString * const kSpecialDayFallbackIconName = @"star.fill";
 static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCell";
 
 #define kSpecialDaysTimelineX (kScreenWidth * 0.33)
-
-@interface SpecialDayDialogView : UIView
-
-@property (nonatomic, strong) UIDatePicker *datePicker;
-@property (nonatomic, strong) UITextField *infoTextField;
-@property (nonatomic, strong) UISegmentedControl *iconPicker;
-@property (nonatomic, strong) UIButton *cancelButton;
-@property (nonatomic, strong) UIButton *addButton;
-
-@end
-
-@implementation SpecialDayDialogView
-
-- (instancetype)init
-{
-    self = [super init];
-    if (self) {
-        self.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-        self.layer.cornerRadius = kSpecialDaysDialogCornerRadius;
-        self.layer.masksToBounds = YES;
-        [self setupUI];
-    }
-    return self;
-}
-
-- (void)setupUI
-{
-    [self addSubview:self.datePicker];
-    [self.datePicker mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.top.right.mas_equalTo(self).inset(kSpecialDaysDialogPadding);
-        make.height.mas_equalTo(120);
-    }];
-
-    [self addSubview:self.infoTextField];
-    [self.infoTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.mas_equalTo(self).inset(kSpecialDaysDialogPadding);
-        make.top.mas_equalTo(self.datePicker.mas_bottom).offset(12);
-        make.height.mas_equalTo(36);
-    }];
-
-    [self addSubview:self.iconPicker];
-    [self.iconPicker mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.mas_equalTo(self).inset(kSpecialDaysDialogPadding);
-        make.top.mas_equalTo(self.infoTextField.mas_bottom).offset(12);
-        make.height.mas_equalTo(32);
-    }];
-
-    [self addSubview:self.cancelButton];
-    [self.cancelButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self).offset(kSpecialDaysDialogPadding);
-        make.top.mas_equalTo(self.iconPicker.mas_bottom).offset(14);
-        make.height.mas_equalTo(36);
-        make.bottom.mas_equalTo(self).offset(-kSpecialDaysDialogPadding);
-    }];
-
-    [self addSubview:self.addButton];
-    [self.addButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self.cancelButton.mas_right).offset(12);
-        make.right.mas_equalTo(self).offset(-kSpecialDaysDialogPadding);
-        make.top.bottom.width.mas_equalTo(self.cancelButton);
-    }];
-}
-
-- (UIDatePicker *)datePicker
-{
-    if (!_datePicker) {
-        _datePicker = [UIDatePicker new];
-        _datePicker.datePickerMode = UIDatePickerModeDate;
-        if (@available(iOS 13.4, *)) {
-            _datePicker.preferredDatePickerStyle = UIDatePickerStyleWheels;
-        }
-    }
-    return _datePicker;
-}
-
-- (UITextField *)infoTextField
-{
-    if (!_infoTextField) {
-        _infoTextField = [UITextField new];
-        _infoTextField.placeholder = @"Info";
-        _infoTextField.font = [UIFont mirrorHintFont_Card];
-        _infoTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        _infoTextField.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
-        _infoTextField.layer.cornerRadius = 8;
-        _infoTextField.layer.masksToBounds = YES;
-        _infoTextField.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 1)];
-        _infoTextField.leftViewMode = UITextFieldViewModeAlways;
-    }
-    return _infoTextField;
-}
-
-- (UISegmentedControl *)iconPicker
-{
-    if (!_iconPicker) {
-        _iconPicker = [[UISegmentedControl alloc] initWithItems:@[
-            [UIImage mirror_systemImageNamed:@"star" fallbackName:kSpecialDayFallbackIconName],
-            [UIImage mirror_systemImageNamed:@"heart" fallbackName:kSpecialDayFallbackIconName],
-            [UIImage mirror_systemImageNamed:@"pin" fallbackName:kSpecialDayFallbackIconName],
-            [UIImage mirror_systemImageNamed:@"gift" fallbackName:kSpecialDayFallbackIconName]
-        ]];
-        _iconPicker.selectedSegmentIndex = 0;
-    }
-    return _iconPicker;
-}
-
-- (UIButton *)cancelButton
-{
-    if (!_cancelButton) {
-        _cancelButton = [UIButton new];
-        [_cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
-        [_cancelButton setTitleColor:[UIColor mirrorColorNamed:MirrorColorTypeText] forState:UIControlStateNormal];
-        _cancelButton.titleLabel.font = [UIFont mirrorButtonFont];
-    }
-    return _cancelButton;
-}
-
-- (UIButton *)addButton
-{
-    if (!_addButton) {
-        _addButton = [UIButton new];
-        [_addButton setTitle:@"Add" forState:UIControlStateNormal];
-        [_addButton setTitleColor:[UIColor systemBlueColor] forState:UIControlStateNormal];
-        _addButton.titleLabel.font = [UIFont mirrorButtonFont];
-    }
-    return _addButton;
-}
-
-@end
 
 @interface SpecialDayCollectionViewCell : UICollectionViewCell
 
@@ -163,8 +32,12 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
 @property (nonatomic, strong) UILabel *leftDateLabel;
 @property (nonatomic, strong) UILabel *leftYearLabel;
 @property (nonatomic, strong) UILabel *infoLabel;
+@property (nonatomic, strong) UITapGestureRecognizer *tapRecognizer;
+@property (nonatomic, strong) UILongPressGestureRecognizer *longPressRecognizer;
+@property (nonatomic, strong) UIEditMenuInteraction *editMenuInteraction API_AVAILABLE(ios(16.0));
 
 - (void)configureWithDay:(MirrorDayModel *)day timestamp:(long)timestamp isFirst:(BOOL)isFirst isLast:(BOOL)isLast;
+- (void)installInteractionsWithTarget:(id<UIEditMenuInteractionDelegate>)target;
 - (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color;
 
 @end
@@ -279,6 +152,23 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     self.infoLabel.text = day.info.length > 0 ? day.info : day.dateStr;
 }
 
+- (void)installInteractionsWithTarget:(id<UIEditMenuInteractionDelegate>)target
+{
+    if (!self.tapRecognizer) {
+        self.tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:target action:@selector(specialDayRowTapped:)];
+        [self.contentView addGestureRecognizer:self.tapRecognizer];
+    }
+    if (!self.longPressRecognizer) {
+        self.longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:target action:@selector(showSpecialDayEditMenu:)];
+        [self.tapRecognizer requireGestureRecognizerToFail:self.longPressRecognizer];
+        [self.contentView addGestureRecognizer:self.longPressRecognizer];
+    }
+    if (!self.editMenuInteraction) {
+        self.editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:target];
+        [self.contentView addInteraction:self.editMenuInteraction];
+    }
+}
+
 - (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color
 {
     [CATransaction begin];
@@ -297,9 +187,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
 @property (nonatomic, strong) UIButton *addButton;
 @property (nonatomic, strong) UICollectionView *collectionView;
 @property (nonatomic, strong) UILabel *emptyLabel;
-@property (nonatomic, strong) UIView *dialogBackdropView;
-@property (nonatomic, strong) SpecialDayDialogView *dialogView;
-@property (nonatomic, strong) MASConstraint *dialogCenterYConstraint;
 @property (nonatomic, strong) NSMutableArray<MirrorDayModel *> *days;
 @property (nonatomic, strong) NSDateFormatter *dateFormatter;
 @property (nonatomic, copy) NSString *focusDateStr;
@@ -330,8 +217,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorDayCreateNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorDayDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorDayEditNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillShow:) name:UIKeyboardWillShowNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
     }
     return self;
 }
@@ -501,29 +386,7 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     MirrorDayModel *day = self.days[indexPath.item];
     [cell configureWithDay:day timestamp:[self timestampFromDay:day] isFirst:indexPath.item == 0 isLast:indexPath.item == self.days.count - 1];
     [cell setShowsSelectionBorder:indexPath.item == self.selectedDayIndex color:[UIColor mirrorSystemColorNamed:day.color]];
-    cell.tag = indexPath.item;
-    cell.contentView.tag = indexPath.item;
-
-    for (UIGestureRecognizer *recognizer in cell.contentView.gestureRecognizers.copy) {
-        [cell.contentView removeGestureRecognizer:recognizer];
-    }
-    if (@available(iOS 16.0, *)) {
-        for (id<UIInteraction> interaction in cell.contentView.interactions.copy) {
-            if ([interaction isKindOfClass:[UIEditMenuInteraction class]]) {
-                [cell.contentView removeInteraction:interaction];
-            }
-        }
-    }
-
-    UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(specialDayRowTapped:)];
-    [cell.contentView addGestureRecognizer:tapRecognizer];
-    if (@available(iOS 16.0, *)) {
-        UIEditMenuInteraction *editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
-        [cell.contentView addInteraction:editMenuInteraction];
-        UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showSpecialDayEditMenu:)];
-        [tapRecognizer requireGestureRecognizerToFail:longPressRecognizer];
-        [cell.contentView addGestureRecognizer:longPressRecognizer];
-    }
+    [cell installInteractionsWithTarget:self];
 
     return cell;
 }
@@ -552,7 +415,11 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     }
     
     UIView *row = recognizer.view;
-    NSInteger index = row.tag;
+    NSIndexPath *indexPath = [self indexPathForSpecialDayRowView:row];
+    if (!indexPath) {
+        return;
+    }
+    NSInteger index = indexPath.item;
     if (index < 0 || index >= self.days.count) {
         return;
     }
@@ -560,6 +427,20 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     NSInteger previousDayIndex = self.selectedDayIndex;
     self.selectedDayIndex = index;
     [self reloadSelectionFromPreviousDayIndex:previousDayIndex currentDayIndex:self.selectedDayIndex];
+}
+
+- (NSIndexPath *)indexPathForSpecialDayRowView:(UIView *)view
+{
+    UIView *candidate = view;
+    while (candidate && candidate != self.collectionView) {
+        if ([candidate isKindOfClass:[UICollectionViewCell class]]) {
+            return [self.collectionView indexPathForCell:(UICollectionViewCell *)candidate];
+        }
+        candidate = candidate.superview;
+    }
+    
+    CGPoint point = [view convertPoint:CGPointMake(CGRectGetMidX(view.bounds), CGRectGetMidY(view.bounds)) toView:self.collectionView];
+    return [self.collectionView indexPathForItemAtPoint:point];
 }
 
 - (void)reloadSelectionFromPreviousDayIndex:(NSInteger)previousDayIndex currentDayIndex:(NSInteger)currentDayIndex
@@ -603,16 +484,22 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
         return;
     }
     
+    UIView *view = recognizer.view;
+    NSIndexPath *indexPath = [self indexPathForSpecialDayRowView:view];
+    if (!indexPath) {
+        return;
+    }
+    NSInteger index = indexPath.item;
+    if (index < 0 || index >= self.days.count) {
+        return;
+    }
+
     UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
     [feedback impactOccurred];
-    
-    UIView *view = recognizer.view;
-    NSInteger index = view.tag;
-    if (index >= 0 && index < self.days.count) {
-        NSInteger previousDayIndex = self.selectedDayIndex;
-        self.selectedDayIndex = index;
-        [self reloadSelectionFromPreviousDayIndex:previousDayIndex currentDayIndex:self.selectedDayIndex];
-    }
+
+    NSInteger previousDayIndex = self.selectedDayIndex;
+    self.selectedDayIndex = index;
+    [self reloadSelectionFromPreviousDayIndex:previousDayIndex currentDayIndex:self.selectedDayIndex];
     [self shakeSelectedRow:view];
     
     if (@available(iOS 16.0, *)) {
@@ -775,13 +662,17 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     
     UITextField *infoTextField = [UITextField new];
     infoTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"special_day_info"];
-    infoTextField.textAlignment = NSTextAlignmentCenter;
+    infoTextField.textAlignment = NSTextAlignmentLeft;
     infoTextField.returnKeyType = UIReturnKeyDone;
     infoTextField.font = [UIFont systemFontOfSize:16 weight:UIFontWeightRegular];
     infoTextField.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     infoTextField.backgroundColor = [self specialDayAlertControlBackgroundColor];
     infoTextField.layer.cornerRadius = 8;
     infoTextField.layer.masksToBounds = YES;
+    infoTextField.leftView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 1)];
+    infoTextField.leftViewMode = UITextFieldViewModeAlways;
+    infoTextField.rightView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 10, 1)];
+    infoTextField.rightViewMode = UITextFieldViewModeAlways;
     infoTextField.delegate = self;
     infoTextField.text = isEditing ? editingDay.info : nil;
 
@@ -1292,75 +1183,9 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     }
 }
 
-- (void)dismissAddDialog
-{
-    [self.view endEditing:YES];
-    [self.dialogBackdropView removeFromSuperview];
-    [self.dialogView removeFromSuperview];
-    self.dialogBackdropView = nil;
-    self.dialogView = nil;
-    self.dialogCenterYConstraint = nil;
-}
-
 - (void)dismissKeyboard
 {
     [self.view endEditing:YES];
-}
-
-- (void)keyboardWillShow:(NSNotification *)notification
-{
-    if (!self.dialogView.superview) {
-        return;
-    }
-
-    CGRect keyboardFrame = [notification.userInfo[UIKeyboardFrameEndUserInfoKey] CGRectValue];
-    CGRect keyboardFrameInView = [self.view convertRect:keyboardFrame fromView:nil];
-    CGFloat overlap = CGRectGetMaxY(self.dialogView.frame) - CGRectGetMinY(keyboardFrameInView) + kSpecialDaysDialogPadding;
-    CGFloat offset = overlap > 0 ? -overlap : 0;
-    [self updateDialogCenterYOffset:offset keyboardNotification:notification];
-}
-
-- (void)keyboardWillHide:(NSNotification *)notification
-{
-    [self updateDialogCenterYOffset:0 keyboardNotification:notification];
-}
-
-- (void)updateDialogCenterYOffset:(CGFloat)offset keyboardNotification:(NSNotification *)notification
-{
-    [self.dialogCenterYConstraint setOffset:offset];
-
-    NSTimeInterval duration = [notification.userInfo[UIKeyboardAnimationDurationUserInfoKey] doubleValue];
-    UIViewAnimationOptions options = ([notification.userInfo[UIKeyboardAnimationCurveUserInfoKey] integerValue] << 16);
-    [UIView animateWithDuration:duration delay:0 options:options animations:^{
-        [self.view layoutIfNeeded];
-    } completion:nil];
-}
-
-- (void)addSpecialDay
-{
-    NSString *dateStr = [self.dateFormatter stringFromDate:self.dialogView.datePicker.date];
-    NSMutableArray<MirrorDayModel *> *days = [MirrorStorage retriveMirrorDays];
-    if ([self specialDayExistsForDateStr:dateStr inDays:days]) {
-        [self showSpecialDayErrorWithTitleKey:@"special_day_cannot_be_duplicated"];
-        return;
-    }
-    
-    MirrorDayModel *day = [[MirrorDayModel alloc] initWithDateStr:dateStr
-                                                             info:self.dialogView.infoTextField.text ?: @""
-                                                             icon:[self selectedIcon]
-                                                            color:[self randomSpecialDayColor]];
-    [MirrorStorage createMirrorDay:day];
-    [self dismissAddDialog];
-}
-
-- (NSString *)selectedIcon
-{
-    NSArray<NSString *> *icons = @[@"star", @"heart", @"pin", @"gift"];
-    NSInteger index = self.dialogView.iconPicker.selectedSegmentIndex;
-    if (index < 0 || index >= icons.count) {
-        return icons.firstObject;
-    }
-    return icons[index];
 }
 
 #pragma mark - UITextFieldDelegate
@@ -1413,29 +1238,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
         _emptyLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     }
     return _emptyLabel;
-}
-
-- (UIView *)dialogBackdropView
-{
-    if (!_dialogBackdropView) {
-        _dialogBackdropView = [UIView new];
-        _dialogBackdropView.backgroundColor = [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:kSpecialDaysBackdropAlpha];
-        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
-        [_dialogBackdropView addGestureRecognizer:tapGesture];
-    }
-    return _dialogBackdropView;
-}
-
-- (SpecialDayDialogView *)dialogView
-{
-    if (!_dialogView) {
-        _dialogView = [SpecialDayDialogView new];
-        _dialogView.infoTextField.returnKeyType = UIReturnKeyDone;
-        _dialogView.infoTextField.delegate = self;
-        [_dialogView.cancelButton addTarget:self action:@selector(dismissAddDialog) forControlEvents:UIControlEventTouchUpInside];
-        [_dialogView.addButton addTarget:self action:@selector(addSpecialDay) forControlEvents:UIControlEventTouchUpInside];
-    }
-    return _dialogView;
 }
 
 - (NSDateFormatter *)dateFormatter
