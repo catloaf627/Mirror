@@ -65,7 +65,7 @@
 
     UIButton *copyDateButton = [UIButton buttonWithType:UIButtonTypeSystem];
     copyDateButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [copyDateButton setTitle:@"sudo date 0826010026" forState:UIControlStateNormal];
+    [copyDateButton setTitle:@"sudo date 0826050026" forState:UIControlStateNormal];
     copyDateButton.titleLabel.font = [UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightMedium];
     copyDateButton.titleLabel.adjustsFontSizeToFitWidth = YES;
     copyDateButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
@@ -168,7 +168,7 @@
 
 - (void)copyRecordDateCommand
 {
-    UIPasteboard.generalPasteboard.string = @"sudo date 0826010026";
+    UIPasteboard.generalPasteboard.string = @"sudo date 0826050026";
 }
 
 - (void)copyRecordTimeOffCommand
