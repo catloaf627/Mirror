@@ -826,6 +826,8 @@
         _collectionView.backgroundColor = self.view.backgroundColor;
 //        _collectionView.allowsMultipleSelection = YES;
         UILongPressGestureRecognizer *longPress = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPress:)];
+        longPress.minimumPressDuration = 0.25;
+        longPress.allowableMovement = 12;
         [_collectionView addGestureRecognizer:longPress];
         [_collectionView registerClass:[GridCollectionViewCell class] forCellWithReuseIdentifier:[GridCollectionViewCell identifier]];
     }

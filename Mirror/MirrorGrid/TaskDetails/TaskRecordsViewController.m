@@ -762,6 +762,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
         [_collectionView addGestureRecognizer:backgroundTapRecognizer];
 
         UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(showEditMenu:)];
+        longPressRecognizer.minimumPressDuration = 0.25;
         [_collectionView addGestureRecognizer:longPressRecognizer];
     }
     return _collectionView;

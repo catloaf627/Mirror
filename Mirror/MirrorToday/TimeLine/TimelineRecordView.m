@@ -91,7 +91,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
     UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressRecordView:)];
     longPressRecognizer.delegate = self;
-    longPressRecognizer.minimumPressDuration = 0.65;
+    longPressRecognizer.minimumPressDuration = 0.25;
     [self.foregroundView addGestureRecognizer:longPressRecognizer];
 
     UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panRecord:)];

@@ -160,6 +160,7 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     }
     if (!self.longPressRecognizer) {
         self.longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:target action:@selector(showSpecialDayEditMenu:)];
+        self.longPressRecognizer.minimumPressDuration = 0.25;
         [self.tapRecognizer requireGestureRecognizerToFail:self.longPressRecognizer];
         [self.contentView addGestureRecognizer:self.longPressRecognizer];
     }

@@ -880,7 +880,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 {
     if (!_taskReorderLongPressRecognizer) {
         _taskReorderLongPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handleTaskReorderLongPress:)];
-        _taskReorderLongPressRecognizer.minimumPressDuration = 0.5;
+        _taskReorderLongPressRecognizer.minimumPressDuration = 0.25;
     }
     return _taskReorderLongPressRecognizer;
 }
