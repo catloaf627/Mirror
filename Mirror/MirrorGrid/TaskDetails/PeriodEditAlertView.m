@@ -276,9 +276,10 @@
 - (void)setupFormatters
 {
     self.timeFormatter = [NSDateFormatter new];
-    self.timeFormatter.locale = [NSLocale localeWithLocaleIdentifier:[MirrorLanguage mirror_stringWithKey:@"locale_Identifier"]];
-    self.timeFormatter.timeStyle = NSDateFormatterShortStyle;
+    self.timeFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_GB"];
     self.timeFormatter.dateStyle = NSDateFormatterNoStyle;
+    self.timeFormatter.timeStyle = NSDateFormatterNoStyle;
+    self.timeFormatter.dateFormat = @"HH:mm";
 }
 
 - (void)setupViews
@@ -625,7 +626,7 @@
     datePicker.minuteInterval = 5;
     datePicker.frame = CGRectMake(0, 0, UIScreen.mainScreen.bounds.size.width, 216*kHeightRatio);
     datePicker.date = [NSDate dateWithTimeIntervalSince1970:timestamp];
-    datePicker.locale = [NSLocale localeWithLocaleIdentifier:[MirrorLanguage mirror_stringWithKey:@"locale_Identifier"]];
+    datePicker.locale = [NSLocale localeWithLocaleIdentifier:@"en_GB"];
     datePicker.tintColor = self.accentColor;
     if (@available(iOS 13.4, *)) {
         datePicker.preferredDatePickerStyle = UIDatePickerStyleWheels;
@@ -711,6 +712,7 @@
 {
     BOOL isStartDate = datePicker == self.startDatePicker;
     datePicker.datePickerMode = mode;
+    datePicker.locale = [NSLocale localeWithLocaleIdentifier:mode == UIDatePickerModeTime ? @"en_GB" : [MirrorLanguage mirror_stringWithKey:@"locale_Identifier"]];
     datePicker.date = [NSDate dateWithTimeIntervalSince1970:isStartDate ? self.startTimestamp : self.endTimestamp];
     datePicker.minimumDate = nil;
     datePicker.maximumDate = nil;
@@ -938,6 +940,8 @@
 {
     NSString *startTitle = [self.timeFormatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:self.startTimestamp]] ?: @"";
     NSString *endTitle = [self.timeFormatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:self.endTimestamp]] ?: @"";
+    [self.startTimeButton setAttributedTitle:nil forState:UIControlStateNormal];
+    [self.endTimeButton setAttributedTitle:nil forState:UIControlStateNormal];
     [self.startTimeButton setTitle:startTitle forState:UIControlStateNormal];
     [self.endTimeButton setTitle:endTitle forState:UIControlStateNormal];
 }
