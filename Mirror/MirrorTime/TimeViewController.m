@@ -110,6 +110,8 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     [self.collectionView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
     }];
+    [self.view layoutIfNeeded];
+    [self.collectionView.collectionViewLayout invalidateLayout];
     [self addNavigationDebugGesture];
     [self presentGoingOnTaskIfNeeded];
 }
@@ -787,7 +789,12 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake((kScreenWidth - kCollectionViewPadding - kCollectionViewPadding -kCellSpacing)/2, kScreenHeight/8);
+    CGFloat availableWidth = collectionView.bounds.size.width;
+    if (availableWidth <= 0) {
+        availableWidth = kScreenWidth - 2 * kCollectionViewPadding;
+    }
+    CGFloat itemWidth = floor((availableWidth - kCellSpacing) / 2.0);
+    return CGSizeMake(itemWidth, kScreenHeight/8);
 }
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumInteritemSpacingForSectionAtIndex:(NSInteger)section
