@@ -128,11 +128,7 @@
 {
     self.date = date ?: [NSDate now];
     self.didScrollToDefaultHours = NO;
-    if (self.hourHeight > 0) {
-        [self.timelineContentView configureWithHourHeight:self.hourHeight
-                                        dayStartTimestamp:[self dayStartTimestamp]
-                                          dayEndTimestamp:[self dayEndTimestamp]];
-    }
+    [self updateTimelineSizeIfNeeded];
     [self reloadData];
 }
 
@@ -568,16 +564,26 @@
 {
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
-    return round([[gregorian startOfDayForDate:self.date] timeIntervalSince1970]);
+    NSDate *startOfDay = nil;
+    NSTimeInterval dayDuration = 0;
+    if ([gregorian rangeOfUnit:NSCalendarUnitDay startDate:&startOfDay interval:&dayDuration forDate:self.date] && startOfDay) {
+        return lround([startOfDay timeIntervalSince1970]);
+    }
+    return lround([[gregorian startOfDayForDate:self.date] timeIntervalSince1970]);
 }
 
 - (long)dayEndTimestamp
 {
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
-    NSDate *startOfDay = [gregorian startOfDayForDate:self.date];
-    NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:startOfDay options:0];
-    return round([startOfNextDay timeIntervalSince1970]);
+    NSDate *startOfDay = nil;
+    NSTimeInterval dayDuration = 0;
+    if ([gregorian rangeOfUnit:NSCalendarUnitDay startDate:&startOfDay interval:&dayDuration forDate:self.date] && startOfDay) {
+        return lround([startOfDay timeIntervalSince1970] + dayDuration);
+    }
+    NSDate *fallbackStartOfDay = [gregorian startOfDayForDate:self.date];
+    NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:fallbackStartOfDay options:0];
+    return lround([startOfNextDay timeIntervalSince1970]);
 }
 
 - (NSInteger)timelineHourCount
