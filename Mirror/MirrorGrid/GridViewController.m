@@ -31,6 +31,63 @@
 #define kCellWidth (25*kWidthRatio)
 #define kCellSpacing (2.5*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
+
+@interface GridFixedRowsLayout : UICollectionViewLayout
+
+@end
+
+@implementation GridFixedRowsLayout
+
+- (CGSize)collectionViewContentSize
+{
+    NSInteger itemCount = [self.collectionView numberOfItemsInSection:0];
+    NSInteger columnCount = itemCount == 0 ? 0 : (itemCount + 6) / 7;
+    CGFloat width = columnCount == 0 ? 0 : columnCount * kCellWidth + MAX(columnCount - 1, 0) * kCellSpacing;
+    CGFloat height = 7 * kCellWidth + 6 * kCellSpacing;
+    return CGSizeMake(width, height);
+}
+
+- (UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(NSIndexPath *)indexPath
+{
+    UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
+    NSInteger column = indexPath.item / 7;
+    NSInteger row = indexPath.item % 7;
+    attributes.frame = CGRectMake(column * (kCellWidth + kCellSpacing),
+                                  row * (kCellWidth + kCellSpacing),
+                                  kCellWidth,
+                                  kCellWidth);
+    return attributes;
+}
+
+- (NSArray<UICollectionViewLayoutAttributes *> *)layoutAttributesForElementsInRect:(CGRect)rect
+{
+    NSInteger itemCount = [self.collectionView numberOfItemsInSection:0];
+    if (itemCount == 0) {
+        return @[];
+    }
+
+    NSInteger firstColumn = MAX((NSInteger)floor(CGRectGetMinX(rect) / (kCellWidth + kCellSpacing)) - 1, 0);
+    NSInteger lastColumn = MIN((NSInteger)ceil(CGRectGetMaxX(rect) / (kCellWidth + kCellSpacing)) + 1, (itemCount + 6) / 7 - 1);
+    NSMutableArray<UICollectionViewLayoutAttributes *> *attributes = [NSMutableArray new];
+    for (NSInteger column = firstColumn; column <= lastColumn; column++) {
+        for (NSInteger row = 0; row < 7; row++) {
+            NSInteger item = column * 7 + row;
+            if (item >= itemCount) {
+                break;
+            }
+            [attributes addObject:[self layoutAttributesForItemAtIndexPath:[NSIndexPath indexPathForItem:item inSection:0]]];
+        }
+    }
+    return attributes;
+}
+
+- (BOOL)shouldInvalidateLayoutForBoundsChange:(CGRect)newBounds
+{
+    return YES;
+}
+
+@end
+
 @interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TaskProgressListDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
@@ -762,10 +819,7 @@
 - (UICollectionView *)collectionView
 {
     if (!_collectionView) {
-        UICollectionViewFlowLayout *layout = [[UICollectionViewFlowLayout alloc]init];
-        layout.minimumLineSpacing = kCellSpacing;
-        layout.minimumInteritemSpacing = kCellSpacing;
-        layout.scrollDirection = UICollectionViewScrollDirectionHorizontal;
+        GridFixedRowsLayout *layout = [GridFixedRowsLayout new];
         _collectionView = [[UICollectionView alloc] initWithFrame:self.view.bounds collectionViewLayout:layout];
         _collectionView.delegate = self;
         _collectionView.dataSource = self;
