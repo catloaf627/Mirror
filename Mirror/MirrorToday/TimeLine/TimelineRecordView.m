@@ -200,7 +200,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
 - (CGRect)resizeTouchRectCenteredAtPoint:(CGPoint)center
 {
-    CGFloat sideLength = MAX(44.0, kTimelineRecordHandleSize + 2*kTimelineRecordResizeTouchOutset);
+    CGFloat sideLength = MAX(64.0, kTimelineRecordHandleSize + 2*kTimelineRecordResizeTouchOutset);
     return CGRectMake(center.x - sideLength / 2.0,
                       center.y - sideLength / 2.0,
                       sideLength,
@@ -209,7 +209,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
 - (CGRect)moveDragTouchRect
 {
-    return CGRectInset(self.bounds, -kTimelineRecordResizeTouchOutset, -kTimelineRecordResizeTouchOutset);
+    return self.bounds;
 }
 
 - (void)tapRecordView:(UITapGestureRecognizer *)recognizer
