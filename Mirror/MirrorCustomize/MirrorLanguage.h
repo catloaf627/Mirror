@@ -26,6 +26,9 @@ typedef NS_ENUM(NSInteger, MirrorLanguageKey) {
 + (NSString *)mirror_stringWithKey:(NSString *)key languageKey:(MirrorLanguageKey)languageKey;
 + (NSString *)mirror_stringWithKey:(NSString *)key
                   with1Placeholder:(NSString *)placeholder; // 1参数
++ (NSString *)mirror_stringWithKey:(NSString *)key
+                  with1Placeholder:(NSString *)placeholder1
+                  with2Placeholder:(NSString *)placeholder2; // 2参数
 + (NSString *)mirror_dateStringWithYear:(long)year
                                   month:(long)month
                                     day:(long)day

@@ -168,6 +168,19 @@
     return [NSString stringWithFormat:format, placeholder];
 }
 
++ (NSString *)mirror_stringWithKey:(NSString *)key
+                  with1Placeholder:(NSString *)placeholder1
+                  with2Placeholder:(NSString *)placeholder2
+{
+    NSMutableDictionary *mirrorDict = [NSMutableDictionary new];
+
+    // Time
+    [mirrorDict setValue:ML(@"This will merge%@into%@. This cannot be undone.", @"这会将%@合并到%@，且无法撤销。", @"Esto fusionará%@con%@. No se puede deshacer.", @"Cela fusionnera%@avec%@. Cette action est irréversible.", @"%@を%@に結合します。元に戻せません。", @"%@을%@에 병합하며 되돌릴 수 없습니다.", @"%@wird mit%@zusammengeführt. Das kann nicht rückgängig gemacht werden.", @"%@будет объединена с%@. Это действие нельзя отменить.") forKey:@"merge_task_warning"];
+    
+    NSString *format = [MirrorLanguage localizedValue:[mirrorDict valueForKey:key] languageKey:[MirrorSettings preferredLanguageKey] fallback:key];
+    return [NSString stringWithFormat:format, placeholder1, placeholder2];
+}
+
 // 1996年6月27日 周四:
 // English: Thu, Jun 27, 1996
 // Chinese: 1996年6月27日 周四

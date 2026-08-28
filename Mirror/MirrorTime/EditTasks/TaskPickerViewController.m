@@ -8,6 +8,7 @@
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
+#import "MirrorMacro.h"
 
 static CGFloat const kTaskPickerBackdropAlpha = 0.82;
 static CGFloat const kTaskPickerShadowOpacity = 0.25;
@@ -31,6 +32,9 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
 @property (nonatomic, copy) TaskPickerCompletion completion;
 @property (nonatomic, strong) UIView *pickerView;
 @property (nonatomic, strong) NSMutableArray<UIButton *> *taskButtons;
+@property (nonatomic, strong) NSMutableArray<UILabel *> *taskNameLabels;
+@property (nonatomic, strong) NSMutableArray<UIView *> *taskColorViews;
+@property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIButton *notePrefixButton;
 @property (nonatomic, strong) UILabel *notePrefixLabel;
 @property (nonatomic, assign) BOOL shouldPrefixRecordNotes;
@@ -49,16 +53,24 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
         _sourceTaskName = [sourceTaskName copy];
         _completion = completion;
         _taskButtons = [NSMutableArray new];
+        _taskNameLabels = [NSMutableArray new];
+        _taskColorViews = [NSMutableArray new];
         self.modalPresentationStyle = UIModalPresentationOverFullScreen;
         self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
     }
     return self;
 }
 
+- (void)dealloc
+{
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    self.view.backgroundColor = [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:kTaskPickerBackdropAlpha]; // dim view
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshColors) name:MirrorSwitchThemeNotification object:nil];
+    [self refreshColors];
     UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissPicker)];
     tapGesture.delegate = self;
     [self.view addGestureRecognizer:tapGesture];
@@ -69,9 +81,9 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
         make.width.mas_equalTo(kTaskPickerRowWidth);
     }];
     
-    UILabel *titleLabel = [self pickerTitleLabelWithText:[MirrorLanguage mirror_stringWithKey:@"merge_task_to" with1Placeholder:self.sourceTaskName]];
-    [self.pickerView addSubview:titleLabel];
-    [titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+    self.titleLabel = [self pickerTitleLabelWithText:[MirrorLanguage mirror_stringWithKey:@"merge_task_to" with1Placeholder:self.sourceTaskName]];
+    [self.pickerView addSubview:self.titleLabel];
+    [self.titleLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.right.top.mas_equalTo(self.pickerView);
     }];
     
@@ -81,7 +93,7 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
         make.centerX.mas_equalTo(self.pickerView);
         make.left.greaterThanOrEqualTo(self.pickerView);
         make.right.lessThanOrEqualTo(self.pickerView);
-        make.top.mas_equalTo(titleLabel.mas_bottom).offset(kTaskPickerTitleSpacing);
+        make.top.mas_equalTo(self.titleLabel.mas_bottom).offset(kTaskPickerTitleSpacing);
         if (self.tasks.count == 0) {
             make.bottom.mas_equalTo(self.pickerView);
         }
@@ -121,13 +133,13 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
         }];
         previousRow = button;
     }
+    [self refreshColors];
 }
 
 - (UILabel *)pickerTitleLabelWithText:(NSString *)text
 {
     UILabel *label = [UILabel new];
     label.text = text;
-    label.textColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
     label.font = [UIFont mirrorLabelFont];
     label.textAlignment = NSTextAlignmentCenter;
     label.numberOfLines = 1;
@@ -142,14 +154,14 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
     button.tag = index;
     button.enabled = !isSourceTask;
     button.alpha = isSourceTask ? 0.2 : 1;
-    button.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG];
     button.layer.cornerRadius = kTaskPickerCornerRadius;
     button.layer.masksToBounds = YES;
     [button addTarget:self action:@selector(selectTask:) forControlEvents:UIControlEventTouchUpInside];
     
     UIView *colorView = [UIView new];
     colorView.userInteractionEnabled = NO;
-    colorView.backgroundColor = [UIColor mirrorColorNamed:task.color];
+    colorView.tag = index;
+    [self.taskColorViews addObject:colorView];
     colorView.layer.cornerRadius = kTaskPickerDotSize / 2;
     colorView.layer.masksToBounds = YES;
     [button addSubview:colorView];
@@ -161,9 +173,10 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
     
     UILabel *nameLabel = [UILabel new];
     nameLabel.userInteractionEnabled = NO;
+    nameLabel.tag = index;
     nameLabel.text = task.taskName;
-    nameLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     nameLabel.font = [UIFont mirrorHintFont_Card];
+    [self.taskNameLabels addObject:nameLabel];
     nameLabel.numberOfLines = 1;
     nameLabel.adjustsFontSizeToFitWidth = YES;
     [button addSubview:nameLabel];
@@ -199,11 +212,42 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
     [self updateNotePrefixButtonAppearance];
 }
 
+- (void)refreshColors
+{
+    self.view.backgroundColor = [[UIColor mirrorColorNamed:MirrorColorTypeBackground] colorWithAlphaComponent:kTaskPickerBackdropAlpha];
+    self.pickerView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
+    self.titleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    self.notePrefixLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+
+    for (UIButton *button in self.taskButtons) {
+        if (button.tag < 0 || button.tag >= self.tasks.count) {
+            continue;
+        }
+        MirrorTaskModel *task = self.tasks[button.tag];
+        button.backgroundColor = [UIColor mirrorColorNamed:task.color];
+    }
+    for (UIView *colorView in self.taskColorViews) {
+        if (colorView.tag < 0 || colorView.tag >= self.tasks.count) {
+            continue;
+        }
+        MirrorTaskModel *task = self.tasks[colorView.tag];
+        colorView.backgroundColor = [UIColor mirrorColorPulsed:task.color];
+    }
+    for (UILabel *label in self.taskNameLabels) {
+        if (label.tag < 0 || label.tag >= self.tasks.count) {
+            continue;
+        }
+        MirrorTaskModel *task = self.tasks[label.tag];
+        label.textColor = [UIColor mirrorColorPulsed:task.color];
+    }
+    [self updateNotePrefixButtonAppearance];
+}
+
 - (void)updateNotePrefixButtonAppearance
 {
-    UIColor *blueColor = [UIColor systemBlueColor];
-    self.notePrefixButton.backgroundColor = self.shouldPrefixRecordNotes ? blueColor : [UIColor clearColor];
-    self.notePrefixButton.layer.borderColor = blueColor.CGColor;
+    UIColor *orangeColor = [UIColor systemOrangeColor];
+    self.notePrefixButton.backgroundColor = self.shouldPrefixRecordNotes ? orangeColor : [UIColor clearColor];
+    self.notePrefixButton.layer.borderColor = orangeColor.CGColor;
     [self.notePrefixButton setTitle:self.shouldPrefixRecordNotes ? @"✓" : @"" forState:UIControlStateNormal];
 }
 
@@ -249,7 +293,6 @@ static CGFloat const kTaskPickerTitleSpacing = 12;
     if (!_notePrefixLabel) {
         _notePrefixLabel = [UILabel new];
         _notePrefixLabel.text = [MirrorLanguage mirror_stringWithKey:@"merge_with_prefix" with1Placeholder:self.sourceTaskName];
-        _notePrefixLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
         _notePrefixLabel.font = [UIFont mirrorHintFont_Card];
         _notePrefixLabel.numberOfLines = 1;
         _notePrefixLabel.adjustsFontSizeToFitWidth = YES;

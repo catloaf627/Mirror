@@ -21,7 +21,6 @@ static CGFloat const kCornerRadius = 14;
 static CGFloat const kActionButtonSize = 32;
 static CGFloat const kActionButtonSpacing = 4;
 static CGFloat const kTextShiftWhenActionsVisible = 24;
-static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimation";
 
 @interface TimeTrackerTaskCollectionViewCell ()
 
@@ -137,10 +136,8 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
 {
     self.isEditingModeEnabled = editingModeEnabled;
     if (editingModeEnabled) {
-        [self startEditingShakeAnimation];
         [self setActionButtonsVisible:YES animated:animated];
     } else {
-        [self stopEditingShakeAnimation];
         [self setActionButtonsVisible:NO animated:animated];
     }
 }
@@ -206,27 +203,6 @@ static NSString * const kEditingShakeAnimationKey = @"MirrorEditingShakeAnimatio
                         options:UIViewAnimationOptionAllowUserInteraction | UIViewAnimationOptionBeginFromCurrentState
                      animations:stateChange
                      completion:nil];
-}
-
-- (void)startEditingShakeAnimation
-{
-    if ([self.layer animationForKey:kEditingShakeAnimationKey]) {
-        return;
-    }
-
-    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.rotation.z"];
-    animation.values = @[@(-0.035), @(0.035), @(-0.028)];
-    animation.duration = 0.14;
-    animation.repeatCount = HUGE_VALF;
-    animation.autoreverses = YES;
-    animation.timeOffset = (arc4random_uniform(100) / 100.0) * animation.duration;
-    [self.layer addAnimation:animation forKey:kEditingShakeAnimationKey];
-}
-
-- (void)stopEditingShakeAnimation
-{
-    [self.layer removeAnimationForKey:kEditingShakeAnimationKey];
-    self.transform = CGAffineTransformIdentity;
 }
 
 #pragma mark - Getters

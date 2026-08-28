@@ -135,6 +135,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 - (void)reloadData
 {
     if (!_isLoaded) return;
+    [self exitEditingTasksIfNeededAnimated:NO];
     self.data = [MirrorStorage tasksWithAddNew];
     [self.collectionView reloadData];
 }
@@ -342,7 +343,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 
     UIView *view = touch.view;
     while (view && view != self.view) {
-        if ([view isKindOfClass:TimeTrackerTaskCollectionViewCell.class]) {
+        if ([view isKindOfClass:UIButton.class]) {
             return NO;
         }
         view = view.superview;
@@ -401,6 +402,40 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     }
     [self.reorderSelectedCell setReorderSelected:NO animated:animated];
     self.reorderSelectedCell = nil;
+}
+
+- (NSIndexPath *)indexPathForTaskName:(NSString *)taskName
+{
+    for (NSInteger index = 0; index < self.data.count; index++) {
+        MirrorTaskModel *task = self.data[index];
+        if (!task.isAddTaskModel && [task.taskName isEqualToString:taskName]) {
+            return [NSIndexPath indexPathForItem:index inSection:0];
+        }
+    }
+    return nil;
+}
+
+- (void)animateTaskCellRemovalWithTaskName:(NSString *)taskName completion:(dispatch_block_t)completion
+{
+    NSIndexPath *indexPath = [self indexPathForTaskName:taskName];
+    if (![self canMoveTaskAtIndexPath:indexPath]) {
+        if (completion) {
+            completion();
+        }
+        return;
+    }
+
+    [self exitEditingTasksIfNeededAnimated:YES];
+    self.collectionView.userInteractionEnabled = NO;
+    [self.data removeObjectAtIndex:indexPath.item];
+    [self.collectionView performBatchUpdates:^{
+        [self.collectionView deleteItemsAtIndexPaths:@[indexPath]];
+    } completion:^(BOOL finished) {
+        self.collectionView.userInteractionEnabled = YES;
+        if (completion) {
+            completion();
+        }
+    }];
 }
 
 - (void)presentEditTaskSheetAtIndexPath:(NSIndexPath *)indexPath
@@ -465,11 +500,18 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 
 - (void)presentMergeTaskAlertWithSourceTask:(MirrorTaskModel *)sourceTask targetTask:(MirrorTaskModel *)targetTask shouldPrefixRecordNotes:(BOOL)shouldPrefixRecordNotes
 {
-    UIAlertController *mergeTaskAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge_tasks_?"] message:[MirrorLanguage mirror_stringWithKey:@"merge_task_warning"] preferredStyle:UIAlertControllerStyleAlert];
+    NSString *sourceTaskName = [NSString stringWithFormat:@" '%@' ", sourceTask.taskName];
+    NSString *targetTaskName = [NSString stringWithFormat:@" '%@' ", targetTask.taskName];
+    NSString *message = [MirrorLanguage mirror_stringWithKey:@"merge_task_warning" with1Placeholder:sourceTaskName with2Placeholder:targetTaskName];
+    UIAlertController *mergeTaskAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge_tasks_?"] message:message preferredStyle:UIAlertControllerStyleAlert];
+    [mergeTaskAlert setValue:[self mergeTaskWarningMessageWithText:message sourceTask:sourceTask targetTask:targetTask] forKey:@"attributedMessage"];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
-    UIAlertAction *mergeAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        [MirrorStorage mergeTask:sourceTask.taskName toTask:targetTask.taskName shouldPrefixRecordNotes:shouldPrefixRecordNotes];
+    UIAlertAction *mergeAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self animateTaskCellRemovalWithTaskName:sourceTask.taskName completion:^{
+            [MirrorStorage mergeTask:sourceTask.taskName toTask:targetTask.taskName shouldPrefixRecordNotes:shouldPrefixRecordNotes];
+        }];
     }];
+    [mergeAction setValue:[UIColor systemOrangeColor] forKey:@"titleTextColor"];
     [mergeTaskAlert addAction:cancelAction];
     [mergeTaskAlert addAction:mergeAction];
     [self presentViewController:mergeTaskAlert animated:YES completion:nil];
@@ -488,6 +530,26 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     return [[NSAttributedString alloc] initWithString:title attributes:@{
         NSFontAttributeName: [UIFont boldSystemFontOfSize:17.0]
     }];
+}
+
+- (NSAttributedString *)mergeTaskWarningMessageWithText:(NSString *)message sourceTask:(MirrorTaskModel *)sourceTask targetTask:(MirrorTaskModel *)targetTask
+{
+    NSMutableAttributedString *attributedMessage = [[NSMutableAttributedString alloc] initWithString:message];
+    NSString *sourceTaskName = [NSString stringWithFormat:@"'%@'", sourceTask.taskName];
+    NSRange sourceRange = [message rangeOfString:sourceTaskName];
+    if (sourceRange.location != NSNotFound) {
+        [attributedMessage addAttribute:NSForegroundColorAttributeName value:[UIColor mirrorColorPulsed:sourceTask.color] range:sourceRange];
+        [attributedMessage addAttribute:NSBackgroundColorAttributeName value:[UIColor mirrorColorNamed:sourceTask.color] range:sourceRange];
+    }
+
+    NSRange targetSearchRange = sourceRange.location == NSNotFound ? NSMakeRange(0, message.length) : NSMakeRange(NSMaxRange(sourceRange), message.length - NSMaxRange(sourceRange));
+    NSString *targetTaskName = [NSString stringWithFormat:@"'%@'", targetTask.taskName];
+    NSRange targetRange = [message rangeOfString:targetTaskName options:0 range:targetSearchRange];
+    if (targetRange.location != NSNotFound) {
+        [attributedMessage addAttribute:NSForegroundColorAttributeName value:[UIColor mirrorColorPulsed:targetTask.color] range:targetRange];
+        [attributedMessage addAttribute:NSBackgroundColorAttributeName value:[UIColor mirrorColorNamed:targetTask.color] range:targetRange];
+    }
+    return attributedMessage;
 }
 
 - (NSArray<NSNumber *> *)taskColorOptions
@@ -602,11 +664,14 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     UIAlertController *deleteTaskAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_task_?"] message:[MirrorLanguage mirror_stringWithKey:@"delete_task_warning"] preferredStyle:UIAlertControllerStyleAlert];
     UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"cancel"] style:UIAlertActionStyleDefault handler:nil];
     UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
-        [MirrorStorage deleteTask:taskName];
+        [self animateTaskCellRemovalWithTaskName:taskName completion:^{
+            [MirrorStorage deleteTask:taskName];
+        }];
     }];
-    UIAlertAction *mergeAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+    UIAlertAction *mergeAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"merge"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self presentMergeTaskPickerAtIndexPath:indexPath];
     }];
+    [mergeAction setValue:[UIColor systemOrangeColor] forKey:@"titleTextColor"];
     [deleteTaskAlert addAction:deleteAction];
     [deleteTaskAlert addAction:mergeAction];
     [deleteTaskAlert addAction:cancelAction];
@@ -668,7 +733,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 - (void)collectionView:(UICollectionView *)collectionView moveItemAtIndexPath:(NSIndexPath *)sourceIndexPath toIndexPath:(NSIndexPath *)destinationIndexPath
 {
     if (![self canMoveTaskAtIndexPath:sourceIndexPath] || ![self canMoveTaskAtIndexPath:destinationIndexPath]) {
-        [collectionView reloadData];
+        [self reloadData];
         return;
     }
 
