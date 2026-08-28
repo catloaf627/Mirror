@@ -38,7 +38,7 @@
     self.presentingViewController = viewController;
 
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"DEBUG"
-                                                                             message:@"\n\n\n\n\n\n\n\n\n\n\n\n\n"
+                                                                             message:@"\n\n\n\n\n\n\n\n\n"
                                                                       preferredStyle:UIAlertControllerStyleAlert];
 
     UIView *tapDotSwitchContainer = [UIView new];
@@ -107,7 +107,7 @@
         [tapDotSwitchContainer.leadingAnchor constraintEqualToAnchor:alertController.view.leadingAnchor constant:24],
         [tapDotSwitchContainer.trailingAnchor constraintEqualToAnchor:alertController.view.trailingAnchor constant:-24],
         [tapDotSwitchContainer.topAnchor constraintEqualToAnchor:alertController.view.topAnchor constant:60],
-        [tapDotSwitchContainer.heightAnchor constraintEqualToConstant:128],
+        [tapDotSwitchContainer.heightAnchor constraintEqualToConstant:124],
 
         [recordSwitchLabel.leadingAnchor constraintEqualToAnchor:tapDotSwitchContainer.leadingAnchor],
         [recordSwitchLabel.topAnchor constraintEqualToAnchor:tapDotSwitchContainer.topAnchor],
@@ -132,7 +132,7 @@
 
         [debugSwitchContainer.leadingAnchor constraintEqualToAnchor:alertController.view.leadingAnchor constant:24],
         [debugSwitchContainer.trailingAnchor constraintEqualToAnchor:alertController.view.trailingAnchor constant:-24],
-        [debugSwitchContainer.topAnchor constraintEqualToAnchor:tapDotSwitchContainer.bottomAnchor constant:8],
+        [debugSwitchContainer.topAnchor constraintEqualToAnchor:tapDotSwitchContainer.bottomAnchor constant:4],
         [debugSwitchContainer.heightAnchor constraintEqualToConstant:36],
 
         [debugSwitchLabel.leadingAnchor constraintEqualToAnchor:debugSwitchContainer.leadingAnchor],
@@ -149,8 +149,7 @@
         [self showJSONDocumentPicker];
     }]];
     [alertController addAction:[UIAlertAction actionWithTitle:@"Seed Fake Data" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-        [MirrorFakeDataSeeder seedFakeData];
-        [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
+        [self presentSeedFakeDataConfirmation];
     }]];
     [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
     [viewController presentViewController:alertController animated:YES completion:nil];
@@ -208,6 +207,26 @@
     activityViewController.popoverPresentationController.sourceView = self.presentingViewController.view;
     activityViewController.popoverPresentationController.sourceRect = CGRectMake(self.presentingViewController.view.bounds.size.width / 2, 0, 1, 1);
     [self.presentingViewController presentViewController:activityViewController animated:YES completion:nil];
+}
+
+- (void)presentSeedFakeDataConfirmation
+{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        UIViewController *viewController = self.presentingViewController;
+        if (!viewController) {
+            return;
+        }
+
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Seed Fake Data?"
+                                                                                 message:@"This will overwrite current tasks, records, and special days."
+                                                                          preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
+        [alertController addAction:[UIAlertAction actionWithTitle:@"Seed" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+            [MirrorFakeDataSeeder seedFakeData];
+            [[NSNotificationCenter defaultCenter] postNotificationName:MirrorImportDataNotificaiton object:nil];
+        }]];
+        [viewController presentViewController:alertController animated:YES completion:nil];
+    });
 }
 
 - (void)showJSONDocumentPicker
