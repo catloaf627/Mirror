@@ -15,9 +15,6 @@
 
 @interface TimelineBackgroundView () <UIGestureRecognizerDelegate>
 
-@property (nonatomic, assign) CGFloat hourHeight;
-@property (nonatomic, assign) long dayStartTimestamp;
-@property (nonatomic, assign) long dayEndTimestamp;
 @property (nonatomic, assign) long pendingStartTimestamp;
 @property (nonatomic, strong) UIView *taskPickerOverlayView;
 
@@ -41,15 +38,6 @@
     [self addGestureRecognizer:tapRecognizer];
 }
 
-- (void)configureWithHourHeight:(CGFloat)hourHeight
-              dayStartTimestamp:(long)dayStartTimestamp
-                dayEndTimestamp:(long)dayEndTimestamp
-{
-    self.hourHeight = hourHeight;
-    self.dayStartTimestamp = dayStartTimestamp;
-    self.dayEndTimestamp = dayEndTimestamp;
-}
-
 - (void)tapTimeline:(UITapGestureRecognizer *)tapRecognizer
 {
     CGPoint point = [tapRecognizer locationInView:self];
@@ -61,7 +49,7 @@
     }
 
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
-    self.pendingStartTimestamp = [self timestampForTimelineY:point.y];
+    self.pendingStartTimestamp = [self.delegate timelineView:self timestampForTimelineY:point.y];
     [self showTaskPickerAtPoint:point];
 }
 
@@ -169,27 +157,7 @@
 
 - (void)addRecordWithTaskName:(NSString *)taskName
 {
-    long start = self.pendingStartTimestamp;
-    long end = [self endTimestampForNewRecordStartingAt:start];
-    if (end - start < kMinSeconds) {
-        return;
-    }
-    [MirrorStorage insertPeriodWithTaskname:taskName startAt:[NSDate dateWithTimeIntervalSince1970:start] endAt:[NSDate dateWithTimeIntervalSince1970:end]];
-    if ([self.delegate respondsToSelector:@selector(timelineViewDidAddRecord:)]) {
-        [self.delegate timelineViewDidAddRecord:self];
-    }
-}
-
-- (long)endTimestampForNewRecordStartingAt:(long)start
-{
-    long end = MIN(start + 3600, self.dayEndTimestamp);
-    for (MirrorRecordModel *record in [MirrorStorage retriveMirrorRecords]) {
-        if (record.startTime >= start) {
-            end = MIN(end, record.startTime);
-            break;
-        }
-    }
-    return end;
+    [self.delegate timelineView:self didSelectTaskName:taskName startTimestamp:self.pendingStartTimestamp];
 }
 
 - (BOOL)pointHitsRecordView:(CGPoint)point
@@ -200,21 +168,6 @@
         }
     }
     return NO;
-}
-
-- (long)timestampForTimelineY:(CGFloat)y
-{
-    CGFloat timelineHeight = self.hourHeight * [self timelineHourCount];
-    CGFloat clampedY = MIN(MAX(y, 0), timelineHeight - 1);
-    NSInteger quarterHours = lround((clampedY / self.hourHeight) * 4.0);
-    NSInteger maxQuarterHours = ((self.dayEndTimestamp - self.dayStartTimestamp) / (15 * 60)) - 1;
-    quarterHours = MIN(MAX(quarterHours, 0), maxQuarterHours);
-    return self.dayStartTimestamp + quarterHours * 15 * 60;
-}
-
-- (NSInteger)timelineHourCount
-{
-    return (self.dayEndTimestamp - self.dayStartTimestamp) / 3600;
 }
 
 - (NSString *)shortTimeFromTimestamp:(long)timestamp

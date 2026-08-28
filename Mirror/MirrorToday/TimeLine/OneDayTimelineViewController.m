@@ -128,7 +128,6 @@
 {
     self.date = date ?: [NSDate now];
     self.didScrollToDefaultHours = NO;
-    [self configureTimelineContentViewForCurrentDate];
     [self updateTimelineSizeIfNeeded];
     [self reloadData];
 }
@@ -165,8 +164,32 @@
     return YES;
 }
 
-- (void)timelineViewDidAddRecord:(TimelineBackgroundView *)timelineView
+- (long)timelineView:(TimelineBackgroundView *)timelineView timestampForTimelineY:(CGFloat)y
 {
+    if (self.hourHeight <= 0) {
+        return [self dayStartTimestamp];
+    }
+
+    long dayStart = [self dayStartTimestamp];
+    long dayEnd = [self dayEndTimestamp];
+    CGFloat timelineHeight = self.hourHeight * [self timelineHourCount];
+    CGFloat clampedY = MIN(MAX(y, 0), timelineHeight - 1);
+    NSInteger quarterHours = lround((clampedY / self.hourHeight) * 4.0);
+    NSInteger maxQuarterHours = ((dayEnd - dayStart) / (15 * 60)) - 1;
+    quarterHours = MIN(MAX(quarterHours, 0), maxQuarterHours);
+    return dayStart + quarterHours * 15 * 60;
+}
+
+- (void)timelineView:(TimelineBackgroundView *)timelineView didSelectTaskName:(NSString *)taskName startTimestamp:(long)startTimestamp
+{
+    long endTimestamp = [self endTimestampForNewRecordStartingAt:startTimestamp];
+    if (endTimestamp - startTimestamp < kMinSeconds) {
+        return;
+    }
+
+    [MirrorStorage insertPeriodWithTaskname:taskName
+                                    startAt:[NSDate dateWithTimeIntervalSince1970:startTimestamp]
+                                      endAt:[NSDate dateWithTimeIntervalSince1970:endTimestamp]];
     [self reloadData];
 }
 
@@ -328,7 +351,6 @@
     self.hourHeight = newHourHeight;
     self.timelineScrollView.contentSize = contentSize;
     self.timelineContentView.frame = CGRectMake(0, 0, contentSize.width, contentSize.height);
-    [self configureTimelineContentViewForCurrentDate];
     [self renderTimeline];
 
     if (!self.didScrollToDefaultHours) {
@@ -361,6 +383,28 @@
             return;
         }
     }
+}
+
+- (long)endTimestampForNewRecordStartingAt:(long)start
+{
+    long dayEnd = [self dayEndTimestamp];
+    long end = MIN(start + 3600, dayEnd);
+    for (MirrorRecordModel *record in [MirrorStorage retriveMirrorRecords]) {
+        if (record.endTime <= start) {
+            continue;
+        }
+        if (record.startTime < start && start < record.endTime) {
+            return start;
+        }
+        if (record.startTime >= dayEnd) {
+            break;
+        }
+        if (record.startTime >= start) {
+            end = MIN(end, record.startTime);
+            break;
+        }
+    }
+    return end;
 }
 
 - (void)renderTimeline
@@ -558,13 +602,6 @@
 }
 
 #pragma mark - Privates
-
-- (void)configureTimelineContentViewForCurrentDate
-{
-    [self.timelineContentView configureWithHourHeight:self.hourHeight
-                                    dayStartTimestamp:[self dayStartTimestamp]
-                                      dayEndTimestamp:[self dayEndTimestamp]];
-}
 
 - (long)dayStartTimestamp
 {
