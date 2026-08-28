@@ -425,8 +425,8 @@
     self.nowLineView = nil;
     self.nowLineTimeLabel = nil;
     [self renderHourLines];
-    [self renderRecords];
     [self updateNowLine];
+    [self renderRecords];
 }
 
 - (void)startNowLineTimer
@@ -487,8 +487,6 @@
     self.nowLineTimeLabel.text = [self shortTimeFromTimestamp:now];
     self.nowLineTimeLabel.frame = CGRectMake(0, lineY - labelHeight / 2.0, labelWidth, labelHeight);
     self.nowLineView.frame = CGRectMake(lineX, lineY - lineHeight / 2.0, lineWidth, lineHeight);
-    [self.timelineContentView bringSubviewToFront:self.nowLineTimeLabel];
-    [self.timelineContentView bringSubviewToFront:self.nowLineView];
 }
 
 - (void)removeNowLine
