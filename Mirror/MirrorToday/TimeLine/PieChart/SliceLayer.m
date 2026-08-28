@@ -15,7 +15,8 @@
     [path addArcWithCenter:_centerPoint radius:_radius startAngle:_startAngle endAngle:_endAngle clockwise:YES];
     [path closePath];
     self.path = path.CGPath;
-    self.strokeColor = [UIColor mirrorColorNamed:MirrorColorTypeAddTaskCellBG].CGColor;
+    self.strokeColor = UIColor.clearColor.CGColor;
+    self.lineWidth = 0;
     self.fillColor = [UIColor mirrorColorNamed:self.colorType].CGColor;
 }
  
