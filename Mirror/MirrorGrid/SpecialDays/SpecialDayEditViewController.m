@@ -40,11 +40,13 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
 @property (nonatomic, strong) NSArray<UIView *> *colorFillViews;
 @property (nonatomic, strong) NSArray<NSString *> *allIconOptions;
 @property (nonatomic, strong) NSArray<NSString *> *filteredIconOptions;
+@property (nonatomic, strong, nullable) MASConstraint *datePickerWidthConstraint;
 @property (nonatomic, strong, nullable) MASConstraint *iconGridBottomConstraint;
 @property (nonatomic, assign) MirrorSystemColorType selectedColor;
 @property (nonatomic, copy) NSString *selectedIconName;
 @property (nonatomic, assign) NSInteger currentIconPage;
 @property (nonatomic, assign) NSInteger iconPageCapacity;
+@property (nonatomic, assign) BOOL isSearchingIcons;
 
 @end
 
@@ -101,8 +103,15 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
     [self.contentView addSubview:self.iconGridView];
 
     [self.datePicker mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.centerX.mas_equalTo(self.contentView);
+        make.left.mas_equalTo(self.contentView).offset(kSpecialDayEditPadding);
         make.top.mas_equalTo(self.contentView).offset(18);
+        self.datePickerWidthConstraint = make.width.mas_equalTo([self fallbackDatePickerWidth]);
+        make.height.mas_equalTo(kSpecialDayEditControlHeight);
+    }];
+    [self.infoTextField mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.datePicker.mas_right).offset(10);
+        make.right.mas_equalTo(self.contentView).offset(-kSpecialDayEditPadding);
+        make.centerY.mas_equalTo(self.datePicker);
         make.height.mas_equalTo(kSpecialDayEditControlHeight);
     }];
     [self.colorPickerView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -115,15 +124,10 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
         make.top.mas_equalTo(self.colorPickerView.mas_bottom).offset(18);
         make.width.height.mas_equalTo(kSpecialDayEditControlHeight);
     }];
-    [self.infoTextField mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.searchTextField mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.iconPreviewButton.mas_right).offset(10);
         make.right.mas_equalTo(self.contentView).offset(-kSpecialDayEditPadding);
         make.centerY.mas_equalTo(self.iconPreviewButton);
-        make.height.mas_equalTo(kSpecialDayEditControlHeight);
-    }];
-    [self.searchTextField mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.right.mas_equalTo(self.contentView).inset(kSpecialDayEditPadding);
-        make.top.mas_equalTo(self.infoTextField.mas_bottom).offset(20);
         make.height.mas_equalTo(kSpecialDayEditControlHeight);
     }];
     [self.iconGridView addSubview:self.iconPagesScrollView];
@@ -147,6 +151,7 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
+    [self updateDatePickerWidthIfNeeded];
     [self updateIconGridPageCapacityIfNeeded];
 }
 
@@ -274,19 +279,44 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
 {
     NSString *query = self.searchTextField.text ?: @"";
     NSString *normalizedQuery = [self normalizedSearchText:query];
+    self.isSearchingIcons = normalizedQuery.length > 0;
     NSArray<NSString *> *searchTokens = [self searchTokensForQuery:normalizedQuery];
     NSArray<NSString *> *sourceOptions = self.allIconOptions;
-    NSMutableArray<NSString *> *filteredOptions = [NSMutableArray new];
+    NSMutableOrderedSet<NSString *> *exactMatches = [NSMutableOrderedSet orderedSet];
+    NSMutableOrderedSet<NSString *> *prefixMatches = [NSMutableOrderedSet orderedSet];
+    NSMutableOrderedSet<NSString *> *containsMatches = [NSMutableOrderedSet orderedSet];
+    NSMutableOrderedSet<NSString *> *keywordMatches = [NSMutableOrderedSet orderedSet];
     for (NSString *iconName in sourceOptions) {
-        if ((normalizedQuery.length == 0 || [self iconName:iconName matchesSearchTokens:searchTokens]) && [UIImage systemImageNamed:iconName]) {
-            [filteredOptions addObject:iconName];
+        if (![UIImage systemImageNamed:iconName]) {
+            continue;
+        }
+        if (normalizedQuery.length == 0) {
+            [containsMatches addObject:iconName];
+            continue;
+        }
+
+        NSString *lowercaseIconName = iconName.lowercaseString;
+        if ([lowercaseIconName isEqualToString:normalizedQuery]) {
+            [exactMatches addObject:iconName];
+        } else if ([lowercaseIconName hasPrefix:normalizedQuery]) {
+            [prefixMatches addObject:iconName];
+        } else if ([lowercaseIconName containsString:normalizedQuery]) {
+            [containsMatches addObject:iconName];
+        } else if ([self iconName:iconName matchesSearchTokens:searchTokens]) {
+            [keywordMatches addObject:iconName];
         }
     }
 
     NSString *trimmedQuery = [query stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet] ?: @"";
-    if (trimmedQuery.length > 0 && [UIImage systemImageNamed:trimmedQuery] && ![filteredOptions containsObject:trimmedQuery]) {
-        [filteredOptions insertObject:trimmedQuery atIndex:0];
+    if (trimmedQuery.length > 0 && [UIImage systemImageNamed:trimmedQuery]) {
+        [exactMatches insertObject:trimmedQuery atIndex:0];
     }
+
+    NSMutableArray<NSString *> *filteredOptions = [NSMutableArray new];
+    [filteredOptions addObjectsFromArray:exactMatches.array];
+    [filteredOptions addObjectsFromArray:prefixMatches.array];
+    [filteredOptions addObjectsFromArray:containsMatches.array];
+    [filteredOptions addObjectsFromArray:keywordMatches.array];
 
     self.filteredIconOptions = filteredOptions;
     self.currentIconPage = MIN(self.currentIconPage, MAX([self iconPageCount] - 1, 0));
@@ -345,8 +375,8 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
         return;
     }
 
-    NSInteger firstPage = MAX(currentPage - 1, 0);
-    NSInteger lastPage = MIN(currentPage + 1, pageCount - 1);
+    NSInteger firstPage = self.isSearchingIcons ? 0 : MAX(currentPage - 1, 0);
+    NSInteger lastPage = self.isSearchingIcons ? pageCount - 1 : MIN(currentPage + 1, pageCount - 1);
     CGFloat itemSpacing = [self iconItemSpacingForWidth:pageWidth];
     NSInteger capacity = [self currentIconPageCapacity];
     for (NSInteger page = firstPage; page <= lastPage; page++) {
@@ -411,6 +441,41 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
     return MAX(floor((availableWidth - kSpecialDayIconColumns * kSpecialDayIconSide) / MAX(kSpecialDayIconColumns - 1, 1)), 6);
 }
 
+- (void)updateDatePickerWidthIfNeeded
+{
+    CGFloat measuredWidth = [self measuredCompactDatePickerWidthInView:self.datePicker];
+    CGFloat width = measuredWidth > 0 ? measuredWidth : [self fallbackDatePickerWidth];
+    if (fabs(CGRectGetWidth(self.datePicker.bounds) - width) > 0.5) {
+        [self.datePickerWidthConstraint setOffset:width];
+        [self.view setNeedsLayout];
+    }
+}
+
+- (CGFloat)measuredCompactDatePickerWidthInView:(UIView *)view
+{
+    NSString *className = NSStringFromClass(view.class);
+    if ([className containsString:@"Compact"] && CGRectGetWidth(view.bounds) > 0) {
+        return ceil(CGRectGetWidth(view.bounds));
+    }
+
+    for (UIView *subview in view.subviews) {
+        CGFloat width = [self measuredCompactDatePickerWidthInView:subview];
+        if (width > 0) {
+            return width;
+        }
+    }
+    return 0;
+}
+
+- (CGFloat)fallbackDatePickerWidth
+{
+    CGFloat availableWidth = CGRectGetWidth(self.contentView.bounds);
+    if (availableWidth <= 0) {
+        availableWidth = kScreenWidth;
+    }
+    return floor((availableWidth - 2 * kSpecialDayEditPadding) / 3.0);
+}
+
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)scrollView
 {
     if (scrollView == self.iconPagesScrollView) {
@@ -461,12 +526,34 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
 - (BOOL)iconName:(NSString *)iconName matchesSearchTokens:(NSArray<NSString *> *)tokens
 {
     NSString *lowercaseIconName = iconName.lowercaseString;
+    NSString *searchableIconName = [[lowercaseIconName stringByReplacingOccurrencesOfString:@"." withString:@" "] stringByReplacingOccurrencesOfString:@"-" withString:@" "];
     for (NSString *token in tokens) {
-        if ([lowercaseIconName containsString:token]) {
+        NSArray<NSString *> *terms = [self searchTermsFromToken:token];
+        BOOL matchesAllTerms = terms.count > 0;
+        for (NSString *term in terms) {
+            if (![lowercaseIconName containsString:term] && ![searchableIconName containsString:term]) {
+                matchesAllTerms = NO;
+                break;
+            }
+        }
+        if (matchesAllTerms) {
             return YES;
         }
     }
     return NO;
+}
+
+- (NSArray<NSString *> *)searchTermsFromToken:(NSString *)token
+{
+    NSString *normalizedToken = [self normalizedSearchText:[token stringByReplacingOccurrencesOfString:@"." withString:@" "]];
+    NSArray<NSString *> *rawTerms = [normalizedToken componentsSeparatedByCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
+    NSMutableArray<NSString *> *terms = [NSMutableArray new];
+    for (NSString *term in rawTerms) {
+        if (term.length > 0) {
+            [terms addObject:term];
+        }
+    }
+    return terms;
 }
 
 - (NSDictionary<NSString *, NSArray<NSString *> *> *)localizedIconSearchKeywords
@@ -592,10 +679,13 @@ static NSString * const kSpecialDayEditFallbackIconName = @"star.fill";
     if (!_datePicker) {
         _datePicker = [UIDatePicker new];
         _datePicker.datePickerMode = UIDatePickerModeDate;
+        _datePicker.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
         _datePicker.locale = [NSLocale localeWithLocaleIdentifier:[MirrorLanguage mirror_stringWithKey:@"locale_Identifier"]];
         if (@available(iOS 13.4, *)) {
             _datePicker.preferredDatePickerStyle = UIDatePickerStyleCompact;
         }
+        [_datePicker setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [_datePicker setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
     }
     return _datePicker;
 }
