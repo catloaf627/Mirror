@@ -172,10 +172,7 @@
 
 - (NSString *)recordNoonDateCommand
 {
-    NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
-    formatter.dateFormat = @"MMdd1200yy";
-    return [@"sudo date " stringByAppendingString:[formatter stringFromDate:NSDate.date]];
+    return @"sudo date 0828000026";
 }
 
 - (void)copyRecordTimeOffCommand
