@@ -55,7 +55,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
 @property (nonatomic, strong) UIView *debugMoveRangeView;
 @property (nonatomic, strong) UIColor *recordColor;
 @property (nonatomic, strong) UIColor *recordPulseColor;
-@property (nonatomic, assign) BOOL usesLongPressColors;
+@property (nonatomic, assign) BOOL usesLongPressHighlight;
 @property (nonatomic, strong) UIEditMenuInteraction *editMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
@@ -138,7 +138,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
     MirrorColorType colorType = task ? task.color : MirrorColorTypeCellGray;
     self.recordColor = [UIColor mirrorColorNamed:colorType];
     self.recordPulseColor = [UIColor mirrorColorPulsed:colorType];
-    self.usesLongPressColors = NO;
+    self.usesLongPressHighlight = NO;
     self.selectionState = TimelineRecordSelectionStateIdle;
     self.periodIndex = record.originalIndex;
     self.tag = record.originalIndex;
@@ -154,7 +154,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
     }
 
     UILabel *titleLabel = [UILabel new];
-    titleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+    titleLabel.textColor = self.recordPulseColor ?: [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     titleLabel.font = [UIFont mirrorHintFont_Card];
     titleLabel.adjustsFontSizeToFitWidth = YES;
     titleLabel.attributedText = [self attributedTimelineTextForRecord:record font:titleLabel.font];
@@ -250,7 +250,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
         [self.delegate timelineRecordViewDidRequestLongSelection:self];
     } else {
         self.selectionState = TimelineRecordSelectionStateLongSelected;
-        self.usesLongPressColors = YES;
+        self.usesLongPressHighlight = YES;
         [self beginSelectionShowsHandles:NO animated:NO];
         [self updateRecordColors];
     }
@@ -345,7 +345,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
     self.isInlineEditing = YES;
     self.selectionState = selectionState;
     self.allowsMoveDrag = selectionState == TimelineRecordSelectionStateTapSelected;
-    self.usesLongPressColors = selectionState == TimelineRecordSelectionStateLongSelected;
+    self.usesLongPressHighlight = selectionState == TimelineRecordSelectionStateLongSelected;
     self.minimumTimestamp = minimumTimestamp;
     self.maximumTimestamp = maximumTimestamp;
     self.hourHeight = hourHeight;
@@ -377,7 +377,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
 {
     self.isSelected = NO;
     self.selectionState = TimelineRecordSelectionStateIdle;
-    self.usesLongPressColors = NO;
+    self.usesLongPressHighlight = NO;
     [self updateRecordColors];
     [self removeDebugRangeViews];
     [self removeEditingAnimation];
@@ -558,23 +558,10 @@ typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
 
 - (void)updateRecordColors
 {
-    UIColor *backgroundColor = self.usesLongPressColors ? self.recordPulseColor : self.recordColor;
-    UIColor *textColor = self.usesLongPressColors ? self.recordColor : self.recordPulseColor;
-    self.foregroundView.backgroundColor = [backgroundColor colorWithAlphaComponent:0.7];
-    [self updateTitleTextColor:textColor];
+    UIColor *backgroundColor = self.recordColor;
+    CGFloat backgroundAlpha = self.usesLongPressHighlight ? 1.0 : 0.7;
+    self.foregroundView.backgroundColor = [backgroundColor colorWithAlphaComponent:backgroundAlpha];
     [self updateSelectionColors];
-}
-
-- (void)updateTitleTextColor:(UIColor *)textColor
-{
-    if (!self.titleLabel.attributedText || !textColor) {
-        return;
-    }
-    NSMutableAttributedString *attributedText = [self.titleLabel.attributedText mutableCopy];
-    [attributedText addAttribute:NSForegroundColorAttributeName
-                           value:textColor
-                           range:NSMakeRange(0, attributedText.length)];
-    self.titleLabel.attributedText = attributedText;
 }
 
 - (void)updateSelectionColors
@@ -628,7 +615,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
     }
     NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] initWithString:text attributes:@{
         NSFontAttributeName: font,
-        NSForegroundColorAttributeName: [UIColor mirrorColorNamed:MirrorColorTypeTextHint]
+        NSForegroundColorAttributeName: self.recordPulseColor ?: [UIColor mirrorColorNamed:MirrorColorTypeTextHint]
     }];
     [attributedText addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:font.pointSize] range:NSMakeRange(0, taskName.length)];
     return attributedText;
