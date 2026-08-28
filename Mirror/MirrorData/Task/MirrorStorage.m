@@ -1323,12 +1323,18 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 // 去掉 NSDate 的秒；例如 08:30:45 变为 08:30:00，保证用户添加/编辑记录时按分钟存储。
 + (NSDate *)dateWithoutSeconds:(NSDate *)date
 {
-    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    NSDateComponents *components = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth| NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute| NSCalendarUnitSecond fromDate:date];
-    components.timeZone = [NSTimeZone systemTimeZone];
-    components.second = 0;
-    NSDate *dateWithoutSeconds = [gregorian dateFromComponents:components];
-    return dateWithoutSeconds;
+    // 原来的 NSCalendar 重组方式会把 NSDate 拆成本地年月日时分秒后再生成 NSDate。
+    // 夏令时结束时本地 01:00-01:59 会出现两次，重组会丢失“第一次/第二次 01:xx”的绝对时间区别，导致记录可能被判断为 0 时长或无效。
+//    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+//    NSDateComponents *components = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute | NSCalendarUnitSecond fromDate:date];
+//    components.timeZone = [NSTimeZone systemTimeZone];
+//    components.second = 0;
+//    NSDate *dateWithoutSeconds = [gregorian dateFromComponents:components];
+//    return dateWithoutSeconds;
+
+    NSTimeInterval timestamp = [date timeIntervalSince1970];
+    NSTimeInterval timestampWithoutSeconds = floor(timestamp / 60.0) * 60.0;
+    return [NSDate dateWithTimeIntervalSince1970:timestampWithoutSeconds];
 }
 
 @end
