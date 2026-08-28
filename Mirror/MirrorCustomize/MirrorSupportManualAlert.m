@@ -8,11 +8,13 @@
 #import "MirrorManualVideoViewController.h"
 
 static NSString * const kMirrorRecordTimeCannotOverlapVideoName = @"no_overlap";
-static NSString * const kMirrorLongPressToEditMergeDeleteTaskVideoName = @"start_longpress_edit_merge_delete";
+static NSString * const kMirrorLongPressToEditTaskVideoName = @"start_longpress_edit";
+static NSString * const kMirrorLongPressToMergeTaskVideoName = @"start_long_press_merge";
+static NSString * const kMirrorLongPressToDeleteTaskVideoName = @"start_longpress_";
 static NSString * const kMirrorLongPressToEditDeleteDragRecordVideoName = @"today_longpress_edit_delete";
 static NSString * const kMirrorTapToAdjustStartEndTimeVideoName = @"today_tap_drag_edit";
 static NSString * const kMirrorTapEmptySpaceToAddNewRecordVideoName = @"today_tap_empty_add_record";
-static NSString * const kMirrorSwipeOrUseCalendarToSwitchDatesVideoName = @"swipe_or_calendar_switch_dates";
+static NSString * const kMirrorSwipeOrUseCalendarToSwitchDatesVideoName = @"today_swipe_or_calendar_switch_dates";
 static NSString * const kMirrorTapTopLeftToOpenSpecialDaysVideoName = @"special_days";
 static NSString * const kMirrorLongPressDragAcrossDatesVideoName = @"records_longdrag_to_see_multiple";
 static NSString * const kMirrorTapDayToViewRecordsVideoName = @"records_tap_to_see_one_day";
@@ -52,7 +54,9 @@ static NSString * const kMirrorManualVideoDefinitionNameKey = @"name";
 {
     return @[
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_no_overlap", kMirrorManualVideoDefinitionNameKey: kMirrorRecordTimeCannotOverlapVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_edit_task", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditMergeDeleteTaskVideoName},
+        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_edit_task", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditTaskVideoName},
+        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_merge_task", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToMergeTaskVideoName},
+        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_delete_task", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToDeleteTaskVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_adjust_time", kMirrorManualVideoDefinitionNameKey: kMirrorTapToAdjustStartEndTimeVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_edit_record", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditDeleteDragRecordVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_add_record", kMirrorManualVideoDefinitionNameKey: kMirrorTapEmptySpaceToAddNewRecordVideoName},
