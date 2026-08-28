@@ -434,6 +434,11 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         [self.delegate timelineRecordView:self didCommitEndTimestamp:newEndTimestamp];
     } else if (dragMode == TimelineRecordDragModeMove && (newStartTimestamp != self.originalStartTimestamp || newEndTimestamp != self.originalEndTimestamp)) {
         [self.delegate timelineRecordView:self didCommitStartTimestamp:newStartTimestamp endTimestamp:newEndTimestamp];
+    } else {
+        CGRect frame = self.frame;
+        frame.origin.y = self.originalTop;
+        frame.size.height = self.originalHeight;
+        self.frame = frame;
     }
 }
 
