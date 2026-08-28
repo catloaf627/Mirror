@@ -12,6 +12,10 @@ typedef void (^OneDayTimelineHeaderConfiguration)(UIView *headerView, NSMutableA
 
 @interface OneDayTimelineViewController : UIViewController
 
+//bg line 的 date = OneDayTimelineViewController.date
+//record 显示用的 date = OneDayTimelineViewController.date 的 dayStart/dayEnd
+//add record 的 date = OneDayTimelineViewController.date + 点击位置换算出的时间
+
 - (instancetype)initWithDate:(NSDate *)date
                   headerView:(UIView * _Nullable)headerView
                 headerHeight:(CGFloat)headerHeight
