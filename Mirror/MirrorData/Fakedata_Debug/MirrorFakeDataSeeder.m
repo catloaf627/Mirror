@@ -334,12 +334,12 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 + (NSArray<NSString *> *)localizedSampleTaskNamesForEnglishName:(NSString *)englishName
 {
     NSDictionary<NSString *, NSArray<NSString *> *> *taskNames = @{
-        @"Gym": ML(@"Gym", @"健身", @"Gimnasio", @"Musculation", @"ジム", @"운동", @"Fitness", @"Тренировка"),
+        @"Gym": ML(@"Gym", @"健身", @"Gym", @"Gym", @"ジム", @"운동", @"Sport", @"Зал"),
         @"Tennis": ML(@"Tennis", @"网球", @"Tenis", @"Tennis", @"テニス", @"테니스", @"Tennis", @"Теннис"),
-        @"Code": ML(@"Code", @"编程", @"Programar", @"Coder", @"コーディング", @"코딩", @"Programmieren", @"Код"),
-        @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Natation", @"水泳", @"수영", @"Schwimmen", @"Плавание"),
+        @"Code": ML(@"Code", @"编程", @"Code", @"Code", @"コード", @"코딩", @"Code", @"Код"),
+        @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Nage", @"水泳", @"수영", @"Swim", @"Бассейн"),
         @"Read": ML(@"Read", @"阅读", @"Leer", @"Lire", @"読書", @"독서", @"Lesen", @"Чтение"),
-        @"Cook": ML(@"Cook", @"做饭", @"Cocinar", @"Cuisiner", @"料理", @"요리", @"Kochen", @"Готовка")
+        @"Cook": ML(@"Cook", @"做饭", @"Cook", @"Cuisine", @"料理", @"요리", @"Kochen", @"Еда")
     };
     return taskNames[englishName] ?: ML(englishName, englishName, englishName, englishName, englishName, englishName, englishName, englishName);
 }
@@ -347,18 +347,18 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 + (NSArray<MirrorFakeSpecialDayPlan *> *)fakeSpecialDayPlans
 {
     return @[
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:1 day:8 info:ML(@"got a car", @"提车啦", @"coche nuevo", @"nouvelle voiture", @"車を手に入れた", @"차를 샀어요", @"Auto bekommen", @"купил машину") icon:@"car.fill" color:MirrorSystemColorTypeGreen],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:2 day:7 info:ML(@"graduated", @"毕业啦", @"graduación", @"diplôme obtenu", @"卒業した", @"졸업했어요", @"Abschluss gemacht", @"выпуск") icon:@"graduationcap.fill" color:MirrorSystemColorTypeBlue],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:3 day:22 info:ML(@"got a job", @"找到工作", @"conseguí trabajo", @"nouveau travail", @"仕事が決まった", @"취업했어요", @"Job bekommen", @"нашел работу") icon:@"briefcase.fill" color:MirrorSystemColorTypeMint],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"moved to a new home", @"搬新家", @"mudanza a una casa nueva", @"déménagement", @"新居へ引っ越し", @"새집으로 이사", @"in ein neues Zuhause gezogen", @"переехал в новый дом") icon:@"chandelier.fill" color:MirrorSystemColorTypeGreen],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:15 info:ML(@"learned butterfly", @"会游蝶泳了", @"aprendí mariposa", @"papillon appris", @"バタフライが泳げるようになった", @"접영을 할 수 있게 됐어요", @"Schmetterling gelernt", @"научился баттерфляю") icon:@"figure.pool.swim" color:MirrorSystemColorTypeOrange],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:6 day:27 info:ML(@"my birthday", @"我的生日", @"mi cumpleaños", @"mon anniversaire", @"自分の誕生日", @"내 생일", @"mein Geburtstag", @"мой день рождения") icon:@"birthday.cake.fill" color:MirrorSystemColorTypeYellow],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:7 day:19 info:ML(@"watched the World Cup", @"看世界杯", @"vimos el Mundial", @"Coupe du monde", @"ワールドカップを見た", @"월드컵 본 날", @"die WM geschaut", @"смотрел чемпионат мира") icon:@"soccerball" color:MirrorSystemColorTypeMint],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"got cats", @"接猫回家", @"adoptamos gatos", @"chats à la maison", @"猫を迎えた", @"고양이를 데려온 날", @"Katzen adoptiert", @"забрали кошек домой") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:9 day:13 info:ML(@"got abs", @"练出腹肌！", @"conseguí abdominales", @"abdos dessinés", @"腹筋が割れた", @"복근 만들기 성공!", @"Bauchmuskeln bekommen!", @"появился пресс!") icon:@"dumbbell.fill" color:MirrorSystemColorTypeOrange],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:10 day:28 info:ML(@"won the 3.0 tennis tournament", @"网球比赛3.0冠军", @"campeón del torneo de tenis 3.0", @"champion du tournoi de tennis 3.0", @"テニス大会3.0優勝", @"테니스 대회 3.0 우승", @"das 3.0-Tennisturnier gewonnen", @"выиграл теннисный турнир 3.0") icon:@"medal.fill" color:MirrorSystemColorTypePurple],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:11 day:11 info:ML(@"wedding", @"婚礼", @"boda", @"mariage", @"結婚式", @"결혼식", @"Hochzeit", @"свадьба") icon:@"heart.fill" color:MirrorSystemColorTypeRed],
-        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:12 day:12 info:ML(@"launched my own website", @"创建了自己的网站", @"creé mi sitio web", @"créé mon site web", @"自分のサイトを作った", @"내 웹사이트를 만들었어요", @"meine eigene Website gestartet", @"запустил свой сайт") icon:@"globe" color:MirrorSystemColorTypeOrange]
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:1 day:8 info:ML(@"got a car 🚗", @"提车啦 🚗", @"coche nuevo 🚗", @"nouvelle voiture 🚗", @"車を手に入れた 🚗", @"차를 샀어요 🚗", @"Auto bekommen 🚗", @"купил машину 🚗") icon:@"car.fill" color:MirrorSystemColorTypeGreen],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:2 day:7 info:ML(@"graduated 🎓", @"毕业啦 🎓", @"graduación 🎓", @"diplôme obtenu 🎓", @"卒業した 🎓", @"졸업했어요 🎓", @"Abschluss gemacht 🎓", @"выпуск 🎓") icon:@"graduationcap.fill" color:MirrorSystemColorTypeBlue],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:3 day:22 info:ML(@"got a job 💼", @"找到工作 💼", @"conseguí trabajo 💼", @"nouveau travail 💼", @"仕事が決まった 💼", @"취업했어요 💼", @"Job bekommen 💼", @"нашел работу 💼") icon:@"briefcase.fill" color:MirrorSystemColorTypeMint],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:4 day:17 info:ML(@"met Messi ⚽️", @"见到梅西 ⚽️", @"vi a Messi ⚽️", @"vu Messi ⚽️", @"メッシに会った ⚽️", @"메시를 만났어요 ⚽️", @"Messi getroffen ⚽️", @"увидел Месси ⚽️") icon:@"soccerball" color:MirrorSystemColorTypeMint],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:5 day:15 info:ML(@"learned butterfly 🏊‍♀️", @"会游蝶泳了 🏊‍♀️", @"aprendí mariposa 🏊‍♀️", @"papillon appris 🏊‍♀️", @"バタフライが泳げるようになった 🏊‍♀️", @"접영을 할 수 있게 됐어요 🏊‍♀️", @"Schmetterling gelernt 🏊‍♀️", @"научился баттерфляю 🏊‍♀️") icon:@"figure.pool.swim" color:MirrorSystemColorTypeOrange],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:6 day:27 info:ML(@"my birthday 🎂", @"我的生日 🎂", @"mi cumpleaños 🎂", @"mon anniversaire 🎂", @"自分の誕生日 🎂", @"내 생일 🎂", @"mein Geburtstag 🎂", @"мой день рождения 🎂") icon:@"birthday.cake.fill" color:MirrorSystemColorTypeYellow],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:7 day:19 info:ML(@"moved to a new home 🏠", @"搬新家 🏠", @"mudanza a una casa nueva 🏠", @"déménagement 🏠", @"新居へ引っ越し 🏠", @"새집으로 이사 🏠", @"in ein neues Zuhause gezogen 🏠", @"переехал в новый дом 🏠") icon:@"house.fill" color:MirrorSystemColorTypeGreen],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:8 day:19 info:ML(@"got cats 🐈", @"接猫回家 🐈", @"adoptamos gatos 🐈", @"chats à la maison 🐈", @"猫を迎えた 🐈", @"고양이를 데려온 날 🐈", @"Katzen adoptiert 🐈", @"забрали кошек домой 🐈") icon:@"cat.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:9 day:13 info:ML(@"got abs 💪", @"练出腹肌！💪", @"conseguí abdominales 💪", @"abdos dessinés 💪", @"腹筋が割れた 💪", @"복근 만들기 성공! 💪", @"Bauchmuskeln bekommen! 💪", @"появился пресс! 💪") icon:@"dumbbell.fill" color:MirrorSystemColorTypeOrange],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:10 day:28 info:ML(@"won the 3.0 tennis tournament 🏅", @"网球比赛3.0冠军 🏅", @"campeón del torneo de tenis 3.0 🏅", @"champion du tournoi de tennis 3.0 🏅", @"テニス大会3.0優勝 🏅", @"테니스 대회 3.0 우승 🏅", @"das 3.0-Tennisturnier gewonnen 🏅", @"выиграл теннисный турнир 3.0 🏅") icon:@"medal.fill" color:MirrorSystemColorTypePurple],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:11 day:11 info:ML(@"wedding 💍", @"婚礼 💍", @"boda 💍", @"mariage 💍", @"結婚式 💍", @"결혼식 💍", @"Hochzeit 💍", @"свадьба 💍") icon:@"heart.fill" color:MirrorSystemColorTypeRed],
+        [[MirrorFakeSpecialDayPlan alloc] initWithMonth:12 day:12 info:ML(@"launched my own website 🌐", @"创建了自己的网站 🌐", @"creé mi sitio web 🌐", @"créé mon site web 🌐", @"自分のサイトを作った 🌐", @"내 웹사이트를 만들었어요 🌐", @"meine eigene Website gestartet 🌐", @"запустил свой сайт 🌐") icon:@"globe" color:MirrorSystemColorTypeOrange]
     ];
 }
 
