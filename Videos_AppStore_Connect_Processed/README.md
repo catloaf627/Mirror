@@ -106,7 +106,7 @@ exit $bad
 Expected result:
 
 ```text
-processed count: 16
+processed count: 24
 ```
 
 Every output video should show:
