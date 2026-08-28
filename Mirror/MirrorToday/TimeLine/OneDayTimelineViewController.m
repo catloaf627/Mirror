@@ -204,6 +204,8 @@
 
     __weak typeof(self) weakSelf = self;
     UIAction *editAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        [weakSelf.activeRecordView endInlineEditing];
+        weakSelf.activeRecordView = nil;
         [weakSelf editPeriodAtIndex:periodIndex];
     }];
     UIAction *deleteAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
@@ -262,15 +264,25 @@
 
 - (void)timelineRecordViewDidRequestInlineEditing:(TimelineRecordView *)recordView
 {
-    [self beginEditingRecordView:recordView allowsMoveDrag:NO];
+    [self beginTapSelectionForRecordView:recordView];
 }
 
-- (void)timelineRecordViewDidRequestMoveEditing:(TimelineRecordView *)recordView
+- (void)timelineRecordViewDidRequestLongSelection:(TimelineRecordView *)recordView
 {
-    [self beginEditingRecordView:recordView allowsMoveDrag:YES];
+    [self beginLongSelectionForRecordView:recordView];
 }
 
-- (void)beginEditingRecordView:(TimelineRecordView *)recordView allowsMoveDrag:(BOOL)allowsMoveDrag
+- (void)beginTapSelectionForRecordView:(TimelineRecordView *)recordView
+{
+    [self beginSelectionForRecordView:recordView isLongSelection:NO];
+}
+
+- (void)beginLongSelectionForRecordView:(TimelineRecordView *)recordView
+{
+    [self beginSelectionForRecordView:recordView isLongSelection:YES];
+}
+
+- (void)beginSelectionForRecordView:(TimelineRecordView *)recordView isLongSelection:(BOOL)isLongSelection
 {
     NSMutableArray<MirrorRecordModel *> *records = [MirrorStorage retriveMirrorRecords];
     NSInteger periodIndex = recordView.periodIndex;
@@ -290,12 +302,12 @@
 
     self.activeRecordView = recordView;
     [self.timelineContentView bringSubviewToFront:recordView];
-    if (allowsMoveDrag) {
-        [recordView beginMoveEditingWithMinimumTimestamp:minimumTimestamp
-                                        maximumTimestamp:maximumTimestamp
-                                              hourHeight:self.hourHeight
-                                       dayStartTimestamp:[self dayStartTimestamp]
-                                         dayEndTimestamp:[self dayEndTimestamp]];
+    if (isLongSelection) {
+        [recordView beginLongSelectionWithMinimumTimestamp:minimumTimestamp
+                                          maximumTimestamp:maximumTimestamp
+                                                hourHeight:self.hourHeight
+                                         dayStartTimestamp:[self dayStartTimestamp]
+                                           dayEndTimestamp:[self dayEndTimestamp]];
     } else {
         [recordView beginInlineEditingWithMinimumTimestamp:minimumTimestamp
                                           maximumTimestamp:maximumTimestamp
@@ -307,7 +319,7 @@
 
 - (void)timelineRecordView:(TimelineRecordView *)recordView didChangeScrollEnabled:(BOOL)enabled
 {
-    self.timelineScrollView.scrollEnabled = enabled;
+    self.timelineScrollView.scrollEnabled = YES;
 }
 
 - (void)timelineRecordView:(TimelineRecordView *)recordView didCommitStartTimestamp:(long)timestamp
@@ -362,16 +374,10 @@
 - (void)reloadDataKeepingInlineEditingForPeriodIndex:(NSInteger)periodIndex
 {
     [self reloadData];
-    [self restoreEditingForPeriodIndex:periodIndex allowsMoveDrag:NO];
+    [self restoreTapSelectionForPeriodIndex:periodIndex];
 }
 
-- (void)reloadDataKeepingMoveEditingForPeriodIndex:(NSInteger)periodIndex
-{
-    [self reloadData];
-    [self restoreEditingForPeriodIndex:periodIndex allowsMoveDrag:YES];
-}
-
-- (void)restoreEditingForPeriodIndex:(NSInteger)periodIndex allowsMoveDrag:(BOOL)allowsMoveDrag
+- (void)restoreTapSelectionForPeriodIndex:(NSInteger)periodIndex
 {
     for (UIView *subview in self.timelineContentView.subviews) {
         if (![subview isKindOfClass:TimelineRecordView.class]) {
@@ -379,7 +385,7 @@
         }
         TimelineRecordView *recordView = (TimelineRecordView *)subview;
         if (recordView.periodIndex == periodIndex) {
-            [self beginEditingRecordView:recordView allowsMoveDrag:allowsMoveDrag];
+            [self beginTapSelectionForRecordView:recordView];
             return;
         }
     }

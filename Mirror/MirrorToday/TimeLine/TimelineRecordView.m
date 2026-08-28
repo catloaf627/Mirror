@@ -23,11 +23,18 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     TimelineRecordDragModeMove,
 };
 
+typedef NS_ENUM(NSInteger, TimelineRecordSelectionState) {
+    TimelineRecordSelectionStateIdle,
+    TimelineRecordSelectionStateTapSelected,
+    TimelineRecordSelectionStateLongSelected,
+};
+
 @interface TimelineRecordView () <UIGestureRecognizerDelegate, UIEditMenuInteractionDelegate>
 
 @property (nonatomic, assign) NSInteger periodIndex;
 @property (nonatomic, assign) BOOL isInlineEditing;
 @property (nonatomic, assign) BOOL isSelected;
+@property (nonatomic, assign) TimelineRecordSelectionState selectionState;
 @property (nonatomic, assign) BOOL allowsMoveDrag;
 @property (nonatomic, assign) TimelineRecordDragMode dragMode;
 @property (nonatomic, assign) long originalStartTimestamp;
@@ -46,7 +53,9 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 @property (nonatomic, strong) UIView *debugStartRangeView;
 @property (nonatomic, strong) UIView *debugEndRangeView;
 @property (nonatomic, strong) UIView *debugMoveRangeView;
+@property (nonatomic, strong) UIColor *recordColor;
 @property (nonatomic, strong) UIColor *recordPulseColor;
+@property (nonatomic, assign) BOOL usesLongPressColors;
 @property (nonatomic, strong) UIEditMenuInteraction *editMenuInteraction API_AVAILABLE(ios(16.0));
 
 @end
@@ -105,8 +114,10 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         return [super pointInside:point withEvent:event];
     }
 
-    CGRect baseTouchRect = self.allowsMoveDrag ? [self moveDragTouchRect] : self.bounds;
-    return CGRectContainsPoint(baseTouchRect, point) || CGRectContainsPoint([self startResizeTouchRect], point) || CGRectContainsPoint([self endResizeTouchRect], point);
+    if (self.selectionState != TimelineRecordSelectionStateTapSelected) {
+        return CGRectContainsPoint(self.bounds, point);
+    }
+    return CGRectContainsPoint([self moveDragTouchRect], point) || CGRectContainsPoint([self startResizeTouchRect], point) || CGRectContainsPoint([self endResizeTouchRect], point);
 }
 
 - (UIView *)handleView
@@ -125,19 +136,20 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 {
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
     MirrorColorType colorType = task ? task.color : MirrorColorTypeCellGray;
-    UIColor *recordColor = [UIColor mirrorColorNamed:colorType];
+    self.recordColor = [UIColor mirrorColorNamed:colorType];
     self.recordPulseColor = [UIColor mirrorColorPulsed:colorType];
+    self.usesLongPressColors = NO;
+    self.selectionState = TimelineRecordSelectionStateIdle;
     self.periodIndex = record.originalIndex;
     self.tag = record.originalIndex;
     self.foregroundView.tag = record.originalIndex;
-    self.foregroundView.backgroundColor = [recordColor colorWithAlphaComponent:0.7];
-    [self updateSelectionColors];
     self.originalStartTimestamp = record.startTime;
     self.originalEndTimestamp = record.endTime;
 
     [self.titleLabel removeFromSuperview];
     self.titleLabel = nil;
     if (!showsText) {
+        [self updateRecordColors];
         return;
     }
 
@@ -148,6 +160,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     titleLabel.attributedText = [self attributedTimelineTextForRecord:record font:titleLabel.font];
     [self.foregroundView addSubview:titleLabel];
     self.titleLabel = titleLabel;
+    [self updateRecordColors];
     [self layoutTitleLabel];
 }
 
@@ -233,10 +246,13 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     if ([self.delegate respondsToSelector:@selector(timelineRecordViewDidRequestMenuDismissal:)]) {
         [self.delegate timelineRecordViewDidRequestMenuDismissal:self];
     }
-    if ([self.delegate respondsToSelector:@selector(timelineRecordViewDidRequestMoveEditing:)]) {
-        [self.delegate timelineRecordViewDidRequestMoveEditing:self];
+    if ([self.delegate respondsToSelector:@selector(timelineRecordViewDidRequestLongSelection:)]) {
+        [self.delegate timelineRecordViewDidRequestLongSelection:self];
     } else {
+        self.selectionState = TimelineRecordSelectionStateLongSelected;
+        self.usesLongPressColors = YES;
         [self beginSelectionShowsHandles:NO animated:NO];
+        [self updateRecordColors];
     }
     if (@available(iOS 16.0, *)) {
         CGPoint point = [recognizer locationInView:self.foregroundView];
@@ -294,43 +310,42 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
                              dayStartTimestamp:(long)dayStartTimestamp
                                dayEndTimestamp:(long)dayEndTimestamp
 {
-    [self beginEditingWithMinimumTimestamp:minimumTimestamp
-                          maximumTimestamp:maximumTimestamp
-                                hourHeight:hourHeight
-                         dayStartTimestamp:dayStartTimestamp
-                           dayEndTimestamp:dayEndTimestamp
-                              showsHandles:YES
-                            allowsMoveDrag:YES
-                                  animated:NO];
+    [self beginEditingWithSelectionState:TimelineRecordSelectionStateTapSelected
+                        minimumTimestamp:minimumTimestamp
+                        maximumTimestamp:maximumTimestamp
+                              hourHeight:hourHeight
+                       dayStartTimestamp:dayStartTimestamp
+                         dayEndTimestamp:dayEndTimestamp
+                                animated:NO];
 }
 
-- (void)beginMoveEditingWithMinimumTimestamp:(long)minimumTimestamp
-                            maximumTimestamp:(long)maximumTimestamp
-                                  hourHeight:(CGFloat)hourHeight
-                           dayStartTimestamp:(long)dayStartTimestamp
-                             dayEndTimestamp:(long)dayEndTimestamp
+- (void)beginLongSelectionWithMinimumTimestamp:(long)minimumTimestamp
+                              maximumTimestamp:(long)maximumTimestamp
+                                    hourHeight:(CGFloat)hourHeight
+                             dayStartTimestamp:(long)dayStartTimestamp
+                               dayEndTimestamp:(long)dayEndTimestamp
 {
-    [self beginEditingWithMinimumTimestamp:minimumTimestamp
-                          maximumTimestamp:maximumTimestamp
-                                hourHeight:hourHeight
-                         dayStartTimestamp:dayStartTimestamp
-                           dayEndTimestamp:dayEndTimestamp
-                              showsHandles:NO
-                            allowsMoveDrag:YES
-                                  animated:NO];
+    [self beginEditingWithSelectionState:TimelineRecordSelectionStateLongSelected
+                        minimumTimestamp:minimumTimestamp
+                        maximumTimestamp:maximumTimestamp
+                              hourHeight:hourHeight
+                       dayStartTimestamp:dayStartTimestamp
+                         dayEndTimestamp:dayEndTimestamp
+                                animated:NO];
 }
 
-- (void)beginEditingWithMinimumTimestamp:(long)minimumTimestamp
-                        maximumTimestamp:(long)maximumTimestamp
-                              hourHeight:(CGFloat)hourHeight
-                       dayStartTimestamp:(long)dayStartTimestamp
-                         dayEndTimestamp:(long)dayEndTimestamp
-                            showsHandles:(BOOL)showsHandles
-                          allowsMoveDrag:(BOOL)allowsMoveDrag
-                                animated:(BOOL)animated
+- (void)beginEditingWithSelectionState:(TimelineRecordSelectionState)selectionState
+                      minimumTimestamp:(long)minimumTimestamp
+                      maximumTimestamp:(long)maximumTimestamp
+                            hourHeight:(CGFloat)hourHeight
+                     dayStartTimestamp:(long)dayStartTimestamp
+                       dayEndTimestamp:(long)dayEndTimestamp
+                              animated:(BOOL)animated
 {
     self.isInlineEditing = YES;
-    self.allowsMoveDrag = allowsMoveDrag;
+    self.selectionState = selectionState;
+    self.allowsMoveDrag = selectionState == TimelineRecordSelectionStateTapSelected;
+    self.usesLongPressColors = selectionState == TimelineRecordSelectionStateLongSelected;
     self.minimumTimestamp = minimumTimestamp;
     self.maximumTimestamp = maximumTimestamp;
     self.hourHeight = hourHeight;
@@ -338,7 +353,8 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     self.dayEndTimestamp = dayEndTimestamp;
     self.originalTop = CGRectGetMinY(self.frame);
     self.originalHeight = CGRectGetHeight(self.frame);
-    [self beginSelectionShowsHandles:showsHandles animated:animated];
+    [self beginSelectionShowsHandles:selectionState == TimelineRecordSelectionStateTapSelected animated:animated];
+    [self updateRecordColors];
     [self updateDebugRangeViews];
     [self.delegate timelineRecordView:self didChangeScrollEnabled:NO];
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
@@ -350,6 +366,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
         return;
     }
     self.isInlineEditing = NO;
+    self.selectionState = TimelineRecordSelectionStateIdle;
     self.allowsMoveDrag = NO;
     self.dragMode = TimelineRecordDragModeNone;
     [self endSelection];
@@ -359,6 +376,9 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 - (void)endSelection
 {
     self.isSelected = NO;
+    self.selectionState = TimelineRecordSelectionStateIdle;
+    self.usesLongPressColors = NO;
+    [self updateRecordColors];
     [self removeDebugRangeViews];
     [self removeEditingAnimation];
     self.layer.borderWidth = 0;
@@ -368,7 +388,8 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 
 - (BOOL)containsTimelinePoint:(CGPoint)point
 {
-    return CGRectContainsPoint(self.frame, point);
+    CGPoint localPoint = [self.superview convertPoint:point toView:self];
+    return [self pointInside:localPoint withEvent:nil];
 }
 
 - (void)updateFrameWithTranslation:(CGFloat)translationY
@@ -455,8 +476,8 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 - (void)beginSelectionShowsHandles:(BOOL)showsHandles animated:(BOOL)animated
 {
     self.isSelected = YES;
-    self.layer.borderWidth = 2;
-    self.layer.borderColor = self.recordPulseColor.CGColor;
+    self.layer.borderWidth = showsHandles ? 2 : 0;
+    self.layer.borderColor = showsHandles ? self.recordPulseColor.CGColor : nil;
     [self updateSelectionColors];
     [self setHandlesHidden:!showsHandles];
     if (animated) {
@@ -535,12 +556,33 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
     self.debugMoveRangeView = nil;
 }
 
+- (void)updateRecordColors
+{
+    UIColor *backgroundColor = self.usesLongPressColors ? self.recordPulseColor : self.recordColor;
+    UIColor *textColor = self.usesLongPressColors ? self.recordColor : self.recordPulseColor;
+    self.foregroundView.backgroundColor = [backgroundColor colorWithAlphaComponent:0.7];
+    [self updateTitleTextColor:textColor];
+    [self updateSelectionColors];
+}
+
+- (void)updateTitleTextColor:(UIColor *)textColor
+{
+    if (!self.titleLabel.attributedText || !textColor) {
+        return;
+    }
+    NSMutableAttributedString *attributedText = [self.titleLabel.attributedText mutableCopy];
+    [attributedText addAttribute:NSForegroundColorAttributeName
+                           value:textColor
+                           range:NSMakeRange(0, attributedText.length)];
+    self.titleLabel.attributedText = attributedText;
+}
+
 - (void)updateSelectionColors
 {
     UIColor *pulseColor = self.recordPulseColor ?: [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     self.startHandleView.backgroundColor = pulseColor;
     self.endHandleView.backgroundColor = pulseColor;
-    if (self.isSelected) {
+    if (self.isSelected && !self.startHandleView.hidden && !self.endHandleView.hidden) {
         self.layer.borderColor = pulseColor.CGColor;
     }
 }
@@ -614,7 +656,7 @@ typedef NS_ENUM(NSInteger, TimelineRecordDragMode) {
 - (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer
 {
     if ([gestureRecognizer isKindOfClass:UIPanGestureRecognizer.class]) {
-        return self.isInlineEditing;
+        return self.selectionState == TimelineRecordSelectionStateTapSelected;
     }
     return YES;
 }
