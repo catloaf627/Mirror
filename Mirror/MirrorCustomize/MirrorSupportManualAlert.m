@@ -7,18 +7,18 @@
 #import "MirrorLanguage.h"
 #import "MirrorManualVideoViewController.h"
 
-static NSString * const kMirrorRecordTimeCannotOverlapVideoName = @"record_time_cannot_overlap";
-static NSString * const kMirrorLongPressToEditMergeDeleteTaskVideoName = @"long_press_to_edit_merge_delete_a_task";
-static NSString * const kMirrorLongPressToEditDeleteDragRecordVideoName = @"long_press_to_edit_delete_drag_a_record";
-static NSString * const kMirrorTapToAdjustStartEndTimeVideoName = @"tap_to_adjust_start_end_time";
-static NSString * const kMirrorTapEmptySpaceToAddNewRecordVideoName = @"tap_empty_space_to_add_a_new_record";
-static NSString * const kMirrorSwipeOrUseCalendarToSwitchDatesVideoName = @"swipe_left_right_or_use_calendar_to_switch_dates";
-static NSString * const kMirrorTapTopLeftToOpenSpecialDaysVideoName = @"tap_top_left_to_open_speical_days_long_press_to_edit_delete";
-static NSString * const kMirrorLongPressDragAcrossDatesVideoName = @"long_press_and_drag_to_view_records_across_multiple_dates";
-static NSString * const kMirrorTapDayToViewRecordsVideoName = @"tap_a_day_to_view_that_days_records";
-static NSString * const kMirrorTapRecordToOpenTaskRecordsVideoName = @"tap_a_record_to_open_all_records_for_that_task_long_press_to_edit_delete";
-static NSString * const kMirrorTapTaskInLegendToHideShowVideoName = @"tap_a_task_in_a_legend_to_hide_show_it";
-static NSString * const kMirrorTapTopLeftFirstDayTopRightHeatmapVideoName = @"tap_top_left_to_switch_the_first_day_of_week_tap_top_right_to_switch_heatmap";
+static NSString * const kMirrorRecordTimeCannotOverlapVideoName = @"no_overlap";
+static NSString * const kMirrorLongPressToEditMergeDeleteTaskVideoName = @"start_longpress_edit_merge_delete";
+static NSString * const kMirrorLongPressToEditDeleteDragRecordVideoName = @"today_longpress_edit_delete";
+static NSString * const kMirrorTapToAdjustStartEndTimeVideoName = @"today_tap_drag_edit";
+static NSString * const kMirrorTapEmptySpaceToAddNewRecordVideoName = @"today_tap_empty_add_record";
+static NSString * const kMirrorSwipeOrUseCalendarToSwitchDatesVideoName = @"swipe_or_calendar_switch_dates";
+static NSString * const kMirrorTapTopLeftToOpenSpecialDaysVideoName = @"special_days";
+static NSString * const kMirrorLongPressDragAcrossDatesVideoName = @"records_longdrag_to_see_multiple";
+static NSString * const kMirrorTapDayToViewRecordsVideoName = @"records_tap_to_see_one_day";
+static NSString * const kMirrorTapRecordToOpenTaskRecordsVideoName = @"records_tap_a_record_to_see_all_records_of_a_task_longpress_to";
+static NSString * const kMirrorTapTaskInLegendToHideShowVideoName = @"records_click_legend";
+static NSString * const kMirrorTapTopLeftFirstDayTopRightHeatmapVideoName = @"records_lefttop_righttop";
 static NSString * const kMirrorManualVideoItemTitleKey = @"title";
 static NSString * const kMirrorManualVideoItemURLKey = @"url";
 static NSString * const kMirrorManualVideoDefinitionLanguageKey = @"languageKey";

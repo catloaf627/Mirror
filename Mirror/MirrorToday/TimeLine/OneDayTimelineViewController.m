@@ -128,6 +128,7 @@
 {
     self.date = date ?: [NSDate now];
     self.didScrollToDefaultHours = NO;
+    [self configureTimelineContentViewForCurrentDate];
     [self updateTimelineSizeIfNeeded];
     [self reloadData];
 }
@@ -327,9 +328,7 @@
     self.hourHeight = newHourHeight;
     self.timelineScrollView.contentSize = contentSize;
     self.timelineContentView.frame = CGRectMake(0, 0, contentSize.width, contentSize.height);
-    [self.timelineContentView configureWithHourHeight:self.hourHeight
-                                    dayStartTimestamp:[self dayStartTimestamp]
-                                      dayEndTimestamp:[self dayEndTimestamp]];
+    [self configureTimelineContentViewForCurrentDate];
     [self renderTimeline];
 
     if (!self.didScrollToDefaultHours) {
@@ -559,6 +558,13 @@
 }
 
 #pragma mark - Privates
+
+- (void)configureTimelineContentViewForCurrentDate
+{
+    [self.timelineContentView configureWithHourHeight:self.hourHeight
+                                    dayStartTimestamp:[self dayStartTimestamp]
+                                      dayEndTimestamp:[self dayEndTimestamp]];
+}
 
 - (long)dayStartTimestamp
 {
