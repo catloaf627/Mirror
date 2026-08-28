@@ -65,7 +65,7 @@
 
     UIButton *copyDateButton = [UIButton buttonWithType:UIButtonTypeSystem];
     copyDateButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [copyDateButton setTitle:@"sudo date 0826050026" forState:UIControlStateNormal];
+    [copyDateButton setTitle:[self recordNoonDateCommand] forState:UIControlStateNormal];
     copyDateButton.titleLabel.font = [UIFont monospacedSystemFontOfSize:11 weight:UIFontWeightMedium];
     copyDateButton.titleLabel.adjustsFontSizeToFitWidth = YES;
     copyDateButton.contentHorizontalAlignment = UIControlContentHorizontalAlignmentLeft;
@@ -168,7 +168,15 @@
 
 - (void)copyRecordDateCommand
 {
-    UIPasteboard.generalPasteboard.string = @"sudo date 0826050026";
+    UIPasteboard.generalPasteboard.string = [self recordNoonDateCommand];
+}
+
+- (NSString *)recordNoonDateCommand
+{
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    formatter.dateFormat = @"MMdd1200yy";
+    return [@"sudo date " stringByAppendingString:[formatter stringFromDate:NSDate.date]];
 }
 
 - (void)copyRecordTimeOffCommand

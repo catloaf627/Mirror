@@ -53,8 +53,8 @@ static NSString * const kMirrorManualVideoDefinitionNameKey = @"name";
     return @[
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_no_overlap", kMirrorManualVideoDefinitionNameKey: kMirrorRecordTimeCannotOverlapVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_edit_task", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditMergeDeleteTaskVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_edit_record", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditDeleteDragRecordVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_adjust_time", kMirrorManualVideoDefinitionNameKey: kMirrorTapToAdjustStartEndTimeVideoName},
+        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_edit_record", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditDeleteDragRecordVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_add_record", kMirrorManualVideoDefinitionNameKey: kMirrorTapEmptySpaceToAddNewRecordVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_switch_date", kMirrorManualVideoDefinitionNameKey: kMirrorSwipeOrUseCalendarToSwitchDatesVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_special_days", kMirrorManualVideoDefinitionNameKey: kMirrorTapTopLeftToOpenSpecialDaysVideoName},
