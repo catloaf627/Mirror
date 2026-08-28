@@ -304,7 +304,7 @@
 {
     NSInteger periodIndex = recordView.periodIndex;
     [MirrorStorage editPeriodStartTime:startTimestamp endTime:endTimestamp periodIndex:periodIndex];
-    [self reloadDataKeepingMoveEditingForPeriodIndex:periodIndex];
+    [self reloadDataKeepingInlineEditingForPeriodIndex:periodIndex];
 }
 
 #pragma mark - Timeline
