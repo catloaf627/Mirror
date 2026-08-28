@@ -684,7 +684,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
     NSInteger periodIndex = sender.tag;
     UIAlertController *deleteButtonAlert = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete_period_?"] message:nil preferredStyle:UIAlertControllerStyleAlert];
 
-    UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         NSIndexPath *deletedIndexPath = [self indexPathForOriginalIndex:periodIndex];
         if (deletedIndexPath) {
             TaskRecordTimelineCell *cell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:deletedIndexPath];
