@@ -426,11 +426,7 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 
 + (NSString *)tennisNoteForMonthIndex:(NSInteger)monthIndex dayIndex:(NSInteger)dayIndex
 {
-    // 网球 1/3 概率生成 note，所有语言都尽量保持短标签。
-    if ([self randomValueForDayIndex:dayIndex salt:89 modulo:3] != 0) {
-        return nil;
-    }
-
+    // 网球每次都有 note，展示 fake data 里的训练重点。
     NSArray<NSArray<NSString *> *> *progressNotes = @[
         ML(@"strokes", @"正反手", @"golpes", @"coups", @"ストローク", @"스트로크", @"Schläge", @"удары"),
         ML(@"footwork", @"脚步", @"pies", @"jambes", @"フットワーク", @"풋워크", @"Beinarbeit", @"ноги"),
@@ -446,7 +442,8 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         ML(@"points", @"得分", @"puntos", @"points", @"ポイント", @"포인트", @"Punkte", @"очки"),
         ML(@"match", @"实战", @"partido", @"match", @"試合", @"매치", @"Match", @"матч")
     ];
-    NSArray<NSString *> *note = progressNotes[monthIndex % progressNotes.count];
+    NSInteger noteIndex = (monthIndex + [self randomValueForDayIndex:dayIndex salt:89 modulo:progressNotes.count]) % progressNotes.count;
+    NSArray<NSString *> *note = progressNotes[noteIndex];
     return [self localizedValue:note
                     languageKey:[self fakeDataLanguageKey]
                       fallback:note.firstObject];
