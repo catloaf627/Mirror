@@ -21,6 +21,7 @@ static CGFloat const kDotMinSize = 8;
 static CGFloat const kDotMaxSize = 16;
 static NSTimeInterval const kDotMaxDuration = 8 * 60 * 60;
 static CGFloat const kRowMinHeight = 72;
+static CGFloat const kHighlightVerticalInset = 2;
 static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimelineCell";
 
 #define kTimelineX (kScreenWidth/4)
@@ -34,6 +35,8 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
                     isFirst:(BOOL)isFirst
                      isLast:(BOOL)isLast
               isHighlighted:(BOOL)isHighlighted
+      previousIsHighlighted:(BOOL)previousIsHighlighted
+          nextIsHighlighted:(BOOL)nextIsHighlighted
                  isSelected:(BOOL)isSelected;
 - (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color;
 - (void)shake;
@@ -42,6 +45,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 
 @interface TaskRecordTimelineCell ()
 
+@property (nonatomic, strong) UIView *highlightBackgroundView;
 @property (nonatomic, strong) UIView *topLine;
 @property (nonatomic, strong) UIView *bottomLine;
 @property (nonatomic, strong) UIView *dot;
@@ -50,6 +54,8 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 @property (nonatomic, strong) UILabel *durationLabel;
 @property (nonatomic, strong) UILabel *noteLabel;
 @property (nonatomic, assign) CGFloat dotSize;
+@property (nonatomic, assign) CGFloat highlightTopInset;
+@property (nonatomic, assign) CGFloat highlightBottomInset;
 
 @end
 
@@ -61,6 +67,10 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
     if (self) {
         self.backgroundColor = UIColor.clearColor;
         self.contentView.backgroundColor = UIColor.clearColor;
+
+        self.highlightBackgroundView = [UIView new];
+        self.highlightBackgroundView.hidden = YES;
+        [self.contentView addSubview:self.highlightBackgroundView];
 
         self.topLine = [UIView new];
         [self.contentView addSubview:self.topLine];
@@ -105,6 +115,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
     [super prepareForReuse];
     [self setShowsSelectionBorder:NO color:nil];
     self.layer.backgroundColor = UIColor.clearColor.CGColor;
+    self.highlightBackgroundView.hidden = YES;
 }
 
 - (void)configureWithRecord:(MirrorRecordModel *)record
@@ -114,10 +125,16 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
                     isFirst:(BOOL)isFirst
                      isLast:(BOOL)isLast
               isHighlighted:(BOOL)isHighlighted
+      previousIsHighlighted:(BOOL)previousIsHighlighted
+          nextIsHighlighted:(BOOL)nextIsHighlighted
                  isSelected:(BOOL)isSelected
 {
     self.dotSize = dotSize;
-    self.contentView.backgroundColor = isHighlighted ? [pulseColor colorWithAlphaComponent:0.12] : UIColor.clearColor;
+    self.contentView.backgroundColor = UIColor.clearColor;
+    self.highlightBackgroundView.hidden = !isHighlighted;
+    self.highlightBackgroundView.backgroundColor = [pulseColor colorWithAlphaComponent:0.12];
+    self.highlightTopInset = isHighlighted && !previousIsHighlighted ? kHighlightVerticalInset * kHeightRatio : 0;
+    self.highlightBottomInset = isHighlighted && !nextIsHighlighted ? kHighlightVerticalInset * kHeightRatio : 0;
     self.topLine.backgroundColor = pulseColor;
     self.topLine.alpha = isFirst ? 0 : 0.35;
     self.bottomLine.backgroundColor = pulseColor;
@@ -152,6 +169,9 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
     CGFloat centerY = height / 2.0;
     CGFloat dotSize = self.dotSize > 0 ? self.dotSize : kDotMinSize;
 
+    self.highlightBackgroundView.frame = CGRectMake(0, self.highlightTopInset, width, MAX(height - self.highlightTopInset - self.highlightBottomInset, 0));
+    self.highlightBackgroundView.layer.cornerRadius = 0;
+
     self.topLine.frame = CGRectMake(timelineX - 1, 0, 2, MAX(centerY - dotSize / 2.0, 0));
     self.bottomLine.frame = CGRectMake(timelineX - 1, centerY + dotSize / 2.0, 2, MAX(height - centerY - dotSize / 2.0, 0));
     self.dot.frame = CGRectMake(timelineX - dotSize / 2.0, centerY - dotSize / 2.0, dotSize, dotSize);
@@ -177,8 +197,8 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 {
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
-    self.layer.cornerRadius = 8;
-    self.layer.masksToBounds = YES;
+    self.layer.cornerRadius = showsSelectionBorder ? 8 : 0;
+    self.layer.masksToBounds = showsSelectionBorder;
     self.layer.borderWidth = showsSelectionBorder ? 1.5 : 0;
     self.layer.borderColor = showsSelectionBorder ? color.CGColor : nil;
     [CATransaction commit];
@@ -403,25 +423,67 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 
 - (void)scrollToFirstHighlightedRecordIfNeeded
 {
-    NSIndexPath *indexPath = [self firstHighlightedRecordIndexPath];
-    if (!indexPath) {
+    NSArray<NSIndexPath *> *highlightedIndexPaths = [self highlightedRecordIndexPaths];
+    if (highlightedIndexPaths.count == 0) {
         return;
     }
-    [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionTop animated:NO];
-    CGPoint offset = self.collectionView.contentOffset;
-    offset.y = MAX(offset.y - 16 * kHeightRatio, -self.collectionView.adjustedContentInset.top);
-    self.collectionView.contentOffset = offset;
+
+    [self.collectionView layoutIfNeeded];
+    NSInteger maximumVisibleCellCount = [self maximumVisibleCellCount];
+    if (highlightedIndexPaths.count < maximumVisibleCellCount) {
+        NSIndexPath *middleIndexPath = highlightedIndexPaths[highlightedIndexPaths.count / 2];
+        [self scrollToIndexPathAtVerticalCenter:middleIndexPath];
+    } else {
+        [self scrollToIndexPathNearTop:highlightedIndexPaths.firstObject];
+    }
     self.didScrollToInitialHighlightedRecord = YES;
 }
 
-- (NSIndexPath *)firstHighlightedRecordIndexPath
+- (NSArray<NSIndexPath *> *)highlightedRecordIndexPaths
 {
+    NSMutableArray<NSIndexPath *> *indexPaths = [NSMutableArray new];
     for (NSInteger index = 0; index < self.sortedTimelineRecords.count; index++) {
         if ([self shouldHighlightRecord:self.sortedTimelineRecords[index]]) {
-            return [NSIndexPath indexPathForItem:index inSection:0];
+            [indexPaths addObject:[NSIndexPath indexPathForItem:index inSection:0]];
         }
     }
-    return nil;
+    return indexPaths.copy;
+}
+
+- (NSInteger)maximumVisibleCellCount
+{
+    CGFloat rowHeight = kRowMinHeight * kHeightRatio;
+    if (rowHeight <= 0) {
+        return 1;
+    }
+    return MAX((NSInteger)floor(CGRectGetHeight(self.collectionView.bounds) / rowHeight), 1);
+}
+
+- (void)scrollToIndexPathAtVerticalCenter:(NSIndexPath *)indexPath
+{
+    UICollectionViewLayoutAttributes *attributes = [self.collectionView layoutAttributesForItemAtIndexPath:indexPath];
+    if (!attributes) {
+        [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredVertically animated:NO];
+        return;
+    }
+    [self setTimelineContentOffsetY:CGRectGetMidY(attributes.frame) - CGRectGetHeight(self.collectionView.bounds) / 2.0];
+}
+
+- (void)scrollToIndexPathNearTop:(NSIndexPath *)indexPath
+{
+    UICollectionViewLayoutAttributes *attributes = [self.collectionView layoutAttributesForItemAtIndexPath:indexPath];
+    if (!attributes) {
+        [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionTop animated:NO];
+        return;
+    }
+    [self setTimelineContentOffsetY:CGRectGetMinY(attributes.frame) - 12 * kHeightRatio];
+}
+
+- (void)setTimelineContentOffsetY:(CGFloat)offsetY
+{
+    CGFloat minimumOffsetY = -self.collectionView.adjustedContentInset.top;
+    CGFloat maximumOffsetY = MAX(self.collectionView.contentSize.height - CGRectGetHeight(self.collectionView.bounds) + self.collectionView.adjustedContentInset.bottom, minimumOffsetY);
+    self.collectionView.contentOffset = CGPointMake(0, MIN(MAX(offsetY, minimumOffsetY), maximumOffsetY));
 }
 
 - (NSIndexPath *)indexPathForOriginalIndex:(NSInteger)originalIndex
@@ -467,13 +529,18 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:record.taskName];
     UIColor *taskColor = [UIColor mirrorColorNamed:task.color ?: self.data.taskModel.color];
     UIColor *pulseColor = [UIColor mirrorColorPulsed:task.color ?: self.data.taskModel.color];
+    BOOL isHighlighted = [self shouldHighlightRecord:record];
+    BOOL previousIsHighlighted = indexPath.item > 0 && [self shouldHighlightRecord:self.sortedTimelineRecords[indexPath.item - 1]];
+    BOOL nextIsHighlighted = indexPath.item + 1 < self.sortedTimelineRecords.count && [self shouldHighlightRecord:self.sortedTimelineRecords[indexPath.item + 1]];
     [cell configureWithRecord:record
                     taskColor:taskColor
                    pulseColor:pulseColor
                       dotSize:[self dotSizeForRecord:record]
                       isFirst:indexPath.item == 0
                        isLast:indexPath.item == self.sortedTimelineRecords.count - 1
-                isHighlighted:[self shouldHighlightRecord:record]
+                isHighlighted:isHighlighted
+        previousIsHighlighted:previousIsHighlighted
+            nextIsHighlighted:nextIsHighlighted
                    isSelected:record.originalIndex == self.selectedPeriodIndex];
     [self installEditMenuInteractionIfNeededForCell:cell];
     return cell;
