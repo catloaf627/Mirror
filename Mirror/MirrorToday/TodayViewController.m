@@ -75,7 +75,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     self = [super init];
     if (self) {
         // 系统通知
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSignificantTimeChangeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadDataWithTime) name:MirrorSignificantTimeChangeNotification object:nil];
         // 设置通知
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchThemeNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchLanguageNotification object:nil];
@@ -144,6 +144,15 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         [self updateNavigationItem];
     }
     [self p_setupUI];
+}
+
+- (void)reloadDataWithTime {
+    NSDate *today = [NSDate now];
+    if (!_isLoaded) {
+        self.selectedDate = today;
+        return;
+    }
+    [self updateSelectedDate:today];
 }
 
 - (void)reloadData
