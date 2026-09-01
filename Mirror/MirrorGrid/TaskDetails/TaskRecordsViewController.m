@@ -23,6 +23,20 @@ static NSTimeInterval const kDotMaxDuration = 8 * 60 * 60;
 static CGFloat const kRowMinHeight = 72;
 static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimelineCell";
 
+static CGFloat TaskRecordsPixelCeil(CGFloat value)
+{
+    CGFloat scale = UIScreen.mainScreen.scale;
+    if (scale <= 0) {
+        return value;
+    }
+    return ceil(value * scale) / scale;
+}
+
+static CGFloat TaskRecordsScaledHeight(CGFloat value)
+{
+    return TaskRecordsPixelCeil(value * kHeightRatio);
+}
+
 #define kTimelineX (kScreenWidth/4)
 
 @interface TaskRecordTimelineCell : UICollectionViewCell
@@ -449,7 +463,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 
 - (NSInteger)maximumVisibleCellCount
 {
-    CGFloat rowHeight = kRowMinHeight * kHeightRatio;
+    CGFloat rowHeight = TaskRecordsScaledHeight(kRowMinHeight);
     if (rowHeight <= 0) {
         return 1;
     }
@@ -473,7 +487,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
         [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionTop animated:NO];
         return;
     }
-    [self setTimelineContentOffsetY:CGRectGetMinY(attributes.frame) - 12 * kHeightRatio];
+    [self setTimelineContentOffsetY:CGRectGetMinY(attributes.frame) - TaskRecordsScaledHeight(12)];
 }
 
 - (void)setTimelineContentOffsetY:(CGFloat)offsetY
@@ -541,12 +555,12 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(CGRectGetWidth(collectionView.bounds), kRowMinHeight * kHeightRatio);
+    return CGSizeMake(CGRectGetWidth(collectionView.bounds), TaskRecordsScaledHeight(kRowMinHeight));
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
 {
-    return UIEdgeInsetsMake(12 * kHeightRatio, 0, 20 * kHeightRatio, 0);
+    return UIEdgeInsetsMake(TaskRecordsScaledHeight(12), 0, TaskRecordsScaledHeight(20), 0);
 }
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section
