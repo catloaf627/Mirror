@@ -20,7 +20,7 @@ static CGFloat const kShadowWidth = 5;
 static CGFloat const kCornerRadius = 14;
 static CGFloat const kActionButtonSize = 32;
 static CGFloat const kActionButtonSpacing = 4;
-static CGFloat const kTextShiftWhenActionsVisible = 24;
+static CGFloat const kActionButtonLeadingInset = 5;
 
 @interface TimeTrackerTaskCollectionViewCell ()
 
@@ -84,7 +84,7 @@ static CGFloat const kTextShiftWhenActionsVisible = 24;
     [self.contentView addSubview:self.taskNameLabel];
     [self.contentView addSubview:self.hintLabel];
     [self.deleteButton mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self.contentView).offset(14);
+        make.left.mas_equalTo(self.contentView).offset(kActionButtonLeadingInset);
         make.bottom.mas_equalTo(self.contentView.mas_centerY).offset(-kActionButtonSpacing / 2);
         make.width.height.mas_equalTo(kActionButtonSize);
     }];
@@ -107,12 +107,27 @@ static CGFloat const kTextShiftWhenActionsVisible = 24;
     [self setActionButtonsVisible:NO animated:NO];
 }
 
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    if (self.isShowingActionButtons) {
+        CGFloat textShift = [self textShiftWhenActionsVisible];
+        [self.taskNameCenterXConstraint setOffset:textShift];
+        [self.hintCenterXConstraint setOffset:textShift];
+    }
+}
+
 - (void)prepareForReuse
 {
     [super prepareForReuse];
     [self setEditingModeEnabled:NO animated:NO];
     [self setActionButtonsVisible:NO animated:NO];
     [self setReorderSelected:NO animated:NO];
+}
+
+- (CGFloat)textShiftWhenActionsVisible
+{
+    return MAX((kActionButtonLeadingInset + kActionButtonSize) / 2.0, 0);
 }
 
 #pragma mark - Actions
@@ -157,8 +172,9 @@ static CGFloat const kTextShiftWhenActionsVisible = 24;
         self.editButton.userInteractionEnabled = visible;
         self.deleteButton.transform = visible ? CGAffineTransformIdentity : CGAffineTransformMakeScale(0.72, 0.72);
         self.editButton.transform = visible ? CGAffineTransformIdentity : CGAffineTransformMakeScale(0.72, 0.72);
-        [self.taskNameCenterXConstraint setOffset:visible ? kTextShiftWhenActionsVisible : 0];
-        [self.hintCenterXConstraint setOffset:visible ? kTextShiftWhenActionsVisible : 0];
+        CGFloat textShift = visible ? [self textShiftWhenActionsVisible] : 0;
+        [self.taskNameCenterXConstraint setOffset:textShift];
+        [self.hintCenterXConstraint setOffset:textShift];
         [self.contentView layoutIfNeeded];
     };
 
@@ -248,7 +264,7 @@ static CGFloat const kTextShiftWhenActionsVisible = 24;
         _deleteButton = [UIButton new];
         _deleteButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
         _deleteButton.accessibilityLabel = [MirrorLanguage mirror_stringWithKey:@"delete"];
-        [_deleteButton setImage:[UIImage mirror_systemImageNamed:@"trash" fallbackName:@"trash"] forState:UIControlStateNormal];
+        [_deleteButton setImage:[UIImage mirror_systemImageNamed:@"xmark" fallbackName:@"trash"] forState:UIControlStateNormal];
         [_deleteButton addTarget:self action:@selector(tapDeleteButton) forControlEvents:UIControlEventTouchUpInside];
     }
     return _deleteButton;
