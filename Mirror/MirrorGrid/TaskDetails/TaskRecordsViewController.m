@@ -24,6 +24,29 @@ static CGFloat const kRowMinHeight = 72;
 static CGFloat const kHighlightVerticalInset = 2;
 static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimelineCell";
 
+static CGFloat TaskRecordsPixelCeil(CGFloat value)
+{
+    CGFloat scale = UIScreen.mainScreen.scale;
+    if (scale <= 0) {
+        return value;
+    }
+    return ceil(value * scale) / scale;
+}
+
+static CGFloat TaskRecordsPixelFloor(CGFloat value)
+{
+    CGFloat scale = UIScreen.mainScreen.scale;
+    if (scale <= 0) {
+        return value;
+    }
+    return floor(value * scale) / scale;
+}
+
+static CGFloat TaskRecordsRowHeight(void)
+{
+    return TaskRecordsPixelCeil(kRowMinHeight * kHeightRatio);
+}
+
 #define kTimelineX (kScreenWidth/4)
 
 @interface TaskRecordTimelineCell : UICollectionViewCell
@@ -133,8 +156,8 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
     self.contentView.backgroundColor = UIColor.clearColor;
     self.highlightBackgroundView.hidden = !isHighlighted;
     self.highlightBackgroundView.backgroundColor = [pulseColor colorWithAlphaComponent:0.12];
-    self.highlightTopInset = isHighlighted && !previousIsHighlighted ? kHighlightVerticalInset * kHeightRatio : 0;
-    self.highlightBottomInset = isHighlighted && !nextIsHighlighted ? kHighlightVerticalInset * kHeightRatio : 0;
+    self.highlightTopInset = isHighlighted && !previousIsHighlighted ? TaskRecordsPixelCeil(kHighlightVerticalInset * kHeightRatio) : 0;
+    self.highlightBottomInset = isHighlighted && !nextIsHighlighted ? TaskRecordsPixelCeil(kHighlightVerticalInset * kHeightRatio) : 0;
     self.topLine.backgroundColor = pulseColor;
     self.topLine.alpha = isFirst ? 0 : 0.35;
     self.bottomLine.backgroundColor = pulseColor;
@@ -169,7 +192,9 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
     CGFloat centerY = height / 2.0;
     CGFloat dotSize = self.dotSize > 0 ? self.dotSize : kDotMinSize;
 
-    self.highlightBackgroundView.frame = CGRectMake(0, self.highlightTopInset, width, MAX(height - self.highlightTopInset - self.highlightBottomInset, 0));
+    CGFloat highlightMinY = TaskRecordsPixelCeil(self.highlightTopInset);
+    CGFloat highlightMaxY = TaskRecordsPixelFloor(height - self.highlightBottomInset);
+    self.highlightBackgroundView.frame = CGRectMake(0, highlightMinY, width, MAX(highlightMaxY - highlightMinY, 0));
     self.highlightBackgroundView.layer.cornerRadius = 0;
 
     self.topLine.frame = CGRectMake(timelineX - 1, 0, 2, MAX(centerY - dotSize / 2.0, 0));
@@ -452,7 +477,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 
 - (NSInteger)maximumVisibleCellCount
 {
-    CGFloat rowHeight = kRowMinHeight * kHeightRatio;
+    CGFloat rowHeight = TaskRecordsRowHeight();
     if (rowHeight <= 0) {
         return 1;
     }
@@ -548,7 +573,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(CGRectGetWidth(collectionView.bounds), kRowMinHeight * kHeightRatio);
+    return CGSizeMake(CGRectGetWidth(collectionView.bounds), TaskRecordsRowHeight());
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
