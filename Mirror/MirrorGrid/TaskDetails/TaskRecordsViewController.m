@@ -173,17 +173,17 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
     CGFloat leftLabelX = 4 * kWidthRatio;
     CGFloat leftLabelRight = CGRectGetMinX(self.dot.frame) - 8 * kWidthRatio;
     CGFloat leftLabelWidth = MAX(leftLabelRight - leftLabelX, 0);
-    self.leftDateLabel.frame = CGRectMake(leftLabelX, centerY - 22, leftLabelWidth, 18);
-    self.leftYearLabel.frame = CGRectMake(leftLabelX, CGRectGetMaxY(self.leftDateLabel.frame) + 4, leftLabelWidth, 16);
+    self.leftDateLabel.frame = CGRectMake(leftLabelX, centerY - 22 * kHeightRatio, leftLabelWidth, 18 * kHeightRatio);
+    self.leftYearLabel.frame = CGRectMake(leftLabelX, CGRectGetMaxY(self.leftDateLabel.frame) + 4 * kHeightRatio, leftLabelWidth, 16 * kHeightRatio);
 
     [self.durationLabel sizeToFit];
     CGFloat durationX = CGRectGetMaxX(self.dot.frame) + 8 * kWidthRatio;
     CGFloat durationWidth = MIN(CGRectGetWidth(self.durationLabel.bounds), MAX(width - durationX - kHorizontalPadding, 0));
-    self.durationLabel.frame = CGRectMake(durationX, centerY - 10, durationWidth, 20);
+    self.durationLabel.frame = CGRectMake(durationX, centerY - 10 * kHeightRatio, durationWidth, 20 * kHeightRatio);
 
     CGFloat noteX = CGRectGetMaxX(self.durationLabel.frame) + 10;
     CGFloat noteWidth = MAX(width - noteX - kHorizontalPadding, 0);
-    self.noteLabel.frame = CGRectMake(noteX, centerY - 10, noteWidth, 20);
+    self.noteLabel.frame = CGRectMake(noteX, centerY - 10 * kHeightRatio, noteWidth, 20 * kHeightRatio);
 }
 
 - (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color
@@ -449,7 +449,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 
 - (NSInteger)maximumVisibleCellCount
 {
-    CGFloat rowHeight = kRowMinHeight;
+    CGFloat rowHeight = kRowMinHeight * kHeightRatio;
     if (rowHeight <= 0) {
         return 1;
     }
@@ -473,7 +473,7 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
         [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionTop animated:NO];
         return;
     }
-    [self setTimelineContentOffsetY:CGRectGetMinY(attributes.frame) - 12];
+    [self setTimelineContentOffsetY:CGRectGetMinY(attributes.frame) - 12 * kHeightRatio];
 }
 
 - (void)setTimelineContentOffsetY:(CGFloat)offsetY
@@ -541,12 +541,12 @@ static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimeli
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(CGRectGetWidth(collectionView.bounds), kRowMinHeight);
+    return CGSizeMake(CGRectGetWidth(collectionView.bounds), kRowMinHeight * kHeightRatio);
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
 {
-    return UIEdgeInsetsMake(12, 0, 20, 0);
+    return UIEdgeInsetsMake(12 * kHeightRatio, 0, 20 * kHeightRatio, 0);
 }
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section
