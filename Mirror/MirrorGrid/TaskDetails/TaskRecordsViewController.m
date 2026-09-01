@@ -21,31 +21,7 @@ static CGFloat const kDotMinSize = 8;
 static CGFloat const kDotMaxSize = 16;
 static NSTimeInterval const kDotMaxDuration = 8 * 60 * 60;
 static CGFloat const kRowMinHeight = 72;
-static CGFloat const kHighlightVerticalInset = 2;
 static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimelineCell";
-
-static CGFloat TaskRecordsPixelCeil(CGFloat value)
-{
-    CGFloat scale = UIScreen.mainScreen.scale;
-    if (scale <= 0) {
-        return value;
-    }
-    return ceil(value * scale) / scale;
-}
-
-static CGFloat TaskRecordsPixelFloor(CGFloat value)
-{
-    CGFloat scale = UIScreen.mainScreen.scale;
-    if (scale <= 0) {
-        return value;
-    }
-    return floor(value * scale) / scale;
-}
-
-static CGFloat TaskRecordsRowHeight(void)
-{
-    return TaskRecordsPixelCeil(kRowMinHeight * kHeightRatio);
-}
 
 #define kTimelineX (kScreenWidth/4)
 
@@ -58,8 +34,6 @@ static CGFloat TaskRecordsRowHeight(void)
                     isFirst:(BOOL)isFirst
                      isLast:(BOOL)isLast
               isHighlighted:(BOOL)isHighlighted
-      previousIsHighlighted:(BOOL)previousIsHighlighted
-          nextIsHighlighted:(BOOL)nextIsHighlighted
                  isSelected:(BOOL)isSelected;
 - (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color;
 - (void)shake;
@@ -77,8 +51,6 @@ static CGFloat TaskRecordsRowHeight(void)
 @property (nonatomic, strong) UILabel *durationLabel;
 @property (nonatomic, strong) UILabel *noteLabel;
 @property (nonatomic, assign) CGFloat dotSize;
-@property (nonatomic, assign) CGFloat highlightTopInset;
-@property (nonatomic, assign) CGFloat highlightBottomInset;
 
 @end
 
@@ -129,6 +101,7 @@ static CGFloat TaskRecordsRowHeight(void)
         self.noteLabel.adjustsFontSizeToFitWidth = YES;
         self.noteLabel.minimumScaleFactor = 0.7;
         [self.contentView addSubview:self.noteLabel];
+
     }
     return self;
 }
@@ -138,6 +111,7 @@ static CGFloat TaskRecordsRowHeight(void)
     [super prepareForReuse];
     [self setShowsSelectionBorder:NO color:nil];
     self.layer.backgroundColor = UIColor.clearColor.CGColor;
+    self.contentView.layer.backgroundColor = UIColor.clearColor.CGColor;
     self.highlightBackgroundView.hidden = YES;
 }
 
@@ -148,16 +122,12 @@ static CGFloat TaskRecordsRowHeight(void)
                     isFirst:(BOOL)isFirst
                      isLast:(BOOL)isLast
               isHighlighted:(BOOL)isHighlighted
-      previousIsHighlighted:(BOOL)previousIsHighlighted
-          nextIsHighlighted:(BOOL)nextIsHighlighted
                  isSelected:(BOOL)isSelected
 {
     self.dotSize = dotSize;
     self.contentView.backgroundColor = UIColor.clearColor;
     self.highlightBackgroundView.hidden = !isHighlighted;
     self.highlightBackgroundView.backgroundColor = [pulseColor colorWithAlphaComponent:0.12];
-    self.highlightTopInset = isHighlighted && !previousIsHighlighted ? TaskRecordsPixelCeil(kHighlightVerticalInset * kHeightRatio) : 0;
-    self.highlightBottomInset = isHighlighted && !nextIsHighlighted ? TaskRecordsPixelCeil(kHighlightVerticalInset * kHeightRatio) : 0;
     self.topLine.backgroundColor = pulseColor;
     self.topLine.alpha = isFirst ? 0 : 0.35;
     self.bottomLine.backgroundColor = pulseColor;
@@ -192,9 +162,7 @@ static CGFloat TaskRecordsRowHeight(void)
     CGFloat centerY = height / 2.0;
     CGFloat dotSize = self.dotSize > 0 ? self.dotSize : kDotMinSize;
 
-    CGFloat highlightMinY = TaskRecordsPixelCeil(self.highlightTopInset);
-    CGFloat highlightMaxY = TaskRecordsPixelFloor(height - self.highlightBottomInset);
-    self.highlightBackgroundView.frame = CGRectMake(0, highlightMinY, width, MAX(highlightMaxY - highlightMinY, 0));
+    self.highlightBackgroundView.frame = self.contentView.bounds;
     self.highlightBackgroundView.layer.cornerRadius = 0;
 
     self.topLine.frame = CGRectMake(timelineX - 1, 0, 2, MAX(centerY - dotSize / 2.0, 0));
@@ -205,27 +173,31 @@ static CGFloat TaskRecordsRowHeight(void)
     CGFloat leftLabelX = 4 * kWidthRatio;
     CGFloat leftLabelRight = CGRectGetMinX(self.dot.frame) - 8 * kWidthRatio;
     CGFloat leftLabelWidth = MAX(leftLabelRight - leftLabelX, 0);
-    self.leftDateLabel.frame = CGRectMake(leftLabelX, centerY - 22 * kHeightRatio, leftLabelWidth, 18 * kHeightRatio);
-    self.leftYearLabel.frame = CGRectMake(leftLabelX, CGRectGetMaxY(self.leftDateLabel.frame) + 4 * kHeightRatio, leftLabelWidth, 16 * kHeightRatio);
+    self.leftDateLabel.frame = CGRectMake(leftLabelX, centerY - 22, leftLabelWidth, 18);
+    self.leftYearLabel.frame = CGRectMake(leftLabelX, CGRectGetMaxY(self.leftDateLabel.frame) + 4, leftLabelWidth, 16);
 
     [self.durationLabel sizeToFit];
     CGFloat durationX = CGRectGetMaxX(self.dot.frame) + 8 * kWidthRatio;
     CGFloat durationWidth = MIN(CGRectGetWidth(self.durationLabel.bounds), MAX(width - durationX - kHorizontalPadding, 0));
-    self.durationLabel.frame = CGRectMake(durationX, centerY - 10 * kHeightRatio, durationWidth, 20 * kHeightRatio);
+    self.durationLabel.frame = CGRectMake(durationX, centerY - 10, durationWidth, 20);
 
     CGFloat noteX = CGRectGetMaxX(self.durationLabel.frame) + 10;
     CGFloat noteWidth = MAX(width - noteX - kHorizontalPadding, 0);
-    self.noteLabel.frame = CGRectMake(noteX, centerY - 10 * kHeightRatio, noteWidth, 20 * kHeightRatio);
+    self.noteLabel.frame = CGRectMake(noteX, centerY - 10, noteWidth, 20);
 }
 
 - (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color
 {
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
-    self.layer.cornerRadius = showsSelectionBorder ? 8 : 0;
-    self.layer.masksToBounds = showsSelectionBorder;
-    self.layer.borderWidth = showsSelectionBorder ? 1.5 : 0;
-    self.layer.borderColor = showsSelectionBorder ? color.CGColor : nil;
+    self.layer.cornerRadius = 0;
+    self.layer.masksToBounds = NO;
+    self.layer.borderWidth = 0;
+    self.layer.borderColor = nil;
+    self.contentView.layer.cornerRadius = showsSelectionBorder ? 8 : 0;
+    self.contentView.layer.masksToBounds = NO;
+    self.contentView.layer.borderWidth = showsSelectionBorder ? 1 : 0;
+    self.contentView.layer.borderColor = showsSelectionBorder ? color.CGColor : nil;
     [CATransaction commit];
 }
 
@@ -477,7 +449,7 @@ static CGFloat TaskRecordsRowHeight(void)
 
 - (NSInteger)maximumVisibleCellCount
 {
-    CGFloat rowHeight = TaskRecordsRowHeight();
+    CGFloat rowHeight = kRowMinHeight;
     if (rowHeight <= 0) {
         return 1;
     }
@@ -501,7 +473,7 @@ static CGFloat TaskRecordsRowHeight(void)
         [self.collectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionTop animated:NO];
         return;
     }
-    [self setTimelineContentOffsetY:CGRectGetMinY(attributes.frame) - 12 * kHeightRatio];
+    [self setTimelineContentOffsetY:CGRectGetMinY(attributes.frame) - 12];
 }
 
 - (void)setTimelineContentOffsetY:(CGFloat)offsetY
@@ -555,8 +527,6 @@ static CGFloat TaskRecordsRowHeight(void)
     UIColor *taskColor = [UIColor mirrorColorNamed:task.color ?: self.data.taskModel.color];
     UIColor *pulseColor = [UIColor mirrorColorPulsed:task.color ?: self.data.taskModel.color];
     BOOL isHighlighted = [self shouldHighlightRecord:record];
-    BOOL previousIsHighlighted = indexPath.item > 0 && [self shouldHighlightRecord:self.sortedTimelineRecords[indexPath.item - 1]];
-    BOOL nextIsHighlighted = indexPath.item + 1 < self.sortedTimelineRecords.count && [self shouldHighlightRecord:self.sortedTimelineRecords[indexPath.item + 1]];
     [cell configureWithRecord:record
                     taskColor:taskColor
                    pulseColor:pulseColor
@@ -564,8 +534,6 @@ static CGFloat TaskRecordsRowHeight(void)
                       isFirst:indexPath.item == 0
                        isLast:indexPath.item == self.sortedTimelineRecords.count - 1
                 isHighlighted:isHighlighted
-        previousIsHighlighted:previousIsHighlighted
-            nextIsHighlighted:nextIsHighlighted
                    isSelected:record.originalIndex == self.selectedPeriodIndex];
     [self installEditMenuInteractionIfNeededForCell:cell];
     return cell;
@@ -573,12 +541,12 @@ static CGFloat TaskRecordsRowHeight(void)
 
 - (CGSize)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout sizeForItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    return CGSizeMake(CGRectGetWidth(collectionView.bounds), TaskRecordsRowHeight());
+    return CGSizeMake(CGRectGetWidth(collectionView.bounds), kRowMinHeight);
 }
 
 - (UIEdgeInsets)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout insetForSectionAtIndex:(NSInteger)section
 {
-    return UIEdgeInsetsMake(12 * kHeightRatio, 0, 20 * kHeightRatio, 0);
+    return UIEdgeInsetsMake(12, 0, 20, 0);
 }
 
 - (CGFloat)collectionView:(UICollectionView *)collectionView layout:(UICollectionViewLayout *)collectionViewLayout minimumLineSpacingForSectionAtIndex:(NSInteger)section
