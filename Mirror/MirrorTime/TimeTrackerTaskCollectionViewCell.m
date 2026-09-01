@@ -15,12 +15,14 @@
 #import "MirrorTool.h"
 #import "UIFont+MirrorFont.h"
 #import "UIImage+MirrorSymbol.h"
+#import "MirrorMacro.h"
 
 static CGFloat const kShadowWidth = 5;
 static CGFloat const kCornerRadius = 14;
-static CGFloat const kActionButtonSize = 32;
 static CGFloat const kActionButtonSpacing = 4;
-static CGFloat const kActionButtonLeadingInset = 5;
+
+#define kActionButtonSize (32*kWidthRatio)
+#define kActionButtonLeadingInset (5*kWidthRatio)
 
 @interface TimeTrackerTaskCollectionViewCell ()
 
