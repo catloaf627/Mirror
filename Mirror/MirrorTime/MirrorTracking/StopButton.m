@@ -58,14 +58,15 @@ static UIImage *StopButtonImageWithColor(UIColor *color)
     self.titleLabel.font = [UIFont fontWithName:@"TrebuchetMS-Italic" size:20];
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
     self.titleLabel.minimumScaleFactor = 0.6;
-    self.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.18].CGColor;
+    UIColor *borderColor = [UIColor colorWithWhite:1 alpha:0.18];
+    self.layer.borderColor = borderColor.CGColor;
     self.layer.borderWidth = 1;
     self.layer.cornerRadius = 12;
     self.clipsToBounds = YES;
     [self setBackgroundImage:StopButtonImageWithColor(StopButtonBackgroundColor()) forState:UIControlStateNormal];
     [self setBackgroundImage:StopButtonImageWithColor(StopButtonHighlightedColor()) forState:UIControlStateHighlighted];
     [self insertSubview:self.progressView atIndex:0];
-    self.progressView.backgroundColor = [taskColor colorWithAlphaComponent:0.38];
+    self.progressView.backgroundColor = borderColor;
 }
 
 - (void)layoutSubviews
