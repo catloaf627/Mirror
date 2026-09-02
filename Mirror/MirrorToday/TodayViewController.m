@@ -35,6 +35,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 @property (nonatomic, copy) MirrorHandmadeCalendarDateHandler dateSelectionHandler;
 @property (nonatomic, copy) NSDictionary<NSString *, NSArray<UIColor *> *> *recordColorsByDateKey;
 @property (nonatomic, copy) NSDictionary<NSString *, MirrorDayModel *> *specialDaysByDateKey;
+@property (nonatomic, copy) NSSet<NSString *> *scheduleDateKeys;
 @property (nonatomic, assign) BOOL weekStartsOnMonday;
 @property (nonatomic, copy) MirrorHandmadeCalendarLayoutHandler layoutChangeHandler;
 
@@ -65,6 +66,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 @property (nonatomic, strong) MirrorHandmadeCalendarView *handmadeCalendarView;
 @property (nonatomic, strong) NSDictionary<NSString *, NSMutableArray<MirrorReadModel *> *> *gridData;
 @property (nonatomic, strong) NSDictionary<NSString *, MirrorDayModel *> *specialDaysByDateKey;
+@property (nonatomic, strong) NSSet<NSString *> *scheduleDateKeys;
 
 @end
 
@@ -136,6 +138,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     self.handmadeCalendarView = nil;
     self.gridData = nil;
     self.specialDaysByDateKey = nil;
+    self.scheduleDateKeys = nil;
     self.specialDaysButton = nil;
     self.todayButton = nil;
     self.todayButtonContainer = nil;
@@ -148,6 +151,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 }
 
 - (void)reloadDataWithTime {
+    [MirrorStorage removeSchedulesBeforeToday];
     NSDate *today = [NSDate now];
     if (!_isLoaded) {
         self.selectedDate = today;
@@ -161,10 +165,14 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     /*
      调用reloadData后UI不刷新的bug折磨了我很久，一开始以为是其他页面遮挡了collection view导致的不刷新，多次改动collection view reload data的调用方式都没成功
      最后发现根本原因是：在整个页面还没有setupUI的时候就被通知reloadData
-     */
+    */
     if (!_isLoaded) return;
+    self.scheduleDateKeys = nil;
     [self updateHeaderStateWithRecords:nil];
     [self.timelineViewController updateDate:self.selectedDate ?: [NSDate now]];
+    if (self.calendarPickerContainerView.superview) {
+        [self updateHandmadeCalendarData];
+    }
 }
 
 - (void)p_setupUI
@@ -498,6 +506,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     self.handmadeCalendarView.weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
     self.handmadeCalendarView.recordColorsByDateKey = [self handmadeCalendarRecordColorsByDateKey];
     self.handmadeCalendarView.specialDaysByDateKey = self.specialDaysByDateKey ?: @{};
+    self.handmadeCalendarView.scheduleDateKeys = self.scheduleDateKeys ?: [self handmadeCalendarScheduleDateKeys];
     [self.handmadeCalendarView reloadCalendar];
 }
 
@@ -537,6 +546,43 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         }
     }];
     return colorsByDateKey;
+}
+
+- (NSSet<NSString *> *)handmadeCalendarScheduleDateKeys
+{
+    NSMutableSet<NSString *> *dateKeys = [NSMutableSet set];
+    NSCalendar *calendar = [NSCalendar calendarWithIdentifier:NSCalendarIdentifierGregorian];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"yyyy-MM-dd";
+    formatter.timeZone = calendar.timeZone;
+    formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    
+    for (MirrorScheduleModel *schedule in [MirrorStorage retriveMirrorSchedules]) {
+        if (![schedule isKindOfClass:MirrorScheduleModel.class] || schedule.endTime <= schedule.startTime) {
+            continue;
+        }
+        NSDate *startDate = [NSDate dateWithTimeIntervalSince1970:schedule.startTime];
+        NSDate *endDate = [NSDate dateWithTimeIntervalSince1970:schedule.endTime - 1];
+        NSDate *day = [calendar startOfDayForDate:startDate];
+        NSDate *lastDay = [calendar startOfDayForDate:endDate];
+        while (day && [day compare:lastDay] != NSOrderedDescending) {
+            NSString *dateKey = [formatter stringFromDate:day];
+            if (dateKey.length > 0) {
+                [dateKeys addObject:dateKey];
+            }
+            day = [calendar dateByAddingUnit:NSCalendarUnitDay value:1 toDate:day options:0];
+        }
+    }
+    return dateKeys;
+}
+
+- (NSSet<NSString *> *)scheduleDateKeys
+{
+    if (!_scheduleDateKeys) {
+        _scheduleDateKeys = [self handmadeCalendarScheduleDateKeys];
+    }
+    return _scheduleDateKeys;
 }
 
 

@@ -124,6 +124,7 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
     NSNumber *currentSecondsFromGMT = @([NSTimeZone systemTimeZone].secondsFromGMT);
     if (![[MirrorStorage retriveSecondsFromGMT] isEqualToNumber:currentSecondsFromGMT]) {
         [MirrorStorage saveSecondsFromGMT:currentSecondsFromGMT];
+        [MirrorStorage removeSchedulesBeforeToday];
         [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSignificantTimeChangeNotification object:nil userInfo:nil];
     }
 

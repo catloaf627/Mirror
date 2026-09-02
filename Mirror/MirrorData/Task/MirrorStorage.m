@@ -358,6 +358,35 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorScheduleChangeNotification object:nil userInfo:nil];
 }
 
++ (void)removeSchedulesBeforeToday
+{
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSMutableArray<MirrorDayModel *> *days = nil;
+    NSMutableArray<MirrorScheduleModel *> *schedules = nil;
+    NSNumber *secondsFromGMT = nil;
+    if (![MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records days:&days schedules:&schedules secondsFromGMT:&secondsFromGMT]) {
+        return;
+    }
+    
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    long todayStart = lround([[gregorian startOfDayForDate:[NSDate now]] timeIntervalSince1970]);
+    NSMutableArray<MirrorScheduleModel *> *validSchedules = [NSMutableArray new];
+    for (MirrorScheduleModel *schedule in schedules) {
+        if (![schedule isKindOfClass:MirrorScheduleModel.class]) {
+            continue;
+        }
+        if (schedule.startTime >= todayStart && schedule.endTime - schedule.startTime >= kMinSeconds) {
+            schedule.originalIndex = validSchedules.count;
+            [validSchedules addObject:schedule];
+        }
+    }
+    if (validSchedules.count != schedules.count) {
+        [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days schedules:validSchedules secondsFromGMT:secondsFromGMT];
+    }
+}
+
 // 按查询范围和自然日切 UI 片段；例如原始记录 1/1 08:00-1/3 08:00，查询 1/2 00:00-1/3 00:00 时只返回 1/2 全天片段。
 + (NSArray<MirrorRecordModel *> *)daySegmentsForRecord:(MirrorRecordModel *)record clippedToStart:(long)rangeStart end:(long)rangeEnd
 {

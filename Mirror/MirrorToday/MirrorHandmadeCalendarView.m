@@ -26,6 +26,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 @property (nonatomic, copy, nullable) MirrorHandmadeCalendarLayoutHandler layoutChangeHandler;
 @property (nonatomic, copy) NSDictionary<NSString *, NSArray<UIColor *> *> *recordColorsByDateKey;
 @property (nonatomic, copy) NSDictionary<NSString *, MirrorDayModel *> *specialDaysByDateKey;
+@property (nonatomic, copy) NSSet<NSString *> *scheduleDateKeys;
 @property (nonatomic, assign) BOOL weekStartsOnMonday;
 
 - (instancetype)initWithSelectedDate:(NSDate *)selectedDate;
@@ -44,6 +45,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 @property (nonatomic, strong, nullable) UIColor *specialDayColor;
 @property (nonatomic, copy) NSString *specialDayIconName;
 @property (nonatomic, copy) NSArray<UIColor *> *recordColors;
+@property (nonatomic, assign) BOOL hasSchedule;
 
 - (void)setDayText:(NSString *)dayText;
 
@@ -60,6 +62,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     if (self) {
         self.backgroundColor = UIColor.clearColor;
         _recordColors = @[];
+        _hasSchedule = NO;
         _dayLabel = [UILabel new];
         _dayLabel.textAlignment = NSTextAlignmentCenter;
         _dayLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightRegular];
@@ -110,6 +113,12 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 - (void)setSpecialDayIconName:(NSString *)specialDayIconName
 {
     _specialDayIconName = [specialDayIconName copy] ?: @"";
+    [self updateSpecialDayIcon];
+}
+
+- (void)setHasSchedule:(BOOL)hasSchedule
+{
+    _hasSchedule = hasSchedule;
     [self updateSpecialDayIcon];
 }
 
@@ -214,7 +223,10 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 - (void)updateSpecialDayIcon
 {
     UIImage *iconImage = nil;
-    if (self.inVisibleMonth && self.specialDayIconName.length > 0) {
+    BOOL showsScheduleIcon = self.inVisibleMonth && self.hasSchedule;
+    if (showsScheduleIcon) {
+        iconImage = [UIImage mirror_systemImageNamed:@"clock.fill" fallbackName:@"clock.fill"];
+    } else if (self.inVisibleMonth && self.specialDayIconName.length > 0) {
         iconImage = [UIImage mirror_systemImageNamed:self.specialDayIconName fallbackName:@"star.fill"];
     }
 
@@ -222,7 +234,11 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     _iconView.hidden = !showsIcon;
     _dayLabel.hidden = showsIcon;
     _iconView.image = showsIcon ? [iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] : nil;
-    _iconView.tintColor = [self.specialDayColor isKindOfClass:UIColor.class] ? self.specialDayColor : [UIColor mirrorColorNamed:MirrorColorTypeText];
+    if (showsScheduleIcon && ![self.specialDayColor isKindOfClass:UIColor.class]) {
+        _iconView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    } else {
+        _iconView.tintColor = [self.specialDayColor isKindOfClass:UIColor.class] ? self.specialDayColor : [UIColor mirrorColorNamed:MirrorColorTypeText];
+    }
 }
 
 @end
@@ -253,6 +269,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         _weekStartsOnMonday = [MirrorSettings appliedWeekStarsOnMonday];
         _recordColorsByDateKey = @{};
         _specialDaysByDateKey = @{};
+        _scheduleDateKeys = [NSSet set];
         _visibleWeekCount = 6;
         [self setupCalendarHelpers];
         [self setupViews];
@@ -285,6 +302,12 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 - (void)setSpecialDaysByDateKey:(NSDictionary<NSString *,MirrorDayModel *> *)specialDaysByDateKey
 {
     _specialDaysByDateKey = [specialDaysByDateKey copy] ?: @{};
+    [self reloadCalendar];
+}
+
+- (void)setScheduleDateKeys:(NSSet<NSString *> *)scheduleDateKeys
+{
+    _scheduleDateKeys = [scheduleDateKeys copy] ?: [NSSet set];
     [self reloadCalendar];
 }
 
@@ -347,6 +370,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
             cell.dateKey = @"";
             cell.specialDayColor = nil;
             cell.specialDayIconName = @"";
+            cell.hasSchedule = NO;
             cell.recordColors = @[];
             [cell setDayText:@""];
             continue;
@@ -384,6 +408,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         cell.showsSelectedDate = inVisibleMonth && [_calendar isDate:date inSameDayAsDate:self.selectedDate ?: [NSDate now]];
         cell.specialDayColor = inVisibleMonth ? specialDayColor : nil;
         cell.specialDayIconName = inVisibleMonth ? specialDayIconName : @"";
+        cell.hasSchedule = inVisibleMonth && [self.scheduleDateKeys containsObject:dateKey];
         cell.recordColors = inVisibleMonth ? recordColors : @[];
         [cell setDayText:inVisibleMonth ? [NSString stringWithFormat:@"%ld", (long)components.day] : @""];
     }

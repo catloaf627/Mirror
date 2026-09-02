@@ -61,6 +61,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)deleteScheduleAtIndex:(NSInteger)index;
 
++ (void)removeSchedulesBeforeToday;
+
 + (void)startTask:(NSString *)taskName at:(NSDate *)accurateDate;
 
 + (void)stopTask:(NSString *)taskName at:(NSDate *)accurateDate;
