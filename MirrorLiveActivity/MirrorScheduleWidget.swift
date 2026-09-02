@@ -68,8 +68,8 @@ struct MirrorScheduleWidget: Widget {
         StaticConfiguration(kind: kind, provider: MirrorScheduleWidgetProvider()) { entry in
             MirrorScheduleWidgetView(entry: entry)
         }
-        .configurationDisplayName("Mirror Schedules")
-        .description("Shows your upcoming schedules.")
+        .configurationDisplayName("Mirror Todos")
+        .description("Shows your upcoming todos.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -100,7 +100,7 @@ private struct MirrorScheduleWidgetView: View {
         let futureSections = futureScheduleSections()
 
         if todaySchedules.isEmpty {
-            MirrorEmptyScheduleView(text: String(localized: "No schedules today"))
+            MirrorEmptyScheduleView(text: String(localized: "No todos today"))
         } else {
             ForEach(todaySchedules.prefix(maxTodayRows)) { schedule in
                 MirrorScheduleRow(schedule: schedule, compact: family == .systemSmall)
@@ -267,13 +267,13 @@ private enum MirrorScheduleStore {
         }
 
         guard let data = try? Data(contentsOf: fileURL) else {
-            return LoadResult(schedules: [], unavailableMessage: String(localized: "Open Mirror.ly to sync schedules"))
+            return LoadResult(schedules: [], unavailableMessage: String(localized: "Open Mirror.ly to sync todos"))
         }
 
         guard let jsonObject = try? JSONSerialization.jsonObject(with: data),
               let jsonDictionary = jsonObject as? [String: Any],
               let jsonSchedules = jsonDictionary["schedules"] as? [[String: Any]] else {
-            return LoadResult(schedules: [], unavailableMessage: String(localized: "Schedule data unavailable"))
+            return LoadResult(schedules: [], unavailableMessage: String(localized: "Todo data unavailable"))
         }
 
         let now = Date.now.timeIntervalSince1970

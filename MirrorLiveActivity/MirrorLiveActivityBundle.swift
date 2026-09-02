@@ -11,7 +11,6 @@ import WidgetKit
 @main
 struct MirrorLiveActivityBundle: WidgetBundle {
     var body: some Widget {
-        MirrorTodayWidget()
         MirrorScheduleWidget()
         MirrorLiveActivityLiveActivity()
     }
