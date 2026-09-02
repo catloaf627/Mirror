@@ -61,7 +61,8 @@
     [mirrorDict setValue:ML(@"Cancel", @"取消", @"Cancelar", @"Annuler", @"キャンセル", @"취소", @"Abbrechen", @"Отмена") forKey:@"cancel"];
     [mirrorDict setValue:ML(@"Done", @"完成", @"Listo", @"Terminé", @"完了", @"완료", @"Fertig", @"Готово") forKey:@"done"];
     [mirrorDict setValue:ML(@"Add", @"添加", @"Añadir", @"Ajouter", @"追加", @"추가", @"Hinzufügen", @"Добавить") forKey:@"add"];
-    [mirrorDict setValue:ML(@"Schedule", @"日程", @"Horario", @"Programme", @"予定", @"일정", @"Termin", @"Расписание") forKey:@"schedule"];
+    [mirrorDict setValue:ML(@"Todo", @"待办", @"Tarea", @"Todo", @"Todo", @"할 일", @"To-do", @"Задача") forKey:@"schedule"];
+    [mirrorDict setValue:ML(@"Todos can only be added for today or future days.", @"待办只能添加到今天或未来的日期。", @"Las tareas solo se pueden añadir para hoy o días futuros.", @"Les todos ne peuvent être ajoutés que pour aujourd'hui ou les jours à venir.", @"Todoは今日または未来の日にのみ追加できます。", @"할 일은 오늘 또는 이후 날짜에만 추가할 수 있습니다.", @"To-dos können nur für heute oder zukünftige Tage hinzugefügt werden.", @"Задачи можно добавлять только на сегодня или будущие дни.") forKey:@"schedule_future_only"];
     [mirrorDict setValue:ML(@"Info", @"信息", @"Información", @"Info", @"情報", @"정보", @"Info", @"Информация") forKey:@"schedule_info"];
     
     // Profile add cell
@@ -181,6 +182,7 @@
 
     // Time
     [mirrorDict setValue:ML(@"This will merge%@into%@. This cannot be undone.", @"这会将%@合并到%@，且无法撤销。", @"Esto fusionará%@con%@. No se puede deshacer.", @"Cela fusionnera%@avec%@. Cette action est irréversible.", @"%@を%@に結合します。元に戻せません。", @"%@을%@에 병합하며 되돌릴 수 없습니다.", @"%@wird mit%@zusammengeführt. Das kann nicht rückgängig gemacht werden.", @"%@будет объединена с%@. Это действие нельзя отменить.") forKey:@"merge_task_warning"];
+    [mirrorDict setValue:ML(@"A temporary todo for %@. It will be removed after %@.", @"%@的临时待办，会在%@过后被移除。", @"Una tarea temporal para %@. Se eliminará después de %@.", @"Un todo temporaire pour %@. Il sera supprimé après %@.", @"%@だけの一時的なTodoです。%@が終わると削除されます。", @"%@만 쓰는 임시 할 일입니다. %@이 지나면 삭제됩니다.", @"Ein vorübergehendes To-do für %@. Es wird nach %@ entfernt.", @"Временная задача на %@. Она будет удалена после %@.") forKey:@"schedule_notice"];
     
     NSString *format = [MirrorLanguage localizedValue:[mirrorDict valueForKey:key] languageKey:[MirrorSettings preferredLanguageKey] fallback:key];
     return [NSString stringWithFormat:format, placeholder1, placeholder2];

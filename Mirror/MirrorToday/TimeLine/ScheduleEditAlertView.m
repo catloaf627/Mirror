@@ -7,6 +7,7 @@
 #import <Masonry/Masonry.h>
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
+#import "MirrorTimeText.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 
@@ -22,6 +23,7 @@
 @property (nonatomic, strong) UIVisualEffectView *blurView;
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, strong) UILabel *noticeLabel;
 @property (nonatomic, strong) UILabel *startLabel;
 @property (nonatomic, strong) UILabel *endLabel;
 @property (nonatomic, strong) UILabel *infoLabel;
@@ -197,6 +199,7 @@
     }];
     
     [self.contentView addSubview:self.titleLabel];
+    [self.contentView addSubview:self.noticeLabel];
     [self.contentView addSubview:self.startLabel];
     [self.contentView addSubview:self.startTimeButton];
     [self.contentView addSubview:self.endLabel];
@@ -215,9 +218,14 @@
         make.right.offset(rightInset);
         make.height.mas_equalTo(34*kHeightRatio);
     }];
+    [self.noticeLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.top.mas_equalTo(self.titleLabel.mas_bottom).offset(2*kHeightRatio);
+        make.left.offset(leftInset);
+        make.right.offset(rightInset);
+    }];
     [self.startLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.offset(leftInset);
-        make.top.mas_equalTo(self.titleLabel.mas_bottom).offset(14*kHeightRatio);
+        make.top.mas_equalTo(self.noticeLabel.mas_bottom).offset(14*kHeightRatio);
         make.width.mas_equalTo(labelWidth);
         make.height.mas_equalTo(rowHeight);
     }];
@@ -452,6 +460,7 @@
     UIColor *borderColor = [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:0.12];
     self.tintColor = accentColor;
     self.titleLabel.textColor = accentColor;
+    self.noticeLabel.textColor = labelColor;
     self.startLabel.textColor = labelColor;
     self.endLabel.textColor = labelColor;
     self.infoLabel.textColor = labelColor;
@@ -466,6 +475,28 @@
 - (NSString *)timeStringFromTimestamp:(long)timestamp
 {
     return [self.timeFormatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
+}
+
+- (NSString *)selectedDateText
+{
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:self.dayStart];
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *today = [NSDate date];
+    NSDate *tomorrow = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:today options:0];
+    NSDate *yesterday = [gregorian dateByAddingUnit:NSCalendarUnitDay value:-1 toDate:today options:0];
+    
+    if ([gregorian isDate:date inSameDayAsDate:today]) {
+        return [MirrorLanguage mirror_stringWithKey:@"today"];
+    }
+    if ([gregorian isDate:date inSameDayAsDate:tomorrow]) {
+        return [MirrorLanguage mirror_stringWithKey:@"tomorrow"];
+    }
+    if ([gregorian isDate:date inSameDayAsDate:yesterday]) {
+        return [MirrorLanguage mirror_stringWithKey:@"yesterday"];
+    }
+    
+    return [MirrorTimeText YYYYmmdd:date];
 }
 
 - (long)timestampOnSelectedDayFromDate:(NSDate *)date
@@ -562,6 +593,23 @@
         _titleLabel.minimumScaleFactor = 0.6;
     }
     return _titleLabel;
+}
+
+- (UILabel *)noticeLabel
+{
+    if (!_noticeLabel) {
+        _noticeLabel = [UILabel new];
+        NSString *dateText = [self selectedDateText];
+        _noticeLabel.text = [MirrorLanguage mirror_stringWithKey:@"schedule_notice"
+                                                with1Placeholder:dateText
+                                                with2Placeholder:dateText];
+        _noticeLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+        _noticeLabel.textAlignment = NSTextAlignmentCenter;
+        _noticeLabel.numberOfLines = 0;
+        _noticeLabel.adjustsFontSizeToFitWidth = YES;
+        _noticeLabel.minimumScaleFactor = 0.8;
+    }
+    return _noticeLabel;
 }
 
 - (UILabel *)startLabel

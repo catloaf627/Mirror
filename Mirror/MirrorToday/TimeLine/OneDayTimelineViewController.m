@@ -212,7 +212,7 @@
     long minimumStartTimestamp = [self minimumCreatableScheduleStartTimestamp];
     if (minimumStartTimestamp >= [self dayEndTimestamp]) {
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
-                                                                                 message:@"Schedules can only be added for today or future days."
+                                                                                 message:[MirrorLanguage mirror_stringWithKey:@"schedule_future_only"]
                                                                           preferredStyle:UIAlertControllerStyleAlert];
         [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
         [self presentViewController:alertController animated:YES completion:nil];
