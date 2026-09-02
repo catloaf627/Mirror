@@ -13,6 +13,7 @@
 #import "UIColor+MirrorColor.h"
 #import "UIImage+MirrorSymbol.h"
 static CGFloat const kPadding = 10;
+static CGFloat const kLegendCellCornerRadius = 3;
 static NSTimeInterval const kLegendHighlightAnimationDuration = 0.3;
 
 @interface LegendCollectionViewCell ()
@@ -39,16 +40,18 @@ static NSTimeInterval const kLegendHighlightAnimationDuration = 0.3;
 {
     MirrorTaskModel *task = [MirrorStorage getTaskModelFromDB:taskName];
     self.backgroundColor = [UIColor clearColor];
-    self.layer.cornerRadius = 6;
+    self.layer.cornerRadius = kLegendCellCornerRadius;
     self.layer.masksToBounds = YES;
     self.contentView.backgroundColor = [UIColor clearColor];
     [self setLegendHighlighted:highlighted taskName:taskName animated:NO];
-    self.contentView.layer.cornerRadius = 6;
+    self.contentView.layer.cornerRadius = kLegendCellCornerRadius;
     self.contentView.layer.masksToBounds = YES;
     [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     
     [self.contentView addSubview:self.coloredView];
     self.coloredView.backgroundColor = task.isHidden ? [UIColor mirrorColorNamed:MirrorColorTypeBackground] : [UIColor mirrorColorNamed:task.color];
+    self.coloredView.layer.cornerRadius = kLegendCellCornerRadius;
+    self.coloredView.layer.masksToBounds = YES;
     self.coloredView.layer.borderColor = [UIColor mirrorColorPulsed:task.color].CGColor;
     self.coloredView.layer.borderWidth = 2;
     [self.coloredView mas_makeConstraints:^(MASConstraintMaker *make) {
