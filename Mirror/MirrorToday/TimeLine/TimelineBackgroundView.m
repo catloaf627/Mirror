@@ -30,6 +30,7 @@ static NSString * const kTimelineSchedulePickerIdentifier = @"MirrorSchedulePick
     self = [super initWithFrame:frame];
     if (self) {
         _showsScheduleOption = YES;
+        _showsTaskOptions = YES;
         [self setupUI];
     }
     return self;
@@ -61,9 +62,11 @@ static NSString * const kTimelineSchedulePickerIdentifier = @"MirrorSchedulePick
 {
     NSMutableArray<MirrorTaskModel *> *tasks = [MirrorStorage tasksWithAddNew];
     NSMutableArray<MirrorTaskModel *> *availableTasks = [NSMutableArray new];
-    for (MirrorTaskModel *task in tasks) {
-        if (!task.isAddTaskModel) {
-            [availableTasks addObject:task];
+    if (self.showsTaskOptions) {
+        for (MirrorTaskModel *task in tasks) {
+            if (!task.isAddTaskModel) {
+                [availableTasks addObject:task];
+            }
         }
     }
 
@@ -138,9 +141,11 @@ static NSString * const kTimelineSchedulePickerIdentifier = @"MirrorSchedulePick
         scheduleLabel.adjustsFontSizeToFitWidth = YES;
         [pickerView addSubview:scheduleLabel];
         
-        UIView *scheduleSeparator = [[UIView alloc] initWithFrame:CGRectMake(14, titleHeight + rowHeight, pickerWidth - 28, 1/[UIScreen mainScreen].scale)];
-        scheduleSeparator.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeSchedule];
-        [pickerView addSubview:scheduleSeparator];
+        if (tasks.count > 0) {
+            UIView *scheduleSeparator = [[UIView alloc] initWithFrame:CGRectMake(14, titleHeight + rowHeight, pickerWidth - 28, 1/[UIScreen mainScreen].scale)];
+            scheduleSeparator.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeSchedule];
+            [pickerView addSubview:scheduleSeparator];
+        }
     }
 
     for (NSInteger index = 0; index < tasks.count; index++) {

@@ -154,6 +154,7 @@
     [self.activeRecordView endInlineEditing];
     [self.activeRecordView endSelection];
     self.activeRecordView = nil;
+    [self.activeScheduleView endInlineEditing];
     [self.activeScheduleView endSelection];
     self.activeScheduleView = nil;
     [self.editingPeriodAlert dismiss];
@@ -171,6 +172,7 @@
         return NO;
     }
     if (self.activeScheduleView) {
+        [self.activeScheduleView endInlineEditing];
         [self.activeScheduleView endSelection];
         self.activeScheduleView = nil;
         return NO;
@@ -343,6 +345,7 @@
     if (self.activeRecordView != recordView) {
         [self.activeRecordView endInlineEditing];
     }
+    [self.activeScheduleView endInlineEditing];
     [self.activeScheduleView endSelection];
     self.activeScheduleView = nil;
     MirrorRecordModel *record = records[periodIndex];
@@ -397,17 +400,108 @@
 
 #pragma mark - TimelineScheduleViewDelegate
 
+- (void)timelineScheduleViewDidRequestInlineEditing:(TimelineScheduleView *)scheduleView
+{
+    [self beginTapSelectionForScheduleView:scheduleView];
+}
+
 - (void)timelineScheduleViewDidRequestLongSelection:(TimelineScheduleView *)scheduleView
 {
     [self.activeRecordView endInlineEditing];
     [self.activeRecordView endSelection];
     self.activeRecordView = nil;
+    [self.activeScheduleView endInlineEditing];
     if (self.activeScheduleView != scheduleView) {
         [self.activeScheduleView endSelection];
     }
     self.activeScheduleView = scheduleView;
     [self.timelineContentView bringSubviewToFront:scheduleView];
     [scheduleView beginLongSelection];
+}
+
+- (void)beginTapSelectionForScheduleView:(TimelineScheduleView *)scheduleView
+{
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    NSInteger scheduleIndex = scheduleView.scheduleIndex;
+    if (scheduleIndex < 0 || scheduleIndex >= schedules.count) {
+        return;
+    }
+    
+    [self.activeRecordView endInlineEditing];
+    [self.activeRecordView endSelection];
+    self.activeRecordView = nil;
+    if (self.activeScheduleView != scheduleView) {
+        [self.activeScheduleView endInlineEditing];
+        [self.activeScheduleView endSelection];
+    }
+    
+    MirrorScheduleModel *schedule = schedules[scheduleIndex];
+    long minimumTimestamp = [self dayStartTimestamp];
+    long maximumTimestamp = [self dayEndTimestamp];
+    if (maximumTimestamp <= minimumTimestamp || schedule.endTime <= minimumTimestamp || schedule.startTime >= maximumTimestamp) {
+        return;
+    }
+    
+    self.activeScheduleView = scheduleView;
+    [self.timelineContentView bringSubviewToFront:scheduleView];
+    [scheduleView beginInlineEditingWithMinimumTimestamp:minimumTimestamp
+                                        maximumTimestamp:maximumTimestamp
+                                              hourHeight:self.hourHeight
+                                       dayStartTimestamp:[self dayStartTimestamp]
+                                         dayEndTimestamp:[self dayEndTimestamp]];
+}
+
+- (void)timelineScheduleView:(TimelineScheduleView *)scheduleView didChangeScrollEnabled:(BOOL)enabled
+{
+    self.timelineScrollView.scrollEnabled = YES;
+}
+
+- (void)timelineScheduleView:(TimelineScheduleView *)scheduleView didCommitStartTimestamp:(long)timestamp
+{
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    NSInteger scheduleIndex = scheduleView.scheduleIndex;
+    if (scheduleIndex < 0 || scheduleIndex >= schedules.count) {
+        return;
+    }
+    
+    MirrorScheduleModel *schedule = schedules[scheduleIndex];
+    MirrorScheduleModel *editedSchedule = [[MirrorScheduleModel alloc] initWithInfo:schedule.scheduleInfo
+                                                                          startTime:timestamp
+                                                                            endTime:schedule.endTime];
+    [MirrorStorage editSchedule:editedSchedule scheduleIndex:scheduleIndex];
+    [self reloadDataKeepingInlineEditingForSchedule:editedSchedule];
+}
+
+- (void)timelineScheduleView:(TimelineScheduleView *)scheduleView didCommitEndTimestamp:(long)timestamp
+{
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    NSInteger scheduleIndex = scheduleView.scheduleIndex;
+    if (scheduleIndex < 0 || scheduleIndex >= schedules.count) {
+        return;
+    }
+    
+    MirrorScheduleModel *schedule = schedules[scheduleIndex];
+    MirrorScheduleModel *editedSchedule = [[MirrorScheduleModel alloc] initWithInfo:schedule.scheduleInfo
+                                                                          startTime:schedule.startTime
+                                                                            endTime:timestamp];
+    [MirrorStorage editSchedule:editedSchedule scheduleIndex:scheduleIndex];
+    [self reloadDataKeepingInlineEditingForSchedule:editedSchedule];
+}
+
+- (void)timelineScheduleView:(TimelineScheduleView *)scheduleView didCommitStartTimestamp:(long)startTimestamp endTimestamp:(long)endTimestamp
+{
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    NSInteger scheduleIndex = scheduleView.scheduleIndex;
+    if (scheduleIndex < 0 || scheduleIndex >= schedules.count) {
+        return;
+    }
+    
+    MirrorScheduleModel *schedule = schedules[scheduleIndex];
+    MirrorScheduleModel *editedSchedule = [[MirrorScheduleModel alloc] initWithInfo:schedule.scheduleInfo
+                                                                          startTime:startTimestamp
+                                                                            endTime:endTimestamp];
+    [MirrorStorage editSchedule:editedSchedule scheduleIndex:scheduleIndex];
+    [self reloadDataKeepingInlineEditingForSchedule:editedSchedule];
 }
 
 - (UIMenu *)menuForTimelineScheduleView:(TimelineScheduleView *)scheduleView API_AVAILABLE(ios(16.0))
@@ -484,6 +578,12 @@
     [self restoreTapSelectionForPeriodIndex:periodIndex];
 }
 
+- (void)reloadDataKeepingInlineEditingForSchedule:(MirrorScheduleModel *)schedule
+{
+    [self reloadData];
+    [self restoreTapSelectionForSchedule:schedule];
+}
+
 - (void)restoreTapSelectionForPeriodIndex:(NSInteger)periodIndex
 {
     for (UIView *subview in self.timelineContentView.subviews) {
@@ -493,6 +593,22 @@
         TimelineRecordView *recordView = (TimelineRecordView *)subview;
         if (recordView.periodIndex == periodIndex) {
             [self beginTapSelectionForRecordView:recordView];
+            return;
+        }
+    }
+}
+
+- (void)restoreTapSelectionForSchedule:(MirrorScheduleModel *)schedule
+{
+    for (UIView *subview in self.timelineContentView.subviews) {
+        if (![subview isKindOfClass:TimelineScheduleView.class]) {
+            continue;
+        }
+        TimelineScheduleView *scheduleView = (TimelineScheduleView *)subview;
+        BOOL hasMatchingTime = scheduleView.originalStartTimestamp == schedule.startTime && scheduleView.originalEndTimestamp == schedule.endTime;
+        BOOL hasMatchingTitle = [scheduleView.scheduleTitle isEqualToString:schedule.scheduleInfo ?: @""];
+        if (hasMatchingTime && hasMatchingTitle) {
+            [self beginTapSelectionForScheduleView:scheduleView];
             return;
         }
     }
@@ -528,6 +644,7 @@
 
     [self.activeRecordView endInlineEditing];
     self.activeRecordView = nil;
+    [self.activeScheduleView endInlineEditing];
     [self.activeScheduleView endSelection];
     self.activeScheduleView = nil;
     [self.timelineContentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
@@ -786,7 +903,13 @@
 
 - (void)updateScheduleOptionAvailability
 {
-    self.timelineContentView.showsScheduleOption = [self minimumCreatableScheduleStartTimestamp] < [self dayEndTimestamp];
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    long selectedDayStart = [self dayStartTimestamp];
+    long todayStart = lround([[gregorian startOfDayForDate:[NSDate now]] timeIntervalSince1970]);
+
+    self.timelineContentView.showsTaskOptions = selectedDayStart <= todayStart;
+    self.timelineContentView.showsScheduleOption = selectedDayStart >= todayStart;
 }
 
 - (long)minimumCreatableScheduleStartTimestamp

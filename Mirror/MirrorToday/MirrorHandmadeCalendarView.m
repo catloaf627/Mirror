@@ -119,7 +119,6 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 - (void)setHasSchedule:(BOOL)hasSchedule
 {
     _hasSchedule = hasSchedule;
-    [self updateSpecialDayIcon];
 }
 
 - (void)setRecordColors:(NSArray<UIColor *> *)recordColors
@@ -223,10 +222,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
 - (void)updateSpecialDayIcon
 {
     UIImage *iconImage = nil;
-    BOOL showsScheduleIcon = self.inVisibleMonth && self.hasSchedule;
-    if (showsScheduleIcon) {
-        iconImage = [UIImage mirror_systemImageNamed:@"clock.fill" fallbackName:@"clock.fill"];
-    } else if (self.inVisibleMonth && self.specialDayIconName.length > 0) {
+    if (self.inVisibleMonth && self.specialDayIconName.length > 0) {
         iconImage = [UIImage mirror_systemImageNamed:self.specialDayIconName fallbackName:@"star.fill"];
     }
 
@@ -234,11 +230,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
     _iconView.hidden = !showsIcon;
     _dayLabel.hidden = showsIcon;
     _iconView.image = showsIcon ? [iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] : nil;
-    if (showsScheduleIcon && ![self.specialDayColor isKindOfClass:UIColor.class]) {
-        _iconView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-    } else {
-        _iconView.tintColor = [self.specialDayColor isKindOfClass:UIColor.class] ? self.specialDayColor : [UIColor mirrorColorNamed:MirrorColorTypeText];
-    }
+    _iconView.tintColor = [self.specialDayColor isKindOfClass:UIColor.class] ? self.specialDayColor : [UIColor mirrorColorNamed:MirrorColorTypeText];
 }
 
 @end

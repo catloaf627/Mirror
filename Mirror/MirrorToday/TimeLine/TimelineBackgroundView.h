@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) UIViewController *presentingViewController;
 @property (nonatomic, assign) CGFloat bottomInset;
 @property (nonatomic, assign) BOOL showsScheduleOption;
+@property (nonatomic, assign) BOOL showsTaskOptions;
 
 - (void)dismissTaskPicker;
 
