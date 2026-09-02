@@ -307,9 +307,8 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
-    NSDateComponents *components = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute fromDate:[NSDate now]];
-    long normalizedNow = lround([[gregorian dateFromComponents:components] timeIntervalSince1970]);
-    if (schedule.startTime < normalizedNow) {
+    long todayStart = lround([[gregorian startOfDayForDate:[NSDate now]] timeIntervalSince1970]);
+    if (schedule.startTime < todayStart) {
         return NO;
     }
     

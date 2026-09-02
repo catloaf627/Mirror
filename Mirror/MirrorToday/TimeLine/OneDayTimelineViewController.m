@@ -212,7 +212,7 @@
     long minimumStartTimestamp = [self minimumCreatableScheduleStartTimestamp];
     if (minimumStartTimestamp >= [self dayEndTimestamp]) {
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
-                                                                                 message:@"Schedules can only start now or in the future."
+                                                                                 message:@"Schedules can only be added for today or future days."
                                                                           preferredStyle:UIAlertControllerStyleAlert];
         [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
         [self presentViewController:alertController animated:YES completion:nil];
@@ -795,15 +795,11 @@
     long dayEnd = [self dayEndTimestamp];
     NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
     gregorian.timeZone = [NSTimeZone systemTimeZone];
-    NSDateComponents *components = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute fromDate:[NSDate now]];
-    long normalizedNow = lround([[gregorian dateFromComponents:components] timeIntervalSince1970]);
-    if (normalizedNow >= dayEnd) {
+    long todayStart = lround([[gregorian startOfDayForDate:[NSDate now]] timeIntervalSince1970]);
+    if (dayEnd <= todayStart) {
         return dayEnd;
     }
-    if (normalizedNow <= dayStart) {
-        return dayStart;
-    }
-    return normalizedNow;
+    return dayStart;
 }
 
 - (NSInteger)timelineHourCount

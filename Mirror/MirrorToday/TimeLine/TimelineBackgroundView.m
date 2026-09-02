@@ -10,6 +10,7 @@
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 #import "MirrorMacro.h"
+#import "UIImage+MirrorSymbol.h"
 
 #define kTimelinePickerHorizontalInset (20*kWidthRatio)
 
@@ -124,18 +125,11 @@ static NSString * const kTimelineSchedulePickerIdentifier = @"MirrorSchedulePick
         [scheduleButton addTarget:self action:@selector(taskPickerDidSelectTask:) forControlEvents:UIControlEventTouchUpInside];
         [pickerView addSubview:scheduleButton];
         
-        UIView *scheduleDot = [[UIView alloc] initWithFrame:CGRectMake(14, titleHeight + 12, 16, 16)];
-        scheduleDot.backgroundColor = pickerView.backgroundColor;
-        scheduleDot.layer.cornerRadius = 8;
-        CAShapeLayer *scheduleDotBorder = [CAShapeLayer layer];
-        scheduleDotBorder.fillColor = UIColor.clearColor.CGColor;
-        scheduleDotBorder.strokeColor = [UIColor mirrorColorNamed:MirrorColorTypeSchedule].CGColor;
-        scheduleDotBorder.lineWidth = 1.2;
-        scheduleDotBorder.lineDashPattern = @[@2, @2];
-        scheduleDotBorder.frame = scheduleDot.bounds;
-        scheduleDotBorder.path = [UIBezierPath bezierPathWithOvalInRect:CGRectInset(scheduleDot.bounds, 0.6, 0.6)].CGPath;
-        [scheduleDot.layer addSublayer:scheduleDotBorder];
-        [pickerView addSubview:scheduleDot];
+        UIImageView *scheduleIconView = [[UIImageView alloc] initWithFrame:CGRectMake(13, titleHeight + 11, 18, 18)];
+        scheduleIconView.contentMode = UIViewContentModeScaleAspectFit;
+        scheduleIconView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+        scheduleIconView.image = [[UIImage mirror_systemImageNamed:@"clock" fallbackName:@"clock"] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+        [pickerView addSubview:scheduleIconView];
         
         UILabel *scheduleLabel = [[UILabel alloc] initWithFrame:CGRectMake(42, titleHeight, pickerWidth - 56, rowHeight)];
         scheduleLabel.text = [MirrorLanguage mirror_stringWithKey:@"schedule"];
@@ -143,6 +137,10 @@ static NSString * const kTimelineSchedulePickerIdentifier = @"MirrorSchedulePick
         scheduleLabel.font = [UIFont mirrorTitleFont_Card];
         scheduleLabel.adjustsFontSizeToFitWidth = YES;
         [pickerView addSubview:scheduleLabel];
+        
+        UIView *scheduleSeparator = [[UIView alloc] initWithFrame:CGRectMake(14, titleHeight + rowHeight, pickerWidth - 28, 1/[UIScreen mainScreen].scale)];
+        scheduleSeparator.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeSchedule];
+        [pickerView addSubview:scheduleSeparator];
     }
 
     for (NSInteger index = 0; index < tasks.count; index++) {

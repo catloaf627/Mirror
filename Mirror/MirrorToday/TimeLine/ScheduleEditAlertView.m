@@ -421,11 +421,6 @@
         [self showMessage:@"End time must be after start time."];
         return;
     }
-    if (self.isNew && self.startTimestamp < [self normalizedNowTimestamp]) {
-        [self showMessage:@"Schedules can only start now or in the future."];
-        return;
-    }
-    
     MirrorScheduleModel *schedule = [[MirrorScheduleModel alloc] initWithInfo:self.infoTextField.text ?: @"" startTime:self.startTimestamp endTime:self.endTimestamp];
     schedule.originalIndex = self.schedule.originalIndex;
     ScheduleEditCompletion completion = self.completion;
@@ -488,15 +483,7 @@
 
 - (long)minimumStartTimestamp
 {
-    return self.isNew ? MAX(self.dayStart, [self normalizedNowTimestamp]) : self.dayStart;
-}
-
-- (long)normalizedNowTimestamp
-{
-    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    gregorian.timeZone = [NSTimeZone systemTimeZone];
-    NSDateComponents *components = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute fromDate:[NSDate now]];
-    return lround([[gregorian dateFromComponents:components] timeIntervalSince1970]);
+    return self.dayStart;
 }
 
 - (void)showMessage:(NSString *)message
