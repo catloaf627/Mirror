@@ -8,6 +8,7 @@
 #import <Foundation/Foundation.h>
 #import "MirrorReadModel.h"
 #import "MirrorDayModel.h"
+#import "MirrorScheduleModel.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -54,6 +55,12 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 
 + (void)insertPeriodWithTaskname:(NSString *)taskName startAt:(NSDate *)startDate endAt:(NSDate *)endDate;
 
++ (BOOL)createSchedule:(MirrorScheduleModel *)schedule;
+
++ (void)editSchedule:(MirrorScheduleModel *)schedule scheduleIndex:(NSInteger)index;
+
++ (void)deleteScheduleAtIndex:(NSInteger)index;
+
 + (void)startTask:(NSString *)taskName at:(NSDate *)accurateDate;
 
 + (void)stopTask:(NSString *)taskName at:(NSDate *)accurateDate;
@@ -84,6 +91,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 + (NSMutableArray<MirrorTaskModel *> *)retriveMirrorTasks;
 
 + (NSMutableArray<MirrorRecordModel *> *)retriveMirrorRecords;
+
++ (NSMutableArray<MirrorScheduleModel *> *)retriveMirrorSchedules;
 
 + (NSMutableArray<MirrorDayModel *> *)retriveMirrorDays;
 
@@ -139,6 +148,8 @@ typedef NS_ENUM(NSInteger, TaskNameExistsType) {
 + (NSMutableArray<MirrorRecordModel *> *)getTodayData;
 
 + (NSMutableArray<MirrorRecordModel *> *)getOneDayDataForDate:(NSDate *)date;
+
++ (NSMutableArray<MirrorScheduleModel *> *)getOneDaySchedulesForDate:(NSDate *)date;
 
 /*
  取出【所有任务】从【某时间】到【某时间】的所有records，并按照优先级排序 （如顺序为🪀、🌸）

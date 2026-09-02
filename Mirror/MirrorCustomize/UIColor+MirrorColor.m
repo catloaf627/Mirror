@@ -24,6 +24,8 @@
             return isLight ? [UIColor blackColor] : [UIColor whiteColor];
         case MirrorColorTypeTextHint: // 和cell gray pulse一样
             return isLight ? [UIColor mirror_darkGray] : [UIColor mirror_lightGray];
+        case MirrorColorTypeSchedule:
+            return isLight ? [UIColor colorWithRed:190/255.0 green:190/255.0 blue:190/255.0 alpha:1] : [UIColor colorWithRed:70/255.0 green:70/255.0 blue:70/255.0 alpha:1];
         case MirrorColorTypeShadow:
             return [UIColor grayColor];
         case MirrorColorTypeAddTaskCellBG:

@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (long)timelineView:(TimelineBackgroundView *)timelineView timestampForTimelineY:(CGFloat)y;
 - (void)timelineView:(TimelineBackgroundView *)timelineView didSelectTaskName:(NSString *)taskName startTimestamp:(long)startTimestamp;
+- (void)timelineView:(TimelineBackgroundView *)timelineView didSelectScheduleStartTimestamp:(long)startTimestamp;
 
 @optional
 - (BOOL)timelineViewShouldBeginAddingRecord:(TimelineBackgroundView *)timelineView;
@@ -24,6 +25,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, weak) id<TimelineBackgroundViewDelegate> delegate;
 @property (nonatomic, weak) UIViewController *presentingViewController;
 @property (nonatomic, assign) CGFloat bottomInset;
+@property (nonatomic, assign) BOOL showsScheduleOption;
 
 - (void)dismissTaskPicker;
 

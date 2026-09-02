@@ -33,6 +33,10 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 + (NSDate * _Nullable)p_goingOnTaskAccurateStartDate;
 + (NSString *)p_goingOnTaskNote;
 + (NSString *)p_noteByPrefixingTaskName:(NSString *)taskName note:(NSString *)note;
++ (void)saveMirrorSchedules:(NSMutableArray<MirrorScheduleModel *> *)schedules;
++ (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days schedules:(NSMutableArray<MirrorScheduleModel *> *)schedules secondsFromGMT:(NSNumber *)secondsFromGMT;
++ (NSDictionary *)jsonDictionaryWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days schedules:(NSMutableArray<MirrorScheduleModel *> *)schedules secondsFromGMT:(NSNumber *)secondsFromGMT;
++ (BOOL)parseJSONDictionary:(NSDictionary *)jsonDictionary tasks:(NSMutableArray<MirrorTaskModel *> **)tasks records:(NSMutableArray<MirrorRecordModel *> **)records days:(NSMutableArray<MirrorDayModel *> **)days schedules:(NSMutableArray<MirrorScheduleModel *> **)schedules secondsFromGMT:(NSNumber **)secondsFromGMT;
 
 @end
 
@@ -293,6 +297,65 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage saveMirrorRecords:records];
     NSLog(@"Insert period start %@, end %@", [MirrorTool timeFromDate:startDate printTimeStamp:NO], [MirrorTool timeFromDate:endDate printTimeStamp:NO]);
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorTaskStopNotification object:nil userInfo:nil];
+}
+
++ (BOOL)createSchedule:(MirrorScheduleModel *)schedule
+{
+    if (!schedule || schedule.endTime - schedule.startTime < kMinSeconds) {
+        return NO;
+    }
+    
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDateComponents *components = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute fromDate:[NSDate now]];
+    long normalizedNow = lround([[gregorian dateFromComponents:components] timeIntervalSince1970]);
+    if (schedule.startTime < normalizedNow) {
+        return NO;
+    }
+    
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    [schedules addObject:schedule];
+    [schedules sortUsingComparator:^NSComparisonResult(MirrorScheduleModel *schedule1, MirrorScheduleModel *schedule2) {
+        if (schedule1.startTime < schedule2.startTime) return NSOrderedAscending;
+        if (schedule1.startTime > schedule2.startTime) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
+    [MirrorStorage saveMirrorSchedules:schedules];
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorScheduleChangeNotification object:nil userInfo:nil];
+    return YES;
+}
+
++ (void)editSchedule:(MirrorScheduleModel *)schedule scheduleIndex:(NSInteger)index
+{
+    if (!schedule || schedule.endTime - schedule.startTime < kMinSeconds) {
+        return;
+    }
+    
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    if (index < 0 || index >= schedules.count) {
+        return;
+    }
+    
+    schedules[index] = schedule;
+    [schedules sortUsingComparator:^NSComparisonResult(MirrorScheduleModel *schedule1, MirrorScheduleModel *schedule2) {
+        if (schedule1.startTime < schedule2.startTime) return NSOrderedAscending;
+        if (schedule1.startTime > schedule2.startTime) return NSOrderedDescending;
+        return NSOrderedSame;
+    }];
+    [MirrorStorage saveMirrorSchedules:schedules];
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorScheduleChangeNotification object:nil userInfo:nil];
+}
+
++ (void)deleteScheduleAtIndex:(NSInteger)index
+{
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    if (index < 0 || index >= schedules.count) {
+        return;
+    }
+    
+    [schedules removeObjectAtIndex:index];
+    [MirrorStorage saveMirrorSchedules:schedules];
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorScheduleChangeNotification object:nil userInfo:nil];
 }
 
 // 按查询范围和自然日切 UI 片段；例如原始记录 1/1 08:00-1/3 08:00，查询 1/2 00:00-1/3 00:00 时只返回 1/2 全天片段。
@@ -673,6 +736,11 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:records days:[MirrorStorage retriveMirrorDays] secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
 }
 
++ (void)saveMirrorSchedules:(NSMutableArray<MirrorScheduleModel *> *)schedules
+{
+    [MirrorStorage replaceAllDataWithTasks:[MirrorStorage retriveMirrorTasks] records:[MirrorStorage retriveMirrorRecords] days:[MirrorStorage retriveMirrorDays] schedules:schedules secondsFromGMT:[MirrorStorage retriveSecondsFromGMT]];
+}
+
 // 从本地 JSON 读取原始用户记录，并补上 originalIndex；例如跨天 1/1-1/3 的记录在这里仍只是一条。
 + (NSMutableArray<MirrorRecordModel *> *)retriveMirrorRecords
 {
@@ -688,6 +756,33 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     } else {
         return [NSMutableArray new];
     }
+}
+
++ (NSMutableArray<MirrorScheduleModel *> *)retriveMirrorSchedules
+{
+    NSMutableArray<MirrorTaskModel *> *tasks = nil;
+    NSMutableArray<MirrorRecordModel *> *records = nil;
+    NSMutableArray<MirrorDayModel *> *days = nil;
+    NSMutableArray<MirrorScheduleModel *> *schedules = nil;
+    NSNumber *secondsFromGMT = nil;
+    if (![MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromDisk] tasks:&tasks records:&records days:&days schedules:&schedules secondsFromGMT:&secondsFromGMT]) {
+        return [NSMutableArray new];
+    }
+    
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    long todayStart = lround([[gregorian startOfDayForDate:[NSDate now]] timeIntervalSince1970]);
+    NSMutableArray<MirrorScheduleModel *> *validSchedules = [NSMutableArray new];
+    for (MirrorScheduleModel *schedule in schedules) {
+        if (schedule.startTime >= todayStart && schedule.endTime - schedule.startTime >= kMinSeconds) {
+            schedule.originalIndex = validSchedules.count;
+            [validSchedules addObject:schedule];
+        }
+    }
+    if (validSchedules.count != schedules.count) {
+        [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days schedules:validSchedules secondsFromGMT:secondsFromGMT];
+    }
+    return validSchedules;
 }
 
 + (NSMutableArray<MirrorDayModel *> *)retriveMirrorDays
@@ -800,12 +895,13 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     NSMutableArray<MirrorTaskModel *> *tasks = nil;
     NSMutableArray<MirrorRecordModel *> *records = nil;
     NSMutableArray<MirrorDayModel *> *days = nil;
+    NSMutableArray<MirrorScheduleModel *> *schedules = nil;
     NSNumber *secondsFromGMT = nil;
     NSDictionary *jsonDictionary = [MirrorStorage jsonDictionaryFromData:data];
-    if (![MirrorStorage parseJSONDictionary:jsonDictionary tasks:&tasks records:&records days:&days secondsFromGMT:&secondsFromGMT]) {
+    if (![MirrorStorage parseJSONDictionary:jsonDictionary tasks:&tasks records:&records days:&days schedules:&schedules secondsFromGMT:&secondsFromGMT]) {
         return NO;
     }
-    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days secondsFromGMT:secondsFromGMT];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days schedules:schedules secondsFromGMT:secondsFromGMT];
     return YES;
 }
 
@@ -845,12 +941,13 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     NSMutableArray<MirrorTaskModel *> *tasks = nil;
     NSMutableArray<MirrorRecordModel *> *records = nil;
     NSMutableArray<MirrorDayModel *> *days = nil;
+    NSMutableArray<MirrorScheduleModel *> *schedules = nil;
     NSNumber *secondsFromGMT = nil;
-    if (![MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:&tasks records:&records days:&days secondsFromGMT:&secondsFromGMT]) {
+    if (![MirrorStorage parseJSONDictionary:[MirrorStorage jsonDictionaryFromICloud] tasks:&tasks records:&records days:&days schedules:&schedules secondsFromGMT:&secondsFromGMT]) {
         return NO;
     }
     
-    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days secondsFromGMT:secondsFromGMT];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days schedules:schedules secondsFromGMT:secondsFromGMT];
     return YES;
 }
 
@@ -862,7 +959,12 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 
 + (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days secondsFromGMT:(NSNumber *)secondsFromGMT
 {
-    NSData *data = [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:tasks records:records days:days secondsFromGMT:secondsFromGMT] options:NSJSONWritingPrettyPrinted error:nil];
+    [MirrorStorage replaceAllDataWithTasks:tasks records:records days:days schedules:[MirrorStorage retriveMirrorSchedules] secondsFromGMT:secondsFromGMT];
+}
+
++ (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days schedules:(NSMutableArray<MirrorScheduleModel *> *)schedules secondsFromGMT:(NSNumber *)secondsFromGMT
+{
+    NSData *data = [NSJSONSerialization dataWithJSONObject:[MirrorStorage jsonDictionaryWithTasks:tasks records:records days:days schedules:schedules secondsFromGMT:secondsFromGMT] options:NSJSONWritingPrettyPrinted error:nil];
     if (!data) return;
     
     [data writeToFile:[MirrorStorage jsonFilePath] atomically:YES];
@@ -963,6 +1065,11 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 // 把模型数组编码成持久化字典；例如 task 写 task_name/color，record 写 start_time/end_time，最终组成 version/tasks/records/days/seconds。
 + (NSDictionary *)jsonDictionaryWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days secondsFromGMT:(NSNumber *)secondsFromGMT
 {
+    return [MirrorStorage jsonDictionaryWithTasks:tasks records:records days:days schedules:[MirrorStorage retriveMirrorSchedules] secondsFromGMT:secondsFromGMT];
+}
+
++ (NSDictionary *)jsonDictionaryWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days schedules:(NSMutableArray<MirrorScheduleModel *> *)schedules secondsFromGMT:(NSNumber *)secondsFromGMT
+{
     NSMutableArray *jsonTasks = [NSMutableArray new];
     for (MirrorTaskModel *task in tasks) {
         [jsonTasks addObject:@{
@@ -992,12 +1099,22 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
             @"color": @(day.color)
         }];
     }
+    
+    NSMutableArray *jsonSchedules = [NSMutableArray new];
+    for (MirrorScheduleModel *schedule in schedules) {
+        [jsonSchedules addObject:@{
+            @"schedule_info": schedule.scheduleInfo ?: @"",
+            @"start_time": @(schedule.startTime),
+            @"end_time": @(schedule.endTime)
+        }];
+    }
 
     return @{
         @"version": @1,
         TASKS: jsonTasks,
         RECORDS: jsonRecords,
         DAYS: jsonDays,
+        SCHEDULES: jsonSchedules,
         SECONDS: secondsFromGMT ?: @([NSTimeZone systemTimeZone].secondsFromGMT)
     };
 }
@@ -1005,16 +1122,25 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 // 严格解析持久化字典为模型；例如缺少 task_name 或 start_time 类型不是 NSNumber 时返回 NO，避免导入坏数据。
 + (BOOL)parseJSONDictionary:(NSDictionary *)jsonDictionary tasks:(NSMutableArray<MirrorTaskModel *> **)tasks records:(NSMutableArray<MirrorRecordModel *> **)records days:(NSMutableArray<MirrorDayModel *> **)days secondsFromGMT:(NSNumber **)secondsFromGMT
 {
+    return [MirrorStorage parseJSONDictionary:jsonDictionary tasks:tasks records:records days:days schedules:nil secondsFromGMT:secondsFromGMT];
+}
+
++ (BOOL)parseJSONDictionary:(NSDictionary *)jsonDictionary tasks:(NSMutableArray<MirrorTaskModel *> **)tasks records:(NSMutableArray<MirrorRecordModel *> **)records days:(NSMutableArray<MirrorDayModel *> **)days schedules:(NSMutableArray<MirrorScheduleModel *> **)schedules secondsFromGMT:(NSNumber **)secondsFromGMT
+{
     if (![jsonDictionary isKindOfClass:NSDictionary.class]) return NO;
 
     NSArray *jsonTasks = jsonDictionary[TASKS];
     NSArray *jsonRecords = jsonDictionary[RECORDS];
     NSArray *jsonDays = jsonDictionary[DAYS];
+    NSArray *jsonSchedules = jsonDictionary[SCHEDULES];
     NSNumber *jsonSecondsFromGMT = jsonDictionary[SECONDS];
     if (![jsonTasks isKindOfClass:NSArray.class] || ![jsonRecords isKindOfClass:NSArray.class] || ![jsonSecondsFromGMT isKindOfClass:NSNumber.class]) {
         return NO;
     }
     if (jsonDays != nil && ![jsonDays isKindOfClass:NSArray.class]) {
+        return NO;
+    }
+    if (jsonSchedules != nil && ![jsonSchedules isKindOfClass:NSArray.class]) {
         return NO;
     }
 
@@ -1066,10 +1192,24 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
         MirrorDayModel *day = [[MirrorDayModel alloc] initWithDateStr:dateStr info:info icon:icon color:[color integerValue]];
         [parsedDays addObject:day];
     }
+    
+    NSMutableArray<MirrorScheduleModel *> *parsedSchedules = [NSMutableArray new];
+    for (NSDictionary *jsonSchedule in jsonSchedules ?: @[]) {
+        if (![jsonSchedule isKindOfClass:NSDictionary.class]) return NO;
+        NSString *scheduleInfo = jsonSchedule[@"schedule_info"];
+        NSNumber *startTime = jsonSchedule[@"start_time"];
+        NSNumber *endTime = jsonSchedule[@"end_time"];
+        if (![scheduleInfo isKindOfClass:NSString.class] || ![startTime isKindOfClass:NSNumber.class] || ![endTime isKindOfClass:NSNumber.class]) {
+            return NO;
+        }
+        MirrorScheduleModel *schedule = [[MirrorScheduleModel alloc] initWithInfo:scheduleInfo startTime:[startTime longValue] endTime:[endTime longValue]];
+        [parsedSchedules addObject:schedule];
+    }
 
     if (tasks) *tasks = parsedTasks;
     if (records) *records = parsedRecords;
     if (days) *days = parsedDays;
+    if (schedules) *schedules = parsedSchedules;
     if (secondsFromGMT) *secondsFromGMT = jsonSecondsFromGMT;
     return YES;
 }
@@ -1181,6 +1321,37 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
         }
     }
     return [[[targetRecords reverseObjectEnumerator] allObjects] mutableCopy]; // 倒序
+}
+
++ (NSMutableArray<MirrorScheduleModel *> *)getOneDaySchedulesForDate:(NSDate *)date
+{
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *targetDate = date ?: [NSDate now];
+    NSDate *startOfDay = [gregorian startOfDayForDate:targetDate];
+    NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:startOfDay options:0];
+    long startTime = round([startOfDay timeIntervalSince1970]);
+    long endTime = round([startOfNextDay timeIntervalSince1970]);
+    
+    NSMutableArray<MirrorScheduleModel *> *targetSchedules = [NSMutableArray new];
+    NSMutableArray<MirrorScheduleModel *> *allSchedules = [MirrorStorage retriveMirrorSchedules];
+    for (MirrorScheduleModel *schedule in allSchedules) {
+        if (schedule.endTime <= schedule.startTime) {
+            continue;
+        }
+        if (schedule.endTime <= startTime) {
+            continue;
+        }
+        if (endTime <= schedule.startTime) {
+            break;
+        }
+        if (schedule.startTime < endTime && startTime < schedule.endTime) {
+            MirrorScheduleModel *segment = [[MirrorScheduleModel alloc] initWithInfo:schedule.scheduleInfo startTime:MAX(schedule.startTime, startTime) endTime:MIN(schedule.endTime, endTime)];
+            segment.originalIndex = schedule.originalIndex;
+            [targetSchedules addObject:segment];
+        }
+    }
+    return targetSchedules;
 }
 
 // 取出指定时间范围内的图表数据，先按范围/自然日切 UI 片段，再按任务顺序包装成 MirrorReadModel；例如查询一周时，跨天 raw record 会贡献到多天统计里。

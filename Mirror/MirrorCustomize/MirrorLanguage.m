@@ -61,6 +61,8 @@
     [mirrorDict setValue:ML(@"Cancel", @"取消", @"Cancelar", @"Annuler", @"キャンセル", @"취소", @"Abbrechen", @"Отмена") forKey:@"cancel"];
     [mirrorDict setValue:ML(@"Done", @"完成", @"Listo", @"Terminé", @"完了", @"완료", @"Fertig", @"Готово") forKey:@"done"];
     [mirrorDict setValue:ML(@"Add", @"添加", @"Añadir", @"Ajouter", @"追加", @"추가", @"Hinzufügen", @"Добавить") forKey:@"add"];
+    [mirrorDict setValue:ML(@"Schedule", @"日程", @"Horario", @"Programme", @"予定", @"일정", @"Termin", @"Расписание") forKey:@"schedule"];
+    [mirrorDict setValue:ML(@"Info", @"信息", @"Información", @"Info", @"情報", @"정보", @"Info", @"Информация") forKey:@"schedule_info"];
     
     // Profile add cell
     [mirrorDict setValue:ML(@"Enter task title", @"输入任务名称", @"Ingresa el título de la tarea", @"Saisir le titre de la tâche", @"タスク名を入力", @"작업 제목 입력", @"Aufgabentitel eingeben", @"Введите название задачи") forKey:@"enter_task_title"];

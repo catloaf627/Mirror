@@ -35,6 +35,9 @@
 		4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88211829F2A2B8009E422C /* TodayTotalHeader.m */; };
 		4A88212929F6035E009E422C /* CellAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88212829F6035E009E422C /* CellAnimation.m */; };
 		4A88212F29F671F7009E422C /* TimeTrackingViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A88212E29F671F7009E422C /* TimeTrackingViewController.m */; };
+		4A9EF9CA3048ABDE00F2E02B /* MirrorScheduleModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9EF9C93048ABDE00F2E02B /* MirrorScheduleModel.m */; };
+		4A9EF9CD3048AF6E00F2E02B /* TimelineScheduleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9EF9CC3048AF6E00F2E02B /* TimelineScheduleView.m */; };
+		4A9EF9D03048AFAE00F2E02B /* ScheduleEditAlertView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9EF9CF3048AFAE00F2E02B /* ScheduleEditAlertView.m */; };
 		4A9FDB21302D0CA0007707FC /* TimelineRecordView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */; };
 		4A9FDB24302D1234007707FC /* TimelineBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB23302D1234007707FC /* TimelineBackgroundView.m */; };
 		4A9FDB27302D1600007707FC /* OneDayTimelineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */; };
@@ -150,6 +153,12 @@
 		4A88212D29F671F7009E422C /* TimeTrackingViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimeTrackingViewController.h; sourceTree = "<group>"; };
 		4A88212E29F671F7009E422C /* TimeTrackingViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimeTrackingViewController.m; sourceTree = "<group>"; };
 		4A938F3C2E5E785000375B8B /* Mirror-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Mirror-Bridging-Header.h"; sourceTree = "<group>"; };
+		4A9EF9C83048ABD400F2E02B /* MirrorScheduleModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorScheduleModel.h; sourceTree = "<group>"; };
+		4A9EF9C93048ABDE00F2E02B /* MirrorScheduleModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorScheduleModel.m; sourceTree = "<group>"; };
+		4A9EF9CB3048AF5C00F2E02B /* TimelineScheduleView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineScheduleView.h; sourceTree = "<group>"; };
+		4A9EF9CC3048AF6E00F2E02B /* TimelineScheduleView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineScheduleView.m; sourceTree = "<group>"; };
+		4A9EF9CE3048AF7600F2E02B /* ScheduleEditAlertView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ScheduleEditAlertView.h; sourceTree = "<group>"; };
+		4A9EF9CF3048AFAE00F2E02B /* ScheduleEditAlertView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ScheduleEditAlertView.m; sourceTree = "<group>"; };
 		4A9FDB1F302D0C5F007707FC /* TimelineRecordView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineRecordView.h; sourceTree = "<group>"; };
 		4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineRecordView.m; sourceTree = "<group>"; };
 		4A9FDB22302D1206007707FC /* TimelineBackgroundView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineBackgroundView.h; sourceTree = "<group>"; };
@@ -290,6 +299,8 @@
 				4AC1FDBF2A03B05100CDCED9 /* MirrorReadModel.m */,
 				4AD0659E302FCA14005A894C /* MirrorDayModel.h */,
 				4AD0659F302FCA1F005A894C /* MirrorDayModel.m */,
+				4A9EF9C83048ABD400F2E02B /* MirrorScheduleModel.h */,
+				4A9EF9C93048ABDE00F2E02B /* MirrorScheduleModel.m */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -439,6 +450,10 @@
 				4A9FDB25302D15A7007707FC /* OneDayTimelineViewController.h */,
 				4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */,
 				4A410A2929EA5D650007003B /* PieChart */,
+				4A9EF9CB3048AF5C00F2E02B /* TimelineScheduleView.h */,
+				4A9EF9CC3048AF6E00F2E02B /* TimelineScheduleView.m */,
+				4A9EF9CE3048AF7600F2E02B /* ScheduleEditAlertView.h */,
+				4A9EF9CF3048AFAE00F2E02B /* ScheduleEditAlertView.m */,
 			);
 			path = TimeLine;
 			sourceTree = "<group>";
@@ -727,6 +742,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4A9EF9D03048AFAE00F2E02B /* ScheduleEditAlertView.m in Sources */,
 				4ADCD21A302410C600578A81 /* MirrorFakeDataSeeder.m in Sources */,
 				4AE4171928DF613D008A6A18 /* TimeViewController.m in Sources */,
 				4AFB77A228DF4A380064CBCA /* AppDelegate.m in Sources */,
@@ -760,12 +776,14 @@
 				4A9FDB24302D1234007707FC /* TimelineBackgroundView.m in Sources */,
 				4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */,
 				4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */,
+				4A9EF9CA3048ABDE00F2E02B /* MirrorScheduleModel.m in Sources */,
 				4AFB77A528DF4A380064CBCA /* SceneDelegate.m in Sources */,
 				4A379B4128E0381A00785CAE /* UIColor+MirrorColor.m in Sources */,
 				4A32A3FE29F7782200DCCF57 /* MirrorTimeText.m in Sources */,
 				4A379B4428E03D0B00785CAE /* MirrorTabsManager.m in Sources */,
 				4AABB5F7303F66FF00AA0DE3 /* MirrorRecordWindow.m in Sources */,
 				4A3DC9302A0106F700679C11 /* GridViewController.m in Sources */,
+				4A9EF9CD3048AF6E00F2E02B /* TimelineScheduleView.m in Sources */,
 				4AFBD1A13029558E006A6350 /* TaskRecordsViewController.m in Sources */,
 				4AD065A0302FCA1F005A894C /* MirrorDayModel.m in Sources */,
 				4A3DC9332A0109DA00679C11 /* GridCollectionViewCell.m in Sources */,

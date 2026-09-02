@@ -5,6 +5,7 @@
 
 #import "OneDayTimelineViewController.h"
 #import "TimelineRecordView.h"
+#import "TimelineScheduleView.h"
 #import "TimelineBackgroundView.h"
 #import "MirrorStorage.h"
 #import "MirrorLanguage.h"
@@ -12,6 +13,7 @@
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 #import "PeriodEditAlertView.h"
+#import "ScheduleEditAlertView.h"
 #import <Masonry/Masonry.h>
 
 #define kLeftRightSpacing (20*kWidthRatio)
@@ -21,7 +23,7 @@
 #define kTimelineTinyRecordThresholdSeconds (10 * 60)
 #define kTimelineTextHiddenThresholdSeconds (45 * 60)
 
-@interface OneDayTimelineViewController () <TimelineRecordViewDelegate, TimelineBackgroundViewDelegate>
+@interface OneDayTimelineViewController () <TimelineRecordViewDelegate, TimelineScheduleViewDelegate, TimelineBackgroundViewDelegate>
 
 @property (nonatomic, strong) NSDate *date;
 @property (nonatomic, strong, nullable) UIView *customHeaderView;
@@ -33,7 +35,9 @@
 @property (nonatomic, assign) NSInteger editingPeriodIndex;
 @property (nonatomic, strong) PeriodEditAlertView *editingPeriodAlert;
 @property (nonatomic, weak) TimelineRecordView *activeRecordView;
+@property (nonatomic, weak) TimelineScheduleView *activeScheduleView;
 @property (nonatomic, strong) NSMutableArray<MirrorRecordModel *> *oneDayData;
+@property (nonatomic, strong) NSMutableArray<MirrorScheduleModel *> *oneDaySchedules;
 @property (nonatomic, strong) UIScrollView *timelineScrollView;
 @property (nonatomic, strong) TimelineBackgroundView *timelineContentView;
 @property (nonatomic, strong) UIView *nowLineView;
@@ -122,6 +126,7 @@
     [self.timelineScrollView addSubview:self.timelineContentView];
     self.timelineContentView.delegate = self;
     self.timelineContentView.presentingViewController = self;
+    [self updateScheduleOptionAvailability];
 }
 
 - (void)updateDate:(NSDate *)date
@@ -134,7 +139,9 @@
 
 - (void)reloadData
 {
+    [self updateScheduleOptionAvailability];
     self.oneDayData = [MirrorStorage getOneDayDataForDate:self.date];
+    self.oneDaySchedules = [MirrorStorage getOneDaySchedulesForDate:self.date];
     if (self.headerConfiguration && self.customHeaderView) {
         self.headerConfiguration(self.customHeaderView, self.oneDayData);
     }
@@ -147,6 +154,8 @@
     [self.activeRecordView endInlineEditing];
     [self.activeRecordView endSelection];
     self.activeRecordView = nil;
+    [self.activeScheduleView endSelection];
+    self.activeScheduleView = nil;
     [self.editingPeriodAlert dismiss];
     self.editingPeriodAlert = nil;
 }
@@ -159,6 +168,11 @@
         [self.activeRecordView endInlineEditing];
         [self.activeRecordView endSelection];
         self.activeRecordView = nil;
+        return NO;
+    }
+    if (self.activeScheduleView) {
+        [self.activeScheduleView endSelection];
+        self.activeScheduleView = nil;
         return NO;
     }
     return YES;
@@ -191,6 +205,42 @@
                                     startAt:[NSDate dateWithTimeIntervalSince1970:startTimestamp]
                                       endAt:[NSDate dateWithTimeIntervalSince1970:endTimestamp]];
     [self reloadData];
+}
+
+- (void)timelineView:(TimelineBackgroundView *)timelineView didSelectScheduleStartTimestamp:(long)startTimestamp
+{
+    long minimumStartTimestamp = [self minimumCreatableScheduleStartTimestamp];
+    if (minimumStartTimestamp >= [self dayEndTimestamp]) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                                 message:@"Schedules can only start now or in the future."
+                                                                          preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alertController animated:YES completion:nil];
+        return;
+    }
+    
+    startTimestamp = MAX(startTimestamp, minimumStartTimestamp);
+    long endTimestamp = MIN(startTimestamp + 3600, [self dayEndTimestamp]);
+    if (endTimestamp - startTimestamp < kMinSeconds) {
+        return;
+    }
+    
+    MirrorScheduleModel *schedule = [[MirrorScheduleModel alloc] initWithInfo:@"" startTime:startTimestamp endTime:endTimestamp];
+    __weak typeof(self) weakSelf = self;
+    ScheduleEditAlertView *editor = [[ScheduleEditAlertView alloc] initWithSchedule:schedule
+                                                                                    dayStart:[self dayStartTimestamp]
+                                                                                      dayEnd:[self dayEndTimestamp]
+                                                                                       isNew:YES
+                                                                                  completion:^(MirrorScheduleModel *editedSchedule) {
+        if (!weakSelf) {
+            return;
+        }
+        MirrorScheduleModel *schedule = [[MirrorScheduleModel alloc] initWithInfo:editedSchedule.scheduleInfo startTime:editedSchedule.startTime endTime:editedSchedule.endTime];
+        if ([MirrorStorage createSchedule:schedule]) {
+            [weakSelf reloadData];
+        }
+    }];
+    [editor presentFromViewController:self];
 }
 
 #pragma mark - Record Menu
@@ -293,6 +343,8 @@
     if (self.activeRecordView != recordView) {
         [self.activeRecordView endInlineEditing];
     }
+    [self.activeScheduleView endSelection];
+    self.activeScheduleView = nil;
     MirrorRecordModel *record = records[periodIndex];
     long minimumTimestamp = periodIndex > 0 ? MAX(records[periodIndex - 1].endTime, [self dayStartTimestamp]) : [self dayStartTimestamp];
     long maximumTimestamp = periodIndex + 1 < records.count ? MIN(records[periodIndex + 1].startTime, [self dayEndTimestamp]) : [self dayEndTimestamp];
@@ -341,6 +393,61 @@
     NSInteger periodIndex = recordView.periodIndex;
     [MirrorStorage editPeriodStartTime:startTimestamp endTime:endTimestamp periodIndex:periodIndex];
     [self reloadDataKeepingInlineEditingForPeriodIndex:periodIndex];
+}
+
+#pragma mark - TimelineScheduleViewDelegate
+
+- (void)timelineScheduleViewDidRequestLongSelection:(TimelineScheduleView *)scheduleView
+{
+    [self.activeRecordView endInlineEditing];
+    [self.activeRecordView endSelection];
+    self.activeRecordView = nil;
+    if (self.activeScheduleView != scheduleView) {
+        [self.activeScheduleView endSelection];
+    }
+    self.activeScheduleView = scheduleView;
+    [self.timelineContentView bringSubviewToFront:scheduleView];
+    [scheduleView beginLongSelection];
+}
+
+- (UIMenu *)menuForTimelineScheduleView:(TimelineScheduleView *)scheduleView API_AVAILABLE(ios(16.0))
+{
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    NSInteger scheduleIndex = scheduleView.scheduleIndex;
+    if (scheduleIndex < 0 || scheduleIndex >= schedules.count) {
+        return nil;
+    }
+    
+    __weak typeof(self) weakSelf = self;
+    UIAction *editAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"edit"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        [weakSelf editScheduleAtIndex:scheduleIndex];
+    }];
+    UIAction *deleteAction = [UIAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] image:nil identifier:nil handler:^(__kindof UIAction *action) {
+        [MirrorStorage deleteScheduleAtIndex:scheduleIndex];
+        [weakSelf reloadData];
+    }];
+    deleteAction.attributes = UIMenuElementAttributesDestructive;
+    return [UIMenu menuWithTitle:@"" children:@[editAction, deleteAction]];
+}
+
+- (void)editScheduleAtIndex:(NSInteger)scheduleIndex
+{
+    NSMutableArray<MirrorScheduleModel *> *schedules = [MirrorStorage retriveMirrorSchedules];
+    if (scheduleIndex < 0 || scheduleIndex >= schedules.count) {
+        return;
+    }
+    
+    MirrorScheduleModel *schedule = schedules[scheduleIndex];
+    __weak typeof(self) weakSelf = self;
+    ScheduleEditAlertView *editor = [[ScheduleEditAlertView alloc] initWithSchedule:schedule
+                                                                                    dayStart:[self dayStartTimestamp]
+                                                                                      dayEnd:[self dayEndTimestamp]
+                                                                                       isNew:NO
+                                                                                  completion:^(MirrorScheduleModel *editedSchedule) {
+        [MirrorStorage editSchedule:editedSchedule scheduleIndex:scheduleIndex];
+        [weakSelf reloadData];
+    }];
+    [editor presentFromViewController:self];
 }
 
 #pragma mark - Timeline
@@ -421,10 +528,13 @@
 
     [self.activeRecordView endInlineEditing];
     self.activeRecordView = nil;
+    [self.activeScheduleView endSelection];
+    self.activeScheduleView = nil;
     [self.timelineContentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     self.nowLineView = nil;
     self.nowLineTimeLabel = nil;
     [self renderHourLines];
+    [self renderSchedules];
     [self updateNowLine];
     [self renderRecords];
 }
@@ -567,6 +677,39 @@
     }
 }
 
+- (void)renderSchedules
+{
+    long dayStart = [self dayStartTimestamp];
+    long dayEnd = [self dayEndTimestamp];
+    CGFloat scheduleX = kTimelineLeftWidth;
+    CGFloat scheduleWidth = CGRectGetWidth(self.timelineContentView.bounds) - scheduleX - kTimelineRightPadding;
+    
+    for (MirrorScheduleModel *schedule in self.oneDaySchedules) {
+        long start = MAX(schedule.startTime, dayStart);
+        long end = MIN(schedule.endTime, dayEnd);
+        if (end <= start) {
+            continue;
+        }
+        
+        long duration = end - start;
+        CGFloat top = ((CGFloat)(start - dayStart) / 3600.0) * self.hourHeight;
+        CGFloat height = ((CGFloat)duration / 3600.0) * self.hourHeight;
+        if (duration < kTimelineTinyRecordThresholdSeconds) {
+            height = MAX(height, kTimelineMinimumTinyRecordHeight);
+        }
+        TimelineScheduleView *scheduleView = [self scheduleViewWithSchedule:schedule frame:CGRectMake(scheduleX, top, scheduleWidth, height)];
+        [self.timelineContentView addSubview:scheduleView];
+    }
+}
+
+- (TimelineScheduleView *)scheduleViewWithSchedule:(MirrorScheduleModel *)schedule frame:(CGRect)frame
+{
+    TimelineScheduleView *view = [[TimelineScheduleView alloc] initWithFrame:frame];
+    view.delegate = self;
+    [view configureWithSchedule:schedule];
+    return view;
+}
+
 - (TimelineRecordView *)recordViewWithRecord:(MirrorRecordModel *)record frame:(CGRect)frame showsText:(BOOL)showsText
 {
     TimelineRecordView *recordView = [[TimelineRecordView alloc] initWithFrame:frame];
@@ -605,6 +748,14 @@
     return _oneDayData;
 }
 
+- (NSMutableArray<MirrorScheduleModel *> *)oneDaySchedules
+{
+    if (!_oneDaySchedules) {
+        _oneDaySchedules = [MirrorStorage getOneDaySchedulesForDate:self.date];
+    }
+    return _oneDaySchedules;
+}
+
 #pragma mark - Privates
 
 - (long)dayStartTimestamp
@@ -631,6 +782,28 @@
     NSDate *fallbackStartOfDay = [gregorian startOfDayForDate:self.date];
     NSDate *startOfNextDay = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:fallbackStartOfDay options:0];
     return lround([startOfNextDay timeIntervalSince1970]);
+}
+
+- (void)updateScheduleOptionAvailability
+{
+    self.timelineContentView.showsScheduleOption = [self minimumCreatableScheduleStartTimestamp] < [self dayEndTimestamp];
+}
+
+- (long)minimumCreatableScheduleStartTimestamp
+{
+    long dayStart = [self dayStartTimestamp];
+    long dayEnd = [self dayEndTimestamp];
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDateComponents *components = [gregorian components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitHour | NSCalendarUnitMinute fromDate:[NSDate now]];
+    long normalizedNow = lround([[gregorian dateFromComponents:components] timeIntervalSince1970]);
+    if (normalizedNow >= dayEnd) {
+        return dayEnd;
+    }
+    if (normalizedNow <= dayStart) {
+        return dayStart;
+    }
+    return normalizedNow;
 }
 
 - (NSInteger)timelineHourCount

@@ -43,6 +43,7 @@ typedef NS_ENUM(NSInteger, MirrorColorType) {
     MirrorColorTypeShadow,                   // 阴影颜色
     MirrorColorTypeAddTaskCellBG,            // add task cell的背景颜色
     MirrorColorTypeAddTaskCellPlus,          // add task cell的加号颜色
+    MirrorColorTypeSchedule,                 // Schedule color
 };
 
 typedef NS_ENUM(NSInteger, MirrorSystemColorType) {

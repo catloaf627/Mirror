@@ -13,6 +13,8 @@
 
 #define kTimelinePickerHorizontalInset (20*kWidthRatio)
 
+static NSString * const kTimelineSchedulePickerIdentifier = @"MirrorSchedulePickerIdentifier";
+
 @interface TimelineBackgroundView () <UIGestureRecognizerDelegate>
 
 @property (nonatomic, assign) long pendingStartTimestamp;
@@ -26,6 +28,7 @@
 {
     self = [super initWithFrame:frame];
     if (self) {
+        _showsScheduleOption = YES;
         [self setupUI];
     }
     return self;
@@ -63,7 +66,7 @@
         }
     }
 
-    if (availableTasks.count == 0) {
+    if (availableTasks.count == 0 && !self.showsScheduleOption) {
         UIAlertController *alertController = [UIAlertController alertControllerWithTitle:[MirrorLanguage mirror_stringWithKey:@"no_task"] message:nil preferredStyle:UIAlertControllerStyleAlert];
         [alertController addAction:[UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"ok"] style:UIAlertActionStyleDefault handler:nil]];
         [self.presentingViewController presentViewController:alertController animated:YES completion:nil];
@@ -82,7 +85,8 @@
     CGFloat pickerWidth = 160*kWidthRatio;
     CGFloat titleHeight = 34;
     CGFloat rowHeight = 40;
-    CGFloat pickerHeight = titleHeight + rowHeight*tasks.count + 8;
+    NSInteger scheduleRowCount = self.showsScheduleOption ? 1 : 0;
+    CGFloat pickerHeight = titleHeight + rowHeight*(tasks.count + scheduleRowCount) + 8;
     CGPoint viewPoint = [self convertPoint:point toView:presentationView];
     CGFloat pickerX = MIN(MAX(viewPoint.x - pickerWidth/2, kTimelinePickerHorizontalInset), CGRectGetWidth(bounds) - pickerWidth - kTimelinePickerHorizontalInset);
     CGFloat pickerY = viewPoint.y + 8;
@@ -114,9 +118,36 @@
     titleLabel.adjustsFontSizeToFitWidth = YES;
     [pickerView addSubview:titleLabel];
 
+    if (self.showsScheduleOption) {
+        UIButton *scheduleButton = [[UIButton alloc] initWithFrame:CGRectMake(0, titleHeight, pickerWidth, rowHeight)];
+        scheduleButton.accessibilityIdentifier = kTimelineSchedulePickerIdentifier;
+        [scheduleButton addTarget:self action:@selector(taskPickerDidSelectTask:) forControlEvents:UIControlEventTouchUpInside];
+        [pickerView addSubview:scheduleButton];
+        
+        UIView *scheduleDot = [[UIView alloc] initWithFrame:CGRectMake(14, titleHeight + 12, 16, 16)];
+        scheduleDot.backgroundColor = pickerView.backgroundColor;
+        scheduleDot.layer.cornerRadius = 8;
+        CAShapeLayer *scheduleDotBorder = [CAShapeLayer layer];
+        scheduleDotBorder.fillColor = UIColor.clearColor.CGColor;
+        scheduleDotBorder.strokeColor = [UIColor mirrorColorNamed:MirrorColorTypeSchedule].CGColor;
+        scheduleDotBorder.lineWidth = 1.2;
+        scheduleDotBorder.lineDashPattern = @[@2, @2];
+        scheduleDotBorder.frame = scheduleDot.bounds;
+        scheduleDotBorder.path = [UIBezierPath bezierPathWithOvalInRect:CGRectInset(scheduleDot.bounds, 0.6, 0.6)].CGPath;
+        [scheduleDot.layer addSublayer:scheduleDotBorder];
+        [pickerView addSubview:scheduleDot];
+        
+        UILabel *scheduleLabel = [[UILabel alloc] initWithFrame:CGRectMake(42, titleHeight, pickerWidth - 56, rowHeight)];
+        scheduleLabel.text = [MirrorLanguage mirror_stringWithKey:@"schedule"];
+        scheduleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
+        scheduleLabel.font = [UIFont mirrorTitleFont_Card];
+        scheduleLabel.adjustsFontSizeToFitWidth = YES;
+        [pickerView addSubview:scheduleLabel];
+    }
+
     for (NSInteger index = 0; index < tasks.count; index++) {
         MirrorTaskModel *task = tasks[index];
-        CGFloat rowY = titleHeight + rowHeight*index;
+        CGFloat rowY = titleHeight + rowHeight*(index + scheduleRowCount);
         UIButton *button = [[UIButton alloc] initWithFrame:CGRectMake(0, rowY, pickerWidth, rowHeight)];
         button.accessibilityIdentifier = task.taskName;
         [button addTarget:self action:@selector(taskPickerDidSelectTask:) forControlEvents:UIControlEventTouchUpInside];
@@ -143,6 +174,10 @@
 {
     NSString *taskName = sender.accessibilityIdentifier;
     [self dismissTaskPicker];
+    if ([taskName isEqualToString:kTimelineSchedulePickerIdentifier]) {
+        [self.delegate timelineView:self didSelectScheduleStartTimestamp:self.pendingStartTimestamp];
+        return;
+    }
     if (taskName.length == 0) {
         return;
     }

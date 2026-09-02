@@ -92,6 +92,7 @@ typedef void (^MirrorHandmadeCalendarLayoutHandler)(void);
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorTaskChangeOrderNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorPeriodEditNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorScheduleChangeNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayCreateNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayDeleteNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(handleSpecialDaysChanged) name:MirrorDayEditNotification object:nil];
