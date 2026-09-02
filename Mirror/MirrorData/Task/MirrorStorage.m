@@ -14,6 +14,7 @@
 static NSInteger const kMaxTaskCnt = 8;
 static NSString * const kMirrorJSONFileName = @"mirror.json";
 static NSString * const kMirrorICloudContainerIdentifier = @"iCloud.com.yuqingwang.dev.Mirror";
+static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.Mirror";
 static NSString * const kMirrorGoingOnTaskNameKey = @"MirrorGoingOnTaskNameKey";
 static NSString * const kMirrorGoingOnTaskStartTimestampKey = @"MirrorGoingOnTaskStartTimestampKey";
 static NSString * const kMirrorGoingOnTaskAccurateStartTimestampKey = @"MirrorGoingOnTaskAccurateStartTimestampKey";
@@ -35,6 +36,10 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
 + (NSString *)p_noteByPrefixingTaskName:(NSString *)taskName note:(NSString *)note;
 + (void)saveMirrorSchedules:(NSMutableArray<MirrorScheduleModel *> *)schedules;
 + (void)replaceAllDataWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days schedules:(NSMutableArray<MirrorScheduleModel *> *)schedules secondsFromGMT:(NSNumber *)secondsFromGMT;
++ (NSString * _Nullable)legacyJsonFilePath;
++ (NSString * _Nullable)sharedJsonFilePath;
++ (void)saveJSONDataToSharedAppGroup:(NSData *)data;
++ (void)reloadScheduleWidget;
 + (NSDictionary *)jsonDictionaryWithTasks:(NSMutableArray<MirrorTaskModel *> *)tasks records:(NSMutableArray<MirrorRecordModel *> *)records days:(NSMutableArray<MirrorDayModel *> *)days schedules:(NSMutableArray<MirrorScheduleModel *> *)schedules secondsFromGMT:(NSNumber *)secondsFromGMT;
 + (BOOL)parseJSONDictionary:(NSDictionary *)jsonDictionary tasks:(NSMutableArray<MirrorTaskModel *> **)tasks records:(NSMutableArray<MirrorRecordModel *> **)records days:(NSMutableArray<MirrorDayModel *> **)days schedules:(NSMutableArray<MirrorScheduleModel *> **)schedules secondsFromGMT:(NSNumber **)secondsFromGMT;
 
@@ -996,11 +1001,27 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
     if (!data) return;
     
     [data writeToFile:[MirrorStorage jsonFilePath] atomically:YES];
+    [MirrorStorage saveJSONDataToSharedAppGroup:data];
     [MirrorStorage saveJSONDataToICloud:data];
+    [MirrorStorage reloadScheduleWidget];
 }
 
 // 返回本地持久化 JSON 路径；例如 .../Library/Application Support/mirror.json。
 + (NSString *)jsonFilePath
+{
+    NSString *sharedPath = [MirrorStorage sharedJsonFilePath];
+    if (sharedPath.length > 0) {
+        NSString *legacyPath = [MirrorStorage legacyJsonFilePath];
+        NSFileManager *fileManager = [NSFileManager defaultManager];
+        if (![fileManager fileExistsAtPath:sharedPath] && [fileManager fileExistsAtPath:legacyPath]) {
+            [fileManager copyItemAtPath:legacyPath toPath:sharedPath error:nil];
+        }
+        return sharedPath;
+    }
+    return [MirrorStorage legacyJsonFilePath];
+}
+
++ (NSString *)legacyJsonFilePath
 {
     NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
     NSString *directoryPath = paths.firstObject;
@@ -1015,6 +1036,43 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
         return nil;
     }
     return [directoryPath stringByAppendingPathComponent:kMirrorJSONFileName];
+}
+
++ (NSString *)sharedJsonFilePath
+{
+    NSURL *containerURL = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:kMirrorAppGroupIdentifier];
+    if (!containerURL) {
+        return nil;
+    }
+    
+    NSError *error = nil;
+    [[NSFileManager defaultManager] createDirectoryAtURL:containerURL withIntermediateDirectories:YES attributes:nil error:&error];
+    if (error) {
+        NSLog(@"Create App Group folder failed: %@", error);
+        return nil;
+    }
+    return [containerURL URLByAppendingPathComponent:kMirrorJSONFileName].path;
+}
+
++ (void)saveJSONDataToSharedAppGroup:(NSData *)data
+{
+    NSString *path = [MirrorStorage sharedJsonFilePath];
+    if (path.length == 0) {
+        return;
+    }
+    [data writeToFile:path atomically:YES];
+}
+
++ (void)reloadScheduleWidget
+{
+    Class manager = NSClassFromString(@"MirrorWidgetReloadManager");
+    SEL selector = @selector(reloadScheduleWidget);
+    if (![manager respondsToSelector:selector]) {
+        return;
+    }
+
+    void (*reloadWidget)(id, SEL) = (void *)[manager methodForSelector:selector];
+    reloadWidget(manager, selector);
 }
 
 // 异步把 JSON 写入 iCloud Documents；例如每次本地保存后同步 mirror.json，失败只记录日志不阻塞 UI。

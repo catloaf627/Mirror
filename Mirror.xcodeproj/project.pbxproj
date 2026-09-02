@@ -38,6 +38,7 @@
 		4A9EF9CA3048ABDE00F2E02B /* MirrorScheduleModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9EF9C93048ABDE00F2E02B /* MirrorScheduleModel.m */; };
 		4A9EF9CD3048AF6E00F2E02B /* TimelineScheduleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9EF9CC3048AF6E00F2E02B /* TimelineScheduleView.m */; };
 		4A9EF9D03048AFAE00F2E02B /* ScheduleEditAlertView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9EF9CF3048AFAE00F2E02B /* ScheduleEditAlertView.m */; };
+		4A9EF9D93048C7A000F2E02B /* MirrorWidgetReloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A9EF9D83048C7A000F2E02B /* MirrorWidgetReloadManager.swift */; };
 		4A9FDB21302D0CA0007707FC /* TimelineRecordView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */; };
 		4A9FDB24302D1234007707FC /* TimelineBackgroundView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB23302D1234007707FC /* TimelineBackgroundView.m */; };
 		4A9FDB27302D1600007707FC /* OneDayTimelineViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A9FDB26302D1600007707FC /* OneDayTimelineViewController.m */; };
@@ -159,6 +160,8 @@
 		4A9EF9CC3048AF6E00F2E02B /* TimelineScheduleView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineScheduleView.m; sourceTree = "<group>"; };
 		4A9EF9CE3048AF7600F2E02B /* ScheduleEditAlertView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ScheduleEditAlertView.h; sourceTree = "<group>"; };
 		4A9EF9CF3048AFAE00F2E02B /* ScheduleEditAlertView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ScheduleEditAlertView.m; sourceTree = "<group>"; };
+		4A9EF9D83048C7A000F2E02B /* MirrorWidgetReloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MirrorWidgetReloadManager.swift; sourceTree = "<group>"; };
+		4A9EF9DA3048CA7200F2E02B /* MirrorLiveActivityExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MirrorLiveActivityExtension.entitlements; sourceTree = "<group>"; };
 		4A9FDB1F302D0C5F007707FC /* TimelineRecordView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineRecordView.h; sourceTree = "<group>"; };
 		4A9FDB20302D0CA0007707FC /* TimelineRecordView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TimelineRecordView.m; sourceTree = "<group>"; };
 		4A9FDB22302D1206007707FC /* TimelineBackgroundView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TimelineBackgroundView.h; sourceTree = "<group>"; };
@@ -284,6 +287,7 @@
 				4A406C1829071939001E83A1 /* MirrorStorage.h */,
 				4A406C1929071939001E83A1 /* MirrorStorage.m */,
 				4ADCD25A3026BB1400578A81 /* MirrorLiveActivityManager.swift */,
+				4A9EF9D83048C7A000F2E02B /* MirrorWidgetReloadManager.swift */,
 			);
 			path = Task;
 			sourceTree = "<group>";
@@ -519,6 +523,7 @@
 		4AFB779428DF4A380064CBCA = {
 			isa = PBXGroup;
 			children = (
+				4A9EF9DA3048CA7200F2E02B /* MirrorLiveActivityExtension.entitlements */,
 				4AFB779F28DF4A380064CBCA /* Mirror */,
 				4ADCD2253026B92E00578A81 /* MirrorLiveActivity */,
 				4ADCD2423026B95E00578A81 /* MirrorLiveActivity */,
@@ -761,6 +766,7 @@
 				4ADD1726303E7718005857EA /* UIImage+MirrorSymbol.m in Sources */,
 				4A9FDB21302D0CA0007707FC /* TimelineRecordView.m in Sources */,
 				4AD065A3302FCEB7005A894C /* SpecialDaysViewController.m in Sources */,
+				4A9EF9D93048C7A000F2E02B /* MirrorWidgetReloadManager.swift in Sources */,
 				4AABB5F1303F622A00AA0DE3 /* MirrorTrackingCircleView.m in Sources */,
 				4AFB77B328DF4A3B0064CBCA /* main.m in Sources */,
 				4A0D410229F13C5300F13EAE /* LegendView.m in Sources */,
@@ -818,6 +824,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = MirrorLiveActivityExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DFGVVBS3CG;
@@ -856,6 +863,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CODE_SIGN_ENTITLEMENTS = MirrorLiveActivityExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = DFGVVBS3CG;
