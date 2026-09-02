@@ -26,6 +26,8 @@ static CGFloat const kActionButtonSpacing = 4;
 
 @interface TimeTrackerTaskCollectionViewCell ()
 
+@property (nonatomic, strong) UIVisualEffectView *glassView;
+@property (nonatomic, strong) UIView *glassTintView;
 @property (nonatomic, strong) UILabel *taskNameLabel;
 @property (nonatomic, strong) UILabel *hintLabel;
 @property (nonatomic, strong) UIButton *editButton;
@@ -55,8 +57,10 @@ static CGFloat const kActionButtonSpacing = 4;
     self.hintLabel.text = [MirrorTimeText Xh:[MirrorTool getTotalTimeOfPeriods:[MirrorStorage getAllTaskRecords:taskName]]];
     self.taskNameLabel.textColor = [UIColor mirrorColorPulsed:task.color];
     self.selectedBorderColor = [UIColor mirrorColorPulsed:task.color];
-    self.contentView.backgroundColor = taskColor;
-    self.contentView.layer.borderColor = self.selectedBorderColor.CGColor;
+    CGFloat tintAlpha = [MirrorSettings appliedDarkMode] ? 0.28 : 0.42;
+    self.contentView.backgroundColor = [taskColor colorWithAlphaComponent:0.68];
+    self.glassTintView.backgroundColor = [taskColor colorWithAlphaComponent:tintAlpha];
+    self.contentView.layer.borderColor = [self glassBorderColor].CGColor;
 }
 
 - (void)p_setupUI
@@ -76,10 +80,21 @@ static CGFloat const kActionButtonSpacing = 4;
         make.bottom.offset(-kShadowWidth);
     }];
     self.contentView.layer.cornerRadius = kCornerRadius;
-    self.contentView.layer.borderWidth = 0;
+    self.contentView.layer.borderWidth = 1;
+    self.contentView.layer.borderColor = [self glassBorderColor].CGColor;
     self.contentView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
     self.contentView.layer.shadowRadius = kShadowWidth / 2;
-    self.contentView.layer.shadowOpacity = 0.2;
+    self.contentView.layer.shadowOpacity = 0.22;
+    self.contentView.layer.shadowOffset = CGSizeMake(0, 3);
+
+    [self.contentView addSubview:self.glassView];
+    [self.contentView addSubview:self.glassTintView];
+    [self.glassView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.offset(0);
+    }];
+    [self.glassTintView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.edges.offset(0);
+    }];
 
     [self.contentView addSubview:self.deleteButton];
     [self.contentView addSubview:self.editButton];
@@ -207,8 +222,9 @@ static CGFloat const kActionButtonSpacing = 4;
 - (void)setReorderSelected:(BOOL)selected animated:(BOOL)animated
 {
     void (^stateChange)(void) = ^{
-        self.contentView.layer.borderWidth = selected ? 2.5 : 0;
-        self.contentView.layer.borderColor = (self.selectedBorderColor ?: [UIColor mirrorColorNamed:MirrorColorTypeText]).CGColor;
+        self.contentView.layer.borderWidth = selected ? 2.5 : 1;
+        UIColor *borderColor = selected ? (self.selectedBorderColor ?: [UIColor mirrorColorNamed:MirrorColorTypeText]) : [self glassBorderColor];
+        self.contentView.layer.borderColor = borderColor.CGColor;
     };
 
     if (!animated) {
@@ -224,6 +240,36 @@ static CGFloat const kActionButtonSpacing = 4;
 }
 
 #pragma mark - Getters
+
+- (UIColor *)glassBorderColor
+{
+    CGFloat alpha = [MirrorSettings appliedDarkMode] ? 0.18 : 0.42;
+    return [UIColor colorWithWhite:1 alpha:alpha];
+}
+
+- (UIVisualEffectView *)glassView
+{
+    if (!_glassView) {
+        UIBlurEffectStyle blurStyle = [MirrorSettings appliedDarkMode] ? UIBlurEffectStyleSystemUltraThinMaterialDark : UIBlurEffectStyleSystemUltraThinMaterialLight;
+        _glassView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:blurStyle]];
+        _glassView.userInteractionEnabled = NO;
+        _glassView.alpha = 0.72;
+        _glassView.clipsToBounds = YES;
+        _glassView.layer.cornerRadius = kCornerRadius;
+    }
+    return _glassView;
+}
+
+- (UIView *)glassTintView
+{
+    if (!_glassTintView) {
+        _glassTintView = [UIView new];
+        _glassTintView.userInteractionEnabled = NO;
+        _glassTintView.clipsToBounds = YES;
+        _glassTintView.layer.cornerRadius = kCornerRadius;
+    }
+    return _glassTintView;
+}
 
 - (UILabel *)taskNameLabel
 {
