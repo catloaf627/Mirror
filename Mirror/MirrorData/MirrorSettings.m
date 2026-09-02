@@ -9,21 +9,32 @@
 #import "UIColor+MirrorColor.h"
 
 static NSString * const kMirrorPreferredLanguageKey = @"MirrorUserPreferredLanguage";
+static NSString * const kMirrorPreferredDarkModeKey = @"MirrorUserPreferredDarkMode";
+static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.Mirror";
 
 @implementation MirrorSettings
 
 + (BOOL)appliedDarkMode
 {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredDarkMode"];
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kMirrorPreferredDarkModeKey];
 }
 
 + (void)switchTheme
 {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredDarkMode"]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MirrorUserPreferredDarkMode"];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MirrorUserPreferredDarkMode"];
+    BOOL darkMode = ![[NSUserDefaults standardUserDefaults] boolForKey:kMirrorPreferredDarkModeKey];
+    [[NSUserDefaults standardUserDefaults] setBool:darkMode forKey:kMirrorPreferredDarkModeKey];
+    NSUserDefaults *sharedDefaults = [[NSUserDefaults alloc] initWithSuiteName:kMirrorAppGroupIdentifier];
+    [sharedDefaults setBool:darkMode forKey:kMirrorPreferredDarkModeKey];
+    [sharedDefaults synchronize];
+
+    Class reloadManager = NSClassFromString(@"MirrorWidgetReloadManager");
+    SEL selector = @selector(reloadScheduleWidget);
+    if (reloadManager && [reloadManager respondsToSelector:selector]) {
+        IMP imp = [reloadManager methodForSelector:selector];
+        void (*func)(id, SEL) = (void *)imp;
+        func(reloadManager, selector);
     }
+
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchThemeNotification object:nil];
 }
 

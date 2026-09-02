@@ -8,6 +8,7 @@
 #import "MirrorStorage.h"
 #import "UIColor+MirrorColor.h"
 #import "MirrorLanguage.h"
+#import "MirrorSettings.h"
 #import "MirrorTool.h"
 #import "MirrorMacro.h"
 
@@ -1201,7 +1202,8 @@ static NSString * const kMirrorGoingOnTaskNoteKey = @"MirrorGoingOnTaskNoteKey";
         RECORDS: jsonRecords,
         DAYS: jsonDays,
         SCHEDULES: jsonSchedules,
-        SECONDS: secondsFromGMT ?: @([NSTimeZone systemTimeZone].secondsFromGMT)
+        SECONDS: secondsFromGMT ?: @([NSTimeZone systemTimeZone].secondsFromGMT),
+        @"dark_mode": @([MirrorSettings appliedDarkMode])
     };
 }
 
