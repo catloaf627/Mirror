@@ -62,6 +62,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
 
 // UI
 @property (nonatomic, strong) UILabel *taskNameLabel;
+@property (nonatomic, strong) UILabel *localInfoLabel;
 @property (nonatomic, strong) UIButton *noteButton;
 @property (nonatomic, strong) MirrorTrackingCircleView *circleView;
 @property (nonatomic, strong) UILabel *timeIntervalLabel;
@@ -151,8 +152,16 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     [self.view addSubview:self.taskNameLabel];
     [self.taskNameLabel mas_makeConstraints:^(MASConstraintMaker *make) {
         make.centerX.offset(0);
-        make.bottom.equalTo(self.circleView.mas_top).offset(-36);
+        make.bottom.equalTo(self.circleView.mas_top).offset(-62);
         make.width.lessThanOrEqualTo(@(kScreenWidth - 2*kPadding));
+    }];
+
+    [self.view addSubview:self.localInfoLabel];
+    [self.localInfoLabel mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.centerX.offset(0);
+        make.top.equalTo(self.taskNameLabel.mas_bottom).offset(8);
+        make.width.lessThanOrEqualTo(@(kScreenWidth - 2*kPadding));
+        make.bottom.lessThanOrEqualTo(self.circleView.mas_top).offset(-20);
     }];
     
     [self.view addSubview:self.stopButton];
@@ -191,6 +200,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     }
 
     self.timeIntervalLabel.text = [[NSDateComponentsFormatter new] stringFromTimeInterval:self.timeInterval];
+    self.localInfoLabel.text = [self localTrackingInfoText];
     self.circleView.startAngle = [self hourCircleStartAngle];
     self.circleView.progress = [self hourCircleProgress];
     NSString *buttonTitleKey = [self canStopAndKeepRecord] ? @"hold_to_stop" : @"cancel";
@@ -400,6 +410,7 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
             note = [note substringToIndex:200];
         }
         [MirrorStorage saveGoingOnTaskNote:note];
+        [self updateLabels];
     }];
     [alert addAction:cancelAction];
     [alert addAction:saveAction];
@@ -450,6 +461,11 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
     return [self.nowTime timeIntervalSinceDate:self.accurateStartDate];
 }
 
+- (NSString *)localTrackingInfoText
+{
+    return [MirrorStorage goingOnTaskNote];
+}
+
 #pragma mark - Getters
 
 - (UILabel *)taskNameLabel
@@ -464,6 +480,21 @@ static UIImage *MirrorTrackingImageWithColor(UIColor *color)
         _taskNameLabel.minimumScaleFactor = 0.5;
     }
     return _taskNameLabel;
+}
+
+- (UILabel *)localInfoLabel
+{
+    if (!_localInfoLabel) {
+        _localInfoLabel = [UILabel new];
+        _localInfoLabel.textColor = [UIColor colorWithWhite:1 alpha:0.72];
+        _localInfoLabel.font = [UIFont fontWithName:kHintFont size:15];
+        _localInfoLabel.textAlignment = NSTextAlignmentCenter;
+        _localInfoLabel.numberOfLines = 2;
+        _localInfoLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+        _localInfoLabel.adjustsFontSizeToFitWidth = YES;
+        _localInfoLabel.minimumScaleFactor = 0.75;
+    }
+    return _localInfoLabel;
 }
 
 - (UIButton *)noteButton
