@@ -23,6 +23,8 @@
 @property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *data;
 @property (nonatomic, assign) BOOL enableInteractive;
 
+- (void)addSliceSeparatorsWithAngles:(NSArray<NSNumber *> *)angles width:(CGFloat)width;
+
 @end
 
 @implementation PiechartView
@@ -76,9 +78,13 @@
         NSString *percentageText = [NSString stringWithFormat:@"%1.f%%", [percentages[i] floatValue]  * 100];
         texts[i] = self.showsOnlyPercentageText ? percentageText : [texts[i] stringByAppendingFormat:@"(%@)", percentageText];
     }
+    NSMutableArray<NSNumber *> *separatorAngles = [NSMutableArray new];
     for (int i=0; i<percentages.count; i++) {
         CGFloat percentage = [percentages[i] floatValue];
         CGFloat angle = percentage * M_PI * 2;
+        if (angle > 0) {
+            [separatorAngles addObject:@(startAngle)];
+        }
         endAngle = angle + startAngle;
         
         SliceLayer *sliceLayer = [[SliceLayer alloc] init];
@@ -97,6 +103,37 @@
 
         startAngle = endAngle;
     }
+
+    if (self.sliceLayerArray.count > 1) {
+        [self addSliceSeparatorsWithAngles:separatorAngles width:width];
+    }
+
+}
+
+- (void)addSliceSeparatorsWithAngles:(NSArray<NSNumber *> *)angles width:(CGFloat)width
+{
+    if (angles.count == 0) return;
+
+    CGPoint centerPoint = CGPointMake(width/2, width/2);
+    CGFloat radius = width/2;
+    UIColor *separatorColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+
+    UIBezierPath *separatorPath = [UIBezierPath bezierPath];
+    for (NSNumber *angleNumber in angles) {
+        CGFloat angle = [angleNumber doubleValue];
+        CGPoint edgePoint = CGPointMake(centerPoint.x + cos(angle) * radius, centerPoint.y + sin(angle) * radius);
+        [separatorPath moveToPoint:centerPoint];
+        [separatorPath addLineToPoint:edgePoint];
+    }
+
+    CAShapeLayer *separatorLayer = [CAShapeLayer layer];
+    separatorLayer.frame = CGRectMake(0, 0, width, width);
+    separatorLayer.path = separatorPath.CGPath;
+    separatorLayer.fillColor = UIColor.clearColor.CGColor;
+    separatorLayer.strokeColor = separatorColor.CGColor;
+    separatorLayer.lineWidth = 1;
+    separatorLayer.lineCap = kCALineCapButt;
+    [self.layer addSublayer:separatorLayer];
 
 }
 
