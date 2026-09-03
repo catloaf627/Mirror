@@ -21,6 +21,7 @@ static CGFloat const kDotMinSize = 8;
 static CGFloat const kDotMaxSize = 16;
 static NSTimeInterval const kDotMaxDuration = 8 * 60 * 60;
 static CGFloat const kRowMinHeight = 72;
+static CGFloat const kRowVerticalPadding = 10;
 static NSString * const kTaskRecordsTimelineCellIdentifier = @"TaskRecordsTimelineCell";
 
 static CGFloat TaskRecordsPixelCeil(CGFloat value)
@@ -91,29 +92,26 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
         [self.contentView addSubview:self.dot];
 
         self.leftDateLabel = [UILabel new];
-        self.leftDateLabel.font = [UIFont mirrorHighlightFont];
+        self.leftDateLabel.font = [UIFont mirrorLabelFont];
         self.leftDateLabel.textAlignment = NSTextAlignmentRight;
-        self.leftDateLabel.adjustsFontSizeToFitWidth = YES;
-        self.leftDateLabel.minimumScaleFactor = 0.7;
+        self.leftDateLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         [self.contentView addSubview:self.leftDateLabel];
 
         self.leftYearLabel = [UILabel new];
-        self.leftYearLabel.font = [UIFont mirrorHintFont];
+        self.leftYearLabel.font = [UIFont mirrorLabelFont];
         self.leftYearLabel.textAlignment = NSTextAlignmentRight;
-        self.leftYearLabel.adjustsFontSizeToFitWidth = YES;
-        self.leftYearLabel.minimumScaleFactor = 0.7;
+        self.leftYearLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         [self.contentView addSubview:self.leftYearLabel];
 
         self.durationLabel = [UILabel new];
         self.durationLabel.font = [UIFont mirrorLabelFont];
-        self.durationLabel.adjustsFontSizeToFitWidth = YES;
-        self.durationLabel.minimumScaleFactor = 0.7;
+        self.durationLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         [self.contentView addSubview:self.durationLabel];
 
         self.noteLabel = [UILabel new];
-        self.noteLabel.font = [UIFont mirrorHintFont];
-        self.noteLabel.adjustsFontSizeToFitWidth = YES;
-        self.noteLabel.minimumScaleFactor = 0.7;
+        self.noteLabel.font = [UIFont mirrorLabelFont];
+        self.noteLabel.numberOfLines = 0;
+        self.noteLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         [self.contentView addSubview:self.noteLabel];
 
     }
@@ -197,7 +195,13 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
 
     CGFloat noteX = CGRectGetMaxX(self.durationLabel.frame) + 10;
     CGFloat noteWidth = MAX(width - noteX - kHorizontalPadding, 0);
-    self.noteLabel.frame = CGRectMake(noteX, centerY - 10 * kHeightRatio, noteWidth, 20 * kHeightRatio);
+    CGFloat noteVerticalPadding = TaskRecordsScaledHeight(kRowVerticalPadding);
+    CGFloat noteMaxHeight = MAX(height - noteVerticalPadding * 2, 0);
+    CGFloat noteLineHeight = MAX(ceil(self.noteLabel.font.lineHeight), 1);
+    self.noteLabel.numberOfLines = MAX((NSInteger)floor(noteMaxHeight / noteLineHeight), 1);
+    CGSize noteSize = [self.noteLabel sizeThatFits:CGSizeMake(noteWidth, noteMaxHeight)];
+    CGFloat noteHeight = MIN(TaskRecordsPixelCeil(noteSize.height), noteMaxHeight);
+    self.noteLabel.frame = CGRectMake(noteX, centerY - noteHeight / 2.0, noteWidth, noteHeight);
 }
 
 - (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color
