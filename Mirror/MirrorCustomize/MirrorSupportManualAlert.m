@@ -7,23 +7,18 @@
 #import "MirrorLanguage.h"
 #import "MirrorManualVideoViewController.h"
 
-static NSString * const kMirrorRecordTimeCannotOverlapVideoName = @"current_time_available";
-static NSString * const kMirrorLongPressToDeleteTaskVideoName = @"start_longpress_delete";
-static NSString * const kMirrorLongPressToEditTaskVideoName = @"start_longpress_edit";
-static NSString * const kMirrorLongPressToMergeTaskVideoName = @"start_longpress_merge";
-static NSString * const kMirrorLongPressToSwitchTaskPositionVideoName = @"start_longpress_switch_position";
-static NSString * const kMirrorLongPressToDeleteRecordVideoName = @"today_longpress_delete";
-static NSString * const kMirrorLongPressToEditRecordVideoName = @"today_longpress_edit";
-static NSString * const kMirrorSwipeOrUseCalendarToSwitchDatesVideoName = @"today_swipe_or_calendar_switch_dates";
-static NSString * const kMirrorTapToAdjustStartEndTimeVideoName = @"today_tap_drag_edit";
-static NSString * const kMirrorTapEmptySpaceToAddNewRecordVideoName = @"today_tap_empty_add_record";
-static NSString * const kMirrorTapTaskInLegendToHideShowVideoName = @"records_click_legend";
-static NSString * const kMirrorTapTopLeftFirstDayTopRightHeatmapVideoName = @"records_lefttop_righttop";
-static NSString * const kMirrorLongPressDragAcrossDatesVideoName = @"records_longdrag_to_see_multiple";
-static NSString * const kMirrorLongPressToDeleteTaskRecordVideoName = @"records_tap_to_see_all_longpress_delete";
-static NSString * const kMirrorLongPressToEditTaskRecordVideoName = @"records_tap_to_see_all_longpress_edit";
-static NSString * const kMirrorLongPressToDeleteSpecialDayVideoName = @"specialdays_longpress_delete";
-static NSString * const kMirrorLongPressToEditSpecialDayVideoName = @"specialdays_longpress_edit";
+static NSString * const kMirrorRecordTimeCannotOverlapVideoName = @"0_no_overlap";
+static NSString * const kMirrorLongPressToSwitchTaskPositionVideoName = @"1_reorder";
+static NSString * const kMirrorLongPressToEditTaskVideoName = @"1_edit";
+static NSString * const kMirrorLongPressToMergeTaskVideoName = @"1_merge";
+static NSString * const kMirrorSwipeOrUseCalendarToSwitchDatesVideoName = @"2_switch_dates";
+static NSString * const kMirrorTapToAdjustStartEndTimeVideoName = @"2_tap_edit";
+static NSString * const kMirrorTapEmptySpaceToAddNewRecordVideoName = @"2_add";
+static NSString * const kMirrorLongPressToEditRecordVideoName = @"2_edit";
+static NSString * const kMirrorLongPressToEditSpecialDayVideoName = @"2_special_edit";
+static NSString * const kMirrorTapTaskInLegendToHideShowVideoName = @"3_legend";
+static NSString * const kMirrorLongPressDragAcrossDatesVideoName = @"3_select_multiple";
+static NSString * const kMirrorLongPressToEditTaskRecordVideoName = @"3_one_edit";
 static NSString * const kMirrorManualVideoItemTitleKey = @"title";
 static NSString * const kMirrorManualVideoItemURLKey = @"url";
 static NSString * const kMirrorManualVideoDefinitionLanguageKey = @"languageKey";
@@ -60,19 +55,14 @@ static NSString * const kMirrorManualVideoDefinitionNameKey = @"name";
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_switch_task_position", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToSwitchTaskPositionVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_edit_task", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditTaskVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_merge_task", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToMergeTaskVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_start_delete_task", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToDeleteTaskVideoName},
+        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_switch_date", kMirrorManualVideoDefinitionNameKey: kMirrorSwipeOrUseCalendarToSwitchDatesVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_adjust_time", kMirrorManualVideoDefinitionNameKey: kMirrorTapToAdjustStartEndTimeVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_add_record", kMirrorManualVideoDefinitionNameKey: kMirrorTapEmptySpaceToAddNewRecordVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_edit_record", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditRecordVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_delete_record", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToDeleteRecordVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_switch_date", kMirrorManualVideoDefinitionNameKey: kMirrorSwipeOrUseCalendarToSwitchDatesVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_special_day_edit", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditSpecialDayVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_special_day_delete", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToDeleteSpecialDayVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_legend_task_visibility", kMirrorManualVideoDefinitionNameKey: kMirrorTapTaskInLegendToHideShowVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_options", kMirrorManualVideoDefinitionNameKey: kMirrorTapTopLeftFirstDayTopRightHeatmapVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_drag_dates", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressDragAcrossDatesVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_task_record_edit", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditTaskRecordVideoName},
-        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_task_record_delete", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToDeleteTaskRecordVideoName}
+        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_task_record_edit", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditTaskRecordVideoName}
     ];
 }
 
