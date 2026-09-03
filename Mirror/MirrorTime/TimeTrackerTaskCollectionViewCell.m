@@ -81,11 +81,6 @@ static CGFloat const kActionButtonSpacing = 4;
     }];
     self.contentView.layer.cornerRadius = kCornerRadius;
     self.contentView.layer.borderWidth = 1;
-    self.contentView.layer.borderColor = [self glassBorderColor].CGColor;
-    self.contentView.layer.shadowColor = [UIColor mirrorColorNamed:MirrorColorTypeShadow].CGColor;
-    self.contentView.layer.shadowRadius = kShadowWidth / 2;
-    self.contentView.layer.shadowOpacity = 0.22;
-    self.contentView.layer.shadowOffset = CGSizeMake(0, 3);
 
     [self.contentView addSubview:self.glassView];
     [self.contentView addSubview:self.glassTintView];
@@ -223,7 +218,8 @@ static CGFloat const kActionButtonSpacing = 4;
 {
     void (^stateChange)(void) = ^{
         self.contentView.layer.borderWidth = selected ? 2.5 : 1;
-        UIColor *borderColor = selected ? (self.selectedBorderColor ?: [UIColor mirrorColorNamed:MirrorColorTypeText]) : [self glassBorderColor];
+        UIColor *selectedColor = self.selectedBorderColor ?: [UIColor mirrorColorNamed:MirrorColorTypeText];
+        UIColor *borderColor = selected ? selectedColor : [self glassBorderColor];
         self.contentView.layer.borderColor = borderColor.CGColor;
     };
 
@@ -243,8 +239,8 @@ static CGFloat const kActionButtonSpacing = 4;
 
 - (UIColor *)glassBorderColor
 {
-    CGFloat alpha = [MirrorSettings appliedDarkMode] ? 0.18 : 0.42;
-    return [UIColor colorWithWhite:1 alpha:alpha];
+    CGFloat alpha = [MirrorSettings appliedDarkMode] ? 0.15 : 0.10;
+    return [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:alpha];
 }
 
 - (UIVisualEffectView *)glassView
