@@ -7,7 +7,7 @@
 #import <Masonry/Masonry.h>
 #import "MirrorLanguage.h"
 #import "MirrorMacro.h"
-#import "MirrorTimeText.h"
+#import "MirrorSettings.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
 
@@ -66,6 +66,7 @@
         [self updateAppearance];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillChangeFrame:) name:UIKeyboardWillChangeFrameNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(keyboardWillHide:) name:UIKeyboardWillHideNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(themeDidChange:) name:MirrorSwitchThemeNotification object:nil];
     }
     return self;
 }
@@ -453,12 +454,26 @@
     [self.endTimeButton setTitle:[self timeStringFromTimestamp:self.endTimestamp] forState:UIControlStateNormal];
 }
 
+- (void)themeDidChange:(NSNotification *)notification
+{
+    [self updateAppearance];
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection
+{
+    [super traitCollectionDidChange:previousTraitCollection];
+    [self updateAppearance];
+}
+
 - (void)updateAppearance
 {
     UIColor *accentColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
     UIColor *labelColor = [UIColor mirrorColorNamed:MirrorColorTypeTextHint];
     UIColor *borderColor = [[UIColor mirrorColorNamed:MirrorColorTypeText] colorWithAlphaComponent:0.12];
+    UIBlurEffectStyle blurStyle = [MirrorSettings appliedDarkMode] ? UIBlurEffectStyleSystemUltraThinMaterialDark : UIBlurEffectStyleSystemUltraThinMaterialLight;
     self.tintColor = accentColor;
+    self.blurView.effect = [UIBlurEffect effectWithStyle:blurStyle];
+    self.datePickerBlurView.effect = [UIBlurEffect effectWithStyle:blurStyle];
     self.titleLabel.textColor = accentColor;
     self.noticeLabel.textColor = labelColor;
     self.startLabel.textColor = labelColor;
@@ -466,8 +481,12 @@
     self.infoLabel.textColor = labelColor;
     self.startTimeButton.tintColor = accentColor;
     self.endTimeButton.tintColor = accentColor;
+    [self.startTimeButton setTitleColor:accentColor forState:UIControlStateNormal];
+    [self.endTimeButton setTitleColor:accentColor forState:UIControlStateNormal];
     self.startTimeButton.layer.borderColor = borderColor.CGColor;
     self.endTimeButton.layer.borderColor = borderColor.CGColor;
+    self.infoTextField.textColor = accentColor;
+    self.infoTextField.tintColor = accentColor;
     self.infoTextField.layer.borderColor = borderColor.CGColor;
     self.datePicker.tintColor = accentColor;
 }
@@ -475,28 +494,6 @@
 - (NSString *)timeStringFromTimestamp:(long)timestamp
 {
     return [self.timeFormatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
-}
-
-- (NSString *)selectedDateText
-{
-    NSDate *date = [NSDate dateWithTimeIntervalSince1970:self.dayStart];
-    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
-    gregorian.timeZone = [NSTimeZone systemTimeZone];
-    NSDate *today = [NSDate date];
-    NSDate *tomorrow = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:today options:0];
-    NSDate *yesterday = [gregorian dateByAddingUnit:NSCalendarUnitDay value:-1 toDate:today options:0];
-    
-    if ([gregorian isDate:date inSameDayAsDate:today]) {
-        return [MirrorLanguage mirror_stringWithKey:@"today"];
-    }
-    if ([gregorian isDate:date inSameDayAsDate:tomorrow]) {
-        return [MirrorLanguage mirror_stringWithKey:@"tomorrow"];
-    }
-    if ([gregorian isDate:date inSameDayAsDate:yesterday]) {
-        return [MirrorLanguage mirror_stringWithKey:@"yesterday"];
-    }
-    
-    return [MirrorTimeText YYYYmmdd:date];
 }
 
 - (long)timestampOnSelectedDayFromDate:(NSDate *)date
@@ -586,7 +583,7 @@
 {
     if (!_titleLabel) {
         _titleLabel = [UILabel new];
-        _titleLabel.text = [MirrorLanguage mirror_stringWithKey:@"schedule"];
+        _titleLabel.text = [MirrorLanguage mirror_stringWithKey:@"temporary_todo"];
         _titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
         _titleLabel.textAlignment = NSTextAlignmentCenter;
         _titleLabel.adjustsFontSizeToFitWidth = YES;
@@ -599,10 +596,7 @@
 {
     if (!_noticeLabel) {
         _noticeLabel = [UILabel new];
-        NSString *dateText = [self selectedDateText];
-        _noticeLabel.text = [MirrorLanguage mirror_stringWithKey:@"schedule_notice"
-                                                with1Placeholder:dateText
-                                                with2Placeholder:dateText];
+        _noticeLabel.text = [MirrorLanguage mirror_stringWithKey:@"temporary_todo_notice"];
         _noticeLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
         _noticeLabel.textAlignment = NSTextAlignmentCenter;
         _noticeLabel.numberOfLines = 0;
@@ -657,7 +651,6 @@
     if (!_infoTextField) {
         _infoTextField = [UITextField new];
         _infoTextField.text = self.schedule.scheduleInfo ?: @"";
-        _infoTextField.placeholder = [MirrorLanguage mirror_stringWithKey:@"schedule"];
         _infoTextField.font = [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
         _infoTextField.borderStyle = UITextBorderStyleRoundedRect;
         _infoTextField.clearButtonMode = UITextFieldViewModeWhileEditing;

@@ -57,6 +57,8 @@
     [mirrorDict setValue:ML(@"Done", @"完成", @"Listo", @"Terminé", @"完了", @"완료", @"Fertig", @"Готово") forKey:@"done"];
     [mirrorDict setValue:ML(@"Add", @"添加", @"Añadir", @"Ajouter", @"追加", @"추가", @"Hinzufügen", @"Добавить") forKey:@"add"];
     [mirrorDict setValue:ML(@"Todo", @"待办", @"Tarea", @"Todo", @"Todo", @"할 일", @"To-do", @"Задача") forKey:@"schedule"];
+    [mirrorDict setValue:ML(@"Temporary Todo", @"临时待办", @"tarea temporal", @"todo temporaire", @"一時的なTodo", @"임시 할 일", @"temporäres To-do", @"временная задача") forKey:@"temporary_todo"];
+    [mirrorDict setValue:ML(@"It will be removed after this day.", @"它会在当天结束后被移除", @"se eliminará después de este día", @"il sera supprimé après ce jour", @"この日が終わると削除されます", @"이 날이 지나면 삭제됩니다", @"es wird nach diesem Tag entfernt", @"она будет удалена после этого дня") forKey:@"temporary_todo_notice"];
     [mirrorDict setValue:ML(@"Todos can only be added for today or future days.", @"待办只能添加到今天或未来的日期。", @"Las tareas solo se pueden añadir para hoy o días futuros.", @"Les todos ne peuvent être ajoutés que pour aujourd'hui ou les jours à venir.", @"Todoは今日または未来の日にのみ追加できます。", @"할 일은 오늘 또는 이후 날짜에만 추가할 수 있습니다.", @"To-dos können nur für heute oder zukünftige Tage hinzugefügt werden.", @"Задачи можно добавлять только на сегодня или будущие дни.") forKey:@"schedule_future_only"];
     [mirrorDict setValue:ML(@"Info", @"信息", @"Información", @"Info", @"情報", @"정보", @"Info", @"Информация") forKey:@"schedule_info"];
     
