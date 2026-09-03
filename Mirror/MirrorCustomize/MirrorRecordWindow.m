@@ -70,7 +70,7 @@
         return;
     }
 
-    CGFloat dotSize = 18;
+    CGFloat dotSize = 28;
     UIView *dotView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, dotSize, dotSize)];
     dotView.center = point;
     dotView.alpha = 0;
