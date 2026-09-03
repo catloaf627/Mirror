@@ -15,6 +15,7 @@ static NSString * const kMirrorSwipeOrUseCalendarToSwitchDatesVideoName = @"2_sw
 static NSString * const kMirrorTapToAdjustStartEndTimeVideoName = @"2_tap_edit";
 static NSString * const kMirrorTapEmptySpaceToAddNewRecordVideoName = @"2_add";
 static NSString * const kMirrorLongPressToEditRecordVideoName = @"2_edit";
+static NSString * const kMirrorFutureTodoWidgetVideoName = @"2_future_todo";
 static NSString * const kMirrorLongPressToEditSpecialDayVideoName = @"2_special_edit";
 static NSString * const kMirrorTapTaskInLegendToHideShowVideoName = @"3_legend";
 static NSString * const kMirrorLongPressDragAcrossDatesVideoName = @"3_select_multiple";
@@ -59,6 +60,7 @@ static NSString * const kMirrorManualVideoDefinitionNameKey = @"name";
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_adjust_time", kMirrorManualVideoDefinitionNameKey: kMirrorTapToAdjustStartEndTimeVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_add_record", kMirrorManualVideoDefinitionNameKey: kMirrorTapEmptySpaceToAddNewRecordVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_today_edit_record", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditRecordVideoName},
+        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_future_todo_widget", kMirrorManualVideoDefinitionNameKey: kMirrorFutureTodoWidgetVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_special_day_edit", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditSpecialDayVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_legend_task_visibility", kMirrorManualVideoDefinitionNameKey: kMirrorTapTaskInLegendToHideShowVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_drag_dates", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressDragAcrossDatesVideoName},
