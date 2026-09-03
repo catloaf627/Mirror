@@ -360,15 +360,15 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
             if (![self canMoveTaskAtIndexPath:indexPath]) {
                 return;
             }
-            if (!self.isEditingTasks) {
-                [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium] impactOccurred];
+            BOOL didEnterEditingTasks = !self.isEditingTasks;
+            if (didEnterEditingTasks) {
                 [self enterEditingTasksIfNeededAnimated:YES];
-                return;
             }
             TimeTrackerTaskCollectionViewCell *cell = (TimeTrackerTaskCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
             self.reorderSelectedCell = cell;
             [cell setReorderSelected:YES animated:YES];
-            [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+            UIImpactFeedbackStyle feedbackStyle = didEnterEditingTasks ? UIImpactFeedbackStyleMedium : UIImpactFeedbackStyleLight;
+            [[[UIImpactFeedbackGenerator alloc] initWithStyle:feedbackStyle] impactOccurred];
             [self.collectionView beginInteractiveMovementForItemAtIndexPath:indexPath];
             break;
         }
