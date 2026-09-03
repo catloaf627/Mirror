@@ -197,14 +197,14 @@ private struct MirrorDateHeaderView: View {
 
     private var displayText: String {
         let calendar = Calendar.current
-        let tomorrow = calendar.date(byAdding: .day, value: 1, to: Date.now) ?? Date.now
 
-        if calendar.isDate(date, inSameDayAs: tomorrow) {
-            let weekday = date.formatted(.dateTime.weekday(.wide))
-            return "\(String(localized: "Tomorrow")) \(weekday)"
+        if calendar.isDateInTomorrow(date) {
+            return String(localized: "Tomorrow")
         }
 
-        return date.formatted(.dateTime.month(.abbreviated).day().weekday(.wide))
+        let weekday = date.formatted(.dateTime.weekday(.wide))
+        let monthDay = date.formatted(.dateTime.month(.abbreviated).day())
+        return "\(weekday), \(monthDay)"
     }
 }
 
@@ -220,19 +220,24 @@ private struct MirrorEmptyScheduleView: View {
     }
 }
 
+private enum MirrorWidgetColor {
+    static let schedule = Color(UIColor { traitCollection in
+        if traitCollection.userInterfaceStyle == .dark {
+            return UIColor(red: 70 / 255, green: 70 / 255, blue: 70 / 255, alpha: 1)
+        }
+        return UIColor(red: 190 / 255, green: 190 / 255, blue: 190 / 255, alpha: 1)
+    })
+}
+
 private struct MirrorScheduleRow: View {
     let schedule: MirrorWidgetSchedule
     let compact: Bool
 
     var body: some View {
         HStack(spacing: 7) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(Color.secondary.opacity(0.32))
-                .frame(width: 3, height: compact ? 24 : 28)
-
             Text(schedule.title)
                 .font(.system(size: compact ? 12 : 13, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(MirrorWidgetColor.schedule)
                 .lineLimit(1)
 
             Spacer(minLength: 6)
@@ -251,7 +256,10 @@ private struct MirrorScheduleRow: View {
         .padding(.horizontal, 7)
         .padding(.vertical, compact ? 2 : 3)
         .frame(minHeight: compact ? 30 : 34)
-        .background(Color(.secondarySystemBackground).opacity(0.42), in: RoundedRectangle(cornerRadius: 5))
+        .overlay {
+            RoundedRectangle(cornerRadius: 5)
+                .stroke(MirrorWidgetColor.schedule, style: StrokeStyle(lineWidth: 1.2, dash: [2, 3]))
+        }
     }
 }
 
