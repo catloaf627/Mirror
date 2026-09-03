@@ -38,7 +38,7 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
 
 - (void)configureWithDay:(MirrorDayModel *)day timestamp:(long)timestamp isFirst:(BOOL)isFirst isLast:(BOOL)isLast;
 - (void)installInteractionsWithTarget:(id<UIEditMenuInteractionDelegate>)target;
-- (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color;
+- (void)shake;
 
 @end
 
@@ -58,8 +58,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
 - (void)prepareForReuse
 {
     [super prepareForReuse];
-    self.contentView.layer.borderWidth = 0;
-    self.contentView.layer.borderColor = nil;
     self.contentView.backgroundColor = UIColor.clearColor;
     [self.contentView.layer removeAnimationForKey:@"selectedRowShake"];
 }
@@ -170,15 +168,13 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     }
 }
 
-- (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color
+- (void)shake
 {
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
-    self.contentView.layer.cornerRadius = 8;
-    self.contentView.layer.masksToBounds = YES;
-    self.contentView.layer.borderWidth = showsSelectionBorder ? 1.5 : 0;
-    self.contentView.layer.borderColor = showsSelectionBorder ? color.CGColor : nil;
-    [CATransaction commit];
+    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
+    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
+    animation.values = @[@0, @(-4 * kWidthRatio), @(4 * kWidthRatio), @(-2 * kWidthRatio), @(2 * kWidthRatio), @0];
+    animation.duration = 0.18;
+    [self.contentView.layer addAnimation:animation forKey:@"selectedRowShake"];
 }
 
 @end
@@ -195,7 +191,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
 @property (nonatomic, assign) NSInteger selectedDayIndex;
 @property (nonatomic, assign) BOOL isSpecialDayEditMenuVisible;
 @property (nonatomic, assign) BOOL shouldSuppressNextSpecialDayEditMenu;
-@property (nonatomic, weak) UIView *borderedSpecialDayRow;
 @property (nonatomic, assign) BOOL shouldSuppressNextSpecialDayReload;
 @property (nonatomic, weak) UIEditMenuInteraction *visibleSpecialDayEditMenuInteraction API_AVAILABLE(ios(16.0));
 
@@ -387,7 +382,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
 
     MirrorDayModel *day = self.days[indexPath.item];
     [cell configureWithDay:day timestamp:[self timestampFromDay:day] isFirst:indexPath.item == 0 isLast:indexPath.item == self.days.count - 1];
-    [cell setShowsSelectionBorder:indexPath.item == self.selectedDayIndex color:[UIColor mirrorSystemColorNamed:day.color]];
     [cell installInteractionsWithTarget:self];
 
     return cell;
@@ -426,9 +420,9 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
         return;
     }
 
-    NSInteger previousDayIndex = self.selectedDayIndex;
     self.selectedDayIndex = index;
-    [self reloadSelectionFromPreviousDayIndex:previousDayIndex currentDayIndex:self.selectedDayIndex];
+    SpecialDayCollectionViewCell *cell = (SpecialDayCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+    [cell shake];
 }
 
 - (NSIndexPath *)indexPathForSpecialDayRowView:(UIView *)view
@@ -443,23 +437,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     
     CGPoint point = [view convertPoint:CGPointMake(CGRectGetMidX(view.bounds), CGRectGetMidY(view.bounds)) toView:self.collectionView];
     return [self.collectionView indexPathForItemAtPoint:point];
-}
-
-- (void)reloadSelectionFromPreviousDayIndex:(NSInteger)previousDayIndex currentDayIndex:(NSInteger)currentDayIndex
-{
-    if (previousDayIndex >= 0 && previousDayIndex < self.days.count && previousDayIndex != currentDayIndex) {
-        NSIndexPath *previousIndexPath = [NSIndexPath indexPathForItem:previousDayIndex inSection:0];
-        SpecialDayCollectionViewCell *previousCell = (SpecialDayCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:previousIndexPath];
-        [previousCell setShowsSelectionBorder:NO color:nil];
-    }
-
-    if (currentDayIndex >= 0 && currentDayIndex < self.days.count) {
-        NSIndexPath *currentIndexPath = [NSIndexPath indexPathForItem:currentDayIndex inSection:0];
-        SpecialDayCollectionViewCell *currentCell = (SpecialDayCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:currentIndexPath];
-        UIColor *borderColor = [UIColor mirrorSystemColorNamed:self.days[currentDayIndex].color];
-        [currentCell setShowsSelectionBorder:YES color:borderColor];
-        self.borderedSpecialDayRow = currentCell.contentView;
-    }
 }
 
 - (long)timestampFromDay:(MirrorDayModel *)day
@@ -499,10 +476,9 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     UIImpactFeedbackGenerator *feedback = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
     [feedback impactOccurred];
 
-    NSInteger previousDayIndex = self.selectedDayIndex;
     self.selectedDayIndex = index;
-    [self reloadSelectionFromPreviousDayIndex:previousDayIndex currentDayIndex:self.selectedDayIndex];
-    [self shakeSelectedRow:view];
+    SpecialDayCollectionViewCell *cell = (SpecialDayCollectionViewCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
+    [cell shake];
     
     if (@available(iOS 16.0, *)) {
         UIEditMenuInteraction *editMenuInteraction = nil;
@@ -520,15 +496,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
         UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
         [editMenuInteraction presentEditMenuWithConfiguration:configuration];
     }
-}
-
-- (void)shakeSelectedRow:(UIView *)row
-{
-    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"transform.translation.x"];
-    animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
-    animation.values = @[@0, @(-4 * kWidthRatio), @(4 * kWidthRatio), @(-2 * kWidthRatio), @(2 * kWidthRatio), @0];
-    animation.duration = 0.18;
-    [row.layer addAnimation:animation forKey:@"selectedRowShake"];
 }
 
 - (UIMenu *)specialDayMenuForIndex:(NSInteger)dayIndex
@@ -644,7 +611,6 @@ static NSString * const kSpecialDayCellIdentifier = @"SpecialDayCollectionViewCe
     } else if (self.selectedDayIndex > index) {
         self.selectedDayIndex -= 1;
     }
-    self.borderedSpecialDayRow = nil;
     self.shouldSuppressNextSpecialDayReload = YES;
     [self.days removeObjectAtIndex:index];
     [MirrorStorage deleteMirrorDayAtIndex:index];

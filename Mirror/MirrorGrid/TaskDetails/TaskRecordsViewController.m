@@ -48,9 +48,7 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
                     dotSize:(CGFloat)dotSize
                     isFirst:(BOOL)isFirst
                      isLast:(BOOL)isLast
-              isHighlighted:(BOOL)isHighlighted
-                 isSelected:(BOOL)isSelected;
-- (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color;
+              isHighlighted:(BOOL)isHighlighted;
 - (void)shake;
 
 @end
@@ -121,10 +119,10 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
 - (void)prepareForReuse
 {
     [super prepareForReuse];
-    [self setShowsSelectionBorder:NO color:nil];
     self.layer.backgroundColor = UIColor.clearColor.CGColor;
     self.contentView.layer.backgroundColor = UIColor.clearColor.CGColor;
     self.highlightBackgroundView.hidden = YES;
+    [self.layer removeAnimationForKey:@"selectedRowShake"];
 }
 
 - (void)configureWithRecord:(MirrorRecordModel *)record
@@ -134,7 +132,6 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
                     isFirst:(BOOL)isFirst
                      isLast:(BOOL)isLast
               isHighlighted:(BOOL)isHighlighted
-                 isSelected:(BOOL)isSelected
 {
     self.dotSize = dotSize;
     self.contentView.backgroundColor = UIColor.clearColor;
@@ -160,7 +157,6 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
     if (is_debug) {
         self.noteLabel.text = [NSString stringWithFormat:@"%@ #%ld", record.note ?: @"", (long)record.originalIndex];
     }
-    [self setShowsSelectionBorder:isSelected color:pulseColor];
     [self setNeedsLayout];
 }
 
@@ -202,21 +198,6 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
     CGSize noteSize = [self.noteLabel sizeThatFits:CGSizeMake(noteWidth, noteMaxHeight)];
     CGFloat noteHeight = MIN(TaskRecordsPixelCeil(noteSize.height), noteMaxHeight);
     self.noteLabel.frame = CGRectMake(noteX, centerY - noteHeight / 2.0, noteWidth, noteHeight);
-}
-
-- (void)setShowsSelectionBorder:(BOOL)showsSelectionBorder color:(UIColor *)color
-{
-    [CATransaction begin];
-    [CATransaction setDisableActions:YES];
-    self.layer.cornerRadius = 0;
-    self.layer.masksToBounds = NO;
-    self.layer.borderWidth = 0;
-    self.layer.borderColor = nil;
-    self.contentView.layer.cornerRadius = showsSelectionBorder ? 8 : 0;
-    self.contentView.layer.masksToBounds = NO;
-    self.contentView.layer.borderWidth = showsSelectionBorder ? 1 : 0;
-    self.contentView.layer.borderColor = showsSelectionBorder ? color.CGColor : nil;
-    [CATransaction commit];
 }
 
 - (void)shake
@@ -551,8 +532,7 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
                       dotSize:[self dotSizeForRecord:record]
                       isFirst:indexPath.item == 0
                        isLast:indexPath.item == self.sortedTimelineRecords.count - 1
-                isHighlighted:isHighlighted
-                   isSelected:record.originalIndex == self.selectedPeriodIndex];
+                isHighlighted:isHighlighted];
     [self installEditMenuInteractionIfNeededForCell:cell];
     return cell;
 }
@@ -574,25 +554,10 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSInteger previousPeriodIndex = self.selectedPeriodIndex;
     MirrorRecordModel *record = self.sortedTimelineRecords[indexPath.item];
     self.selectedPeriodIndex = record.originalIndex;
-    [self reloadSelectionFromPreviousPeriodIndex:previousPeriodIndex currentPeriodIndex:self.selectedPeriodIndex];
-}
-
-- (void)reloadSelectionFromPreviousPeriodIndex:(NSInteger)previousPeriodIndex currentPeriodIndex:(NSInteger)currentPeriodIndex
-{
-    UIColor *selectionColor = [UIColor mirrorColorPulsed:self.data.taskModel.color];
-    NSIndexPath *previousIndexPath = [self indexPathForOriginalIndex:previousPeriodIndex];
-    if (previousIndexPath) {
-        TaskRecordTimelineCell *previousCell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:previousIndexPath];
-        [previousCell setShowsSelectionBorder:NO color:nil];
-    }
-    NSIndexPath *currentIndexPath = [self indexPathForOriginalIndex:currentPeriodIndex];
-    if (currentIndexPath) {
-        TaskRecordTimelineCell *currentCell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:currentIndexPath];
-        [currentCell setShowsSelectionBorder:YES color:selectionColor];
-    }
+    TaskRecordTimelineCell *cell = (TaskRecordTimelineCell *)[collectionView cellForItemAtIndexPath:indexPath];
+    [cell shake];
 }
 
 - (void)reloadBoundaryItemsAroundDeletedItem:(NSInteger)deletedItem
@@ -620,9 +585,7 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
     if (recognizer.state != UIGestureRecognizerStateEnded) {
         return;
     }
-    NSInteger previousPeriodIndex = self.selectedPeriodIndex;
     self.selectedPeriodIndex = NSNotFound;
-    [self reloadSelectionFromPreviousPeriodIndex:previousPeriodIndex currentPeriodIndex:NSNotFound];
 }
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
@@ -673,9 +636,7 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
 
     MirrorRecordModel *record = self.sortedTimelineRecords[indexPath.item];
     TaskRecordTimelineCell *cell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:indexPath];
-    NSInteger previousPeriodIndex = self.selectedPeriodIndex;
     self.selectedPeriodIndex = record.originalIndex;
-    [self reloadSelectionFromPreviousPeriodIndex:previousPeriodIndex currentPeriodIndex:self.selectedPeriodIndex];
 
     [cell shake];
 
@@ -765,8 +726,6 @@ static CGFloat TaskRecordsScaledHeight(CGFloat value)
     UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:[MirrorLanguage mirror_stringWithKey:@"delete"] style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         NSIndexPath *deletedIndexPath = [self indexPathForOriginalIndex:periodIndex];
         if (deletedIndexPath) {
-            TaskRecordTimelineCell *cell = (TaskRecordTimelineCell *)[self.collectionView cellForItemAtIndexPath:deletedIndexPath];
-            [cell setShowsSelectionBorder:NO color:nil];
             [self.collectionView deselectItemAtIndexPath:deletedIndexPath animated:NO];
         }
         self.selectedPeriodIndex = NSNotFound;
