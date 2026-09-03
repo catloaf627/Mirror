@@ -172,7 +172,7 @@
 
 - (NSString *)recordNoonDateCommand
 {
-    return @"sudo date 0828000026";
+    return @"sudo date 0903000026";
 }
 
 - (void)copyRecordTimeOffCommand
