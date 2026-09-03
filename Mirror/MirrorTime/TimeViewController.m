@@ -171,7 +171,7 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
 {
     UIImageSymbolConfiguration *manualConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:19 weight:UIImageSymbolWeightRegular];
     UIImageSymbolConfiguration *fallbackConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:22 weight:UIImageSymbolWeightRegular];
-    UIImage *iconImage = [UIImage mirror_systemImageNamed:@"book.and.wrench" fallbackName:@"questionmark.circle" configuration:manualConfiguration fallbackConfiguration:fallbackConfiguration];
+    UIImage *iconImage = [UIImage mirror_systemImageNamed:@"play.rectangle" fallbackName:@"questionmark.circle" configuration:manualConfiguration fallbackConfiguration:fallbackConfiguration];
     [_supportButton setImage:[iconImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate] forState:UIControlStateNormal];
     [_supportButton setTitle:iconImage ? nil : @"?" forState:UIControlStateNormal];
     _supportButton.titleLabel.font = [UIFont systemFontOfSize:22 weight:UIFontWeightRegular];
