@@ -1,134 +1,196 @@
-# App Preview Video Processing
+# App Store Preview Processing
 
-This folder contains processed App Store Connect app preview videos.
+Use this when converting simulator recordings for App Store Connect.
 
-The source videos are recorded from the same virtual machine each time and are placed in:
+## English Source
 
-```sh
-Videos_AppStore_Connect
-```
+- Source folder: `Videos_AppStore_Connect/0English`
+- Output folder: `Videos_AppStore_Connect_Processed/0English`
+- Current source video: `Videos_AppStore_Connect/0English/english.mov`
+- Current output name: `Mirrorly-AppPreview-886x1920.mp4`
 
-The processed videos should be written to:
+## Tooling
 
-```sh
-Videos_AppStore_Connect_Processed
-```
+Use `ffprobe` first, then `ffmpeg`, then `ffprobe` again on the output.
 
-## Required Output
+If Homebrew `ffmpeg` is unavailable, a temporary static Apple Silicon build was used from:
 
-For iPhone 6.5", 6.7", or 6.9" App Preview uploads, App Store Connect expects preview video dimensions of:
+- FFmpeg download page: `https://ffmpeg.org/download.html`
+- OSXExperts Apple Silicon builds: `https://www.osxexperts.net/`
 
-```text
-886 x 1920 px
-```
+The downloaded binaries were placed under `/private/tmp/mirror-ffmpeg/`.
 
-The screenshot dimensions shown by App Store Connect, such as `1320 x 2868`, `1290 x 2796`, `1260 x 2736`, or `1284 x 2778`, are for screenshots/device assets, not the final App Preview video accepted resolution.
+Published SHA-256 values verified for the extracted binaries:
 
-Use this output format:
+- `ffmpeg`: `591260c945d0eef150e3bf82b0ef988bd36a9cecc18ff05d6679617159f0a95e`
+- `ffprobe`: `e11c17e8200b3ee4c4c186d245e2b4053f01d56957336c1817fca0b997469106`
 
-```text
-Container: .mov
-Video: H.264 High Profile
-H.264 level: 4.0
-Dimensions: 886 x 1920
-Frame rate: constant 30 fps
-Pixel format: yuv420p
-Audio: AAC, 48 kHz, stereo
-Duration: 15-30 seconds
-Maximum file size: 500 MB
-```
-
-## Processing Command
-
-The project has been processed with a temporary macOS arm64 ffmpeg binary at:
+## Inspect Source
 
 ```sh
-/private/tmp/mirror-ffmpeg/ffmpeg
-/private/tmp/mirror-ffmpeg/ffprobe
+/private/tmp/mirror-ffmpeg/ffprobe \
+  -hide_banner \
+  -v error \
+  -show_entries stream=index,codec_type,codec_name,width,height,r_frame_rate,avg_frame_rate,pix_fmt,profile,level,bit_rate,duration \
+  -show_entries format=duration,bit_rate \
+  -of json \
+  Videos_AppStore_Connect/0English/english.mov
 ```
 
-If those binaries are missing, download them first:
+Check:
+
+- Duration is between 15 and 30 seconds.
+- Whether an audio stream exists.
+- Source dimensions and frame rate.
+
+## Export 886 x 1920 Preview
+
+This command preserves aspect ratio, scales to height `1920`, crops the extra width minimally to `886`, forces constant `30 fps`, writes H.264 High Profile Level 4.0, uses `yuv420p`, keeps progressive output, targets about `12 Mbps`, and enables fast start.
+
+Important: do not export App Store previews with no audio stream. App Store Connect may reject those files with an "unsupported or corrupted audio" error. If the simulator recording has no audio, add a clean silent AAC stereo track.
+
+### Source Has No Audio
 
 ```sh
-mkdir -p /private/tmp/mirror-ffmpeg
-curl -L --fail -o /private/tmp/mirror-ffmpeg/ffmpeg.zip https://ffmpeg.martin-riedl.de/redirect/latest/macos/arm64/release/ffmpeg.zip
-curl -L --fail -o /private/tmp/mirror-ffmpeg/ffprobe.zip https://ffmpeg.martin-riedl.de/redirect/latest/macos/arm64/release/ffprobe.zip
-unzip -o /private/tmp/mirror-ffmpeg/ffmpeg.zip -d /private/tmp/mirror-ffmpeg
-unzip -o /private/tmp/mirror-ffmpeg/ffprobe.zip -d /private/tmp/mirror-ffmpeg
-chmod +x /private/tmp/mirror-ffmpeg/ffmpeg /private/tmp/mirror-ffmpeg/ffprobe
+mkdir -p Videos_AppStore_Connect_Processed/0English
+
+/private/tmp/mirror-ffmpeg/ffmpeg \
+  -hide_banner \
+  -y \
+  -i Videos_AppStore_Connect/0English/english.mov \
+  -f lavfi \
+  -i anullsrc=channel_layout=stereo:sample_rate=48000 \
+  -map 0:v:0 \
+  -map 1:a:0 \
+  -shortest \
+  -vf 'scale=-2:1920,crop=886:1920,setsar=1,fps=30,format=yuv420p' \
+  -c:v libx264 \
+  -profile:v high \
+  -level:v 4.0 \
+  -b:v 12M \
+  -minrate 12M \
+  -maxrate 12M \
+  -bufsize 24M \
+  -x264-params 'nal-hrd=cbr:filler=1:force-cfr=1' \
+  -preset slow \
+  -c:a aac \
+  -b:a 256k \
+  -ar 48000 \
+  -ac 2 \
+  -movflags +faststart \
+  -fps_mode cfr \
+  Videos_AppStore_Connect_Processed/0English/Mirrorly-AppPreview-886x1920.mp4
 ```
 
-Run this from the repository root:
+### Source Has Audio
 
 ```sh
-set -e
-cd Videos_AppStore_Connect
-find . -type f -name '*.mov' | sort | while IFS= read -r rel; do
-  out="../Videos_AppStore_Connect_Processed/$rel"
-  mkdir -p "$(dirname "$out")"
-  echo "Processing $rel -> 886x1920"
-  /private/tmp/mirror-ffmpeg/ffmpeg -nostdin -y -hide_banner -loglevel error \
-    -i "$rel" \
-    -f lavfi -i "anullsrc=channel_layout=stereo:sample_rate=48000" \
-    -map 0:v:0 -map 1:a:0 \
-    -vf "fps=30,scale=-2:1920,crop=886:1920" -fps_mode cfr -r 30 \
-    -c:v libx264 -profile:v high -level:v 4.0 -pix_fmt yuv420p -b:v 10M -maxrate 12M -bufsize 20M \
-    -c:a aac -b:a 256k -ar 48000 -ac 2 \
-    -shortest -movflags +faststart "$out"
-done
+mkdir -p Videos_AppStore_Connect_Processed/0English
+
+/private/tmp/mirror-ffmpeg/ffmpeg \
+  -hide_banner \
+  -y \
+  -i Videos_AppStore_Connect/0English/english.mov \
+  -map 0:v:0 \
+  -map 0:a:0 \
+  -vf 'scale=-2:1920,crop=886:1920,setsar=1,fps=30,format=yuv420p' \
+  -c:v libx264 \
+  -profile:v high \
+  -level:v 4.0 \
+  -b:v 12M \
+  -minrate 12M \
+  -maxrate 12M \
+  -bufsize 24M \
+  -x264-params 'nal-hrd=cbr:filler=1:force-cfr=1' \
+  -preset slow \
+  -c:a aac \
+  -b:a 256k \
+  -ar 48000 \
+  -ac 2 \
+  -movflags +faststart \
+  -fps_mode cfr \
+  Videos_AppStore_Connect_Processed/0English/Mirrorly-AppPreview-886x1920.mp4
 ```
 
-Important: keep `-nostdin`. Without it, ffmpeg can consume the `find` loop input and corrupt the batch paths.
+Notes:
 
-## Verification Command
+- Do not overwrite the original `.mov`.
+- Do not use `-an` for App Store preview exports.
+- For silent audio, `ffprobe` may report a very low actual audio bitrate because AAC compresses silence efficiently. That is acceptable as long as the stream is `aac`, profile `LC`, stereo, and `48000 Hz`.
 
-Run this from the repository root after processing:
+## Validate Output
 
 ```sh
-printf 'processed count: '
-find Videos_AppStore_Connect_Processed -type f -name '*.mov' | wc -l
-
-bad=0
-for f in Videos_AppStore_Connect_Processed/*/*.mov; do
-  v=$(/private/tmp/mirror-ffmpeg/ffprobe -v error -select_streams v:0 \
-    -show_entries stream=codec_name,profile,level,width,height,r_frame_rate,avg_frame_rate,pix_fmt,duration \
-    -of csv=p=0 "$f")
-  a=$(/private/tmp/mirror-ffmpeg/ffprobe -v error -select_streams a:0 \
-    -show_entries stream=codec_name,sample_rate,channels \
-    -of csv=p=0 "$f")
-  bytes=$(stat -f%z "$f")
-  printf '%s | %s | audio %s | bytes %s\n' "$f" "$v" "$a" "$bytes"
-  case "$v" in *"886,1920"*"30/1,30/1"*) ;; *) bad=1 ;; esac
-done
-exit $bad
+/private/tmp/mirror-ffmpeg/ffprobe \
+  -hide_banner \
+  -v error \
+  -show_entries stream=index,codec_type,codec_name,width,height,r_frame_rate,avg_frame_rate,pix_fmt,profile,level,bit_rate,duration,field_order,sample_rate,channels,channel_layout \
+  -show_entries format=duration,bit_rate,filename,size \
+  -of json \
+  Videos_AppStore_Connect_Processed/0English/Mirrorly-AppPreview-886x1920.mp4
 ```
 
-Expected result:
+Expected output values:
 
-```text
-processed count: 24
+- Resolution: `886x1920`
+- Codec: `h264`
+- Frame rate: `30/1`
+- Duration: between `15` and `30` seconds
+- Pixel format: `yuv420p`
+- Profile: `High`
+- Level: `40` in ffprobe, meaning H.264 Level 4.0
+- Field order: `progressive`
+- Bitrate: close to `12 Mbps`
+- Audio stream: `aac`, profile `LC`, `48000 Hz`, `2` channels, `stereo`
+
+## Screenshot Diagonal Merges
+
+Use this when creating the three App Store screenshots from the six English simulator screenshots.
+
+Expected timestamp order:
+
+1. `lightstart`
+2. `lighttoday`
+3. `lightrecords`
+4. `darkstart`
+5. `darktoday`
+6. `darkrecords`
+
+Current English source files in that order:
+
+1. `Simulator Screenshot - iPhone 13 Pro Max - 2026-09-03 at 00.00.09.png`
+2. `Simulator Screenshot - iPhone 13 Pro Max - 2026-09-03 at 00.00.11.png`
+3. `Simulator Screenshot - iPhone 13 Pro Max - 2026-09-03 at 00.00.13.png`
+4. `Simulator Screenshot - iPhone 13 Pro Max - 2026-09-03 at 00.00.22.png`
+5. `Simulator Screenshot - iPhone 13 Pro Max - 2026-09-03 at 00.00.24.png`
+6. `Simulator Screenshot - iPhone 13 Pro Max - 2026-09-03 at 00.00.27.png`
+
+Always verify the order before generating outputs:
+
+```sh
+find Videos_AppStore_Connect/0English -maxdepth 1 -type f -iname '*.png' -print | sort
+sips -g pixelWidth -g pixelHeight Videos_AppStore_Connect/0English/*.png
 ```
 
-Every output video should show:
+All six screenshots should have the same dimensions. Current English screenshots are `1284x2778`.
 
-```text
-h264,High,886,1920,yuv420p,40,30/1,30/1
-audio aac,48000,2
-```
+Merge rules:
 
-## Current Folder Structure
+- `image1`: start screenshots, diagonal from top-right to bottom-left, light on the left and dark on the right.
+- `image2`: today screenshots, diagonal from top-right to bottom-left, dark on the left and light on the right.
+- `image3`: records screenshots, diagonal from top-right to bottom-left, light on the left and dark on the right.
 
-The valid processed output folders are:
+Output files:
 
-```text
-0English
-1Chinese
-2Spanish
-3French
-4Japanese
-5Korean
-6German
-7Russian
-```
+- `Videos_AppStore_Connect_Processed/0English/01_start_light-left_dark-right.png`
+- `Videos_AppStore_Connect_Processed/0English/02_today_dark-left_light-right.png`
+- `Videos_AppStore_Connect_Processed/0English/03_records_light-left_dark-right.png`
 
-Do not keep stray folders such as `yuqingwang`, `lish`, or `_AppStore_Connect`; those were caused by an earlier bad batch command and are not valid output.
+The helper used for this was compiled to `/private/tmp/mirror_merge_screenshots`. If it is gone, rebuild and run it from the command history or recreate an Objective-C/CoreGraphics helper with this behavior:
+
+- Load the six PNGs with `CGImageSource`.
+- Draw the right-side image first.
+- Clip a triangular left-side path using points `(0, 0)`, `(width, height)`, `(0, height)`.
+- Draw the left-side image into that clipped triangle.
+- Save each merged image as PNG with `CGImageDestination`.
+- Validate output dimensions with `sips`.
