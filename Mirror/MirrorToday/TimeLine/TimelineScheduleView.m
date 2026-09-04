@@ -35,6 +35,7 @@ typedef NS_ENUM(NSInteger, TimelineScheduleDragMode) {
 @property (nonatomic, assign) CGFloat hourHeight;
 @property (nonatomic, assign) CGFloat originalTop;
 @property (nonatomic, assign) CGFloat originalHeight;
+@property (nonatomic, strong) UIView *foregroundView;
 @property (nonatomic, strong) UILabel *titleLabel;
 @property (nonatomic, strong) UIView *startHandleView;
 @property (nonatomic, strong) UIView *endHandleView;
@@ -78,11 +79,17 @@ typedef NS_ENUM(NSInteger, TimelineScheduleDragMode) {
     self.dottedBorderLayer.lineDashPattern = @[@2, @3];
     [self.layer addSublayer:self.dottedBorderLayer];
     
+    self.foregroundView = [[UIView alloc] initWithFrame:self.bounds];
+    self.foregroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    self.foregroundView.layer.cornerRadius = 5;
+    self.foregroundView.layer.masksToBounds = YES;
+    [self addSubview:self.foregroundView];
+    
     self.titleLabel = [UILabel new];
     self.titleLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeSchedule];
     self.titleLabel.font = [UIFont mirrorHintFont_Card];
     self.titleLabel.adjustsFontSizeToFitWidth = YES;
-    [self addSubview:self.titleLabel];
+    [self.foregroundView addSubview:self.titleLabel];
     
     self.startHandleView = [self handleView];
     self.endHandleView = [self handleView];
@@ -92,17 +99,17 @@ typedef NS_ENUM(NSInteger, TimelineScheduleDragMode) {
     
     if (@available(iOS 16.0, *)) {
         self.editMenuInteraction = [[UIEditMenuInteraction alloc] initWithDelegate:self];
-        [self addInteraction:self.editMenuInteraction];
+        [self.foregroundView addInteraction:self.editMenuInteraction];
     }
     
     UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(tapSchedule:)];
     tapRecognizer.delegate = self;
-    [self addGestureRecognizer:tapRecognizer];
+    [self.foregroundView addGestureRecognizer:tapRecognizer];
     
     UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressSchedule:)];
     longPressRecognizer.delegate = self;
     longPressRecognizer.minimumPressDuration = 0.25;
-    [self addGestureRecognizer:longPressRecognizer];
+    [self.foregroundView addGestureRecognizer:longPressRecognizer];
     
     UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panSchedule:)];
     panRecognizer.delegate = self;
@@ -132,6 +139,7 @@ typedef NS_ENUM(NSInteger, TimelineScheduleDragMode) {
 {
     self.scheduleIndex = schedule.originalIndex;
     self.tag = schedule.originalIndex;
+    self.foregroundView.tag = schedule.originalIndex;
     self.originalStartTimestamp = schedule.startTime;
     self.originalEndTimestamp = schedule.endTime;
     self.scheduleTitle = schedule.scheduleInfo ?: @"";
@@ -295,7 +303,7 @@ typedef NS_ENUM(NSInteger, TimelineScheduleDragMode) {
         [self.delegate timelineScheduleViewDidRequestLongSelection:self];
     }
     if (@available(iOS 16.0, *)) {
-        CGPoint point = [recognizer locationInView:self];
+        CGPoint point = [recognizer locationInView:self.foregroundView];
         UIEditMenuConfiguration *configuration = [UIEditMenuConfiguration configurationWithIdentifier:nil sourcePoint:point];
         [self.editMenuInteraction presentEditMenuWithConfiguration:configuration];
     }
