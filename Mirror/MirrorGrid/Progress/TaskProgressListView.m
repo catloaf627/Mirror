@@ -14,7 +14,6 @@
 #import <Masonry/Masonry.h>
 
 static CGFloat const kRowHeight = 34;
-static CGFloat const kRowSpacing = 6;
 static CGFloat const kBarHeight = 6;
 static CGFloat const kDotSize = 8;
 
@@ -72,9 +71,9 @@ static CGFloat const kDotSize = 8;
             make.left.right.mas_equalTo(self.contentView);
             make.height.mas_equalTo(kRowHeight * kHeightRatio);
             if (previousRow) {
-                make.top.mas_equalTo(previousRow.mas_bottom).offset(kRowSpacing * kHeightRatio);
+                make.top.mas_equalTo(previousRow.mas_bottom);
             } else {
-                make.top.mas_equalTo(self.contentView).offset(kRowSpacing * kHeightRatio);
+                make.top.mas_equalTo(self.contentView);
             }
         }];
         previousRow = row;
@@ -84,7 +83,7 @@ static CGFloat const kDotSize = 8;
         make.edges.mas_equalTo(self.scrollView);
         make.width.mas_equalTo(self.scrollView);
         if (previousRow) {
-            make.bottom.mas_equalTo(previousRow.mas_bottom).offset(kRowSpacing * kHeightRatio);
+            make.bottom.mas_equalTo(previousRow.mas_bottom);
         } else {
             make.bottom.mas_equalTo(self.contentView.mas_top);
         }
