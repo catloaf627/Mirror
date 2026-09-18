@@ -18,7 +18,6 @@ static UIView *sManualGuidePointerView = nil;
 
     UIWindow *window = viewController.view.window;
     BOOL hasShownManualGuidePointer = [[NSUserDefaults standardUserDefaults] boolForKey:kManualGuidePointerShownKey];
-    hasShownManualGuidePointer = NO;
     if (hasShownManualGuidePointer ||
         !window ||
         !targetView.superview ||
