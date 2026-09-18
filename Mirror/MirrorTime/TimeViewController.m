@@ -23,6 +23,7 @@
 #import "HintFooter.h"
 #import "TaskPickerViewController.h"
 #import "MirrorSupportManualAlert.h"
+#import "MirrorManualGuidePointer.h"
 #import "UIImage+MirrorSymbol.h"
 
 #import "Mirror-Swift.h"
@@ -30,7 +31,6 @@
 #define kCellSpacing (16 * kHeightRatio)// cell之间的上下间距
 #define kCollectionViewPadding (20 * kWidthRatio) // 左右留白
 static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNaviIconUsesCustomConfiguration";
-static NSString * const kManualGuidePointerShownKey = @"MirrorManualGuidePointerShown";
 
 @interface TimeViewController ()<UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TimeTrackerTaskCollectionViewCellDelegate, UIViewControllerTransitioningDelegate, UIGestureRecognizerDelegate>
 
@@ -38,7 +38,6 @@ static NSString * const kManualGuidePointerShownKey = @"MirrorManualGuidePointer
 @property (nonatomic, strong) UIView *navigationDebugHitView;
 @property (nonatomic, assign) NSInteger navigationDebugTapCount;
 @property (nonatomic, strong) NSDate *lastNavigationDebugTapDate;
-@property (nonatomic, strong) UIView *manualGuidePointerView;
 // Navibar
 @property (nonatomic, strong) UIButton *settingsButton;
 @property (nonatomic, strong) UIButton *supportButton;
@@ -104,7 +103,7 @@ static NSString * const kManualGuidePointerShownKey = @"MirrorManualGuidePointer
     [super viewWillDisappear:animated];
     [self exitEditingTasksIfNeededAnimated:NO];
     [self removeNavigationDebugGesture];
-    [self removeManualGuidePointer];
+    [MirrorManualGuidePointer remove];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -116,7 +115,7 @@ static NSString * const kManualGuidePointerShownKey = @"MirrorManualGuidePointer
     [self.view layoutIfNeeded];
     [self.collectionView.collectionViewLayout invalidateLayout];
     [self addNavigationDebugGesture];
-    [self showManualGuidePointer];
+    [MirrorManualGuidePointer showOnceFromViewController:self targetView:self.supportButton];
     [self presentGoingOnTaskIfNeeded];
 }
 
@@ -129,7 +128,6 @@ static NSString * const kManualGuidePointerShownKey = @"MirrorManualGuidePointer
         [self refreshNavigationButtonColors];
         [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.settingsButton rightButton:self.supportButton];
         [self addNavigationDebugGesture];
-        [self showManualGuidePointer];
     }
     // reset ui
     self.collectionView = nil;
@@ -273,121 +271,6 @@ static NSString * const kManualGuidePointerShownKey = @"MirrorManualGuidePointer
     self.lastNavigationDebugTapDate = nil;
 }
 
-- (void)showManualGuidePointer
-{
-    [self removeManualGuidePointer];
-
-    UIWindow *window = self.view.window;
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:kManualGuidePointerShownKey] ||
-        !window ||
-        !self.supportButton.superview ||
-        self.presentedViewController) {
-        return;
-    }
-
-    CGRect buttonFrame = [self.supportButton convertRect:self.supportButton.bounds toView:window];
-    if (CGRectIsEmpty(buttonFrame)) {
-        return;
-    }
-
-    CGFloat pointerSize = 58;
-    CGPoint clickCenter = CGPointMake(CGRectGetMidX(buttonFrame) - pointerSize / 2 + 8,
-                                      CGRectGetMidY(buttonFrame) + 20);
-    CGPoint startCenter = CGPointMake(clickCenter.x - 36, clickCenter.y + 16);
-    UIView *pointerView = [[UIView alloc] initWithFrame:CGRectMake(0,
-                                                                   0,
-                                                                   pointerSize,
-                                                                   pointerSize)];
-    pointerView.userInteractionEnabled = NO;
-    pointerView.alpha = 0.0;
-    pointerView.transform = CGAffineTransformMakeScale(0.92, 0.92);
-    pointerView.center = startCenter;
-    pointerView.layer.shadowColor = UIColor.blackColor.CGColor;
-    pointerView.layer.shadowOpacity = 0.25;
-    pointerView.layer.shadowRadius = 7;
-    pointerView.layer.shadowOffset = CGSizeMake(0, 4);
-
-    UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:40 weight:UIImageSymbolWeightRegular];
-    UIImage *handImage = [UIImage mirror_systemImageNamed:@"hand.point.up.right.fill" fallbackName:@"hand.point.up.fill" configuration:configuration fallbackConfiguration:configuration];
-    if (handImage) {
-        UIImageView *imageView = [[UIImageView alloc] initWithImage:[handImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
-        imageView.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        imageView.contentMode = UIViewContentModeScaleAspectFit;
-        imageView.frame = pointerView.bounds;
-        imageView.transform = CGAffineTransformMakeRotation(M_PI_4);
-        [pointerView addSubview:imageView];
-    } else {
-        UILabel *fallbackLabel = [[UILabel alloc] initWithFrame:pointerView.bounds];
-        fallbackLabel.text = @"☝︎";
-        fallbackLabel.font = [UIFont systemFontOfSize:42 weight:UIFontWeightRegular];
-        fallbackLabel.textAlignment = NSTextAlignmentCenter;
-        fallbackLabel.textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
-        fallbackLabel.transform = CGAffineTransformMakeRotation(M_PI_4);
-        [pointerView addSubview:fallbackLabel];
-    }
-
-    [window addSubview:pointerView];
-    self.manualGuidePointerView = pointerView;
-    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kManualGuidePointerShownKey];
-
-    [self animateManualGuidePointer:pointerView clickCenter:clickCenter startCenter:startCenter remainingCount:2];
-}
-
-- (void)removeManualGuidePointer
-{
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(removeManualGuidePointer) object:nil];
-    [self.manualGuidePointerView.layer removeAllAnimations];
-    [self.manualGuidePointerView removeFromSuperview];
-    self.manualGuidePointerView = nil;
-}
-
-- (void)animateManualGuidePointer:(UIView *)pointerView clickCenter:(CGPoint)clickCenter startCenter:(CGPoint)startCenter remainingCount:(NSInteger)remainingCount
-{
-    if (remainingCount <= 0 || self.manualGuidePointerView != pointerView) {
-        [UIView animateWithDuration:0.25 animations:^{
-            pointerView.alpha = 0.0;
-        } completion:^(BOOL finished) {
-            if (self.manualGuidePointerView == pointerView) {
-                [self removeManualGuidePointer];
-            }
-        }];
-        return;
-    }
-
-    [UIView animateKeyframesWithDuration:2.0
-                                   delay:remainingCount == 2 ? 0 : 0.25
-                                 options:UIViewKeyframeAnimationOptionAllowUserInteraction
-                              animations:^{
-        [UIView addKeyframeWithRelativeStartTime:0 relativeDuration:0.12 animations:^{
-            pointerView.alpha = 1.0;
-            pointerView.center = startCenter;
-            pointerView.transform = CGAffineTransformMakeScale(0.92, 0.92);
-        }];
-        [UIView addKeyframeWithRelativeStartTime:0.12 relativeDuration:0.42 animations:^{
-            pointerView.center = clickCenter;
-            pointerView.transform = CGAffineTransformIdentity;
-        }];
-        [UIView addKeyframeWithRelativeStartTime:0.54 relativeDuration:0.10 animations:^{
-            pointerView.center = CGPointMake(clickCenter.x + 8, clickCenter.y);
-            pointerView.transform = CGAffineTransformMakeScale(0.82, 0.82);
-        }];
-        [UIView addKeyframeWithRelativeStartTime:0.64 relativeDuration:0.14 animations:^{
-            pointerView.center = clickCenter;
-            pointerView.transform = CGAffineTransformIdentity;
-        }];
-        [UIView addKeyframeWithRelativeStartTime:0.82 relativeDuration:0.18 animations:^{
-            pointerView.center = startCenter;
-            pointerView.transform = CGAffineTransformMakeScale(0.92, 0.92);
-        }];
-    } completion:^(BOOL finished) {
-        if (!finished || self.manualGuidePointerView != pointerView) {
-            return;
-        }
-
-        [self animateManualGuidePointer:pointerView clickCenter:clickCenter startCenter:startCenter remainingCount:remainingCount - 1];
-    }];
-}
-
 - (void)countNavigationDebugTap:(UITapGestureRecognizer *)tapRecognizer
 {
     if (tapRecognizer.state != UIGestureRecognizerStateRecognized || self.presentedViewController) {
@@ -412,7 +295,7 @@ static NSString * const kManualGuidePointerShownKey = @"MirrorManualGuidePointer
 
 - (void)showSupportAlert
 {
-    [self removeManualGuidePointer];
+    [MirrorManualGuidePointer remove];
     [MirrorSupportManualAlert presentFromViewController:self];
 }
 

@@ -48,6 +48,7 @@
 		4AABB609303F8E0400AA0DE3 /* MirrorManualVideoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB608303F8E0400AA0DE3 /* MirrorManualVideoViewController.m */; };
 		4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */; };
 		4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBF2A03B05100CDCED9 /* MirrorReadModel.m */; };
+		4AC2B8D5305DE6F5001CE587 /* MirrorManualGuidePointer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC2B8D4305DE6F5001CE587 /* MirrorManualGuidePointer.m */; };
 		4ACB422E29EEA411005EECC4 /* LeftAnimation.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ACB422D29EEA411005EECC4 /* LeftAnimation.m */; };
 		4AD065A0302FCA1F005A894C /* MirrorDayModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AD0659F302FCA1F005A894C /* MirrorDayModel.m */; };
 		4AD065A3302FCEB7005A894C /* SpecialDaysViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AD065A2302FCEB7005A894C /* SpecialDaysViewController.m */; };
@@ -180,6 +181,8 @@
 		4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorRecordModel.m; sourceTree = "<group>"; };
 		4AC1FDBE2A03B05100CDCED9 /* MirrorReadModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorReadModel.h; sourceTree = "<group>"; };
 		4AC1FDBF2A03B05100CDCED9 /* MirrorReadModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorReadModel.m; sourceTree = "<group>"; };
+		4AC2B8D3305DE6D4001CE587 /* MirrorManualGuidePointer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorManualGuidePointer.h; sourceTree = "<group>"; };
+		4AC2B8D4305DE6F5001CE587 /* MirrorManualGuidePointer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorManualGuidePointer.m; sourceTree = "<group>"; };
 		4ACB422C29EEA411005EECC4 /* LeftAnimation.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LeftAnimation.h; sourceTree = "<group>"; };
 		4ACB422D29EEA411005EECC4 /* LeftAnimation.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LeftAnimation.m; sourceTree = "<group>"; };
 		4AD0659E302FCA14005A894C /* MirrorDayModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorDayModel.h; sourceTree = "<group>"; };
@@ -397,6 +400,8 @@
 				4AABB5F6303F66FF00AA0DE3 /* MirrorRecordWindow.m */,
 				4AABB607303F8DDF00AA0DE3 /* MirrorManualVideoViewController.h */,
 				4AABB608303F8E0400AA0DE3 /* MirrorManualVideoViewController.m */,
+				4AC2B8D3305DE6D4001CE587 /* MirrorManualGuidePointer.h */,
+				4AC2B8D4305DE6F5001CE587 /* MirrorManualGuidePointer.m */,
 			);
 			path = MirrorCustomize;
 			sourceTree = "<group>";
@@ -772,6 +777,7 @@
 				4A0D410229F13C5300F13EAE /* LegendView.m in Sources */,
 				4A37369A29E3AD8700187280 /* MirrorSettings.m in Sources */,
 				4A37369729E2BD3C00187280 /* SliceLayer.m in Sources */,
+				4AC2B8D5305DE6F5001CE587 /* MirrorManualGuidePointer.m in Sources */,
 				4A88212F29F671F7009E422C /* TimeTrackingViewController.m in Sources */,
 				4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */,
 				4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */,
