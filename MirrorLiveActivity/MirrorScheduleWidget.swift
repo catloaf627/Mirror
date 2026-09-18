@@ -37,8 +37,8 @@ struct MirrorScheduleWidgetProvider: TimelineProvider {
         let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: now) ?? now.addingTimeInterval(24 * 60 * 60)
         let later = Calendar.current.date(byAdding: .day, value: 3, to: now) ?? now.addingTimeInterval(3 * 24 * 60 * 60)
         return MirrorScheduleWidgetEntry(date: now, schedules: [
-            MirrorWidgetSchedule(id: "preview-1", title: "Tennis", startDate: tomorrowAt(hour: 9, minute: 0, from: tomorrow), endDate: tomorrowAt(hour: 10, minute: 30, from: tomorrow)),
-            MirrorWidgetSchedule(id: "preview-2", title: "Ajah", startDate: tomorrowAt(hour: 9, minute: 0, from: later), endDate: tomorrowAt(hour: 10, minute: 0, from: later))
+            MirrorWidgetSchedule(id: "preview-1", title: String(localized: "Sample todo"), startDate: tomorrowAt(hour: 9, minute: 0, from: tomorrow), endDate: tomorrowAt(hour: 10, minute: 30, from: tomorrow)),
+            MirrorWidgetSchedule(id: "preview-2", title: String(localized: "Upcoming todo"), startDate: tomorrowAt(hour: 9, minute: 0, from: later), endDate: tomorrowAt(hour: 10, minute: 0, from: later))
         ], unavailableMessage: nil)
     }
 
@@ -330,7 +330,7 @@ private extension Calendar {
     MirrorScheduleWidget()
 } timeline: {
     MirrorScheduleWidgetEntry(date: .now, schedules: [
-        MirrorWidgetSchedule(id: "1", title: "Tennis", startDate: Calendar.current.date(byAdding: .day, value: 1, to: .now) ?? .now, endDate: Calendar.current.date(byAdding: .day, value: 1, to: .now.addingTimeInterval(5400)) ?? .now.addingTimeInterval(5400)),
-        MirrorWidgetSchedule(id: "2", title: "Ajah", startDate: Calendar.current.date(byAdding: .day, value: 3, to: .now) ?? .now, endDate: Calendar.current.date(byAdding: .day, value: 3, to: .now.addingTimeInterval(3600)) ?? .now.addingTimeInterval(3600))
+        MirrorWidgetSchedule(id: "1", title: String(localized: "Sample todo"), startDate: Calendar.current.date(byAdding: .day, value: 1, to: .now) ?? .now, endDate: Calendar.current.date(byAdding: .day, value: 1, to: .now.addingTimeInterval(5400)) ?? .now.addingTimeInterval(5400)),
+        MirrorWidgetSchedule(id: "2", title: String(localized: "Upcoming todo"), startDate: Calendar.current.date(byAdding: .day, value: 3, to: .now) ?? .now, endDate: Calendar.current.date(byAdding: .day, value: 3, to: .now.addingTimeInterval(3600)) ?? .now.addingTimeInterval(3600))
     ], unavailableMessage: nil)
 }
