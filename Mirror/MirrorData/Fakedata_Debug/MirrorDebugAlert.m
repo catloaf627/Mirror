@@ -148,8 +148,11 @@
     [alertController addAction:[UIAlertAction actionWithTitle:@"Import JSON" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self showJSONDocumentPicker];
     }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"Seed Fake Data" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    [alertController addAction:[UIAlertAction actionWithTitle:@"Seed Fake Data" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         [self presentSeedFakeDataConfirmation];
+    }]];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"For My Web" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+        [self exportJSONDataForMyWeb];
     }]];
     [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
     [viewController presentViewController:alertController animated:YES completion:nil];
@@ -198,6 +201,55 @@
     NSString *filename = [[@"Mirror" stringByAppendingString:[MirrorTimeText getPreciseTimeString]] stringByAppendingString:@".json"];
     NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingString:filename]];
     [data writeToURL:url atomically:NO];
+
+    UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:nil];
+    activityViewController.excludedActivityTypes = @[];
+    activityViewController.popoverPresentationController.sourceView = self.presentingViewController.view;
+    activityViewController.popoverPresentationController.sourceRect = CGRectMake(self.presentingViewController.view.bounds.size.width / 2, 0, 1, 1);
+    [self.presentingViewController presentViewController:activityViewController animated:YES completion:nil];
+}
+
+- (void)exportJSONDataForMyWeb
+{
+    NSData *data = [MirrorStorage exportJSONData];
+    if (!data) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"No Data" message:nil preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+        [self.presentingViewController presentViewController:alertController animated:YES completion:nil];
+        return;
+    }
+
+    NSError *jsonError = nil;
+    NSMutableDictionary *jsonDictionary = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&jsonError];
+    NSMutableArray *records = jsonDictionary[RECORDS];
+    NSMutableArray *days = jsonDictionary[DAYS];
+    if (jsonError || ![jsonDictionary isKindOfClass:NSDictionary.class] || ![records isKindOfClass:NSArray.class] || ![days isKindOfClass:NSArray.class]) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Invalid JSON Data" message:nil preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+        [self.presentingViewController presentViewController:alertController animated:YES completion:nil];
+        return;
+    }
+
+    NSUInteger itemCount = MAX(records.count, days.count);
+    for (NSUInteger index = 0; index < itemCount; index++) {
+        if (index < records.count && [records[index] isKindOfClass:NSMutableDictionary.class]) {
+            records[index][@"note"] = @"";
+        }
+        if (index < days.count && [days[index] isKindOfClass:NSMutableDictionary.class]) {
+            days[index][@"info"] = @"";
+        }
+    }
+
+    NSData *webData = [NSJSONSerialization dataWithJSONObject:jsonDictionary options:NSJSONWritingPrettyPrinted error:nil];
+    if (!webData) {
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"Export Failed" message:nil preferredStyle:UIAlertControllerStyleAlert];
+        [alertController addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
+        [self.presentingViewController presentViewController:alertController animated:YES completion:nil];
+        return;
+    }
+
+    NSURL *url = [NSURL fileURLWithPath:[NSTemporaryDirectory() stringByAppendingString:@"me.json"]];
+    [webData writeToURL:url atomically:NO];
 
     UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[url] applicationActivities:nil];
     activityViewController.excludedActivityTypes = @[];
