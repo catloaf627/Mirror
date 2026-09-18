@@ -31,6 +31,16 @@ private struct MirrorScheduleSection: Identifiable {
     }
 }
 
+private struct MirrorScheduleDisplayLine: Identifiable {
+    enum Kind {
+        case date(Date, isToday: Bool)
+        case schedule(MirrorWidgetSchedule)
+    }
+
+    let id: String
+    let kind: Kind
+}
+
 struct MirrorScheduleWidgetProvider: TimelineProvider {
     func placeholder(in context: Context) -> MirrorScheduleWidgetEntry {
         let now = Date.now
@@ -80,8 +90,6 @@ private struct MirrorScheduleWidgetView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: verticalSpacing) {
-            MirrorDateHeaderView(date: entry.date, isToday: true)
-
             if let unavailableMessage = entry.unavailableMessage {
                 MirrorEmptyScheduleView(text: unavailableMessage)
             } else {
@@ -96,22 +104,17 @@ private struct MirrorScheduleWidgetView: View {
 
     @ViewBuilder
     private var agendaContent: some View {
-        let todaySchedules = schedulesForToday()
-        let futureSections = futureScheduleSections()
+        let displayLines = visibleDisplayLines()
 
-        if todaySchedules.isEmpty {
-            MirrorEmptyScheduleView(text: String(localized: "No todos today"))
+        if displayLines.isEmpty {
+            MirrorEmptyScheduleView(text: String(localized: "No upcoming todos"))
         } else {
-            ForEach(todaySchedules.prefix(maxTodayRows)) { schedule in
-                MirrorScheduleRow(schedule: schedule, compact: family == .systemSmall)
-            }
-        }
-
-        if family != .systemSmall {
-            ForEach(futureSections.prefix(maxFutureSections)) { section in
-                MirrorDateHeaderView(date: section.date, isToday: false)
-                ForEach(section.schedules.prefix(rowsPerFutureSection)) { schedule in
-                    MirrorScheduleRow(schedule: schedule, compact: false)
+            ForEach(displayLines) { line in
+                switch line.kind {
+                case let .date(date, isToday):
+                    MirrorDateHeaderView(date: date, isToday: isToday)
+                case let .schedule(schedule):
+                    MirrorScheduleRow(schedule: schedule, compact: family == .systemSmall)
                 }
             }
         }
@@ -134,23 +137,47 @@ private struct MirrorScheduleWidgetView: View {
         }
     }
 
-    private var maxTodayRows: Int {
+    private var maxLineCount: Int {
         switch family {
         case .systemSmall:
-            return 1
-        case .systemMedium:
-            return 2
-        default:
             return 3
+        case .systemMedium:
+            return 3
+        default:
+            return 7
         }
     }
 
-    private var maxFutureSections: Int {
-        family == .systemLarge ? 3 : 1
+    private func visibleDisplayLines() -> [MirrorScheduleDisplayLine] {
+        var remainingLineCount = maxLineCount
+        var lines: [MirrorScheduleDisplayLine] = []
+
+        for section in scheduleSections() {
+            guard remainingLineCount >= 2 else {
+                break
+            }
+
+            let visibleSchedules = Array(section.schedules.prefix(remainingLineCount - 1))
+            guard !visibleSchedules.isEmpty else {
+                continue
+            }
+
+            let isToday = Calendar.current.isDate(section.date, inSameDayAs: entry.date)
+            lines.append(MirrorScheduleDisplayLine(id: "date-\(section.id)", kind: .date(section.date, isToday: isToday)))
+            lines.append(contentsOf: visibleSchedules.map { schedule in
+                MirrorScheduleDisplayLine(id: "schedule-\(schedule.id)", kind: .schedule(schedule))
+            })
+            remainingLineCount -= visibleSchedules.count + 1
+        }
+
+        return lines
     }
 
-    private var rowsPerFutureSection: Int {
-        family == .systemLarge ? 2 : 1
+    private func scheduleSections() -> [MirrorScheduleSection] {
+        let todaySchedules = schedulesForToday()
+        let todaySection = todaySchedules.isEmpty ? [] : [MirrorScheduleSection(date: Calendar.current.startOfDay(for: entry.date),
+                                                                                 schedules: todaySchedules)]
+        return todaySection + futureScheduleSections()
     }
 
     private func schedulesForToday() -> [MirrorWidgetSchedule] {
@@ -197,6 +224,10 @@ private struct MirrorDateHeaderView: View {
 
     private var displayText: String {
         let calendar = Calendar.current
+
+        if isToday {
+            return String(localized: "Today")
+        }
 
         if calendar.isDateInTomorrow(date) {
             return String(localized: "Tomorrow")
