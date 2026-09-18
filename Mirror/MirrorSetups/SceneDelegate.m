@@ -12,6 +12,7 @@
 #import "MirrorStorage.h"
 #import "MirrorMacro.h"
 #import "MirrorRecordWindow.h"
+#import "TimeViewController.h"
 #import <UIKit/UIKit.h>
 
 
@@ -106,9 +107,32 @@ static NSString * const kMirrorInitialDataPromptShownKey = @"MirrorInitialDataPr
             dispatch_async(dispatch_get_main_queue(), ^{
                 [self showInitialDataPromptIfNeeded];
             });
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.35 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [self showInitialManualGuidePointerIfNeeded];
+            });
         }]];
     }
     [self.window.rootViewController presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)showInitialManualGuidePointerIfNeeded
+{
+    UIViewController *rootViewController = self.window.rootViewController;
+    if (![rootViewController isKindOfClass:UINavigationController.class]) {
+        return;
+    }
+
+    UIViewController *topViewController = ((UINavigationController *)rootViewController).topViewController;
+    if (![topViewController isKindOfClass:UITabBarController.class]) {
+        return;
+    }
+
+    UIViewController *timeViewController = ((UITabBarController *)topViewController).viewControllers.firstObject;
+    if (![timeViewController isKindOfClass:TimeViewController.class]) {
+        return;
+    }
+
+    [(TimeViewController *)timeViewController showManualGuidePointerIfNeeded];
 }
 
 - (void)sceneDidDisconnect:(UIScene *)scene {

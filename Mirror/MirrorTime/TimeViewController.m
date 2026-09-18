@@ -115,8 +115,15 @@ static NSString * const kNaviIconUsesCustomConfigurationIdentifier = @"MirrorNav
     [self.view layoutIfNeeded];
     [self.collectionView.collectionViewLayout invalidateLayout];
     [self addNavigationDebugGesture];
-    [MirrorManualGuidePointer showOnceFromViewController:self targetView:self.supportButton];
     [self presentGoingOnTaskIfNeeded];
+}
+
+- (void)showManualGuidePointerIfNeeded
+{
+    if (![MirrorSettings hasPreferredLanguage]) {
+        return;
+    }
+    [MirrorManualGuidePointer showOnceFromViewController:self targetView:self.supportButton];
 }
 
 - (void)restartVC

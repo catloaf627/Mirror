@@ -15,7 +15,6 @@ static UIView *sManualGuidePointerView = nil;
 + (void)showOnceFromViewController:(UIViewController *)viewController targetView:(UIView *)targetView
 {
     [self remove];
-
     UIWindow *window = viewController.view.window;
     BOOL hasShownManualGuidePointer = [[NSUserDefaults standardUserDefaults] boolForKey:kManualGuidePointerShownKey];
     if (hasShownManualGuidePointer ||
@@ -70,6 +69,7 @@ static UIView *sManualGuidePointerView = nil;
 
     [window addSubview:pointerView];
     sManualGuidePointerView = pointerView;
+    [self markGuidePointerShown];
 
     [self animatePointer:pointerView clickCenter:clickCenter startCenter:startCenter];
 }
@@ -79,6 +79,11 @@ static UIView *sManualGuidePointerView = nil;
     [sManualGuidePointerView.layer removeAllAnimations];
     [sManualGuidePointerView removeFromSuperview];
     sManualGuidePointerView = nil;
+}
+
++ (void)markGuidePointerShown
+{
+    [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kManualGuidePointerShownKey];
 }
 
 + (void)animatePointer:(UIView *)pointerView clickCenter:(CGPoint)clickCenter startCenter:(CGPoint)startCenter
@@ -93,7 +98,6 @@ static UIView *sManualGuidePointerView = nil;
                 return;
             }
 
-            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:kManualGuidePointerShownKey];
             [self fadeOutPointer:pointerView];
         }];
     }];
