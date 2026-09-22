@@ -80,7 +80,7 @@ struct MirrorScheduleWidget: Widget {
         }
         .configurationDisplayName("Mirror Todos")
         .description("Shows your upcoming todos.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryInline, .accessoryCircular, .accessoryRectangular])
     }
 }
 
@@ -89,6 +89,27 @@ private struct MirrorScheduleWidgetView: View {
     let entry: MirrorScheduleWidgetEntry
 
     var body: some View {
+        widgetContent
+            .containerBackground(for: .widget) {
+                Color(.systemBackground)
+            }
+    }
+
+    @ViewBuilder
+    private var widgetContent: some View {
+        switch family {
+        case .accessoryInline:
+            accessoryInlineView
+        case .accessoryCircular:
+            accessoryCircularView
+        case .accessoryRectangular:
+            accessoryRectangularView
+        default:
+            homeScreenWidgetView
+        }
+    }
+
+    private var homeScreenWidgetView: some View {
         VStack(alignment: .leading, spacing: verticalSpacing) {
             if let unavailableMessage = entry.unavailableMessage {
                 MirrorEmptyScheduleView(text: unavailableMessage)
@@ -97,9 +118,58 @@ private struct MirrorScheduleWidgetView: View {
             }
         }
         .padding(widgetPadding)
-        .containerBackground(for: .widget) {
-            Color(.systemBackground)
+    }
+
+    private var accessoryInlineView: some View {
+        Label {
+            Text(accessorySummaryText)
+        } icon: {
+            Image(systemName: accessorySymbolName)
         }
+    }
+
+    private var accessoryCircularView: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+
+            VStack(spacing: 2) {
+                Image(systemName: accessorySymbolName)
+                    .font(.system(size: 18, weight: .semibold))
+                    .widgetAccentable()
+
+                Text(accessoryCircularText)
+                    .font(.system(size: 12, weight: .semibold))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .padding(4)
+        }
+    }
+
+    private var accessoryRectangularView: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+
+            VStack(alignment: .leading, spacing: 2) {
+                Label {
+                    Text(accessoryHeadlineText)
+                        .lineLimit(1)
+                } icon: {
+                    Image(systemName: accessorySymbolName)
+                }
+                .font(.system(size: 13, weight: .semibold))
+                .widgetAccentable()
+
+                Text(accessoryDetailText)
+                    .font(.system(size: 12, weight: .regular))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 8)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     @ViewBuilder
@@ -146,6 +216,73 @@ private struct MirrorScheduleWidgetView: View {
         default:
             return 7
         }
+    }
+
+    private var nextSchedule: MirrorWidgetSchedule? {
+        entry.schedules.first { $0.endDate > entry.date }
+    }
+
+    private var accessorySymbolName: String {
+        nextSchedule == nil ? "calendar" : "calendar.badge.clock"
+    }
+
+    private var accessorySummaryText: String {
+        guard entry.unavailableMessage == nil else {
+            return String(localized: "Open Mirror.ly")
+        }
+
+        guard let nextSchedule else {
+            return String(localized: "No upcoming todos")
+        }
+
+        return "\(nextSchedule.title), \(accessoryTimeText(for: nextSchedule))"
+    }
+
+    private var accessoryHeadlineText: String {
+        guard entry.unavailableMessage == nil else {
+            return String(localized: "Mirror Todos")
+        }
+
+        return nextSchedule?.title ?? String(localized: "No upcoming todos")
+    }
+
+    private var accessoryDetailText: String {
+        if let unavailableMessage = entry.unavailableMessage {
+            return unavailableMessage
+        }
+
+        guard let nextSchedule else {
+            return String(localized: "All clear")
+        }
+
+        return accessoryTimeText(for: nextSchedule)
+    }
+
+    private var accessoryCircularText: String {
+        guard entry.unavailableMessage == nil else {
+            return String(localized: "Open")
+        }
+
+        guard let nextSchedule else {
+            return "0"
+        }
+
+        return nextSchedule.startDate.formatted(date: .omitted, time: .shortened)
+    }
+
+    private func accessoryTimeText(for schedule: MirrorWidgetSchedule) -> String {
+        let calendar = Calendar.current
+        let dayText: String
+
+        if calendar.isDate(schedule.startDate, inSameDayAs: entry.date) {
+            dayText = String(localized: "Today")
+        } else if calendar.isDateInTomorrow(schedule.startDate) {
+            dayText = String(localized: "Tomorrow")
+        } else {
+            dayText = schedule.startDate.formatted(.dateTime.weekday(.abbreviated))
+        }
+
+        return "\(dayText) \(schedule.startDate.formatted(date: .omitted, time: .shortened))"
     }
 
     private func visibleDisplayLines() -> [MirrorScheduleDisplayLine] {
@@ -217,7 +354,7 @@ private struct MirrorDateHeaderView: View {
     var body: some View {
         Text(displayText)
             .font(.system(size: isToday ? 14 : 13, weight: .bold))
-            .foregroundStyle(isToday ? Color.red : Color.secondary)
+            .foregroundStyle(isToday ? Color(.systemRed) : Color.secondary)
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -252,12 +389,8 @@ private struct MirrorEmptyScheduleView: View {
 }
 
 private enum MirrorWidgetColor {
-    static let schedule = Color(UIColor { traitCollection in
-        if traitCollection.userInterfaceStyle == .dark {
-            return UIColor(red: 70 / 255, green: 70 / 255, blue: 70 / 255, alpha: 1)
-        }
-        return UIColor(red: 190 / 255, green: 190 / 255, blue: 190 / 255, alpha: 1)
-    })
+    static let scheduleText = Color(.secondaryLabel)
+    static let scheduleBorder = Color(.separator)
 }
 
 private struct MirrorScheduleRow: View {
@@ -268,7 +401,7 @@ private struct MirrorScheduleRow: View {
         HStack(spacing: 7) {
             Text(schedule.title)
                 .font(.system(size: compact ? 12 : 13, weight: .semibold))
-                .foregroundStyle(MirrorWidgetColor.schedule)
+                .foregroundStyle(MirrorWidgetColor.scheduleText)
                 .lineLimit(1)
 
             Spacer(minLength: 6)
@@ -289,7 +422,7 @@ private struct MirrorScheduleRow: View {
         .frame(minHeight: compact ? 30 : 34)
         .overlay {
             RoundedRectangle(cornerRadius: 5)
-                .stroke(MirrorWidgetColor.schedule, style: StrokeStyle(lineWidth: 1.2, dash: [2, 3]))
+                .stroke(MirrorWidgetColor.scheduleBorder, style: StrokeStyle(lineWidth: 1.2, dash: [2, 3]))
         }
     }
 }

@@ -22,7 +22,6 @@ struct MirrorLiveActivityLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: MirrorLiveActivityAttributes.self) { context in
             MirrorLockScreenLiveActivityView(context: context)
-                .activityBackgroundTint(.black)
                 .activitySystemActionForegroundColor(MirrorActivityColor.color(for: context.attributes.colorType))
         } dynamicIsland: { context in
             DynamicIsland {
@@ -82,11 +81,11 @@ private struct MirrorLockScreenLiveActivityView: View {
                 Text(context.attributes.taskName)
                     .font(.headline)
                     .lineLimit(1)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
 
                 Text("Counting")
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.65))
+                    .foregroundStyle(.secondary)
             }
 
             Spacer()
@@ -94,7 +93,7 @@ private struct MirrorLockScreenLiveActivityView: View {
             Text(context.state.startDate, style: .timer)
                 .font(.title3)
                 .monospacedDigit()
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 16)
@@ -112,7 +111,7 @@ private struct MirrorColorDot: View {
             .overlay(
                 Circle()
                     .inset(by: 0.5)
-                    .stroke(.white.opacity(0.65), lineWidth: 1)
+                    .stroke(Color(.separator), lineWidth: 1)
             )
     }
 }
