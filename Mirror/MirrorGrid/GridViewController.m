@@ -33,7 +33,8 @@
 #define kCellWidth (25*kWidthRatio)
 #define kCellSpacing (2.5*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
-#define kChartBottomPadding (4*kHeightRatio)
+#define kChartTopPadding (10*kHeightRatio)
+#define kChartBottomPadding (10*kHeightRatio)
 
 @interface GridFixedRowsLayout : UICollectionViewLayout
 
@@ -254,21 +255,21 @@
     [self.taskProgressListView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kChartBottomPadding);
     }];
     [self.view addSubview:self.taskBubbleListView];
     [self.taskBubbleListView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kChartBottomPadding);
     }];
     [self.view addSubview:self.taskLineChartView];
     [self.taskLineChartView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kChartBottomPadding);
     }];
     [self updateChartVisibility];
@@ -278,7 +279,7 @@
     CGFloat width = MIN(chartAreaWidth, chartAreaHeight);
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing + (chartAreaWidth - width) / 2);
-        make.top.mas_equalTo(self.legendView.mas_bottom).offset((chartAreaHeight - width) / 2);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding + (chartAreaHeight - width) / 2);
         make.width.height.mas_equalTo(width);
     }];
     [self updateChartVisibility];
@@ -602,7 +603,7 @@
     if (self.piechartView.superview) { //security
         [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
             make.left.mas_equalTo(self.view).offset(kLeftRightSpacing + (chartAreaWidth - width) / 2);
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset((chartAreaHeight - width) / 2);
+            make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding + (chartAreaHeight - width) / 2);
             make.width.height.mas_equalTo(width);
         }];
     }
@@ -1113,7 +1114,7 @@
     CGFloat navi = self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height;
     CGFloat grid_plusGapBelow = (kCellWidth*7 + kCellSpacing*6) + kGapInLine;
     CGFloat dataLabel_plusGapBelow = 24*kHeightRatio + kGapInLine;
-    CGFloat legend_plusGapBelow = [self.legendView legendViewHeight];
+    CGFloat legend_plusGapBelow = [self.legendView legendViewHeight] + kChartTopPadding;
     CGFloat tabbar_plusGapAbove = self.tabBarController.tabBar.frame.size.height + kChartBottomPadding;
     
     CGFloat leftHeight = kScreenHeight - navi - grid_plusGapBelow - dataLabel_plusGapBelow - legend_plusGapBelow - tabbar_plusGapAbove;
