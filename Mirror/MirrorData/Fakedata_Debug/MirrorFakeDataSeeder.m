@@ -334,7 +334,7 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 + (NSArray<NSString *> *)localizedSampleTaskNamesForEnglishName:(NSString *)englishName
 {
     NSDictionary<NSString *, NSArray<NSString *> *> *taskNames = @{
-        @"Gym": ML(@"Gym", @"健身", @"Gym", @"Gym", @"ジム", @"운동", @"Sport", @"Зал"),
+        @"Gym": ML(@"Lift", @"健身", @"Gym", @"Gym", @"ジム", @"운동", @"Sport", @"Зал"),
         @"Tennis": ML(@"Tennis", @"网球", @"Tenis", @"Tennis", @"テニス", @"테니스", @"Tennis", @"Теннис"),
         @"Code": ML(@"Code", @"编程", @"Code", @"Code", @"コード", @"코딩", @"Code", @"Код"),
         @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Nage", @"水泳", @"수영", @"Swim", @"Бассейн"),
