@@ -44,6 +44,7 @@
 		4AA6FCA13069A08200FE59CE /* TaskBubbleListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA6FCA03069A08200FE59CE /* TaskBubbleListView.m */; };
 		4AA6FCA43069A75800FE59CE /* HourIconView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA6FCA33069A75800FE59CE /* HourIconView.m */; };
 		4AA6FCA73069AC5F00FE59CE /* TaskProgressListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA6FCA63069AC5F00FE59CE /* TaskProgressListView.m */; };
+		4AA6FCAA3069B61400FE59CE /* TaskLineChartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AA6FCA93069B61400FE59CE /* TaskLineChartView.m */; };
 		4AABB5F1303F622A00AA0DE3 /* MirrorTrackingCircleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB5F0303F622A00AA0DE3 /* MirrorTrackingCircleView.m */; };
 		4AABB5F4303F623F00AA0DE3 /* StopButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB5F3303F623F00AA0DE3 /* StopButton.m */; };
 		4AABB5F7303F66FF00AA0DE3 /* MirrorRecordWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB5F6303F66FF00AA0DE3 /* MirrorRecordWindow.m */; };
@@ -175,6 +176,8 @@
 		4AA6FCA33069A75800FE59CE /* HourIconView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = HourIconView.m; sourceTree = "<group>"; };
 		4AA6FCA53069AC3A00FE59CE /* TaskProgressListView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskProgressListView.h; sourceTree = "<group>"; };
 		4AA6FCA63069AC5F00FE59CE /* TaskProgressListView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskProgressListView.m; sourceTree = "<group>"; };
+		4AA6FCA83069B5D000FE59CE /* TaskLineChartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskLineChartView.h; sourceTree = "<group>"; };
+		4AA6FCA93069B61400FE59CE /* TaskLineChartView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskLineChartView.m; sourceTree = "<group>"; };
 		4AABB5EF303F61F600AA0DE3 /* MirrorTrackingCircleView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorTrackingCircleView.h; sourceTree = "<group>"; };
 		4AABB5F0303F622A00AA0DE3 /* MirrorTrackingCircleView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorTrackingCircleView.m; sourceTree = "<group>"; };
 		4AABB5F2303F622E00AA0DE3 /* StopButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StopButton.h; sourceTree = "<group>"; };
@@ -455,6 +458,8 @@
 				4AA6FCA33069A75800FE59CE /* HourIconView.m */,
 				4AA6FCA53069AC3A00FE59CE /* TaskProgressListView.h */,
 				4AA6FCA63069AC5F00FE59CE /* TaskProgressListView.m */,
+				4AA6FCA83069B5D000FE59CE /* TaskLineChartView.h */,
+				4AA6FCA93069B61400FE59CE /* TaskLineChartView.m */,
 			);
 			path = Progress;
 			sourceTree = "<group>";
@@ -792,6 +797,7 @@
 				4A37369729E2BD3C00187280 /* SliceLayer.m in Sources */,
 				4AC2B8D5305DE6F5001CE587 /* MirrorManualGuidePointer.m in Sources */,
 				4A88212F29F671F7009E422C /* TimeTrackingViewController.m in Sources */,
+				4AA6FCAA3069B61400FE59CE /* TaskLineChartView.m in Sources */,
 				4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */,
 				4A7EFA073027D3CB00904ED9 /* UIFont+MirrorFont.m in Sources */,
 				4A37369429E2AEE900187280 /* PiechartView.m in Sources */,

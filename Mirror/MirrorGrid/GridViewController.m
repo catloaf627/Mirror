@@ -19,6 +19,7 @@
 #import "LegendView.h"
 #import "TaskProgressListView.h"
 #import "TaskBubbleListView.h"
+#import "TaskLineChartView.h"
 #import "PiechartView.h"
 #import "TaskRecordsViewController.h"
 #import "MirrorTimeText.h"
@@ -32,6 +33,7 @@
 #define kCellWidth (25*kWidthRatio)
 #define kCellSpacing (2.5*kWidthRatio)
 #define kGapInLine (10*kHeightRatio)
+#define kChartBottomPadding (4*kHeightRatio)
 
 @interface GridFixedRowsLayout : UICollectionViewLayout
 
@@ -117,6 +119,7 @@
 @property (nonatomic, strong) LegendView *legendView;
 @property (nonatomic, strong) TaskProgressListView *taskProgressListView;
 @property (nonatomic, strong) TaskBubbleListView *taskBubbleListView;
+@property (nonatomic, strong) TaskLineChartView *taskLineChartView;
 @property (nonatomic, strong) PiechartView *piechartView;
 @end
 
@@ -194,6 +197,7 @@
     self.legendView = nil;
     self.taskProgressListView = nil;
     self.taskBubbleListView = nil;
+    self.taskLineChartView = nil;
     self.piechartView = nil;
     self.chartModeButton = nil;
     self.heatmapButton = nil;
@@ -273,29 +277,32 @@
     [self.taskProgressListView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
-        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
+        make.top.mas_equalTo(self.legendView.mas_bottom);
+        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kChartBottomPadding);
     }];
     [self.view addSubview:self.taskBubbleListView];
     [self.taskBubbleListView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
-        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
+        make.top.mas_equalTo(self.legendView.mas_bottom);
+        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kChartBottomPadding);
+    }];
+    [self.view addSubview:self.taskLineChartView];
+    [self.taskLineChartView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
+        make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
+        make.top.mas_equalTo(self.legendView.mas_bottom);
+        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kChartBottomPadding);
     }];
     [self updateChartVisibility];
     [self.view addSubview:self.piechartView];
-    CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
+    CGFloat chartAreaWidth = [[self leftWidthLeftHeight][0] floatValue];
+    CGFloat chartAreaHeight = [[self leftWidthLeftHeight][1] floatValue];
+    CGFloat width = MIN(chartAreaWidth, chartAreaHeight);
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
-        if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
-            make.centerX.offset(0);
-            make.width.height.mas_equalTo(width);
-        } else {
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
-            make.centerX.offset(0);
-            make.width.height.mas_equalTo(width);
-        }
+        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing + (chartAreaWidth - width) / 2);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset((chartAreaHeight - width) / 2);
+        make.width.height.mas_equalTo(width);
     }];
     [self updateChartVisibility];
     _selectedCellIndexesStart = -1;
@@ -368,7 +375,8 @@
 {
     MirrorGridChartMode chartMode = [MirrorSettings appliedGridChartMode];
     self.taskProgressListView.hidden = chartMode != MirrorGridChartModeProgressList;
-    self.taskBubbleListView.hidden = !(chartMode == MirrorGridChartModeBubbles || chartMode == MirrorGridChartModeLineChart);
+    self.taskBubbleListView.hidden = chartMode != MirrorGridChartModeBubbles;
+    self.taskLineChartView.hidden = chartMode != MirrorGridChartModeLineChart;
     self.piechartView.hidden = chartMode != MirrorGridChartModePieChart;
 }
 
@@ -509,6 +517,44 @@
     return [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:shouldHideHidden];
 }
 
+- (NSMutableArray<MirrorReadModel *> *)lineChartDataFromDateKeys:(NSArray<NSString *> *)dateKeys
+{
+    if (dateKeys.count == 0) {
+        return [NSMutableArray new];
+    }
+    NSDate *startDate = [self dateFromKey:dateKeys.firstObject];
+    NSDate *endDate = [self dateFromKey:dateKeys.lastObject];
+    if (!startDate || !endDate) {
+        return [NSMutableArray new];
+    }
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    long startTime = [startDate timeIntervalSince1970];
+    long endTime = [[gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:endDate options:0] timeIntervalSince1970];
+    return [MirrorStorage getAllRecordsInTaskOrderWithStart:startTime end:endTime shouldHideHidden:YES];
+}
+
+- (NSArray<NSString *> *)lineChartDateKeysFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
+{
+    if (self.keys.count == 0 || startIndex < 0 || endIndex < 0 || startIndex >= self.keys.count || endIndex >= self.keys.count) {
+        return @[];
+    }
+    NSInteger start = MIN(startIndex, endIndex);
+    NSInteger end = MAX(startIndex, endIndex);
+    if (start == end) {
+        NSDate *date = [self dateFromKey:self.keys[start]];
+        if (!date) {
+            return @[];
+        }
+        NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+        gregorian.timeZone = [NSTimeZone systemTimeZone];
+        NSDate *previousDate = [gregorian dateByAddingUnit:NSCalendarUnitDay value:-1 toDate:date options:0];
+        NSDate *nextDate = [gregorian dateByAddingUnit:NSCalendarUnitDay value:1 toDate:date options:0];
+        return @[[self keyFromDate:previousDate], self.keys[start], [self keyFromDate:nextDate]];
+    }
+    return [self.keys subarrayWithRange:NSMakeRange(start, end - start + 1)];
+}
+
 - (NSMutableArray<MirrorReadModel *> *)legendDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
 {
     NSMutableArray<MirrorReadModel *> *legendData = [NSMutableArray new];
@@ -546,6 +592,8 @@
     NSInteger end = startIndex > endIndex ? startIndex : endIndex;
     NSMutableArray<MirrorReadModel *> *legendData = [self legendDataFromIndex:start toIndex:end];
     NSMutableArray<MirrorReadModel *> *data = [self chartDataFromIndex:start toIndex:end shouldHideHidden:YES];
+    NSArray<NSString *> *lineChartDateKeys = [self lineChartDateKeysFromIndex:start toIndex:end];
+    NSMutableArray<MirrorReadModel *> *lineChartData = [self lineChartDataFromDateKeys:lineChartDateKeys];
     long totalTime = 0;
     for (MirrorReadModel *readModel in data) {
         totalTime += [MirrorTool getTotalTimeOfPeriods:readModel.records];
@@ -567,18 +615,17 @@
     // progress and bubble lists
     [self.taskProgressListView updateWithData:data];
     [self.taskBubbleListView updateWithData:data];
-    CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
+    [self.taskLineChartView updateWithData:lineChartData dateKeys:lineChartDateKeys];
+    CGFloat chartAreaWidth = [[self leftWidthLeftHeight][0] floatValue];
+    CGFloat chartAreaHeight = [[self leftWidthLeftHeight][1] floatValue];
+    CGFloat width = MIN(chartAreaWidth, chartAreaHeight);
     // piechart
     [self.piechartView updateWithData:data width:width enableInteractive:YES];
     if (self.piechartView.superview) { //security
         [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
-            if (width == [[self leftWidthLeftHeight][0] floatValue]) { // 宽度小于高度
-                make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine + ([[self leftWidthLeftHeight][1] floatValue]-[[self leftWidthLeftHeight][0] floatValue])/2);
-                make.width.height.mas_equalTo(width);
-            } else {
-                make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
-                make.width.height.mas_equalTo(width);
-            }
+            make.left.mas_equalTo(self.view).offset(kLeftRightSpacing + (chartAreaWidth - width) / 2);
+            make.top.mas_equalTo(self.legendView.mas_bottom).offset((chartAreaHeight - width) / 2);
+            make.width.height.mas_equalTo(width);
         }];
     }
 }
@@ -837,6 +884,14 @@
     return _taskBubbleListView;
 }
 
+- (TaskLineChartView *)taskLineChartView
+{
+    if (!_taskLineChartView) {
+        _taskLineChartView = [[TaskLineChartView alloc] initWithData:[NSMutableArray new] dateKeys:@[]];
+    }
+    return _taskLineChartView;
+}
+
 - (PiechartView *)piechartView
 {
     if (!_piechartView) {
@@ -1079,9 +1134,9 @@
     CGFloat navi = self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height;
     CGFloat leftRightTimeHint_noGapBelow = kCellWidth;
     CGFloat grid_plusGapBelow = (kCellWidth*7 + kCellSpacing*6) + kGapInLine;
-    CGFloat dataLabel_plusGapBelow = 20*kHeightRatio + kGapInLine;
-    CGFloat legend_plusGapBelow = [self.legendView legendViewHeight] + kGapInLine;
-    CGFloat tabbar_plusGapAbove = self.tabBarController.tabBar.frame.size.height + kGapInLine;
+    CGFloat dataLabel_plusGapBelow = 24*kHeightRatio + kGapInLine;
+    CGFloat legend_plusGapBelow = [self.legendView legendViewHeight];
+    CGFloat tabbar_plusGapAbove = self.tabBarController.tabBar.frame.size.height + kChartBottomPadding;
     
     CGFloat leftHeight = kScreenHeight - navi - leftRightTimeHint_noGapBelow - grid_plusGapBelow - dataLabel_plusGapBelow - legend_plusGapBelow - tabbar_plusGapAbove;
     CGFloat leftWidth = kScreenWidth - 2*kLeftRightSpacing;
