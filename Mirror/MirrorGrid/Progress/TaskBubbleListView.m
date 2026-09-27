@@ -29,6 +29,7 @@ static NSInteger const kMoreTagViewTag = 1002;
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *data;
 @property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *bubbleData;
+@property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *expandedBubbleData;
 @property (nonatomic, strong) NSMutableSet<NSString *> *expandedTaskNames;
 @property (nonatomic, strong) NSMutableArray<UIButton *> *bubbleButtons;
 @property (nonatomic, strong) MASConstraint *contentHeightConstraint;
@@ -43,6 +44,7 @@ static NSInteger const kMoreTagViewTag = 1002;
     if (self) {
         self.data = data;
         self.bubbleData = [NSMutableArray new];
+        self.expandedBubbleData = [NSMutableArray new];
         self.expandedTaskNames = [NSMutableSet new];
         self.bubbleButtons = [NSMutableArray new];
         self.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
@@ -83,6 +85,7 @@ static NSInteger const kMoreTagViewTag = 1002;
 {
     [self.contentView.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     [self.bubbleData removeAllObjects];
+    [self.expandedBubbleData removeAllObjects];
     [self.bubbleButtons removeAllObjects];
     
     for (MirrorReadModel *data in self.data) {
@@ -92,10 +95,12 @@ static NSInteger const kMoreTagViewTag = 1002;
             MirrorRecordModel *record = data.records[recordIndex];
             BOOL showsMoreTag = !isExpanded && data.records.count > 1 && recordIndex == 0;
             UIButton *bubbleButton = [self bubbleButtonWithRecord:record data:data showsMoreTag:showsMoreTag];
-            MirrorReadModel *bubbleData = [[MirrorReadModel alloc] initWithTask:data.taskModel records:[@[record] mutableCopy]];
+            MirrorReadModel *singleRecordData = [[MirrorReadModel alloc] initWithTask:data.taskModel records:[@[record] mutableCopy]];
+            MirrorReadModel *bubbleData = showsMoreTag ? data : singleRecordData;
             NSInteger bubbleIndex = self.bubbleData.count;
             bubbleButton.tag = bubbleIndex;
             [self.bubbleData addObject:bubbleData];
+            [self.expandedBubbleData addObject:data];
             [self.bubbleButtons addObject:bubbleButton];
             [self.contentView addSubview:bubbleButton];
         }
@@ -238,10 +243,10 @@ static NSInteger const kMoreTagViewTag = 1002;
 - (void)selectMoreTag:(UIButton *)moreTagButton
 {
     NSInteger index = moreTagButton.superview.tag;
-    if (index < 0 || index >= self.bubbleData.count) {
+    if (index < 0 || index >= self.expandedBubbleData.count) {
         return;
     }
-    MirrorReadModel *data = self.bubbleData[index];
+    MirrorReadModel *data = self.expandedBubbleData[index];
     [self.expandedTaskNames addObject:data.taskModel.taskName];
     [self rebuildBubbles];
     [self setNeedsLayout];
