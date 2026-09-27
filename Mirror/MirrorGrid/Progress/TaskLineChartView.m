@@ -7,6 +7,7 @@
 #import "MirrorMacro.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
+#import "MirrorLanguage.h"
 #import "MirrorTimeText.h"
 #import <Masonry/Masonry.h>
 
@@ -375,6 +376,8 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
     }
     CGRect visibleRect = [self visibleRectInCanvas];
     tagWidth = MIN(tagWidth, CGRectGetWidth(visibleRect) - 16 * scale);
+    titleFont = [self font:titleFont fittingText:title maxWidth:tagWidth - 2 * paddingX minimumScale:0.72];
+    titleAttributes = @{NSFontAttributeName: titleFont, NSForegroundColorAttributeName: titleColor};
     CGFloat tagHeight = paddingY * 2 + ceil(titleFont.lineHeight) + rowHeight * summaryData.count;
     CGFloat edgePadding = 8 * scale;
     CGFloat lineSpacing = 8 * scale;
@@ -437,16 +440,29 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
     return self.bounds;
 }
 
+- (UIFont *)font:(UIFont *)font fittingText:(NSString *)text maxWidth:(CGFloat)maxWidth minimumScale:(CGFloat)minimumScale
+{
+    if (maxWidth <= 0 || text.length == 0) {
+        return font;
+    }
+    CGFloat textWidth = [text sizeWithAttributes:@{NSFontAttributeName: font}].width;
+    if (textWidth <= maxWidth) {
+        return font;
+    }
+    CGFloat targetSize = MAX(font.pointSize * minimumScale, font.pointSize * maxWidth / textWidth);
+    return [UIFont fontWithName:font.fontName size:targetSize] ?: [UIFont systemFontOfSize:targetSize];
+}
+
 - (NSString *)titleTextForDateKey:(NSString *)dateKey
 {
     NSDate *date = [self dateFromKey:dateKey];
     if (!date) {
         return dateKey;
     }
-    NSDateFormatter *formatter = [NSDateFormatter new];
-    formatter.dateFormat = @"EEE, MMM d";
-    formatter.timeZone = [NSTimeZone systemTimeZone];
-    return [formatter stringFromDate:date];
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    calendar.timeZone = [NSTimeZone systemTimeZone];
+    NSDateComponents *components = [calendar components:NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitWeekday fromDate:date];
+    return [MirrorLanguage mirror_shortDateStringWithMonth:components.month day:components.day weekday:components.weekday];
 }
 
 - (NSDate *)dateFromKey:(NSString *)dateKey

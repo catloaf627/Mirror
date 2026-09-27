@@ -33,6 +33,9 @@ typedef NS_ENUM(NSInteger, MirrorLanguageKey) {
                                   month:(long)month
                                     day:(long)day
                                 weekday:(long)weekday;
++ (NSString *)mirror_shortDateStringWithMonth:(long)month
+                                          day:(long)day
+                                      weekday:(long)weekday; // 不带年份的短日期
 + (NSString *)mirror_dateStringWithYear:(long)year
                                   month:(long)month
                                     day:(long)day;

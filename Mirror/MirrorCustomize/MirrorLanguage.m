@@ -223,6 +223,41 @@
     }
 }
 
+// 6月27日 周四:
+// English: Thu, Jun 27
+// Chinese: 6月27日 周四
+// Spanish: Jue, 27 Jun
+// French: Jeu, 27 Juin
+// Japanese: 6月27日 木
+// Korean: 6월 27일 목
+// German: Do, 27. Jun
+// Russian: Чт, 27 Июн
++ (NSString *)mirror_shortDateStringWithMonth:(long)month
+                                          day:(long)day
+                                      weekday:(long)weekday
+{
+    MirrorLanguageKey languageKey = [MirrorSettings preferredLanguageKey];
+    NSString *monthText = [MirrorLanguage monthTextForMonth:month languageKey:languageKey];
+    NSString *weekdayText = [MirrorLanguage weekdayTextForWeekday:weekday languageKey:languageKey];
+    
+    switch (languageKey) {
+        case MirrorLanguageKeySimplifiedChinese:
+        case MirrorLanguageKeyJapanese:
+            return [NSString stringWithFormat:@"%@%ld日 %@", monthText, day, weekdayText];
+        case MirrorLanguageKeyKorean:
+            return [NSString stringWithFormat:@"%@ %ld일 %@", monthText, day, weekdayText];
+        case MirrorLanguageKeyGerman:
+            return [NSString stringWithFormat:@"%@, %ld. %@", weekdayText, day, monthText];
+        case MirrorLanguageKeySpanish:
+        case MirrorLanguageKeyFrench:
+        case MirrorLanguageKeyRussian:
+            return [NSString stringWithFormat:@"%@, %ld %@", weekdayText, day, monthText];
+        case MirrorLanguageKeyEnglish:
+        default:
+            return [NSString stringWithFormat:@"%@, %@ %ld", weekdayText, monthText, day];
+    }
+}
+
 // 1996年6月27日:
 // English: Jun 27, 1996
 // Chinese: 1996年6月27日
