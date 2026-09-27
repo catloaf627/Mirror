@@ -177,7 +177,10 @@
 
 - (NSString *)recordNoonDateCommand
 {
-    return @"sudo date 0903000026";
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"MMdd0000yy";
+    formatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    return [NSString stringWithFormat:@"sudo date %@", [formatter stringFromDate:[NSDate date]]];
 }
 
 - (void)copyRecordTimeOffCommand

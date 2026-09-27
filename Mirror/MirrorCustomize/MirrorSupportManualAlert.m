@@ -19,6 +19,7 @@ static NSString * const kMirrorFutureTodoWidgetVideoName = @"2_future_todo";
 static NSString * const kMirrorLongPressToEditSpecialDayVideoName = @"2_special_edit";
 static NSString * const kMirrorTapTaskInLegendToHideShowVideoName = @"3_legend";
 static NSString * const kMirrorLongPressDragAcrossDatesVideoName = @"3_select_multiple";
+static NSString * const kMirrorTapToSwitchRecordDataStyleVideoName = @"3_four_styles";
 static NSString * const kMirrorLongPressToEditTaskRecordVideoName = @"3_one_edit";
 static NSString * const kMirrorManualVideoItemTitleKey = @"title";
 static NSString * const kMirrorManualVideoItemURLKey = @"url";
@@ -64,6 +65,7 @@ static NSString * const kMirrorManualVideoDefinitionNameKey = @"name";
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_special_day_edit", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditSpecialDayVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_legend_task_visibility", kMirrorManualVideoDefinitionNameKey: kMirrorTapTaskInLegendToHideShowVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_drag_dates", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressDragAcrossDatesVideoName},
+        @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_data_styles", kMirrorManualVideoDefinitionNameKey: kMirrorTapToSwitchRecordDataStyleVideoName},
         @{kMirrorManualVideoDefinitionLanguageKey: @"manual_record_task_record_edit", kMirrorManualVideoDefinitionNameKey: kMirrorLongPressToEditTaskRecordVideoName}
     ];
 }
