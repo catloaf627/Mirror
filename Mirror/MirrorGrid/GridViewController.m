@@ -180,7 +180,6 @@
     if (_selectedCellIndex < [self.collectionView numberOfItemsInSection:0]) { // safety
         [self.collectionView scrollToItemAtIndexPath:[NSIndexPath indexPathForItem:_selectedCellIndex inSection:0] atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
     }
-    [self updateHints];
 }
 
 - (void)restartVC
@@ -219,7 +218,6 @@
     [self updateHeatmapButton];
     [self updateWeekStartsOnButton];
     [self updateChartVisibility];
-    [self updateWeekdayView];
     [self updateKeys];
     [self updateGridData];
     [self updateCharts];
@@ -231,32 +229,11 @@
 {
     // collection view
     self.view.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    [self.view addSubview:self.leftHint];
-    [self.leftHint mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing+kCellWidth+2);
-        make.width.mas_equalTo((kScreenWidth-2*kLeftRightSpacing-kCellWidth-2)/2);
-        make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
-        make.height.mas_equalTo(kCellWidth);
-    }];
-    [self.view addSubview:self.rightHint];
-    [self.rightHint mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.width.mas_equalTo((kScreenWidth-2*kLeftRightSpacing-kCellWidth-2)/2);
-        make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
-        make.height.mas_equalTo(kCellWidth);
-    }];
-    [self.view addSubview:self.weekdayView];
-    [self.weekdayView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
-        make.top.mas_equalTo(self.rightHint.mas_bottom);
-        make.height.mas_equalTo(kCellWidth*7 + kCellSpacing*6);
-        make.width.mas_equalTo([self weekdayViewWidth]);
-    }];
     [self.view addSubview:self.collectionView];
     [self.collectionView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self.weekdayView.mas_right).offset(kCellSpacing);
+        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
-        make.top.mas_equalTo(self.rightHint.mas_bottom);
+        make.top.mas_equalTo(self.view).offset(self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height);
         make.height.mas_equalTo(kCellWidth*7 + kCellSpacing*6);
     }];
     [self.view addSubview:self.dateLabel];
@@ -775,7 +752,6 @@
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
-    [self updateHints];
 }
 
 - (void)collectionView:(UICollectionView *)collectionView willDisplayCell:(UICollectionViewCell *)cell forItemAtIndexPath:(NSIndexPath *)indexPath
@@ -1134,13 +1110,12 @@
 - (NSArray *)leftWidthLeftHeight
 {
     CGFloat navi = self.navigationController.navigationBar.frame.origin.y + self.navigationController.navigationBar.frame.size.height;
-    CGFloat leftRightTimeHint_noGapBelow = kCellWidth;
     CGFloat grid_plusGapBelow = (kCellWidth*7 + kCellSpacing*6) + kGapInLine;
     CGFloat dataLabel_plusGapBelow = 24*kHeightRatio + kGapInLine;
     CGFloat legend_plusGapBelow = [self.legendView legendViewHeight];
     CGFloat tabbar_plusGapAbove = self.tabBarController.tabBar.frame.size.height + kChartBottomPadding;
     
-    CGFloat leftHeight = kScreenHeight - navi - leftRightTimeHint_noGapBelow - grid_plusGapBelow - dataLabel_plusGapBelow - legend_plusGapBelow - tabbar_plusGapAbove;
+    CGFloat leftHeight = kScreenHeight - navi - grid_plusGapBelow - dataLabel_plusGapBelow - legend_plusGapBelow - tabbar_plusGapAbove;
     CGFloat leftWidth = kScreenWidth - 2*kLeftRightSpacing;
     return @[@(leftWidth), @(leftHeight)];
 }
