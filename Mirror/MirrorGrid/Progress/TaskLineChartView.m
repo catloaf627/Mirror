@@ -7,6 +7,7 @@
 #import "MirrorMacro.h"
 #import "UIColor+MirrorColor.h"
 #import "UIFont+MirrorFont.h"
+#import "MirrorTimeText.h"
 #import <Masonry/Masonry.h>
 
 static CGFloat const kLineChartTopInset = 10;
@@ -19,6 +20,7 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
 
 @property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *data;
 @property (nonatomic, strong) NSArray<NSString *> *dateKeys;
+@property (nonatomic, assign) NSInteger selectedDateIndex;
 
 - (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data dateKeys:(NSArray<NSString *> *)dateKeys;
 
@@ -115,6 +117,9 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
     if (self) {
         self.backgroundColor = [UIColor clearColor];
         self.contentMode = UIViewContentModeRedraw;
+        self.selectedDateIndex = NSNotFound;
+        UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleTap:)];
+        [self addGestureRecognizer:tapRecognizer];
     }
     return self;
 }
@@ -123,6 +128,9 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
 {
     self.data = data;
     self.dateKeys = dateKeys;
+    if (self.selectedDateIndex >= dateKeys.count) {
+        self.selectedDateIndex = NSNotFound;
+    }
     [self setNeedsDisplay];
 }
 
@@ -169,6 +177,7 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
         wavePath.lineWidth = 1.5 * kWidthRatio;
         [wavePath stroke];
     }
+    [self drawSelectionInRect:plotRect secondsByTask:secondsByTask];
 }
 
 - (NSDictionary<NSString *, NSDictionary<NSString *, NSNumber *> *> *)secondsByTaskByDate
@@ -274,6 +283,170 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
         linePath.lineWidth = 0.5;
         [linePath stroke];
     }
+}
+
+- (void)handleTap:(UITapGestureRecognizer *)recognizer
+{
+    if (self.dateKeys.count == 0) {
+        self.selectedDateIndex = NSNotFound;
+        [self setNeedsDisplay];
+        return;
+    }
+    CGRect plotRect = UIEdgeInsetsInsetRect(self.bounds, UIEdgeInsetsMake(kLineChartTopInset * kHeightRatio,
+                                                                          kLineChartLeftInset * kWidthRatio,
+                                                                          kLineChartBottomInset * kHeightRatio,
+                                                                          kLineChartRightInset * kWidthRatio));
+    CGPoint point = [recognizer locationInView:self];
+    CGFloat step = self.dateKeys.count > 1 ? CGRectGetWidth(plotRect) / (self.dateKeys.count - 1) : 0;
+    NSInteger nearestIndex = 0;
+    CGFloat nearestDistance = CGFLOAT_MAX;
+    for (NSInteger index = 0; index < self.dateKeys.count; index++) {
+        CGFloat x = self.dateKeys.count > 1 ? CGRectGetMinX(plotRect) + step * index : CGRectGetMidX(plotRect);
+        CGFloat distance = fabs(point.x - x);
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestIndex = index;
+        }
+    }
+    self.selectedDateIndex = nearestIndex;
+    [self setNeedsDisplay];
+}
+
+- (void)drawSelectionInRect:(CGRect)plotRect secondsByTask:(NSDictionary<NSString *, NSDictionary<NSString *, NSNumber *> *> *)secondsByTask
+{
+    if (self.selectedDateIndex == NSNotFound || self.selectedDateIndex >= self.dateKeys.count) {
+        return;
+    }
+    NSString *dateKey = self.dateKeys[self.selectedDateIndex];
+    CGFloat step = self.dateKeys.count > 1 ? CGRectGetWidth(plotRect) / (self.dateKeys.count - 1) : 0;
+    CGFloat x = self.dateKeys.count > 1 ? CGRectGetMinX(plotRect) + step * self.selectedDateIndex : CGRectGetMidX(plotRect);
+    
+    UIColor *lineColor = [[UIColor mirrorColorNamed:MirrorColorTypeTextHint] colorWithAlphaComponent:0.45];
+    [lineColor setStroke];
+    UIBezierPath *linePath = [UIBezierPath new];
+    [linePath moveToPoint:CGPointMake(x, CGRectGetMinY(plotRect))];
+    [linePath addLineToPoint:CGPointMake(x, CGRectGetMaxY(plotRect))];
+    linePath.lineWidth = 0.5;
+    [linePath stroke];
+    
+    NSArray<MirrorReadModel *> *summaryData = [self summaryDataForDateKey:dateKey secondsByTask:secondsByTask];
+    [self drawSummaryTagWithDateKey:dateKey data:summaryData atX:x plotRect:plotRect];
+}
+
+- (NSArray<MirrorReadModel *> *)summaryDataForDateKey:(NSString *)dateKey secondsByTask:(NSDictionary<NSString *, NSDictionary<NSString *, NSNumber *> *> *)secondsByTask
+{
+    NSMutableArray<MirrorReadModel *> *summaryData = [NSMutableArray new];
+    for (MirrorReadModel *readModel in self.data) {
+        NSNumber *seconds = secondsByTask[readModel.taskModel.taskName][dateKey];
+        if (seconds.longValue <= 0) {
+            continue;
+        }
+        MirrorRecordModel *summaryRecord = [MirrorRecordModel new];
+        summaryRecord.startTime = 0;
+        summaryRecord.endTime = seconds.longValue;
+        MirrorReadModel *summaryModel = [[MirrorReadModel alloc] initWithTask:readModel.taskModel records:[@[summaryRecord] mutableCopy]];
+        [summaryData addObject:summaryModel];
+    }
+    return summaryData;
+}
+
+- (void)drawSummaryTagWithDateKey:(NSString *)dateKey data:(NSArray<MirrorReadModel *> *)summaryData atX:(CGFloat)x plotRect:(CGRect)plotRect
+{
+    CGFloat scale = kWidthRatio;
+    CGFloat paddingX = 12 * scale;
+    CGFloat paddingY = 9 * kHeightRatio;
+    CGFloat rowHeight = 20 * kHeightRatio;
+    CGFloat dotSize = 8 * scale;
+    CGFloat dotTextSpacing = 10 * scale;
+    CGFloat columnSpacing = 16 * scale;
+    UIFont *titleFont = [UIFont mirrorLabelFont];
+    UIFont *rowFont = [UIFont mirrorHintFont];
+    UIColor *titleColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    UIColor *textColor = [UIColor mirrorColorNamed:MirrorColorTypeText];
+    NSString *title = [self titleTextForDateKey:dateKey];
+    NSDictionary *titleAttributes = @{NSFontAttributeName: titleFont, NSForegroundColorAttributeName: titleColor};
+    NSDictionary *rowAttributes = @{NSFontAttributeName: rowFont, NSForegroundColorAttributeName: textColor};
+    CGFloat tagWidth = ceil([title sizeWithAttributes:titleAttributes].width) + 2 * paddingX;
+    for (MirrorReadModel *readModel in summaryData) {
+        NSString *name = readModel.taskModel.taskName ?: @"";
+        NSString *time = [MirrorTimeText XdXhXmXsShort:readModel.records.firstObject.endTime];
+        CGFloat rowWidth = dotSize + dotTextSpacing + ceil([name sizeWithAttributes:rowAttributes].width) + columnSpacing + ceil([time sizeWithAttributes:rowAttributes].width);
+        tagWidth = MAX(tagWidth, rowWidth + 2 * paddingX);
+    }
+    CGRect visibleRect = [self visibleRectInCanvas];
+    tagWidth = MIN(tagWidth, CGRectGetWidth(visibleRect) - 16 * scale);
+    CGFloat tagHeight = paddingY * 2 + ceil(titleFont.lineHeight) + rowHeight * summaryData.count;
+    CGFloat edgePadding = 8 * scale;
+    CGFloat lineSpacing = 8 * scale;
+    CGFloat availableLeftWidth = x - lineSpacing - CGRectGetMinX(visibleRect) - edgePadding;
+    CGFloat availableRightWidth = CGRectGetMaxX(visibleRect) - x - lineSpacing - edgePadding;
+    CGFloat tagX = availableRightWidth >= availableLeftWidth ? x + lineSpacing : x - lineSpacing - tagWidth;
+    tagX = MIN(MAX(CGRectGetMinX(visibleRect) + edgePadding, tagX), CGRectGetMaxX(visibleRect) - tagWidth - edgePadding);
+    CGFloat tagY = MAX(8 * kHeightRatio, CGRectGetMinY(plotRect) + 8 * kHeightRatio);
+    CGRect tagRect = CGRectMake(tagX, tagY, tagWidth, tagHeight);
+    
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSaveGState(context);
+    CGContextSetShadowWithColor(context, CGSizeMake(0, 2 * kHeightRatio), 8 * scale, [[UIColor blackColor] colorWithAlphaComponent:0.16].CGColor);
+    UIBezierPath *backgroundPath = [UIBezierPath bezierPathWithRoundedRect:tagRect cornerRadius:7 * scale];
+    [[UIColor mirrorColorNamed:MirrorColorTypeBackground] setFill];
+    [backgroundPath fill];
+    CGContextRestoreGState(context);
+    
+    [[UIColor colorWithWhite:0 alpha:0.12] setStroke];
+    backgroundPath.lineWidth = 0.5;
+    [backgroundPath stroke];
+    
+    CGRect titleRect = CGRectMake(CGRectGetMinX(tagRect) + paddingX,
+                                  CGRectGetMinY(tagRect) + paddingY,
+                                  tagWidth - 2 * paddingX,
+                                  ceil(titleFont.lineHeight));
+    [title drawInRect:titleRect withAttributes:titleAttributes];
+    
+    CGFloat rowY = CGRectGetMaxY(titleRect) + 5 * kHeightRatio;
+    if (summaryData.count == 0) {
+        return;
+    }
+    for (MirrorReadModel *readModel in summaryData) {
+        CGFloat dotY = rowY + (rowHeight - dotSize) / 2;
+        CGRect dotRect = CGRectMake(CGRectGetMinX(tagRect) + paddingX, dotY, dotSize, dotSize);
+        UIBezierPath *dotPath = [UIBezierPath bezierPathWithRoundedRect:dotRect cornerRadius:3 * scale];
+        [[UIColor mirrorColorNamed:readModel.taskModel.color] setFill];
+        [dotPath fill];
+        
+        NSString *name = readModel.taskModel.taskName ?: @"";
+        NSString *time = [MirrorTimeText XdXhXmXsShort:readModel.records.firstObject.endTime];
+        CGFloat timeWidth = ceil([time sizeWithAttributes:rowAttributes].width);
+        CGFloat textX = CGRectGetMaxX(dotRect) + dotTextSpacing;
+        CGFloat timeX = CGRectGetMaxX(tagRect) - paddingX - timeWidth;
+        [name drawInRect:CGRectMake(textX, rowY, MAX(0, timeX - textX - columnSpacing), rowHeight) withAttributes:rowAttributes];
+        [time drawInRect:CGRectMake(timeX, rowY, timeWidth, rowHeight) withAttributes:rowAttributes];
+        rowY += rowHeight;
+    }
+}
+
+- (CGRect)visibleRectInCanvas
+{
+    if ([self.superview isKindOfClass:UIScrollView.class]) {
+        UIScrollView *scrollView = (UIScrollView *)self.superview;
+        return CGRectMake(scrollView.contentOffset.x,
+                          scrollView.contentOffset.y,
+                          CGRectGetWidth(scrollView.bounds),
+                          CGRectGetHeight(scrollView.bounds));
+    }
+    return self.bounds;
+}
+
+- (NSString *)titleTextForDateKey:(NSString *)dateKey
+{
+    NSDate *date = [self dateFromKey:dateKey];
+    if (!date) {
+        return dateKey;
+    }
+    NSDateFormatter *formatter = [NSDateFormatter new];
+    formatter.dateFormat = @"EEE, MMM d";
+    formatter.timeZone = [NSTimeZone systemTimeZone];
+    return [formatter stringFromDate:date];
 }
 
 - (NSDate *)dateFromKey:(NSString *)dateKey
