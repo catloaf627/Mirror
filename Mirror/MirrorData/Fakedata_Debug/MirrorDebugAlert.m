@@ -151,9 +151,11 @@
     [alertController addAction:[UIAlertAction actionWithTitle:@"Seed Fake Data" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
         [self presentSeedFakeDataConfirmation];
     }]];
-    [alertController addAction:[UIAlertAction actionWithTitle:@"For My Web" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *action) {
+    UIAlertAction *webAction = [UIAlertAction actionWithTitle:@"For My Web" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         [self exportJSONDataForMyWeb];
-    }]];
+    }];
+    [webAction setValue:UIColor.systemPurpleColor forKey:@"titleTextColor"];
+    [alertController addAction:webAction];
     [alertController addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:nil]];
     [viewController presentViewController:alertController animated:YES completion:nil];
 }
