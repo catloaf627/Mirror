@@ -37,6 +37,7 @@
         self.sliceLayerArray = @[].mutableCopy;
         self.data = data;
         self.enableInteractive = enableInteractive;
+        self.textFontScale = 1.0;
         UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handlePieTap:)];
         [self addGestureRecognizer:tapRecognizer];
         [self drawPiechartWithWidth:(CGFloat)width];
@@ -97,6 +98,7 @@
         sliceLayer.text = texts[i];
         sliceLayer.tag = i;
         sliceLayer.showsOnlyPercentageText = self.showsOnlyPercentageText;
+        sliceLayer.textFontScale = self.textFontScale;
         [sliceLayer create];
         [self.layer addSublayer:sliceLayer];
         [self.sliceLayerArray addObject:sliceLayer];

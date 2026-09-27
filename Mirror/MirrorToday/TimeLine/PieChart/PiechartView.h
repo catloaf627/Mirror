@@ -21,6 +21,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, weak) UIView<PiechartDelegate> *delegate;
 @property (nonatomic, assign) BOOL showsOnlyPercentageText;
+@property (nonatomic, assign) CGFloat textFontScale;
 
 - (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data width:(CGFloat)width enableInteractive:(BOOL)enableInteractive;
 - (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data width:(CGFloat)width enableInteractive:(BOOL)enableInteractive;
