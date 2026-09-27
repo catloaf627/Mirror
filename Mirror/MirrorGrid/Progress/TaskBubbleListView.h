@@ -1,5 +1,5 @@
 //
-//  TaskProgressListView.h
+//  TaskBubbleListView.h
 //  Mirror
 //
 //  Created by Yuqing Wang on 2023/4/20.
@@ -11,17 +11,17 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@class TaskProgressListView;
+@class TaskBubbleListView;
 
-@protocol TaskProgressListDelegate <NSObject>
+@protocol TaskBubbleListDelegate <NSObject>
 
-- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorReadModel *)data;
+- (void)taskBubbleListView:(TaskBubbleListView *)taskBubbleListView didSelectData:(MirrorReadModel *)data;
 
 @end
 
-@interface TaskProgressListView : UIView
+@interface TaskBubbleListView : UIView
 
-@property (nonatomic, weak) id<TaskProgressListDelegate> delegate;
+@property (nonatomic, weak) id<TaskBubbleListDelegate> delegate;
 
 - (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data;
 - (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data;

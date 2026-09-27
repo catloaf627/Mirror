@@ -17,7 +17,7 @@
 #import "MirrorStorage.h"
 #import "MirrorSettings.h"
 #import "LegendView.h"
-#import "TaskProgressListView.h"
+#import "TaskBubbleListView.h"
 #import "PiechartView.h"
 #import "TaskRecordsViewController.h"
 #import "MirrorTimeText.h"
@@ -88,7 +88,7 @@
 
 @end
 
-@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TaskProgressListDelegate>
+@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TaskBubbleListDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
@@ -113,7 +113,7 @@
 ///one day (single selection)
 @property (nonatomic, strong) UILabel *dateLabel;
 @property (nonatomic, strong) LegendView *legendView;
-@property (nonatomic, strong) TaskProgressListView *taskProgressListView;
+@property (nonatomic, strong) TaskBubbleListView *taskBubbleListView;
 @property (nonatomic, strong) PiechartView *piechartView;
 @end
 
@@ -189,7 +189,7 @@
     self.dateLabel = nil;
     self.weekdayView = nil;
     self.legendView = nil;
-    self.taskProgressListView = nil;
+    self.taskBubbleListView = nil;
     self.piechartView = nil;
     self.heatmapButton = nil;
     self.weekStartsOnButton = nil;
@@ -210,9 +210,9 @@
     [self updateWeekStartsOnButton];
     if ([MirrorSettings appliedPieChartRecord]) {
         self.piechartView.hidden = NO;
-        self.taskProgressListView.hidden = YES;
+        self.taskBubbleListView.hidden = YES;
     } else {
-        self.taskProgressListView.hidden = NO;
+        self.taskBubbleListView.hidden = NO;
         self.piechartView.hidden = YES;
     }
     [self updateWeekdayView];
@@ -269,14 +269,14 @@
         make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
-    [self.view addSubview:self.taskProgressListView];
-    [self.taskProgressListView mas_makeConstraints:^(MASConstraintMaker *make) {
+    [self.view addSubview:self.taskBubbleListView];
+    [self.taskBubbleListView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
         make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
-    self.taskProgressListView.hidden = [MirrorSettings appliedPieChartRecord];
+    self.taskBubbleListView.hidden = [MirrorSettings appliedPieChartRecord];
     [self.view addSubview:self.piechartView];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -511,8 +511,8 @@
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
-    // progress list
-    [self.taskProgressListView updateWithData:data];
+    // bubble list
+    [self.taskBubbleListView updateWithData:data];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     // piechart
     [self.piechartView updateWithData:data width:width enableInteractive:YES];
@@ -653,7 +653,7 @@
 
 #pragma mark - Collection view delegate
 
-- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorReadModel *)data
+- (void)taskBubbleListView:(TaskBubbleListView *)taskBubbleListView didSelectData:(MirrorReadModel *)data
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
@@ -755,13 +755,13 @@
     return _legendView;
 }
 
-- (TaskProgressListView *)taskProgressListView
+- (TaskBubbleListView *)taskBubbleListView
 {
-    if (!_taskProgressListView) {
-        _taskProgressListView = [[TaskProgressListView alloc] initWithData:[NSMutableArray new]];
-        _taskProgressListView.delegate = self;
+    if (!_taskBubbleListView) {
+        _taskBubbleListView = [[TaskBubbleListView alloc] initWithData:[NSMutableArray new]];
+        _taskBubbleListView.delegate = self;
     }
-    return _taskProgressListView;
+    return _taskBubbleListView;
 }
 
 - (PiechartView *)piechartView
