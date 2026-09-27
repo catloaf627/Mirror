@@ -10,6 +10,8 @@
 
 static NSString * const kMirrorPreferredLanguageKey = @"MirrorUserPreferredLanguage";
 static NSString * const kMirrorPreferredDarkModeKey = @"MirrorUserPreferredDarkMode";
+static NSString * const kMirrorPreferredGridChartModeKey = @"MirrorUserPreferredGridChartMode";
+static NSString * const kMirrorPreferredPiechartRecordKey = @"MirrorUserPreferredPiechartRecord";
 static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.Mirror";
 
 @implementation MirrorSettings
@@ -86,19 +88,37 @@ static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.M
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchWeekStartsOnNotification object:nil];
 }
 
++ (MirrorGridChartMode)appliedGridChartMode
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    id chartMode = [defaults objectForKey:kMirrorPreferredGridChartModeKey];
+    if ([chartMode respondsToSelector:@selector(integerValue)]) {
+        NSInteger value = [chartMode integerValue];
+        if (value >= MirrorGridChartModeProgressList && value <= MirrorGridChartModeLineChart) {
+            return (MirrorGridChartMode)value;
+        }
+    }
+    return MirrorGridChartModeProgressList;
+}
+
++ (void)switchGridChartMode
+{
+    NSInteger chartMode = [self appliedGridChartMode];
+    MirrorGridChartMode nextChartMode = (MirrorGridChartMode)((chartMode + 1) % 4);
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setInteger:nextChartMode forKey:kMirrorPreferredGridChartModeKey];
+    [defaults setBool:nextChartMode == MirrorGridChartModePieChart forKey:kMirrorPreferredPiechartRecordKey];
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchChartTypeRecordNotification object:nil];
+}
+
 + (BOOL)appliedPieChartRecord
 {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredPiechartRecord"];
+    return [self appliedGridChartMode] == MirrorGridChartModePieChart;
 }
 
 + (void)switchChartTypeRecord
 {
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:@"MirrorUserPreferredPiechartRecord"]) {
-        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"MirrorUserPreferredPiechartRecord"];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"MirrorUserPreferredPiechartRecord"];
-    }
-    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchChartTypeRecordNotification object:nil];
+    [self switchGridChartMode];
 }
 
 // 按照时间长短更新颜色深浅

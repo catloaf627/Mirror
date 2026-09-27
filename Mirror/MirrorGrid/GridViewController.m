@@ -17,6 +17,7 @@
 #import "MirrorStorage.h"
 #import "MirrorSettings.h"
 #import "LegendView.h"
+#import "TaskProgressListView.h"
 #import "TaskBubbleListView.h"
 #import "PiechartView.h"
 #import "TaskRecordsViewController.h"
@@ -88,10 +89,11 @@
 
 @end
 
-@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TaskBubbleListDelegate>
+@interface GridViewController () <UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, TaskProgressListDelegate, TaskBubbleListDelegate>
 
 @property (nonatomic, assign) BOOL isLoaded;
 // Navibar
+@property (nonatomic, strong) UIButton *chartModeButton;
 @property (nonatomic, strong) UIButton *heatmapButton;
 @property (nonatomic, strong) UIButton *weekStartsOnButton;
 @property (nonatomic, strong) UIView *gridOptionsView;
@@ -113,6 +115,7 @@
 ///one day (single selection)
 @property (nonatomic, strong) UILabel *dateLabel;
 @property (nonatomic, strong) LegendView *legendView;
+@property (nonatomic, strong) TaskProgressListView *taskProgressListView;
 @property (nonatomic, strong) TaskBubbleListView *taskBubbleListView;
 @property (nonatomic, strong) PiechartView *piechartView;
 @end
@@ -164,7 +167,7 @@
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.weekStartsOnButton rightButton:self.gridOptionsView];
+    [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.chartModeButton rightButton:self.gridOptionsView];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -189,8 +192,10 @@
     self.dateLabel = nil;
     self.weekdayView = nil;
     self.legendView = nil;
+    self.taskProgressListView = nil;
     self.taskBubbleListView = nil;
     self.piechartView = nil;
+    self.chartModeButton = nil;
     self.heatmapButton = nil;
     self.weekStartsOnButton = nil;
     self.gridOptionsView = nil;
@@ -198,7 +203,7 @@
     [self.view.subviews makeObjectsPerformSelector:@selector(removeFromSuperview)];
     // 更新navibar
     if (self.tabBarController.selectedIndex == 2) {
-        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.weekStartsOnButton rightButton:self.gridOptionsView];
+        [[MirrorNaviManager sharedInstance] updateNaviItemWithTitle:@"" leftButton:self.chartModeButton rightButton:self.gridOptionsView];
     }
     [self p_setupUI];
 }
@@ -206,15 +211,10 @@
 - (void)reloadData
 {
     if (!_isLoaded) return;
+    [self updateChartModeButton];
     [self updateHeatmapButton];
     [self updateWeekStartsOnButton];
-    if ([MirrorSettings appliedPieChartRecord]) {
-        self.piechartView.hidden = NO;
-        self.taskBubbleListView.hidden = YES;
-    } else {
-        self.taskBubbleListView.hidden = NO;
-        self.piechartView.hidden = YES;
-    }
+    [self updateChartVisibility];
     [self updateWeekdayView];
     [self updateKeys];
     [self updateGridData];
@@ -269,6 +269,13 @@
         make.top.mas_equalTo(self.dateLabel.mas_bottom).offset(kGapInLine);
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
+    [self.view addSubview:self.taskProgressListView];
+    [self.taskProgressListView mas_makeConstraints:^(MASConstraintMaker *make) {
+        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
+        make.right.mas_equalTo(self.view).offset(-kLeftRightSpacing);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
+        make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
+    }];
     [self.view addSubview:self.taskBubbleListView];
     [self.taskBubbleListView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
@@ -276,7 +283,7 @@
         make.top.mas_equalTo(self.legendView.mas_bottom).offset(kGapInLine);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kGapInLine);
     }];
-    self.taskBubbleListView.hidden = [MirrorSettings appliedPieChartRecord];
+    [self updateChartVisibility];
     [self.view addSubview:self.piechartView];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -290,7 +297,7 @@
             make.width.height.mas_equalTo(width);
         }
     }];
-    self.piechartView.hidden = ![MirrorSettings appliedPieChartRecord];
+    [self updateChartVisibility];
     _selectedCellIndexesStart = -1;
     _selectedCellIndexesEnd = -1;
     [self updateCharts];
@@ -314,9 +321,55 @@
     [self showGridOptionToastWithKey:toastKey];
 }
 
+- (void)switchChartMode
+{
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+    [MirrorSettings switchGridChartMode];
+}
+
 - (void)showGridOptionToastWithKey:(NSString *)key
 {
     [MirrorToast showWithText:[MirrorLanguage mirror_stringWithKey:key] inView:self.view];
+}
+
+- (void)updateChartModeButton
+{
+    MirrorGridChartMode chartMode = [MirrorSettings appliedGridChartMode];
+    NSString *imageName = @"circle.grid.cross.up.filled";
+    NSString *fallbackName = imageName;
+    switch (chartMode) {
+        case MirrorGridChartModeProgressList:
+            imageName = @"circle.grid.cross.up.filled";
+            fallbackName = imageName;
+            break;
+        case MirrorGridChartModeBubbles:
+            imageName = @"circle.grid.cross.right.filled";
+            fallbackName = imageName;
+            break;
+        case MirrorGridChartModePieChart:
+            imageName = @"circle.grid.cross.down.filled";
+            fallbackName = imageName;
+            break;
+        case MirrorGridChartModeLineChart:
+            imageName = @"circle.grid.cross.left.filled";
+            fallbackName = @"chart.xyaxis.line";
+            break;
+    }
+    
+    UIImageSymbolConfiguration *configuration = [UIImageSymbolConfiguration configurationWithPointSize:17 weight:UIImageSymbolWeightRegular];
+    UIImage *iconImage = [[UIImage mirror_systemImageNamed:imageName fallbackName:fallbackName configuration:configuration] imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
+    [self.chartModeButton setImage:iconImage forState:UIControlStateNormal];
+    [self.chartModeButton setTitle:iconImage ? nil : [NSString stringWithFormat:@"%ld", (long)chartMode] forState:UIControlStateNormal];
+    self.chartModeButton.titleLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightRegular];
+    self.chartModeButton.tintColor = [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight];
+}
+
+- (void)updateChartVisibility
+{
+    MirrorGridChartMode chartMode = [MirrorSettings appliedGridChartMode];
+    self.taskProgressListView.hidden = chartMode != MirrorGridChartModeProgressList;
+    self.taskBubbleListView.hidden = !(chartMode == MirrorGridChartModeBubbles || chartMode == MirrorGridChartModeLineChart);
+    self.piechartView.hidden = chartMode != MirrorGridChartModePieChart;
 }
 
 - (void)updateHeatmapButton
@@ -511,7 +564,8 @@
     [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
         make.height.mas_equalTo([self.legendView legendViewHeight]);
     }];
-    // bubble list
+    // progress and bubble lists
+    [self.taskProgressListView updateWithData:data];
     [self.taskBubbleListView updateWithData:data];
     CGFloat width = MIN([[self leftWidthLeftHeight][0] floatValue], [[self leftWidthLeftHeight][1] floatValue]);
     // piechart
@@ -653,7 +707,17 @@
 
 #pragma mark - Collection view delegate
 
+- (void)taskProgressListView:(TaskProgressListView *)taskProgressListView didSelectData:(MirrorReadModel *)data
+{
+    [self openTaskRecordsWithData:data];
+}
+
 - (void)taskBubbleListView:(TaskBubbleListView *)taskBubbleListView didSelectData:(MirrorReadModel *)data
+{
+    [self openTaskRecordsWithData:data];
+}
+
+- (void)openTaskRecordsWithData:(MirrorReadModel *)data
 {
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
     NSMutableArray<MirrorRecordModel *> *allRecords = [MirrorStorage getAllTaskRecords:data.taskModel.taskName];
@@ -755,6 +819,15 @@
     return _legendView;
 }
 
+- (TaskProgressListView *)taskProgressListView
+{
+    if (!_taskProgressListView) {
+        _taskProgressListView = [[TaskProgressListView alloc] initWithData:[NSMutableArray new]];
+        _taskProgressListView.delegate = self;
+    }
+    return _taskProgressListView;
+}
+
 - (TaskBubbleListView *)taskBubbleListView
 {
     if (!_taskBubbleListView) {
@@ -844,6 +917,16 @@
     return _heatmapButton;
 }
 
+- (UIButton *)chartModeButton
+{
+    if (!_chartModeButton) {
+        _chartModeButton = [UIButton new];
+        [_chartModeButton addTarget:self action:@selector(switchChartMode) forControlEvents:UIControlEventTouchUpInside];
+        [self updateChartModeButton];
+    }
+    return _chartModeButton;
+}
+
 - (UIButton *)weekStartsOnButton
 {
     if (!_weekStartsOnButton) {
@@ -858,7 +941,12 @@
 {
     if (!_gridOptionsView) {
         CGFloat itemSize = self.navigationController.navigationBar.frame.size.height;
-        _gridOptionsView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, itemSize, itemSize)];
+        _gridOptionsView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, itemSize * 2, itemSize)];
+        [_gridOptionsView addSubview:self.weekStartsOnButton];
+        [self.weekStartsOnButton mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.left.top.bottom.mas_equalTo(_gridOptionsView);
+            make.width.mas_equalTo(itemSize);
+        }];
         [_gridOptionsView addSubview:self.heatmapButton];
         [self.heatmapButton mas_makeConstraints:^(MASConstraintMaker *make) {
             make.right.top.bottom.mas_equalTo(_gridOptionsView);

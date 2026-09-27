@@ -11,6 +11,13 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+typedef NS_ENUM(NSInteger, MirrorGridChartMode) {
+    MirrorGridChartModeProgressList = 0,
+    MirrorGridChartModeBubbles = 1,
+    MirrorGridChartModePieChart = 2,
+    MirrorGridChartModeLineChart = 3,
+};
+
 @interface MirrorSettings : NSObject
 
 // Theme
@@ -25,6 +32,10 @@ NS_ASSUME_NONNULL_BEGIN
 // Week starts on
 + (BOOL)appliedWeekStarsOnMonday;
 + (void)switchWeekStartsOn;
+
+// Grid chart mode
++ (MirrorGridChartMode)appliedGridChartMode;
++ (void)switchGridChartMode;
 
 // Pie chart
 + (BOOL)appliedPieChartRecord;
