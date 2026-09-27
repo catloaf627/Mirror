@@ -576,12 +576,13 @@
         totalTime += [MirrorTool getTotalTimeOfPeriods:readModel.records];
     }
     
+    NSString *totalTimeText = totalTime > 0 ? [[@": " stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]] copy] : @"";
     if (start == end) {
-        self.dateLabel.text = [[[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[start]]] stringByAppendingString:@": "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
+        self.dateLabel.text = [[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[start]]] stringByAppendingString:totalTimeText];
     } else {
         NSString *startDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[start]]];
         NSString *endDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[end]]];
-        self.dateLabel.text = [[[[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate] stringByAppendingString:@": "] stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]];
+        self.dateLabel.text = [[[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate] stringByAppendingString:totalTimeText];
     }
 
     // legend
