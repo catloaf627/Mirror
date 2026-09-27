@@ -324,20 +324,20 @@
     NSString *fallbackName = imageName;
     switch (chartMode) {
         case MirrorGridChartModeBubbles:
-            imageName = @"circle.grid.cross.up.filled";
-            fallbackName = imageName;
+            imageName = @"capsule";
+            fallbackName = @"circle.grid.cross.up.filled";
             break;
         case MirrorGridChartModeProgressList:
-            imageName = @"circle.grid.cross.right.filled";
-            fallbackName = imageName;
+            imageName = @"list.bullet";
+            fallbackName = @"circle.grid.cross.right.filled";
             break;
         case MirrorGridChartModePieChart:
-            imageName = @"circle.grid.cross.down.filled";
-            fallbackName = imageName;
+            imageName = @"chart.pie";
+            fallbackName = @"circle.grid.cross.down.filled";
             break;
         case MirrorGridChartModeLineChart:
-            imageName = @"circle.grid.cross.left.filled";
-            fallbackName = @"chart.xyaxis.line";
+            imageName = @"chart.xyaxis.line";
+            fallbackName = @"circle.grid.cross.left.filled";
             break;
     }
     
