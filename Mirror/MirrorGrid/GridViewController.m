@@ -345,11 +345,11 @@
     NSString *imageName = @"circle.grid.cross.up.filled";
     NSString *fallbackName = imageName;
     switch (chartMode) {
-        case MirrorGridChartModeProgressList:
+        case MirrorGridChartModeBubbles:
             imageName = @"circle.grid.cross.up.filled";
             fallbackName = imageName;
             break;
-        case MirrorGridChartModeBubbles:
+        case MirrorGridChartModeProgressList:
             imageName = @"circle.grid.cross.right.filled";
             fallbackName = imageName;
             break;
@@ -896,6 +896,8 @@
 {
     if (!_piechartView) {
         _piechartView = [[PiechartView alloc] initWithData:[NSMutableArray new] width:0 enableInteractive:NO];
+        _piechartView.textFontScale = 1.25;
+        _piechartView.delegate = self.legendView;
     }
     return _piechartView;
 }

@@ -12,8 +12,8 @@
 NS_ASSUME_NONNULL_BEGIN
 
 typedef NS_ENUM(NSInteger, MirrorGridChartMode) {
-    MirrorGridChartModeProgressList = 0,
-    MirrorGridChartModeBubbles = 1,
+    MirrorGridChartModeBubbles = 0,
+    MirrorGridChartModeProgressList = 1,
     MirrorGridChartModePieChart = 2,
     MirrorGridChartModeLineChart = 3,
 };

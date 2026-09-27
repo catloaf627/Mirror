@@ -94,11 +94,11 @@ static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.M
     id chartMode = [defaults objectForKey:kMirrorPreferredGridChartModeKey];
     if ([chartMode respondsToSelector:@selector(integerValue)]) {
         NSInteger value = [chartMode integerValue];
-        if (value >= MirrorGridChartModeProgressList && value <= MirrorGridChartModeLineChart) {
+        if (value >= 0 && value <= 3) {
             return (MirrorGridChartMode)value;
         }
     }
-    return MirrorGridChartModeProgressList;
+    return (MirrorGridChartMode)0;
 }
 
 + (void)switchGridChartMode

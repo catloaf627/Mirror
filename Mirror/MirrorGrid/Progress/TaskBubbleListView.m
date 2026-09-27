@@ -15,7 +15,6 @@ static CGFloat const kBubbleHorizontalInset = 12;
 static CGFloat const kBubbleVerticalInset = 7;
 static CGFloat const kBubbleHorizontalSpacing = 8;
 static CGFloat const kBubbleVerticalSpacing = 8;
-static CGFloat const kBubbleCornerRadius = 10;
 static CGFloat const kHourIconSize = 21;
 static CGFloat const kHourIconTextSpacing = 6;
 static CGFloat const kMoreTagTextSpacing = 8;
@@ -132,7 +131,6 @@ static NSInteger const kMoreTagViewTag = 1002;
         [bubbleButton addSubview:moreTagButton];
     }
     bubbleButton.backgroundColor = [[UIColor mirrorColorNamed:data.taskModel.color] colorWithAlphaComponent:0.2];
-    bubbleButton.layer.cornerRadius = kBubbleCornerRadius * kWidthRatio;
     bubbleButton.layer.masksToBounds = YES;
     [bubbleButton addTarget:self action:@selector(selectBubble:) forControlEvents:UIControlEventTouchUpInside];
     return bubbleButton;
@@ -174,7 +172,6 @@ static NSInteger const kMoreTagViewTag = 1002;
     [moreTagButton setTitleColor:[UIColor mirrorColorPulsed:color] forState:UIControlStateNormal];
     moreTagButton.titleLabel.font = [UIFont mirrorHintFont];
     moreTagButton.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
-    moreTagButton.layer.cornerRadius = kBubbleCornerRadius * kWidthRatio;
     moreTagButton.layer.masksToBounds = YES;
     [moreTagButton addTarget:self action:@selector(selectMoreTag:) forControlEvents:UIControlEventTouchUpInside];
     return moreTagButton;
@@ -207,6 +204,7 @@ static NSInteger const kMoreTagViewTag = 1002;
         }
         
         bubbleButton.frame = CGRectMake(x, y, width, height);
+        bubbleButton.layer.cornerRadius = height / 2.0;
         HourIconView *hourIconView = (HourIconView *)[bubbleButton viewWithTag:kHourIconViewTag];
         CGFloat iconSize = kHourIconSize * kWidthRatio;
         hourIconView.frame = CGRectMake(kBubbleHorizontalInset * kWidthRatio,
@@ -221,6 +219,7 @@ static NSInteger const kMoreTagViewTag = 1002;
                                              (height - moreTagHeight) / 2,
                                              moreTagWidth,
                                              moreTagHeight);
+            moreTagButton.layer.cornerRadius = moreTagHeight / 2.0;
         }
         x += width + horizontalSpacing;
         rowHeight = MAX(rowHeight, height);
