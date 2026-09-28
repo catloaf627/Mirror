@@ -106,7 +106,7 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         NSDateComponents *components = [calendar components:NSCalendarUnitYear | NSCalendarUnitMonth | NSCalendarUnitDay | NSCalendarUnitWeekday fromDate:currentDate];
         NSInteger monthIndex = [calendar components:NSCalendarUnitMonth fromDate:startDate toDate:currentDate options:0].month;
         if (dayIndex == totalDays) {
-            [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Gym"] components:components hour:7 minute:30 durationMinutes:90 note:[self gymNoteForWorkoutIndex:dayIndex / 2 dayIndex:dayIndex] records:fakeRecords];
+            [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Lift"] components:components hour:7 minute:30 durationMinutes:90 note:[self gymNoteForWorkoutIndex:dayIndex / 2 dayIndex:dayIndex] records:fakeRecords];
             [self addRecordWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] components:components hour:10 minute:0 durationMinutes:60 note:[self codeNoteForDayIndex:dayIndex] records:fakeRecords];
             continue;
         }
@@ -133,7 +133,7 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 + (NSArray<MirrorFakeTaskPlan *> *)fakeTaskPlans
 {
     return @[
-        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Gym"] color:MirrorColorTypeCellBlue createdHour:7 createdMinute:30],
+        [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Lift"] color:MirrorColorTypeCellBlue createdHour:7 createdMinute:30],
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Tennis"] color:MirrorColorTypeCellGreen createdHour:18 createdMinute:30],
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Swim"] color:MirrorColorTypeCellTeal createdHour:17 createdMinute:45],
         [[MirrorFakeTaskPlan alloc] initWithName:[self localizedSampleTaskNameWithEnglishName:@"Code"] color:MirrorColorTypeCellPurple createdHour:9 createdMinute:30],
@@ -167,7 +167,7 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         NSString *movementTaskName = nil;
         NSInteger movementRoll = [self randomPercentForDayIndex:dayIndex salt:11];
         if (movementRoll < 52) {
-            movementTaskName = @"Gym";
+            movementTaskName = @"Lift";
         } else if (movementRoll < 88) {
             movementTaskName = @"Tennis";
         } else {
@@ -181,7 +181,7 @@ static BOOL MirrorFakeDataIsSeeding = NO;
         NSInteger movementMinute = [self randomValueForDayIndex:dayIndex salt:19 modulo:4] * 10;
         NSInteger movementDuration = 90 + [self randomValueForDayIndex:dayIndex salt:23 modulo:31];
         NSString *movementNote = nil;
-        if ([movementTaskName isEqualToString:@"Gym"]) {
+        if ([movementTaskName isEqualToString:@"Lift"]) {
             movementNote = [self gymNoteForWorkoutIndex:dayIndex / 2 dayIndex:dayIndex];
         } else if ([movementTaskName isEqualToString:@"Tennis"]) {
             movementNote = [self tennisNoteForMonthIndex:monthIndex dayIndex:dayIndex];
@@ -334,7 +334,7 @@ static BOOL MirrorFakeDataIsSeeding = NO;
 + (NSArray<NSString *> *)localizedSampleTaskNamesForEnglishName:(NSString *)englishName
 {
     NSDictionary<NSString *, NSArray<NSString *> *> *taskNames = @{
-        @"Gym": ML(@"Lift", @"健身", @"Gym", @"Gym", @"ジム", @"운동", @"Sport", @"Зал"),
+        @"Lift": ML(@"Lift", @"健身", @"Lift", @"Lift", @"ジム", @"운동", @"Sport", @"Зал"),
         @"Tennis": ML(@"Tennis", @"网球", @"Tenis", @"Tennis", @"テニス", @"테니스", @"Tennis", @"Теннис"),
         @"Code": ML(@"Code", @"编程", @"Code", @"Code", @"コード", @"코딩", @"Code", @"Код"),
         @"Swim": ML(@"Swim", @"游泳", @"Nadar", @"Nage", @"水泳", @"수영", @"Swim", @"Бассейн"),
