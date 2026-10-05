@@ -37,6 +37,7 @@ static CGFloat const kLineChartRangeControlSpacing = 6;
 @property (nonatomic, strong) MASConstraint *canvasWidthConstraint;
 @property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *data;
 @property (nonatomic, strong) NSArray<NSString *> *dateKeys;
+@property (nonatomic, assign) BOOL rangeSelectionActive;
 
 @end
 
@@ -48,6 +49,7 @@ static CGFloat const kLineChartRangeControlSpacing = 6;
     if (self) {
         self.data = data;
         self.dateKeys = dateKeys;
+        _rangeSelectionActive = YES;
         self.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
         [self addSubview:self.rangeSegmentedControl];
         [self.rangeSegmentedControl mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -79,15 +81,27 @@ static CGFloat const kLineChartRangeControlSpacing = 6;
 {
     self.data = data;
     self.dateKeys = dateKeys;
-    self.rangeSegmentedControl.selectedSegmentIndex = [MirrorSettings appliedChartRange];
+    [self updateRangeSegmentSelection];
     [self.canvasView updateWithData:data dateKeys:dateKeys];
     [self updateCanvasWidth];
 }
 
+- (void)setRangeSelectionActive:(BOOL)active
+{
+    _rangeSelectionActive = active;
+    [self updateRangeSegmentSelection];
+}
+
 - (void)chartRangeChanged:(UISegmentedControl *)sender
 {
+    _rangeSelectionActive = YES;
     [MirrorSettings saveChartRange:(MirrorChartRange)sender.selectedSegmentIndex];
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+}
+
+- (void)updateRangeSegmentSelection
+{
+    self.rangeSegmentedControl.selectedSegmentIndex = self.rangeSelectionActive ? [MirrorSettings appliedChartRange] : UISegmentedControlNoSegment;
 }
 
 - (void)updateCanvasWidth

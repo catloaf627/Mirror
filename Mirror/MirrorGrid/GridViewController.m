@@ -109,6 +109,7 @@
 @property (nonatomic, assign) NSInteger selectedCellIndexesStart;
 @property (nonatomic, assign) NSInteger selectedCellIndexesEnd;
 @property (nonatomic, assign) BOOL hasInitializedSelectedCellIndex;
+@property (nonatomic, assign) BOOL shouldUseChartRangeSelection;
 // UI
 ///grid
 @property (nonatomic, strong) UILabel *leftHint;
@@ -130,6 +131,7 @@
 {
     self = [super init];
     if (self) {
+        self.shouldUseChartRangeSelection = YES;
         // 系统通知
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSignificantTimeChangeNotification object:nil];
         // 设置通知
@@ -137,7 +139,7 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchLanguageNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchWeekStartsOnNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchChartTypeRecordNotification object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchChartRangeNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(chartRangeChanged) name:MirrorSwitchChartRangeNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchShowShadeNotification object:nil];
         // 数据通知 (直接数据驱动UI，本地数据变动必然导致这里的UI变动)
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorImportDataNotificaiton object:nil];
@@ -222,6 +224,18 @@
     [self updateChartVisibility];
     [self updateKeys];
     [self updateGridData];
+    if (self.shouldUseChartRangeSelection) {
+        [self syncSelectedCellsWithChartRangeIfNeeded];
+    }
+    [self updateCharts];
+    [self.collectionView reloadData];
+}
+
+- (void)chartRangeChanged
+{
+    if (!_isLoaded) return;
+    self.shouldUseChartRangeSelection = YES;
+    [self syncSelectedCellsWithChartRangeIfNeeded];
     [self updateCharts];
     [self.collectionView reloadData];
 }
@@ -288,6 +302,9 @@
     [self updateChartVisibility];
     _selectedCellIndexesStart = -1;
     _selectedCellIndexesEnd = -1;
+    if (self.shouldUseChartRangeSelection) {
+        [self syncSelectedCellsWithChartRangeIfNeeded];
+    }
     [self updateCharts];
 }
 
@@ -639,6 +656,26 @@
     }
 }
 
+- (void)syncSelectedCellsWithChartRangeIfNeeded
+{
+    MirrorGridChartMode chartMode = [MirrorSettings appliedGridChartMode];
+    if (chartMode != MirrorGridChartModePieChart && chartMode != MirrorGridChartModeLineChart) {
+        return;
+    }
+    NSArray<NSNumber *> *chartIndexes = [self chartRangeIndexes];
+    if (chartIndexes.count != 2) {
+        return;
+    }
+    NSInteger start = chartIndexes.firstObject.integerValue;
+    NSInteger end = chartIndexes.lastObject.integerValue;
+    if (start < 0 || end < 0 || start >= self.keys.count || end >= self.keys.count) {
+        return;
+    }
+    _selectedCellIndexesStart = start;
+    _selectedCellIndexesEnd = end;
+    _selectedCellIndex = end;
+}
+
 - (void)updateChartsFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
 {
     if (self.keys.count == 0 || startIndex < 0 || endIndex < 0) { // 空数据保护
@@ -675,14 +712,19 @@
         return;
     }
 
-    NSArray<NSNumber *> *chartIndexes = [self chartRangeIndexes];
-    NSInteger chartStart = chartIndexes.count == 2 ? chartIndexes.firstObject.integerValue : start;
-    NSInteger chartEnd = chartIndexes.count == 2 ? chartIndexes.lastObject.integerValue : end;
+    NSInteger chartStart = start;
+    NSInteger chartEnd = end;
+    if (self.shouldUseChartRangeSelection) {
+        NSArray<NSNumber *> *chartIndexes = [self chartRangeIndexes];
+        chartStart = chartIndexes.count == 2 ? chartIndexes.firstObject.integerValue : start;
+        chartEnd = chartIndexes.count == 2 ? chartIndexes.lastObject.integerValue : end;
+    }
 
     if (chartMode == MirrorGridChartModeLineChart) {
         NSArray<NSString *> *lineChartDateKeys = [self lineChartDateKeysFromIndex:chartStart toIndex:chartEnd];
         NSMutableArray<MirrorReadModel *> *lineChartData = [self lineChartDataFromDateKeys:lineChartDateKeys];
         [self updateDateLabelWithData:lineChartData start:chartStart end:chartEnd];
+        [self.taskLineChartView setRangeSelectionActive:self.shouldUseChartRangeSelection];
         [self.taskLineChartView updateWithData:lineChartData dateKeys:lineChartDateKeys];
         return;
     }
@@ -694,6 +736,7 @@
         CGFloat width = MAX(0, MIN([PiechartView maximumPieWidthForAvailableWidth:chartAreaWidth], chartAreaHeight - ([PiechartView totalHeightForPieWidth:0])));
         CGFloat totalWidth = chartAreaWidth;
         CGFloat totalHeight = [PiechartView totalHeightForPieWidth:width];
+        [self.piechartView setRangeSelectionActive:self.shouldUseChartRangeSelection];
         [self.piechartView updateWithData:rangedChartData width:width enableInteractive:YES];
         if (self.piechartView.superview) { //security
             [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
@@ -725,6 +768,7 @@
 
 - (void)updateMultiSelectStart:(NSInteger)newstart
 {
+    self.shouldUseChartRangeSelection = NO;
     _selectedCellIndexesStart = newstart;
 }
 
@@ -877,6 +921,7 @@
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    self.shouldUseChartRangeSelection = NO;
     _selectedCellIndexesStart = -1;
     _selectedCellIndexesEnd = -1;
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];

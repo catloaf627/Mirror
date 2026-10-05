@@ -28,6 +28,7 @@
 @property (nonatomic, strong) UISegmentedControl *rangeSegmentedControl;
 @property (nonatomic, assign) CGFloat pieWidth;
 @property (nonatomic, assign) CGSize lastDrawBoundsSize;
+@property (nonatomic, assign) BOOL rangeSelectionActive;
 
 - (void)addSliceSeparatorsWithAngles:(NSArray<NSNumber *> *)angles width:(CGFloat)width;
 
@@ -69,6 +70,7 @@
         self.enableInteractive = enableInteractive;
         self.textFontScale = 1.0;
         self.pieWidth = width;
+        _rangeSelectionActive = YES;
         [self addSubview:self.rangeSegmentedControl];
         UITapGestureRecognizer *tapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handlePieTap:)];
         tapRecognizer.delegate = self;
@@ -83,8 +85,14 @@
     self.data = data;
     self.enableInteractive = enableInteractive;
     self.pieWidth = width;
-    self.rangeSegmentedControl.selectedSegmentIndex = [MirrorSettings appliedChartRange];
+    [self updateRangeSegmentSelection];
     [self redrawPiechartIfPossible];
+}
+
+- (void)setRangeSelectionActive:(BOOL)active
+{
+    _rangeSelectionActive = active;
+    [self updateRangeSegmentSelection];
 }
 
 - (void)layoutSubviews
@@ -200,8 +208,14 @@
 
 - (void)chartRangeChanged:(UISegmentedControl *)sender
 {
+    _rangeSelectionActive = YES;
     [MirrorSettings saveChartRange:(MirrorChartRange)sender.selectedSegmentIndex];
     [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+}
+
+- (void)updateRangeSegmentSelection
+{
+    self.rangeSegmentedControl.selectedSegmentIndex = self.rangeSelectionActive ? [MirrorSettings appliedChartRange] : UISegmentedControlNoSegment;
 }
 
 - (void)handlePieTap:(UITapGestureRecognizer *)recognizer

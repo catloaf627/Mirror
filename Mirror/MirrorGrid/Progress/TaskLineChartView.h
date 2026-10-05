@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface TaskLineChartView : UIView
 
 - (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data dateKeys:(NSArray<NSString *> *)dateKeys;
+- (void)setRangeSelectionActive:(BOOL)active;
 - (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data dateKeys:(NSArray<NSString *> *)dateKeys;
 
 @end

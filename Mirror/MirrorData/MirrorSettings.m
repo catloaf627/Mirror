@@ -135,9 +135,6 @@ static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.M
     if (chartRange < MirrorChartRangeOneWeek || chartRange > MirrorChartRangeAll) {
         return;
     }
-    if ([self appliedChartRange] == chartRange) {
-        return;
-    }
     [[NSUserDefaults standardUserDefaults] setInteger:chartRange forKey:kMirrorPreferredChartRangeKey];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchChartRangeNotification object:nil];
 }
