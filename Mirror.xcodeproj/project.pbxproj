@@ -49,6 +49,7 @@
 		4AABB5F4303F623F00AA0DE3 /* StopButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB5F3303F623F00AA0DE3 /* StopButton.m */; };
 		4AABB5F7303F66FF00AA0DE3 /* MirrorRecordWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB5F6303F66FF00AA0DE3 /* MirrorRecordWindow.m */; };
 		4AABB609303F8E0400AA0DE3 /* MirrorManualVideoViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AABB608303F8E0400AA0DE3 /* MirrorManualVideoViewController.m */; };
+		4ABC842630736FC700FE423F /* TaskPieChartView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4ABC842530736FC700FE423F /* TaskPieChartView.m */; };
 		4AC1FDBD2A0384A600CDCED9 /* MirrorRecordModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */; };
 		4AC1FDC02A03B05100CDCED9 /* MirrorReadModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC1FDBF2A03B05100CDCED9 /* MirrorReadModel.m */; };
 		4AC2B8D5305DE6F5001CE587 /* MirrorManualGuidePointer.m in Sources */ = {isa = PBXBuildFile; fileRef = 4AC2B8D4305DE6F5001CE587 /* MirrorManualGuidePointer.m */; };
@@ -186,6 +187,8 @@
 		4AABB5F6303F66FF00AA0DE3 /* MirrorRecordWindow.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorRecordWindow.m; sourceTree = "<group>"; };
 		4AABB607303F8DDF00AA0DE3 /* MirrorManualVideoViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorManualVideoViewController.h; sourceTree = "<group>"; };
 		4AABB608303F8E0400AA0DE3 /* MirrorManualVideoViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorManualVideoViewController.m; sourceTree = "<group>"; };
+		4ABC842430736FAD00FE423F /* TaskPieChartView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TaskPieChartView.h; sourceTree = "<group>"; };
+		4ABC842530736FC700FE423F /* TaskPieChartView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TaskPieChartView.m; sourceTree = "<group>"; };
 		4AC1FDBB2A0384A600CDCED9 /* MirrorRecordModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorRecordModel.h; sourceTree = "<group>"; };
 		4AC1FDBC2A0384A600CDCED9 /* MirrorRecordModel.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MirrorRecordModel.m; sourceTree = "<group>"; };
 		4AC1FDBE2A03B05100CDCED9 /* MirrorReadModel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MirrorReadModel.h; sourceTree = "<group>"; };
@@ -460,6 +463,8 @@
 				4AA6FCA63069AC5F00FE59CE /* TaskProgressListView.m */,
 				4AA6FCA83069B5D000FE59CE /* TaskLineChartView.h */,
 				4AA6FCA93069B61400FE59CE /* TaskLineChartView.m */,
+				4ABC842430736FAD00FE423F /* TaskPieChartView.h */,
+				4ABC842530736FC700FE423F /* TaskPieChartView.m */,
 			);
 			path = Progress;
 			sourceTree = "<group>";
@@ -805,6 +810,7 @@
 				4A9FDB27302D1600007707FC /* OneDayTimelineViewController.m in Sources */,
 				4A9FDB24302D1234007707FC /* TimelineBackgroundView.m in Sources */,
 				4A88211929F2A2B8009E422C /* TodayTotalHeader.m in Sources */,
+				4ABC842630736FC700FE423F /* TaskPieChartView.m in Sources */,
 				4AF5A3302B9C5F98009A2FB3 /* HintFooter.m in Sources */,
 				4A9EF9CA3048ABDE00F2E02B /* MirrorScheduleModel.m in Sources */,
 				4AFB77A528DF4A380064CBCA /* SceneDelegate.m in Sources */,

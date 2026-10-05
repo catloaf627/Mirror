@@ -23,11 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL showsOnlyPercentageText;
 @property (nonatomic, assign) CGFloat textFontScale;
 
-+ (CGFloat)maximumPieWidthForAvailableWidth:(CGFloat)availableWidth;
-+ (CGFloat)totalWidthForPieWidth:(CGFloat)pieWidth;
-+ (CGFloat)totalHeightForPieWidth:(CGFloat)pieWidth;
 - (instancetype)initWithData:(NSMutableArray<MirrorReadModel *> *)data width:(CGFloat)width enableInteractive:(BOOL)enableInteractive;
-- (void)setRangeSelectionActive:(BOOL)active;
 - (void)updateWithData:(NSMutableArray<MirrorReadModel *> *)data width:(CGFloat)width enableInteractive:(BOOL)enableInteractive;
 
 @end

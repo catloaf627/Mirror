@@ -20,7 +20,7 @@
 #import "TaskProgressListView.h"
 #import "TaskBubbleListView.h"
 #import "TaskLineChartView.h"
-#import "PiechartView.h"
+#import "TaskPieChartView.h"
 #import "TaskRecordsViewController.h"
 #import "MirrorTimeText.h"
 #import "MirrorTool.h"
@@ -122,7 +122,7 @@
 @property (nonatomic, strong) TaskProgressListView *taskProgressListView;
 @property (nonatomic, strong) TaskBubbleListView *taskBubbleListView;
 @property (nonatomic, strong) TaskLineChartView *taskLineChartView;
-@property (nonatomic, strong) PiechartView *piechartView;
+@property (nonatomic, strong) TaskPieChartView *piechartView;
 @end
 
 @implementation GridViewController
@@ -290,9 +290,9 @@
     [self.view addSubview:self.piechartView];
     CGFloat chartAreaWidth = [[self leftWidthLeftHeight][0] floatValue];
     CGFloat chartAreaHeight = [[self leftWidthLeftHeight][1] floatValue];
-    CGFloat width = MAX(0, MIN([PiechartView maximumPieWidthForAvailableWidth:chartAreaWidth], chartAreaHeight - ([PiechartView totalHeightForPieWidth:0])));
+    CGFloat width = MAX(0, MIN([TaskPieChartView maximumPieWidthForAvailableWidth:chartAreaWidth], chartAreaHeight - ([TaskPieChartView totalHeightForPieWidth:0])));
     CGFloat totalWidth = chartAreaWidth;
-    CGFloat totalHeight = [PiechartView totalHeightForPieWidth:width];
+    CGFloat totalHeight = [TaskPieChartView totalHeightForPieWidth:width];
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
         make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
         make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding + (chartAreaHeight - totalHeight) / 2);
@@ -733,9 +733,9 @@
         [self updateDateLabelWithData:rangedChartData start:chartStart end:chartEnd];
         CGFloat chartAreaWidth = [[self leftWidthLeftHeight][0] floatValue];
         CGFloat chartAreaHeight = [[self leftWidthLeftHeight][1] floatValue];
-        CGFloat width = MAX(0, MIN([PiechartView maximumPieWidthForAvailableWidth:chartAreaWidth], chartAreaHeight - ([PiechartView totalHeightForPieWidth:0])));
+        CGFloat width = MAX(0, MIN([TaskPieChartView maximumPieWidthForAvailableWidth:chartAreaWidth], chartAreaHeight - ([TaskPieChartView totalHeightForPieWidth:0])));
         CGFloat totalWidth = chartAreaWidth;
-        CGFloat totalHeight = [PiechartView totalHeightForPieWidth:width];
+        CGFloat totalHeight = [TaskPieChartView totalHeightForPieWidth:width];
         [self.piechartView setRangeSelectionActive:self.shouldUseChartRangeSelection];
         [self.piechartView updateWithData:rangedChartData width:width enableInteractive:YES];
         if (self.piechartView.superview) { //security
@@ -1029,10 +1029,10 @@
     return _taskLineChartView;
 }
 
-- (PiechartView *)piechartView
+- (TaskPieChartView *)piechartView
 {
     if (!_piechartView) {
-        _piechartView = [[PiechartView alloc] initWithData:[NSMutableArray new] width:0 enableInteractive:NO];
+        _piechartView = [[TaskPieChartView alloc] initWithData:[NSMutableArray new] width:0 enableInteractive:NO];
         _piechartView.textFontScale = 1.25;
         _piechartView.delegate = self.legendView;
     }
