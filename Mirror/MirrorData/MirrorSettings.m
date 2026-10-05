@@ -114,7 +114,15 @@ static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.M
 
 + (NSArray<NSString *> *)chartRangeTitles
 {
-    return @[@"1W", @"1M", @"3M", @"6M", @"YTD", @"1Y", @"ALL"];
+    return @[
+        [MirrorLanguage mirror_stringWithKey:@"chart_range_1w"],
+        [MirrorLanguage mirror_stringWithKey:@"chart_range_1m"],
+        [MirrorLanguage mirror_stringWithKey:@"chart_range_3m"],
+        [MirrorLanguage mirror_stringWithKey:@"chart_range_6m"],
+        [MirrorLanguage mirror_stringWithKey:@"chart_range_ytd"],
+        [MirrorLanguage mirror_stringWithKey:@"chart_range_1y"],
+        [MirrorLanguage mirror_stringWithKey:@"chart_range_all"]
+    ];
 }
 
 + (MirrorChartRange)appliedChartRange

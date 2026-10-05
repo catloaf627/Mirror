@@ -111,6 +111,13 @@
     [mirrorDict setValue:ML(@"Heatmap off", @"热力图已关闭", @"Mapa de calor desactivado", @"Carte thermique désactivée", @"ヒートマップをオフ", @"히트맵 꺼짐", @"Heatmap deaktiviert", @"Тепловая карта выключена") forKey:@"grid_toast_heatmap_off"];
     [mirrorDict setValue:ML(@"Weeks start on Monday", @"每周从周一开始", @"Las semanas empiezan el lunes", @"Les semaines commencent le lundi", @"週は月曜始まり", @"주는 월요일부터 시작", @"Wochen beginnen am Montag", @"Неделя начинается в понедельник") forKey:@"grid_toast_week_starts_monday"];
     [mirrorDict setValue:ML(@"Weeks start on Sunday", @"每周从周日开始", @"Las semanas empiezan el domingo", @"Les semaines commencent le dimanche", @"週は日曜始まり", @"주는 일요일부터 시작", @"Wochen beginnen am Sonntag", @"Неделя начинается в воскресенье") forKey:@"grid_toast_week_starts_sunday"];
+    [mirrorDict setValue:ML(@"1W", @"1周", @"1S", @"1S", @"1週", @"1주", @"1W", @"1Н") forKey:@"chart_range_1w"];
+    [mirrorDict setValue:ML(@"1M", @"1月", @"1M", @"1M", @"1か月", @"1개월", @"1M", @"1М") forKey:@"chart_range_1m"];
+    [mirrorDict setValue:ML(@"3M", @"3月", @"3M", @"3M", @"3か月", @"3개월", @"3M", @"3М") forKey:@"chart_range_3m"];
+    [mirrorDict setValue:ML(@"6M", @"6月", @"6M", @"6M", @"6か月", @"6개월", @"6M", @"6М") forKey:@"chart_range_6m"];
+    [mirrorDict setValue:ML(@"YTD", @"年初", @"AA", @"AD", @"年初", @"연초", @"YTD", @"СНГ") forKey:@"chart_range_ytd"];
+    [mirrorDict setValue:ML(@"1Y", @"1年", @"1A", @"1A", @"1年", @"1년", @"1J", @"1Г") forKey:@"chart_range_1y"];
+    [mirrorDict setValue:ML(@"ALL", @"全部", @"Todo", @"Tout", @"全て", @"전체", @"Alle", @"Все") forKey:@"chart_range_all"];
     
     // Weekdays
     [mirrorDict setValue:ML(@"Sun", @"周日", @"Dom", @"Dim", @"日", @"일", @"So", @"Вс") forKey:@"sunday"];
