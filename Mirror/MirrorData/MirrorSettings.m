@@ -12,6 +12,7 @@ static NSString * const kMirrorPreferredLanguageKey = @"MirrorUserPreferredLangu
 static NSString * const kMirrorPreferredDarkModeKey = @"MirrorUserPreferredDarkMode";
 static NSString * const kMirrorPreferredGridChartModeKey = @"MirrorUserPreferredGridChartMode";
 static NSString * const kMirrorPreferredPiechartRecordKey = @"MirrorUserPreferredPiechartRecord";
+static NSString * const kMirrorPreferredChartRangeKey = @"MirrorUserPreferredChartRange";
 static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.Mirror";
 
 @implementation MirrorSettings
@@ -109,6 +110,36 @@ static NSString * const kMirrorAppGroupIdentifier = @"group.com.yuqingwang.dev.M
     [defaults setInteger:nextChartMode forKey:kMirrorPreferredGridChartModeKey];
     [defaults setBool:nextChartMode == MirrorGridChartModePieChart forKey:kMirrorPreferredPiechartRecordKey];
     [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchChartTypeRecordNotification object:nil];
+}
+
++ (NSArray<NSString *> *)chartRangeTitles
+{
+    return @[@"1W", @"1M", @"3M", @"6M", @"YTD", @"1Y", @"ALL"];
+}
+
++ (MirrorChartRange)appliedChartRange
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    id chartRange = [defaults objectForKey:kMirrorPreferredChartRangeKey];
+    if ([chartRange respondsToSelector:@selector(integerValue)]) {
+        NSInteger value = [chartRange integerValue];
+        if (value >= MirrorChartRangeOneWeek && value <= MirrorChartRangeAll) {
+            return (MirrorChartRange)value;
+        }
+    }
+    return MirrorChartRangeOneWeek;
+}
+
++ (void)saveChartRange:(MirrorChartRange)chartRange
+{
+    if (chartRange < MirrorChartRangeOneWeek || chartRange > MirrorChartRangeAll) {
+        return;
+    }
+    if ([self appliedChartRange] == chartRange) {
+        return;
+    }
+    [[NSUserDefaults standardUserDefaults] setInteger:chartRange forKey:kMirrorPreferredChartRangeKey];
+    [[NSNotificationCenter defaultCenter] postNotificationName:MirrorSwitchChartRangeNotification object:nil];
 }
 
 + (BOOL)appliedPieChartRecord

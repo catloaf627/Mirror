@@ -9,13 +9,15 @@
 #import "UIFont+MirrorFont.h"
 #import "MirrorLanguage.h"
 #import "MirrorTimeText.h"
+#import "MirrorSettings.h"
 #import <Masonry/Masonry.h>
 
 static CGFloat const kLineChartTopInset = 10;
 static CGFloat const kLineChartBottomInset = 0;
 static CGFloat const kLineChartLeftInset = 0;
 static CGFloat const kLineChartRightInset = 0;
-static CGFloat const kLineChartMinimumDateWidth = 28;
+static CGFloat const kLineChartRangeControlHeight = 30;
+static CGFloat const kLineChartRangeControlSpacing = 6;
 
 @interface TaskLineChartCanvasView : UIView
 
@@ -30,6 +32,7 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
 @interface TaskLineChartView ()
 
 @property (nonatomic, strong) UIScrollView *scrollView;
+@property (nonatomic, strong) UISegmentedControl *rangeSegmentedControl;
 @property (nonatomic, strong) TaskLineChartCanvasView *canvasView;
 @property (nonatomic, strong) MASConstraint *canvasWidthConstraint;
 @property (nonatomic, strong) NSMutableArray<MirrorReadModel *> *data;
@@ -46,9 +49,15 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
         self.data = data;
         self.dateKeys = dateKeys;
         self.backgroundColor = [UIColor mirrorColorNamed:MirrorColorTypeBackground];
+        [self addSubview:self.rangeSegmentedControl];
+        [self.rangeSegmentedControl mas_makeConstraints:^(MASConstraintMaker *make) {
+            make.left.right.top.mas_equalTo(self);
+            make.height.mas_equalTo(kLineChartRangeControlHeight*kHeightRatio);
+        }];
         [self addSubview:self.scrollView];
         [self.scrollView mas_makeConstraints:^(MASConstraintMaker *make) {
-            make.edges.mas_equalTo(self);
+            make.left.right.bottom.mas_equalTo(self);
+            make.top.mas_equalTo(self.rangeSegmentedControl.mas_bottom).offset(kLineChartRangeControlSpacing*kHeightRatio);
         }];
         [self.scrollView addSubview:self.canvasView];
         [self.canvasView mas_makeConstraints:^(MASConstraintMaker *make) {
@@ -70,20 +79,23 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
 {
     self.data = data;
     self.dateKeys = dateKeys;
+    self.rangeSegmentedControl.selectedSegmentIndex = [MirrorSettings appliedChartRange];
     [self.canvasView updateWithData:data dateKeys:dateKeys];
     [self updateCanvasWidth];
 }
 
+- (void)chartRangeChanged:(UISegmentedControl *)sender
+{
+    [MirrorSettings saveChartRange:(MirrorChartRange)sender.selectedSegmentIndex];
+    [[[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight] impactOccurred];
+}
+
 - (void)updateCanvasWidth
 {
-    CGFloat minimumWidth = CGRectGetWidth(self.bounds);
-    CGFloat contentWidth = MAX(minimumWidth, self.dateKeys.count * kLineChartMinimumDateWidth * kWidthRatio + kLineChartLeftInset + kLineChartRightInset);
-    [self.canvasWidthConstraint setOffset:contentWidth];
-    self.scrollView.scrollEnabled = contentWidth > minimumWidth + 1;
-    CGFloat maxOffsetX = MAX(0, contentWidth - minimumWidth);
-    if (!self.scrollView.scrollEnabled || self.scrollView.contentOffset.x > maxOffsetX) {
-        [self.scrollView setContentOffset:CGPointMake(maxOffsetX, 0) animated:NO];
-    }
+    CGFloat visibleWidth = CGRectGetWidth(self.scrollView.bounds);
+    [self.canvasWidthConstraint setOffset:visibleWidth];
+    self.scrollView.scrollEnabled = NO;
+    [self.scrollView setContentOffset:CGPointZero animated:NO];
 }
 
 #pragma mark - Getters
@@ -97,6 +109,27 @@ static CGFloat const kLineChartMinimumDateWidth = 28;
         _scrollView.showsHorizontalScrollIndicator = NO;
     }
     return _scrollView;
+}
+
+- (UISegmentedControl *)rangeSegmentedControl
+{
+    if (!_rangeSegmentedControl) {
+        _rangeSegmentedControl = [[UISegmentedControl alloc] initWithItems:[MirrorSettings chartRangeTitles]];
+        _rangeSegmentedControl.selectedSegmentIndex = [MirrorSettings appliedChartRange];
+        if (@available(iOS 13.0, *)) {
+            _rangeSegmentedControl.selectedSegmentTintColor = [[UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight] colorWithAlphaComponent:0.14];
+        }
+        [_rangeSegmentedControl setTitleTextAttributes:@{
+            NSFontAttributeName: [UIFont mirrorHintFont],
+            NSForegroundColorAttributeName: [UIColor mirrorColorNamed:MirrorColorTypeTextHint]
+        } forState:UIControlStateNormal];
+        [_rangeSegmentedControl setTitleTextAttributes:@{
+            NSFontAttributeName: [UIFont mirrorHintFont],
+            NSForegroundColorAttributeName: [UIColor mirrorColorNamed:MirrorColorTypeTabbarIconTextHightlight]
+        } forState:UIControlStateSelected];
+        [_rangeSegmentedControl addTarget:self action:@selector(chartRangeChanged:) forControlEvents:UIControlEventValueChanged];
+    }
+    return _rangeSegmentedControl;
 }
 
 - (TaskLineChartCanvasView *)canvasView

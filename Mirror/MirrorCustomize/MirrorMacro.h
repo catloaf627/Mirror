@@ -60,6 +60,7 @@ static inline CGFloat MirrorBottomSafeAreaHeight(void) {
 #define MirrorSwitchLanguageNotification @"MirrorSwitchLanguageNotification"
 #define MirrorSwitchWeekStartsOnNotification @"MirrorSwitchWeekStartsOnNotification"
 #define MirrorSwitchChartTypeRecordNotification @"MirrorSwitchChartTypeRecordNotification"
+#define MirrorSwitchChartRangeNotification @"MirrorSwitchChartRangeNotification"
 #define MirrorSwitchShowIndexNotification @"MirrorSwitchShowIndexNotification"
 #define MirrorSwitchShowShadeNotification @"MirrorSwitchShowShadeNotification"
 // Data Notifications (MirrorStorage统一来发)

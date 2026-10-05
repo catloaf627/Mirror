@@ -18,6 +18,16 @@ typedef NS_ENUM(NSInteger, MirrorGridChartMode) {
     MirrorGridChartModeLineChart = 3,
 };
 
+typedef NS_ENUM(NSInteger, MirrorChartRange) {
+    MirrorChartRangeOneWeek = 0,
+    MirrorChartRangeOneMonth,
+    MirrorChartRangeThreeMonths,
+    MirrorChartRangeSixMonths,
+    MirrorChartRangeYearToDate,
+    MirrorChartRangeOneYear,
+    MirrorChartRangeAll
+};
+
 @interface MirrorSettings : NSObject
 
 // Theme
@@ -36,6 +46,9 @@ typedef NS_ENUM(NSInteger, MirrorGridChartMode) {
 // Grid chart mode
 + (MirrorGridChartMode)appliedGridChartMode;
 + (void)switchGridChartMode;
++ (NSArray<NSString *> *)chartRangeTitles;
++ (MirrorChartRange)appliedChartRange;
++ (void)saveChartRange:(MirrorChartRange)chartRange;
 
 // Pie chart
 + (BOOL)appliedPieChartRecord;

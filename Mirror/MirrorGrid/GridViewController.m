@@ -137,6 +137,7 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(restartVC) name:MirrorSwitchLanguageNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchWeekStartsOnNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchChartTypeRecordNotification object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchChartRangeNotification object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorSwitchShowShadeNotification object:nil];
         // 数据通知 (直接数据驱动UI，本地数据变动必然导致这里的UI变动)
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(reloadData) name:MirrorImportDataNotificaiton object:nil];
@@ -272,15 +273,17 @@
         make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding);
         make.bottom.mas_equalTo(self.view).offset(-self.tabBarController.tabBar.frame.size.height - kChartBottomPadding);
     }];
-    [self updateChartVisibility];
     [self.view addSubview:self.piechartView];
     CGFloat chartAreaWidth = [[self leftWidthLeftHeight][0] floatValue];
     CGFloat chartAreaHeight = [[self leftWidthLeftHeight][1] floatValue];
-    CGFloat width = MIN(chartAreaWidth, chartAreaHeight);
+    CGFloat width = MAX(0, MIN([PiechartView maximumPieWidthForAvailableWidth:chartAreaWidth], chartAreaHeight - ([PiechartView totalHeightForPieWidth:0])));
+    CGFloat totalWidth = chartAreaWidth;
+    CGFloat totalHeight = [PiechartView totalHeightForPieWidth:width];
     [self.piechartView mas_makeConstraints:^(MASConstraintMaker *make) {
-        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing + (chartAreaWidth - width) / 2);
-        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding + (chartAreaHeight - width) / 2);
-        make.width.height.mas_equalTo(width);
+        make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
+        make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding + (chartAreaHeight - totalHeight) / 2);
+        make.width.mas_equalTo(totalWidth);
+        make.height.mas_equalTo(totalHeight);
     }];
     [self updateChartVisibility];
     _selectedCellIndexesStart = -1;
@@ -533,6 +536,88 @@
     return [self.keys subarrayWithRange:NSMakeRange(start, end - start + 1)];
 }
 
+- (NSArray<NSNumber *> *)chartRangeIndexes
+{
+    if (self.keys.count == 0) {
+        return @[];
+    }
+    MirrorChartRange selectedChartRange = [MirrorSettings appliedChartRange];
+    if (selectedChartRange == MirrorChartRangeAll) {
+        return @[@0, @(self.keys.count - 1)];
+    }
+
+    NSCalendar *gregorian = [[NSCalendar alloc] initWithCalendarIdentifier:NSCalendarIdentifierGregorian];
+    gregorian.timeZone = [NSTimeZone systemTimeZone];
+    NSDate *endDate = [gregorian startOfDayForDate:[NSDate now]];
+    NSDate *startDate = nil;
+    switch (selectedChartRange) {
+        case MirrorChartRangeOneWeek:
+            startDate = [gregorian dateByAddingUnit:NSCalendarUnitDay value:-6 toDate:endDate options:0];
+            break;
+        case MirrorChartRangeOneMonth:
+            startDate = [gregorian dateByAddingUnit:NSCalendarUnitMonth value:-1 toDate:endDate options:0];
+            break;
+        case MirrorChartRangeThreeMonths:
+            startDate = [gregorian dateByAddingUnit:NSCalendarUnitMonth value:-3 toDate:endDate options:0];
+            break;
+        case MirrorChartRangeSixMonths:
+            startDate = [gregorian dateByAddingUnit:NSCalendarUnitMonth value:-6 toDate:endDate options:0];
+            break;
+        case MirrorChartRangeYearToDate: {
+            NSDateComponents *components = [gregorian components:NSCalendarUnitYear fromDate:endDate];
+            components.month = 1;
+            components.day = 1;
+            startDate = [gregorian dateFromComponents:components];
+            break;
+        }
+        case MirrorChartRangeOneYear:
+            startDate = [gregorian dateByAddingUnit:NSCalendarUnitYear value:-1 toDate:endDate options:0];
+            break;
+        case MirrorChartRangeAll:
+            startDate = [self dateFromKey:self.keys.firstObject];
+            break;
+    }
+
+    NSInteger startIndex = [self firstDateKeyIndexOnOrAfterDate:startDate];
+    NSInteger endIndex = [self lastDateKeyIndexOnOrBeforeDate:endDate];
+    if (startIndex == NSNotFound || endIndex == NSNotFound || startIndex > endIndex) {
+        NSInteger todayIndex = [self.keys indexOfObject:[self keyFromDate:endDate]];
+        if (todayIndex == NSNotFound) {
+            todayIndex = MIN(MAX(self.selectedCellIndex, 0), self.keys.count - 1);
+        }
+        return @[@(todayIndex), @(todayIndex)];
+    }
+    return @[@(startIndex), @(endIndex)];
+}
+
+- (NSInteger)firstDateKeyIndexOnOrAfterDate:(NSDate *)date
+{
+    if (!date) {
+        return NSNotFound;
+    }
+    for (NSInteger index = 0; index < self.keys.count; index++) {
+        NSDate *keyDate = [self dateFromKey:self.keys[index]];
+        if (keyDate && [keyDate compare:date] != NSOrderedAscending) {
+            return index;
+        }
+    }
+    return NSNotFound;
+}
+
+- (NSInteger)lastDateKeyIndexOnOrBeforeDate:(NSDate *)date
+{
+    if (!date) {
+        return NSNotFound;
+    }
+    for (NSInteger index = self.keys.count - 1; index >= 0; index--) {
+        NSDate *keyDate = [self dateFromKey:self.keys[index]];
+        if (keyDate && [keyDate compare:date] != NSOrderedDescending) {
+            return index;
+        }
+    }
+    return NSNotFound;
+}
+
 - (NSMutableArray<MirrorReadModel *> *)legendDataFromIndex:(NSInteger)startIndex toIndex:(NSInteger)endIndex
 {
     NSMutableArray<MirrorReadModel *> *legendData = [NSMutableArray new];
@@ -568,15 +653,66 @@
     
     NSInteger start = startIndex < endIndex ? startIndex : endIndex;
     NSInteger end = startIndex > endIndex ? startIndex : endIndex;
+    MirrorGridChartMode chartMode = [MirrorSettings appliedGridChartMode];
     NSMutableArray<MirrorReadModel *> *legendData = [self legendDataFromIndex:start toIndex:end];
-    NSMutableArray<MirrorReadModel *> *data = [self chartDataFromIndex:start toIndex:end shouldHideHidden:YES];
-    NSArray<NSString *> *lineChartDateKeys = [self lineChartDateKeysFromIndex:start toIndex:end];
-    NSMutableArray<MirrorReadModel *> *lineChartData = [self lineChartDataFromDateKeys:lineChartDateKeys];
+
+    // legend
+    [self.legendView updateWithData:legendData];
+    [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
+        make.height.mas_equalTo([self.legendView legendViewHeight]);
+    }];
+
+    if (chartMode == MirrorGridChartModeProgressList) {
+        NSMutableArray<MirrorReadModel *> *data = [self chartDataFromIndex:start toIndex:end shouldHideHidden:YES];
+        [self updateDateLabelWithData:data start:start end:end];
+        [self.taskProgressListView updateWithData:data];
+        return;
+    }
+    if (chartMode == MirrorGridChartModeBubbles) {
+        NSMutableArray<MirrorReadModel *> *data = [self chartDataFromIndex:start toIndex:end shouldHideHidden:YES];
+        [self updateDateLabelWithData:data start:start end:end];
+        [self.taskBubbleListView updateWithData:data];
+        return;
+    }
+
+    NSArray<NSNumber *> *chartIndexes = [self chartRangeIndexes];
+    NSInteger chartStart = chartIndexes.count == 2 ? chartIndexes.firstObject.integerValue : start;
+    NSInteger chartEnd = chartIndexes.count == 2 ? chartIndexes.lastObject.integerValue : end;
+
+    if (chartMode == MirrorGridChartModeLineChart) {
+        NSArray<NSString *> *lineChartDateKeys = [self lineChartDateKeysFromIndex:chartStart toIndex:chartEnd];
+        NSMutableArray<MirrorReadModel *> *lineChartData = [self lineChartDataFromDateKeys:lineChartDateKeys];
+        [self updateDateLabelWithData:lineChartData start:chartStart end:chartEnd];
+        [self.taskLineChartView updateWithData:lineChartData dateKeys:lineChartDateKeys];
+        return;
+    }
+    if (chartMode == MirrorGridChartModePieChart) {
+        NSMutableArray<MirrorReadModel *> *rangedChartData = [self chartDataFromIndex:chartStart toIndex:chartEnd shouldHideHidden:YES];
+        [self updateDateLabelWithData:rangedChartData start:chartStart end:chartEnd];
+        CGFloat chartAreaWidth = [[self leftWidthLeftHeight][0] floatValue];
+        CGFloat chartAreaHeight = [[self leftWidthLeftHeight][1] floatValue];
+        CGFloat width = MAX(0, MIN([PiechartView maximumPieWidthForAvailableWidth:chartAreaWidth], chartAreaHeight - ([PiechartView totalHeightForPieWidth:0])));
+        CGFloat totalWidth = chartAreaWidth;
+        CGFloat totalHeight = [PiechartView totalHeightForPieWidth:width];
+        [self.piechartView updateWithData:rangedChartData width:width enableInteractive:YES];
+        if (self.piechartView.superview) { //security
+            [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
+                make.left.mas_equalTo(self.view).offset(kLeftRightSpacing);
+                make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding + (chartAreaHeight - totalHeight) / 2);
+                make.width.mas_equalTo(totalWidth);
+                make.height.mas_equalTo(totalHeight);
+            }];
+        }
+    }
+}
+
+- (void)updateDateLabelWithData:(NSMutableArray<MirrorReadModel *> *)data start:(NSInteger)start end:(NSInteger)end
+{
     long totalTime = 0;
     for (MirrorReadModel *readModel in data) {
         totalTime += [MirrorTool getTotalTimeOfPeriods:readModel.records];
     }
-    
+
     NSString *totalTimeText = totalTime > 0 ? [[@": " stringByAppendingString:[MirrorTimeText XdXhXmXsFull:totalTime]] copy] : @"";
     if (start == end) {
         self.dateLabel.text = [[MirrorTimeText YYYYmmddWeekday:[self dateFromKey:self.keys[start]]] stringByAppendingString:totalTimeText];
@@ -584,28 +720,6 @@
         NSString *startDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[start]]];
         NSString *endDate = [MirrorTimeText YYYYmmdd:[self dateFromKey:self.keys[end]]];
         self.dateLabel.text = [[[startDate stringByAppendingString:@" - "] stringByAppendingString:endDate] stringByAppendingString:totalTimeText];
-    }
-
-    // legend
-    [self.legendView updateWithData:legendData];
-    [self.legendView mas_updateConstraints:^(MASConstraintMaker *make) {
-        make.height.mas_equalTo([self.legendView legendViewHeight]);
-    }];
-    // progress and bubble lists
-    [self.taskProgressListView updateWithData:data];
-    [self.taskBubbleListView updateWithData:data];
-    [self.taskLineChartView updateWithData:lineChartData dateKeys:lineChartDateKeys];
-    CGFloat chartAreaWidth = [[self leftWidthLeftHeight][0] floatValue];
-    CGFloat chartAreaHeight = [[self leftWidthLeftHeight][1] floatValue];
-    CGFloat width = MIN(chartAreaWidth, chartAreaHeight);
-    // piechart
-    [self.piechartView updateWithData:data width:width enableInteractive:YES];
-    if (self.piechartView.superview) { //security
-        [self.piechartView mas_updateConstraints:^(MASConstraintMaker *make) {
-            make.left.mas_equalTo(self.view).offset(kLeftRightSpacing + (chartAreaWidth - width) / 2);
-            make.top.mas_equalTo(self.legendView.mas_bottom).offset(kChartTopPadding + (chartAreaHeight - width) / 2);
-            make.width.height.mas_equalTo(width);
-        }];
     }
 }
 
