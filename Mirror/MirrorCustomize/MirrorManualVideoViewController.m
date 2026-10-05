@@ -7,6 +7,8 @@
 #import "UIColor+MirrorColor.h"
 #import <AVFoundation/AVFoundation.h>
 
+NSString * const kMirrorManualLastWatchedVideoIndexKey = @"MirrorManualLastWatchedVideoIndex";
+
 static NSString * const kMirrorManualVideoItemTitleKey = @"title";
 static NSString * const kMirrorManualVideoItemURLKey = @"url";
 
@@ -347,6 +349,7 @@ static NSString * const kMirrorManualVideoItemURLKey = @"url";
     self.titleLabel.text = title;
     self.indexLabel.text = [NSString stringWithFormat:@"%ld/%ld", (long)(self.currentIndex + 1), (long)self.videoItems.count];
     self.progressSlider.value = 0;
+    [[NSUserDefaults standardUserDefaults] setInteger:self.currentIndex forKey:kMirrorManualLastWatchedVideoIndexKey];
     [self updateThumbnailSelection];
     [self.player replaceCurrentItemWithPlayerItem:[AVPlayerItem playerItemWithURL:videoURL]];
     [self resetPlayerEndObserver];

@@ -46,7 +46,9 @@ static NSString * const kMirrorManualVideoDefinitionNameKey = @"name";
         return;
     }
 
-    MirrorManualVideoViewController *playerViewController = [[MirrorManualVideoViewController alloc] initWithVideoItems:videoItems currentIndex:0];
+    NSInteger lastWatchedVideoIndex = [[NSUserDefaults standardUserDefaults] integerForKey:kMirrorManualLastWatchedVideoIndexKey];
+    NSInteger currentIndex = lastWatchedVideoIndex >= 0 && lastWatchedVideoIndex < videoItems.count ? lastWatchedVideoIndex : 0;
+    MirrorManualVideoViewController *playerViewController = [[MirrorManualVideoViewController alloc] initWithVideoItems:videoItems currentIndex:currentIndex];
     [presentingViewController presentViewController:playerViewController animated:YES completion:nil];
 }
 

@@ -7,6 +7,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+FOUNDATION_EXPORT NSString * const kMirrorManualLastWatchedVideoIndexKey;
+
 @interface MirrorManualVideoViewController : UIViewController
 
 - (instancetype)initWithVideoItems:(NSArray<NSDictionary<NSString *, id> *> *)videoItems currentIndex:(NSInteger)currentIndex;
